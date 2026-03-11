@@ -177,7 +177,7 @@ $branchName = $_SESSION['branch_name'] ?? 'Branch';
 <div class="dashboard-grid">
 
     <div class="card stat-card">
-        <h3>Today </h3>
+        <h3>Today Registrations</h3>
         <h2><?= (int)$todayRegs ?></h2>
     </div>
 
