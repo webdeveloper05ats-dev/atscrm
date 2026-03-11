@@ -1,478 +1,522 @@
 <?php
 // =====================================
-// Permission Management (RBAC) - AJAX (Stable)
-// File: views/permission_management.php
+// Permission Management (RBAC) - AJAX
 // =====================================
 
 if (!defined('APP_NAME')) {
     die("Unauthorized access.");
 }
 
-// Page protection (if you use it)
 if (function_exists('requireView')) {
     requireView('permission_management');
 }
 
-// ------------------------------
-// Fetch Roles
-// ------------------------------
+/* ===============================
+FETCH ROLES
+=============================== */
 $roles = $pdo->query("SELECT id, role_name FROM roles WHERE status=1 ORDER BY id ASC")
              ->fetchAll(PDO::FETCH_ASSOC);
 
-// ------------------------------
-// Fetch Menus (All active)
-// ------------------------------
+/* ===============================
+FETCH MENUS
+=============================== */
 $allMenus = $pdo->query("
-    SELECT id, menu_name, menu_slug, parent_id, sort_order
-    FROM menus
-    WHERE status=1
-    ORDER BY parent_id IS NOT NULL, parent_id ASC, sort_order ASC
+SELECT id, menu_name, menu_slug, parent_id, sort_order
+FROM menus
+WHERE status=1
+ORDER BY parent_id IS NOT NULL, parent_id ASC, sort_order ASC
 ")->fetchAll(PDO::FETCH_ASSOC);
 
-// Build Tree
-$menuTree = [];
-foreach ($allMenus as $m) {
-    if ($m['parent_id'] === null) {
-        $menuTree[$m['id']] = $m;
-        $menuTree[$m['id']]['children'] = [];
+/* ===============================
+BUILD TREE
+=============================== */
+$menuTree=[];
+
+foreach($allMenus as $m){
+    if($m['parent_id']===null){
+        $menuTree[$m['id']]=$m;
+        $menuTree[$m['id']]['children']=[];
     }
 }
-foreach ($allMenus as $m) {
-    if ($m['parent_id'] !== null && isset($menuTree[$m['parent_id']])) {
-        $menuTree[$m['parent_id']]['children'][] = $m;
+
+foreach($allMenus as $m){
+    if($m['parent_id']!==null && isset($menuTree[$m['parent_id']])){
+        $menuTree[$m['parent_id']]['children'][]=$m;
     }
 }
 
-// ------------------------------
-// AJAX: Fetch permissions for selected role
-// GET: ?page=permission_management&ajax=perms&role_id=2
-// ------------------------------
-if (isset($_GET['ajax']) && $_GET['ajax'] === 'perms') {
-    header('Content-Type: application/json; charset=utf-8');
+/* ===============================
+AJAX FETCH PERMISSIONS
+=============================== */
+if(isset($_GET['ajax']) && $_GET['ajax']==='perms'){
 
-    $roleId = isset($_GET['role_id']) ? (int)$_GET['role_id'] : 0;
+header('Content-Type: application/json');
 
-    if ($roleId <= 0) {
-        echo json_encode(['ok' => false, 'message' => 'Invalid role.']);
-        exit;
-    }
+$roleId=(int)($_GET['role_id'] ?? 0);
 
-    // Super Admin always full access (role_id = 1)
-    if ($roleId === 1) {
-        $perms = [];
-        foreach ($allMenus as $m) {
-            $mid = (int)$m['id'];
-            $perms[$mid] = ['view'=>1,'add'=>1,'edit'=>1,'delete'=>1];
-        }
-        echo json_encode(['ok' => true, 'superadmin' => true, 'perms' => $perms]);
-        exit;
-    }
-
-    $stmt = $pdo->prepare("
-        SELECT menu_id, can_view, can_add, can_edit, can_delete
-        FROM role_permissions
-        WHERE role_id = ?
-    ");
-    $stmt->execute([$roleId]);
-
-    $perms = [];
-    foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $p) {
-        $mid = (int)$p['menu_id'];
-        $perms[$mid] = [
-            'view'   => (int)$p['can_view'],
-            'add'    => (int)$p['can_add'],
-            'edit'   => (int)$p['can_edit'],
-            'delete' => (int)$p['can_delete'],
-        ];
-    }
-
-    echo json_encode(['ok' => true, 'superadmin' => false, 'perms' => $perms]);
-    exit;
+if($roleId<=0){
+echo json_encode(['ok'=>false]);
+exit;
 }
 
-// ------------------------------
-// AJAX: Save permissions
-// POST: ajax_save=1 + role_id + perm[menu_id][view/add/edit/delete]
-// ------------------------------
-if (isset($_POST['ajax_save']) && $_POST['ajax_save'] == '1') {
-    header('Content-Type: application/json; charset=utf-8');
+if($roleId===1){
 
-    $role_id = (int)($_POST['role_id'] ?? 0);
+$perms=[];
+foreach($allMenus as $m){
+$perms[$m['id']]=['view'=>1,'add'=>1,'edit'=>1,'delete'=>1];
+}
 
-    if ($role_id <= 0) {
-        echo json_encode(['ok' => false, 'message' => 'Please select a role.']);
-        exit;
-    }
+echo json_encode(['ok'=>true,'superadmin'=>true,'perms'=>$perms]);
+exit;
+}
 
-    if ($role_id === 1) {
-        echo json_encode(['ok' => false, 'message' => 'Super Admin permissions cannot be restricted.']);
-        exit;
-    }
+$stmt=$pdo->prepare("
+SELECT menu_id,can_view,can_add,can_edit,can_delete
+FROM role_permissions
+WHERE role_id=?
+");
 
-    $perm = $_POST['perm'] ?? [];
+$stmt->execute([$roleId]);
 
-    try {
-        $pdo->beginTransaction();
+$perms=[];
 
-        // Remove old permissions
-        $del = $pdo->prepare("DELETE FROM role_permissions WHERE role_id=?");
-        $del->execute([$role_id]);
+foreach($stmt->fetchAll(PDO::FETCH_ASSOC) as $p){
 
-        // Insert new permissions
-        $ins = $pdo->prepare("
-            INSERT INTO role_permissions
-            (role_id, menu_id, can_view, can_add, can_edit, can_delete, created_at, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?, NOW(), NOW())
-        ");
+$perms[$p['menu_id']]=[
+'view'=>(int)$p['can_view'],
+'add'=>(int)$p['can_add'],
+'edit'=>(int)$p['can_edit'],
+'delete'=>(int)$p['can_delete']
+];
 
-        // Loop all menus so missing checkbox becomes 0
-        foreach ($allMenus as $m) {
-            $menu_id = (int)$m['id'];
+}
 
-            $can_view   = isset($perm[$menu_id]['view']) ? 1 : 0;
-            $can_add    = isset($perm[$menu_id]['add']) ? 1 : 0;
-            $can_edit   = isset($perm[$menu_id]['edit']) ? 1 : 0;
-            $can_delete = isset($perm[$menu_id]['delete']) ? 1 : 0;
+echo json_encode(['ok'=>true,'superadmin'=>false,'perms'=>$perms]);
+exit;
+}
 
-            // Rule: if view OFF -> everything OFF
-            if ($can_view === 0) {
-                $can_add = $can_edit = $can_delete = 0;
-            }
+/* ===============================
+AJAX SAVE
+=============================== */
 
-            $ins->execute([$role_id, $menu_id, $can_view, $can_add, $can_edit, $can_delete]);
-        }
+if(isset($_POST['ajax_save'])){
 
-        $pdo->commit();
+header('Content-Type: application/json');
 
-        echo json_encode(['ok' => true, 'message' => 'Permissions updated successfully!']);
-        exit;
+$role_id=(int)($_POST['role_id'] ?? 0);
 
-    } catch (Exception $e) {
-        if ($pdo->inTransaction()) $pdo->rollBack();
-        echo json_encode(['ok' => false, 'message' => 'Failed to save permissions. ' . $e->getMessage()]);
-        exit;
-    }
+if($role_id<=0){
+echo json_encode(['ok'=>false]);
+exit;
+}
+
+if($role_id===1){
+echo json_encode(['ok'=>false]);
+exit;
+}
+
+$perm=$_POST['perm'] ?? [];
+
+$pdo->beginTransaction();
+
+$pdo->prepare("DELETE FROM role_permissions WHERE role_id=?")
+    ->execute([$role_id]);
+
+$ins=$pdo->prepare("
+INSERT INTO role_permissions
+(role_id,menu_id,can_view,can_add,can_edit,can_delete,created_at,updated_at)
+VALUES(?,?,?,?,?,?,NOW(),NOW())
+");
+
+foreach($allMenus as $m){
+
+$mid=$m['id'];
+
+$v=isset($perm[$mid]['view'])?1:0;
+$a=isset($perm[$mid]['add'])?1:0;
+$e=isset($perm[$mid]['edit'])?1:0;
+$d=isset($perm[$mid]['delete'])?1:0;
+
+if(!$v){$a=$e=$d=0;}
+
+$ins->execute([$role_id,$mid,$v,$a,$e,$d]);
+
+}
+
+$pdo->commit();
+
+echo json_encode(['ok'=>true]);
+exit;
 }
 ?>
 
-<h2 style="margin-bottom:16px;">Permission Management</h2>
+<style>
+
+/* ===== Permission Table ===== */
+
+.perm-table{
+width:100%;
+border-collapse:collapse;
+background:#fff;
+font-size:14px;
+}
+
+.perm-table th{
+background:#fce4ec;
+color:#e91e63;
+padding:12px;
+border:1px solid #f3c6d3;
+}
+
+.perm-table td{
+padding:12px;
+border:1px solid #f3c6d3;
+}
+
+.perm-parent-row{
+background:#fff6fa;
+}
+
+.perm-menu-name{
+font-weight:600;
+}
+
+.perm-menu-slug{
+font-size:12px;
+color:#777;
+}
+
+.perm-child{
+padding-left:30px;
+}
+
+.perm-center{
+text-align:center;
+}
+
+/* ===== Toggle Switch ===== */
+
+.perm-switch{
+position:relative;
+display:inline-block;
+width:42px;
+height:22px;
+}
+
+.perm-switch input{
+opacity:0;
+width:0;
+height:0;
+}
+
+.perm-slider{
+position:absolute;
+cursor:pointer;
+top:0;
+left:0;
+right:0;
+bottom:0;
+background:#d9d9d9;
+border-radius:30px;
+transition:.25s;
+}
+
+.perm-slider:before{
+content:"";
+position:absolute;
+height:18px;
+width:18px;
+left:2px;
+top:2px;
+background:white;
+border-radius:50%;
+transition:.25s;
+box-shadow:0 2px 5px rgba(0,0,0,.2);
+}
+
+.perm-switch input:checked + .perm-slider{
+background:#e91e63;
+}
+
+.perm-switch input:checked + .perm-slider:before{
+transform:translateX(20px);
+}
+
+/* ===== Buttons ===== */
+
+.permission-actions{
+display:flex;
+gap:10px;
+flex-wrap:wrap;
+align-items:center;
+margin-bottom:15px;
+}
+
+.permission-actions button{
+width:auto !important;
+display:inline-block;
+padding:8px 16px;
+border:none;
+border-radius:6px;
+cursor:pointer;
+font-size:13px;
+white-space:nowrap;
+}
+
+.btn-primary{
+background:#e91e63;
+color:#fff;
+}
+
+.btn{
+background:#eee;
+}
+
+/* ===== Responsive ===== */
+
+@media(max-width:768px){
+
+.perm-table th,
+.perm-table td{
+font-size:12px;
+padding:8px;
+}
+
+.perm-menu-slug{
+display:none;
+}
+
+}
+
+</style>
+
+<h2>Permission Management</h2>
 
 <div class="card">
-    <div class="card-header">Select Role</div>
+<div class="card-header">Select Role</div>
 
-    <div style="padding:14px;">
-        <div class="form-group">
-            <label>Role</label>
-            <select id="role_select">
-                <option value="">-- Select Role --</option>
-                <?php foreach ($roles as $r): ?>
-                    <option value="<?= (int)$r['id'] ?>">
-                        <?= htmlspecialchars($r['role_name']) ?>
-                    </option>
-                <?php endforeach; ?>
-            </select>
-        </div>
+<div style="padding:14px">
 
-        <div id="perm_loading_note" style="display:none;margin-top:10px;color:var(--text-light);">
-            Loading permissions...
-        </div>
-    </div>
+<select id="role_select">
+
+<option value="">Select Role</option>
+
+<?php foreach($roles as $r): ?>
+
+<option value="<?= $r['id'] ?>">
+<?= htmlspecialchars($r['role_name']) ?>
+</option>
+
+<?php endforeach; ?>
+
+</select>
+
+</div>
 </div>
 
-<!-- Super Admin info -->
-<div class="card" id="superadmin_card" style="display:none;">
-    <div class="card-header">Super Admin</div>
-    <p style="padding:14px;color:var(--text-light);line-height:1.6;">
-        Super Admin always has full permissions. You cannot edit Super Admin permissions.
-    </p>
+<div class="card" id="perm_card" style="display:none">
+
+<form id="perm_form">
+
+<input type="hidden" name="role_id" id="role_id_hidden">
+<input type="hidden" name="ajax_save" value="1">
+
+<div class="permission-actions">
+
+<button type="button" class="btn-primary" onclick="toggleAll('view',true)">View All</button>
+<button type="button" class="btn-primary" onclick="toggleAll('add',true)">Add All</button>
+<button type="button" class="btn-primary" onclick="toggleAll('edit',true)">Edit All</button>
+<button type="button" class="btn-primary" onclick="toggleAll('delete',true)">Delete All</button>
+<button type="button" class="btn" onclick="toggleAll('view',false)">Clear All</button>
+
 </div>
 
-<!-- Permissions table -->
-<div class="card" id="perm_card" style="display:none;">
-    <div class="card-header">Set Permissions</div>
+<div style="overflow:auto">
 
-    <form id="perm_form" method="POST" style="padding:14px;">
-        <input type="hidden" name="role_id" id="role_id_hidden" value="">
-        <input type="hidden" name="ajax_save" value="1">
+<table class="perm-table">
 
-       <div class="permission-actions">
-<button class="btn btn-primary">View All</button>
-<button class="btn btn-primary">Add All</button>
-<button class="btn btn-primary">Edit All</button>
-<button class="btn btn-primary">Delete All</button>
-<button class="btn">Clear All</button>
+<thead>
+
+<tr>
+<th>Menu</th>
+<th>View</th>
+<th>Add</th>
+<th>Edit</th>
+<th>Delete</th>
+</tr>
+
+</thead>
+
+<tbody>
+
+<?php foreach($menuTree as $parent): ?>
+
+<tr class="perm-parent-row">
+
+<td>
+
+<div class="perm-menu-name"><?= $parent['menu_name']?></div>
+<div class="perm-menu-slug"><?= $parent['menu_slug']?></div>
+
+</td>
+
+<?php foreach(['view','add','edit','delete'] as $p): ?>
+
+<td class="perm-center">
+
+<label class="perm-switch">
+
+<input type="checkbox"
+class="perm-<?= $p ?>"
+name="perm[<?= $parent['id']?>][<?= $p ?>]">
+
+<span class="perm-slider"></span>
+
+</label>
+
+</td>
+
+<?php endforeach; ?>
+
+</tr>
+
+<?php foreach($parent['children'] as $child): ?>
+
+<tr>
+
+<td class="perm-child">
+
+<div class="perm-menu-name"><?= $child['menu_name']?></div>
+<div class="perm-menu-slug"><?= $child['menu_slug']?></div>
+
+</td>
+
+<?php foreach(['view','add','edit','delete'] as $p): ?>
+
+<td class="perm-center">
+
+<label class="perm-switch">
+
+<input type="checkbox"
+class="perm-<?= $p ?>"
+name="perm[<?= $child['id']?>][<?= $p ?>]">
+
+<span class="perm-slider"></span>
+
+</label>
+
+</td>
+
+<?php endforeach; ?>
+
+</tr>
+
+<?php endforeach; ?>
+
+<?php endforeach; ?>
+
+</tbody>
+</table>
+
 </div>
 
-        <div class="perm-table-wrap">
-            <div class="table-responsive">
-                <table class="table perm-table">
-                    <thead>
-                        <tr>
-                            <th>Menu</th>
-                            <th class="perm-center">View</th>
-                            <th class="perm-center">Add</th>
-                            <th class="perm-center">Edit</th>
-                            <th class="perm-center">Delete</th>
-                        </tr>
-                    </thead>
-                    <tbody>
+<button type="submit" class="btn-primary" style="margin-top:15px">
+Save Permissions
+</button>
 
-                    <?php foreach ($menuTree as $parent): ?>
-                        <?php $pid = (int)$parent['id']; ?>
-                        <tr class="perm-parent-row">
-                            <td>
-                                <div class="perm-menu-name"><?= htmlspecialchars($parent['menu_name']) ?></div>
-                                <div class="perm-menu-slug"><?= htmlspecialchars($parent['menu_slug']) ?></div>
-                            </td>
+</form>
 
-                            <td class="perm-center">
-                                <label class="perm-switch">
-                                    <input type="checkbox" class="perm-view"
-                                           name="perm[<?= $pid ?>][view]"
-                                           onchange="enforceViewRule(<?= $pid ?>)">
-                                </label>
-                            </td>
-                            <td class="perm-center">
-                                <label class="perm-switch">
-                                    <input type="checkbox" class="perm-add"
-                                           name="perm[<?= $pid ?>][add]"
-                                           onchange="enforceViewRule(<?= $pid ?>)">
-                                </label>
-                            </td>
-                            <td class="perm-center">
-                                <label class="perm-switch">
-                                    <input type="checkbox" class="perm-edit"
-                                           name="perm[<?= $pid ?>][edit]"
-                                           onchange="enforceViewRule(<?= $pid ?>)">
-                                </label>
-                            </td>
-                            <td class="perm-center">
-                                <label class="perm-switch">
-                                    <input type="checkbox" class="perm-delete"
-                                           name="perm[<?= $pid ?>][delete]"
-                                           onchange="enforceViewRule(<?= $pid ?>)">
-                                </label>
-                            </td>
-                        </tr>
-
-                        <?php if (!empty($parent['children'])): ?>
-                            <?php foreach ($parent['children'] as $child): ?>
-                                <?php $cid = (int)$child['id']; ?>
-                                <tr>
-                                    <td class="perm-child">
-                                        <div class="perm-menu-name"><?= htmlspecialchars($child['menu_name']) ?></div>
-                                        <div class="perm-menu-slug"><?= htmlspecialchars($child['menu_slug']) ?></div>
-                                    </td>
-
-                                    <td class="perm-center">
-                                        <label class="perm-switch">
-                                            <input type="checkbox" class="perm-view"
-                                                   name="perm[<?= $cid ?>][view]"
-                                                   onchange="enforceViewRule(<?= $cid ?>)">
-                                        </label>
-                                    </td>
-                                    <td class="perm-center">
-                                        <label class="perm-switch">
-                                            <input type="checkbox" class="perm-add"
-                                                   name="perm[<?= $cid ?>][add]"
-                                                   onchange="enforceViewRule(<?= $cid ?>)">
-                                        </label>
-                                    </td>
-                                    <td class="perm-center">
-                                        <label class="perm-switch">
-                                            <input type="checkbox" class="perm-edit"
-                                                   name="perm[<?= $cid ?>][edit]"
-                                                   onchange="enforceViewRule(<?= $cid ?>)">
-                                        </label>
-                                    </td>
-                                    <td class="perm-center">
-                                        <label class="perm-switch">
-                                            <input type="checkbox" class="perm-delete"
-                                                   name="perm[<?= $cid ?>][delete]"
-                                                   onchange="enforceViewRule(<?= $cid ?>)">
-                                        </label>
-                                    </td>
-                                </tr>
-                            <?php endforeach; ?>
-                        <?php endif; ?>
-
-                    <?php endforeach; ?>
-
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <div style="margin-top:14px;">
-            <button type="submit" class="btn btn-primary" style="width:220px;">
-                Save Permissions
-            </button>
-        </div>
-
-    </form>
 </div>
 
 <script>
-const roleSelect = document.getElementById('role_select');
-const permCard = document.getElementById('perm_card');
-const superAdminCard = document.getElementById('superadmin_card');
-const roleHidden = document.getElementById('role_id_hidden');
-const permForm = document.getElementById('perm_form');
-const loadingNote = document.getElementById('perm_loading_note');
 
-function swalMsg(icon, title, text) {
-    if (typeof Swal === "undefined") { alert(title + ": " + text); return; }
-    Swal.fire({ icon, title, text, confirmButtonColor:'#e91e63' });
+/* ===============================
+LOAD PERMISSIONS
+=============================== */
+
+const roleSelect=document.getElementById("role_select");
+const permCard=document.getElementById("perm_card");
+const roleHidden=document.getElementById("role_id_hidden");
+
+roleSelect.addEventListener("change",loadPerms);
+
+async function loadPerms(){
+
+let role=roleSelect.value;
+
+if(!role)return;
+
+permCard.style.display="block";
+roleHidden.value=role;
+
+let res=await fetch(`index.php?page=permission_management&ajax=perms&role_id=${role}`);
+let data=await res.json();
+
+document.querySelectorAll(".perm-view,.perm-add,.perm-edit,.perm-delete")
+.forEach(cb=>cb.checked=false);
+
+for(let m in data.perms){
+
+let p=data.perms[m];
+
+let v=document.querySelector(`input[name="perm[${m}][view]"]`);
+let a=document.querySelector(`input[name="perm[${m}][add]"]`);
+let e=document.querySelector(`input[name="perm[${m}][edit]"]`);
+let d=document.querySelector(`input[name="perm[${m}][delete]"]`);
+
+if(v)v.checked=p.view;
+if(a)a.checked=p.add;
+if(e)e.checked=p.edit;
+if(d)d.checked=p.delete;
+
 }
 
-function clearAllChecks() {
-    document.querySelectorAll(".perm-view,.perm-add,.perm-edit,.perm-delete")
-        .forEach(cb => cb.checked = false);
 }
 
-function setPerms(permsObj) {
-    clearAllChecks();
+/* ===============================
+TOGGLE BUTTONS
+=============================== */
 
-    for (const mid in permsObj) {
-        const p = permsObj[mid];
+function toggleAll(type,state){
 
-        const v = document.querySelector(`input[name="perm[${mid}][view]"]`);
-        const a = document.querySelector(`input[name="perm[${mid}][add]"]`);
-        const e = document.querySelector(`input[name="perm[${mid}][edit]"]`);
-        const d = document.querySelector(`input[name="perm[${mid}][delete]"]`);
+if(!state){
 
-        if (v) v.checked = (parseInt(p.view) === 1);
-        if (a) a.checked = (parseInt(p.add) === 1);
-        if (e) e.checked = (parseInt(p.edit) === 1);
-        if (d) d.checked = (parseInt(p.delete) === 1);
-    }
+document.querySelectorAll(".perm-view,.perm-add,.perm-edit,.perm-delete")
+.forEach(cb=>cb.checked=false);
+
+return;
 }
 
-async function loadRolePerms(roleId) {
-    // reset UI
-    permCard.style.display = "none";
-    superAdminCard.style.display = "none";
-    clearAllChecks();
-    roleHidden.value = "";
+document.querySelectorAll(".perm-"+type)
+.forEach(cb=>cb.checked=true);
 
-    if (!roleId) {
-        if (loadingNote) loadingNote.style.display = "none";
-        return;
-    }
-
-    if (loadingNote) loadingNote.style.display = "block";
-
-    try {
-        const url = `index.php?page=permission_management&ajax=perms&role_id=${encodeURIComponent(roleId)}`;
-        const res = await fetch(url, { headers: { "X-Requested-With": "XMLHttpRequest" }});
-        const data = await res.json();
-
-        if (loadingNote) loadingNote.style.display = "none";
-
-        if (!data.ok) {
-            swalMsg('error', 'Error', data.message || 'Failed to load permissions');
-            return;
-        }
-
-        roleHidden.value = roleId;
-
-        if (data.superadmin) {
-            superAdminCard.style.display = "block";
-            permCard.style.display = "none";
-            setPerms(data.perms || {});
-        } else {
-            superAdminCard.style.display = "none";
-            permCard.style.display = "block";
-            setPerms(data.perms || {});
-        }
-
-    } catch (e) {
-        if (loadingNote) loadingNote.style.display = "none";
-        swalMsg('error', 'Error', 'Network/JSON error while loading permissions');
-        console.error(e);
-    }
+if(type!=="view"){
+document.querySelectorAll(".perm-view")
+.forEach(cb=>cb.checked=true);
 }
 
-// Toggle buttons
-function toggleAll(type, state) {
-    if (state === false) {
-        clearAllChecks();
-        return;
-    }
-
-    document.querySelectorAll(".perm-" + type).forEach(cb => cb.checked = true);
-
-    if (type !== "view") {
-        document.querySelectorAll(".perm-view").forEach(cb => cb.checked = true);
-    }
 }
 
-// View rule: if view unchecked => add/edit/delete must be unchecked
-function enforceViewRule(menuId) {
-    const view = document.querySelector(`input[name="perm[${menuId}][view]"]`);
-    const add  = document.querySelector(`input[name="perm[${menuId}][add]"]`);
-    const edit = document.querySelector(`input[name="perm[${menuId}][edit]"]`);
-    const del  = document.querySelector(`input[name="perm[${menuId}][delete]"]`);
+/* ===============================
+SAVE
+=============================== */
 
-    if (!view) return;
+document.getElementById("perm_form")
+.addEventListener("submit",async function(e){
 
-    if (view.checked === false) {
-        if (add) add.checked = false;
-        if (edit) edit.checked = false;
-        if (del) del.checked = false;
-    } else {
-        if (add && add.checked) view.checked = true;
-        if (edit && edit.checked) view.checked = true;
-        if (del && del.checked) view.checked = true;
-    }
-}
+e.preventDefault();
 
-roleSelect.addEventListener('change', () => {
-    loadRolePerms(roleSelect.value);
+let fd=new FormData(this);
+
+let res=await fetch(`index.php?page=permission_management`,{
+method:"POST",
+body:fd
 });
 
-// Save (AJAX)
-permForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
+let data=await res.json();
 
-    const roleId = roleHidden.value;
-    if (!roleId) {
-        swalMsg('error', 'Error', 'Please select a role first.');
-        return;
-    }
+alert("Permissions Saved");
 
-    const fd = new FormData(permForm);
-
-    try {
-        const res = await fetch(`index.php?page=permission_management`, {
-            method: 'POST',
-            body: fd,
-            headers: { "X-Requested-With": "XMLHttpRequest" }
-        });
-        const data = await res.json();
-
-        if (!data.ok) {
-            swalMsg('error', 'Error', data.message || 'Save failed');
-            return;
-        }
-
-        if (typeof Swal !== "undefined") {
-            Swal.fire({
-                icon: 'success',
-                title: 'Success',
-                text: data.message || 'Permissions updated successfully!',
-                confirmButtonColor:'#e91e63'
-            }).then(() => {
-                loadRolePerms(roleId);
-            });
-        } else {
-            alert('Saved!');
-            loadRolePerms(roleId);
-        }
-
-    } catch (err) {
-        swalMsg('error', 'Error', 'Network/JSON error while saving');
-        console.error(err);
-    }
 });
+
 </script>
