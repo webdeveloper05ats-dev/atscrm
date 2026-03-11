@@ -81,7 +81,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['assign_student'])) {
     }
 
     try {
-        // Validate staff
         if ($canAllBranches === 1) {
             $st = $pdo->prepare("
                 SELECT u.id
@@ -106,7 +105,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['assign_student'])) {
             throw new Exception("Selected staff is invalid for this branch.");
         }
 
-        // Validate registration
         if ($canAllBranches === 1) {
             $st = $pdo->prepare("
                 SELECT id
@@ -303,7 +301,7 @@ $baseUrl = "index.php?page=students/assign"
     <div class="stu-page-top">
         <div class="stu-page-title">
             <h2><i class="fas fa-user-tag" style="color:#e91e63;"></i> Assign Students</h2>
-            <p>Assign confirmed students to Staff users for academic handling.</p>
+            <p>View registered students and assign them to staff.</p>
         </div>
         <div class="stu-chip">
             <i class="fas fa-list"></i>
@@ -351,7 +349,7 @@ $baseUrl = "index.php?page=students/assign"
     </div>
 
     <div class="card" style="margin-top:16px;">
-        <div class="card-header">Assignment List (<?= (int)$totalRows ?>)</div>
+        <div class="card-header">Registered Students (<?= (int)$totalRows ?>)</div>
         <div class="table-responsive" style="padding:14px;">
             <table class="table stu-table">
                 <thead>
@@ -366,7 +364,7 @@ $baseUrl = "index.php?page=students/assign"
                 </thead>
                 <tbody>
                 <?php if (!$rows): ?>
-                    <tr><td colspan="6" style="text-align:center;">No students found.</td></tr>
+                    <tr><td colspan="6" style="text-align:center;">No registered students found.</td></tr>
                 <?php endif; ?>
 
                 <?php foreach ($rows as $i => $r): ?>
