@@ -265,7 +265,7 @@ value="<?= h($_POST['lead_year'] ?? $lead['lead_year'] ?? '') ?>">
 <div class="form-group">
 <label>Assign To</label>
 <select name="assigned_to">
-<option value="">Select Staff</option>
+<option value="">Select Staf</option>
 
 <?php foreach($staff as $s): ?>
 
