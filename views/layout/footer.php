@@ -26,6 +26,7 @@ if (!defined('APP_NAME')) {
 <!-- ============================= -->
 <!-- Sidebar Toggle Script -->
 <!-- ============================= -->
+
 <script>
 document.addEventListener("DOMContentLoaded", function () {
 
@@ -120,5 +121,6 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 </script>
 
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </body>
 </html>
