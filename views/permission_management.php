@@ -501,21 +501,83 @@ document.querySelectorAll(".perm-view")
 SAVE
 =============================== */
 
+/* ===============================
+SAVE PERMISSIONS
+=============================== */
+
+/* ===============================
+SAVE PERMISSIONS
+=============================== */
+
 document.getElementById("perm_form")
 .addEventListener("submit",async function(e){
 
 e.preventDefault();
 
-let fd=new FormData(this);
+let fd = new FormData(this);
+let saveBtn = this.querySelector('button[type="submit"]');
 
-let res=await fetch(`index.php?page=permission_management`,{
+/* Disable button */
+saveBtn.disabled = true;
+saveBtn.innerText = "Saving...";
+
+/* Show loading popup */
+Swal.fire({
+title: 'Saving Permissions...',
+text: 'Please wait',
+allowOutsideClick: false,
+didOpen: () => {
+Swal.showLoading();
+}
+});
+
+try{
+
+let res = await fetch(`index.php?page=permission_management`,{
 method:"POST",
 body:fd
 });
 
-let data=await res.json();
+let data = await res.json();
 
-alert("Permissions Saved");
+if(data.ok){
+
+Swal.fire({
+icon: 'success',
+title: 'Permissions Updated',
+text: 'Permissions saved successfully!',
+confirmButtonColor: '#e91e63'
+}).then(() => {
+
+location.reload();
+
+});
+
+}else{
+
+Swal.fire({
+icon: 'error',
+title: 'Error',
+text: 'Failed to save permissions',
+confirmButtonColor: '#e91e63'
+});
+
+}
+
+}catch(err){
+
+Swal.fire({
+icon: 'error',
+title: 'Server Error',
+text: 'Something went wrong!',
+confirmButtonColor: '#e91e63'
+});
+
+}
+
+/* Enable button again */
+saveBtn.disabled = false;
+saveBtn.innerText = "Save Permissions";
 
 });
 
