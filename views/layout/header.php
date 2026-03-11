@@ -23,11 +23,12 @@ $pageTitle = $pageTitle ?? APP_NAME;
 // If login page sets $hideSidebar = true, we hide topbar also
 $hideTopbar = (isset($hideSidebar) && $hideSidebar === true);
 ?>
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    
     <title><?= htmlspecialchars($pageTitle) ?> | <?= htmlspecialchars(APP_NAME) ?></title>
 <!-- Google Font: Poppins -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
