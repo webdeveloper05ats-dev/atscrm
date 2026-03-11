@@ -17,7 +17,7 @@ if (!defined('APP_NAME')) {
     define('APP_NAME', 'ATS CRM');
 }
 define('APP_ENV', 'development'); // change to 'production' in live server
- define('BASE_URL', 'http://localhost/new_2025/demo/crm git/'); // change in production
+define('BASE_URL', 'http://localhost/new_2025/demo/crm git/'); // change in production
 
 //define('BASE_URL', 'http://localhost/2026/crm/');
 
