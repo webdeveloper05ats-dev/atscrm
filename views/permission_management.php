@@ -287,7 +287,51 @@ display:none;
 }
 
 }
+.permission-page button{
+    padding:10px;
+}
 
+
+/* ===============================
+   MODERN PRIMARY BUTTON
+================================ */
+
+.btn-primary{
+display:inline-flex;
+align-items:center;
+justify-content:center;
+gap:8px;
+
+background:linear-gradient(135deg,#ff4d8d,#e91e63);
+color:#fff;
+
+padding:10px 18px;
+border:none;
+border-radius:10px;
+
+font-size:14px;
+font-weight:600;
+
+cursor:pointer;
+
+transition:all .25s ease;
+box-shadow:0 6px 14px rgba(233,30,99,0.25);
+}
+
+/* Hover effect */
+
+.btn-primary:hover{
+background:linear-gradient(135deg,#ff3b82,#d81b60);
+transform:translateY(-2px);
+box-shadow:0 10px 20px rgba(233,30,99,0.35);
+}
+
+/* Click effect */
+
+.btn-primary:active{
+transform:scale(.96);
+box-shadow:0 4px 10px rgba(233,30,99,0.25);
+}
 </style>
 
 <h2>Permission Management</h2>
@@ -419,11 +463,11 @@ name="perm[<?= $child['id']?>][<?= $p ?>]">
 </table>
 
 </div>
-
+<div class="permission-page">
 <button type="submit" class="btn-primary" style="margin-top:15px">
 Save Permissions
 </button>
-
+</div>
 </form>
 
 </div>
