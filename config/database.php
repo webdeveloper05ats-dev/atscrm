@@ -10,7 +10,7 @@ $charset  = "utf8mb4";*/
 
 
 //Mani Server
-$host     = "localhost";
+$host     = "srv1279.hstgr.io";
 $dbname   = "u440631799_crm";
 $username = "u440631799_crm";          // change if needed
 $password = "Accent@crm2026";              // change if needed
