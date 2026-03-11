@@ -80,6 +80,10 @@ $rawPages = [
     'targets/export-user-details',
 ];
 
+if ($page === 'leads/import' && isset($_GET['download']) && $_GET['download'] === 'template') {
+    $rawPages[] = 'leads/import';
+}
+
 if (in_array($page, $rawPages, true)) {
     require_once $viewPath;
     exit;
