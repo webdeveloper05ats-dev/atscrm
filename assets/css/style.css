@@ -610,16 +610,6 @@ grid-template-columns:1fr;
 
 
 
-.permission-actions{
-display:flex;
-gap:10px;
-flex-wrap:wrap;
-margin-bottom:15px;
-}
-
-.permission-actions .btn{
-width:auto;
-}
 
 
 /* ===============================
