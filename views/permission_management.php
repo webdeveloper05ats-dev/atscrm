@@ -195,17 +195,17 @@ if (isset($_POST['ajax_save']) && $_POST['ajax_save'] == '1') {
         <input type="hidden" name="role_id" id="role_id_hidden" value="">
         <input type="hidden" name="ajax_save" value="1">
 
-        <div class="perm-actions">
-            <button type="button" class="btn btn-primary" onclick="toggleAll('view', true)">View All</button>
-            <button type="button" class="btn btn-primary" onclick="toggleAll('add', true)">Add All</button>
-            <button type="button" class="btn btn-primary" onclick="toggleAll('edit', true)">Edit All</button>
-            <button type="button" class="btn btn-primary" onclick="toggleAll('delete', true)">Delete All</button>
-            <button type="button" class="btn-danger" onclick="toggleAll('view', false)">Clear All</button>
-        </div>
+       <div class="permission-actions">
+<button class="btn btn-primary">View All</button>
+<button class="btn btn-primary">Add All</button>
+<button class="btn btn-primary">Edit All</button>
+<button class="btn btn-primary">Delete All</button>
+<button class="btn">Clear All</button>
+</div>
 
         <div class="perm-table-wrap">
             <div class="table-responsive">
-                <table class="perm-table">
+                <table class="table perm-table">
                     <thead>
                         <tr>
                             <th>Menu</th>
