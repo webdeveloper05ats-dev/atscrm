@@ -2,19 +2,19 @@
 // ==============================
 // ATS CRM - Database Connection
 // ==============================
-$host     = "localhost";
+/*$host     = "localhost";
 $dbname   = "u440631799_crm";
 $username = "root";          // change if needed
 $password = "";              // change if needed
-$charset  = "utf8mb4";
+$charset  = "utf8mb4";*/
 
 
 //Mani Server
-/*$host     = "localhost";
+$host     = "localhost";
 $dbname   = "u440631799_crm";
 $username = "u440631799_crm";          // change if needed
 $password = "Accent@crm2026";              // change if needed
-$charset  = "utf8mb4";*/
+$charset  = "utf8mb4";
 
 $dsn = "mysql:host=$host;dbname=$dbname;charset=$charset";
 
