@@ -1,28 +1,25 @@
 /* ==========================================
-   ATS CRM
-   Modern Pink SaaS Theme
-   Organized Professional CSS
-   ========================================== */
-
+ATS CRM
+Modern Pink SaaS Theme
+Professional Stable CSS (Bug Fixed Version)
+========================================== */
 
 /* ==========================================
-   1. FONT + GLOBAL RESET
+
+1. GLOBAL RESET
    ========================================== */
 
-body,
-button,
-input[type="text"],
-input[type="email"],
-input[type="password"],
-input[type="number"],
-input[type="date"],
-select,
-textarea{
-width:100%;
-padding:10px;
-border:1px solid rgba(233,30,99,0.25);
-border-radius:10px;
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
 }
+
+/* ==========================================
+2. FONT SYSTEM
+========================================== */
+
+body,
 table,
 th,
 td,
@@ -36,7 +33,7 @@ h4,
 h5,
 h6,
 a{
-    font-family:'Poppins',sans-serif !important;
+font-family:'Poppins',sans-serif !important;
 }
 
 .fa,
@@ -44,19 +41,12 @@ a{
 .far,
 .fal,
 .fab{
-    font-family:"Font Awesome 6 Free","Font Awesome 6 Brands" !important;
+font-family:"Font Awesome 6 Free","Font Awesome 6 Brands" !important;
 }
-
-*{
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
-}
-
 
 /* ==========================================
-   2. ROOT VARIABLES
-   ========================================== */
+3. ROOT VARIABLES
+========================================== */
 
 :root{
 
@@ -73,12 +63,9 @@ a{
 
 --shadow:0 8px 25px rgba(233,30,99,0.08);
 
-/* Font system */
-
 --font-base:14px;
 --font-sm:12px;
 --font-md:14px;
---font-menu:15px;
 --font-lg:16px;
 --font-xl:18px;
 --font-xxl:22px;
@@ -86,21 +73,25 @@ a{
 
 }
 
-
 /* ==========================================
-   3. GLOBAL LAYOUT
-   ========================================== */
+4. PAGE BASE
+========================================== */
 
 html,body{
 height:100%;
+width:100%;
+overflow-x:hidden;
 }
 
 body{
 font-size:var(--font-base);
 background:var(--bg-light);
 color:var(--text-dark);
-overflow-x:hidden;
 }
+
+/* ==========================================
+5. LAYOUT
+========================================== */
 
 .wrapper{
 display:flex;
@@ -110,11 +101,13 @@ min-height:100vh;
 .content{
 flex:1;
 margin-left:260px;
+width:calc(100% - 260px);
 transition:0.3s;
 }
 
 .content.expanded{
 margin-left:78px;
+width:calc(100% - 78px);
 }
 
 .main-content{
@@ -122,10 +115,9 @@ width:100%;
 padding:26px;
 }
 
-
 /* ==========================================
-   4. SIDEBAR
-   ========================================== */
+6. SIDEBAR
+========================================== */
 
 .sidebar{
 width:260px;
@@ -189,10 +181,9 @@ background:rgba(233,30,99,0.12);
 color:var(--primary-dark);
 }
 
-
 /* ==========================================
-   5. SUBMENU
-   ========================================== */
+7. SUBMENU
+========================================== */
 
 .sidebar .submenu{
 list-style:none;
@@ -215,10 +206,9 @@ background:rgba(233,30,99,0.10);
 color:var(--primary-dark);
 }
 
-
 /* ==========================================
-   6. SIDEBAR COLLAPSED
-   ========================================== */
+8. SIDEBAR COLLAPSED
+========================================== */
 
 .sidebar.collapsed{
 width:78px;
@@ -243,10 +233,9 @@ display:none;
 display:none;
 }
 
-
 /* ==========================================
-   7. TOPBAR
-   ========================================== */
+9. TOPBAR
+========================================== */
 
 .topbar{
 background:#fff;
@@ -268,14 +257,9 @@ align-items:center;
 gap:10px;
 }
 
-.topbar small{
-font-size:var(--font-sm);
-}
-
-
 /* ==========================================
-   8. TYPOGRAPHY
-   ========================================== */
+10. TYPOGRAPHY
+========================================== */
 
 .page-title{
 font-size:var(--font-xxl);
@@ -292,10 +276,9 @@ font-size:var(--font-stat);
 font-weight:800;
 }
 
-
 /* ==========================================
-   9. CARDS
-   ========================================== */
+11. CARDS
+========================================== */
 
 .card{
 background:#fff;
@@ -312,10 +295,9 @@ margin-bottom:10px;
 color:var(--primary-dark);
 }
 
-
 /* ==========================================
-   10. BUTTONS
-   ========================================== */
+12. BUTTONS
+========================================== */
 
 .btn{
 padding:9px 14px;
@@ -337,10 +319,6 @@ background:var(--primary-dark);
 transform:translateY(-1px);
 }
 
-/* ==========================================
-   ACTION BUTTONS
-   ========================================== */
-
 .action-btn{
 display:inline-flex;
 align-items:center;
@@ -357,24 +335,15 @@ background:var(--primary);
 color:#fff;
 }
 
-.btn-edit:hover{
-background:var(--primary-dark);
-}
-
 .btn-danger{
 background:#fff;
 color:#b30000;
 border:1px solid #e5b3b3;
 }
 
-.btn-danger:hover{
-background:#ffe6e6;
-}
-
-
 /* ==========================================
-   11. TABLES
-   ========================================== */
+13. TABLES
+========================================== */
 
 .table-responsive{
 width:100%;
@@ -402,23 +371,21 @@ color:var(--primary-dark);
 font-weight:800;
 }
 
-.table tr:hover{
-background:#fff0f5;
-}
-
+.table tr:hover
 
 /* ==========================================
-   12. FORMS
-   ========================================== */
+14. FORMS
+========================================== */
 
 .form-group{
 margin-bottom:15px;
+display:flex;
+flex-direction:column;
+gap:6px;
 }
 
 label{
 font-weight:700;
-margin-bottom:6px;
-display:inline-block;
 }
 
 input,
@@ -438,40 +405,9 @@ outline:none;
 box-shadow:0 0 0 3px rgba(233,30,99,0.12);
 }
 
-/* ===== FORM SWITCH ALIGN FIX ===== */
-
-.form-group{
-display:flex;
-flex-direction:column;
-gap:6px;
-}
-
-.crm-switch{
-display:inline-flex;
-align-items:center;
-gap:10px;
-margin-top:4px;
-}
-
-.crm-switch span{
-font-size:14px;
-font-weight:600;
-}
 /* ==========================================
-   13. ALERTS
-   ========================================== */
-
-.alert{
-margin-bottom:16px;
-padding:12px 14px;
-border-radius:12px;
-box-shadow:var(--shadow);
-}
-
-
-/* ==========================================
-   14. DASHBOARD GRID
-   ========================================== */
+15. DASHBOARD GRID
+========================================== */
 
 .dashboard-grid{
 display:grid;
@@ -492,10 +428,9 @@ font-weight:800;
 font-size:16px;
 }
 
-
 /* ==========================================
-   15. LOGIN PAGE
-   ========================================== */
+16. LOGIN PAGE
+========================================== */
 
 .login-wrapper{
 display:flex;
@@ -522,62 +457,9 @@ color:var(--primary);
 font-weight:900;
 }
 
-
 /* ==========================================
-   16. ROLE MANAGEMENT UI
-   ========================================== */
-
-.crm-form-grid{
-display:grid;
-grid-template-columns:1fr 1fr;
-gap:18px;
-}
-
-.crm-full{
-grid-column:1/-1;
-}
-
-.crm-switch{
-display:inline-flex;
-align-items:center;
-gap:8px;
-cursor:pointer;
-}
-
-.crm-switch input{
-appearance:none;
-width:46px;
-height:24px;
-border-radius:50px;
-background:#e4e4e4;
-position:relative;
-}
-
-.crm-switch input:checked{
-background:var(--primary);
-}
-
-.crm-pagination{
-display:flex;
-justify-content:flex-end;
-gap:6px;
-margin-top:18px;
-}
-
-.crm-pagination a{
-padding:6px 10px;
-border-radius:8px;
-border:1px solid var(--border);
-text-decoration:none;
-font-weight:600;
-font-size:13px;
-background:#fff;
-}
-
-
-/* ==========================================
-   17. MOBILE RESPONSIVE
-   ========================================== */
+17. MOBILE
+========================================== */
 
 @media(max-width:768px){
 
@@ -592,6 +474,7 @@ left:0;
 .content,
 .content.expanded{
 margin-left:0;
+width:100%;
 }
 
 .main-content{
@@ -602,51 +485,4 @@ padding:16px;
 padding:30px 20px;
 }
 
-.crm-form-grid{
-grid-template-columns:1fr;
 }
-
-}
-
-
-
-
-
-/* ===============================
-   PERMISSION MENU HIERARCHY
-================================ */
-
-/* Parent menu */
-.perm-parent-row{
-background:#fff4f8;
-font-weight:700;
-}
-
-/* Child menu */
-.perm-child{
-padding-left:35px !important;
-position:relative;
-}
-
-/* Child arrow indicator */
-.perm-child::before{
-content:"▸";
-position:absolute;
-left:15px;
-color:#e91e63;
-font-size:12px;
-top:18px;
-}
-
-/* Menu title */
-.perm-menu-name{
-font-weight:600;
-}
-
-/* Menu slug */
-.perm-menu-slug{
-font-size:12px;
-color:#777;
-margin-top:2px;
-}
-
