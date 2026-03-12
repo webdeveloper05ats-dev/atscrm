@@ -676,7 +676,7 @@ confirmButtonColor:"#e91e63"
 document.addEventListener("DOMContentLoaded", function(){
 
 crmDataTable('#usersTable',{
-pageLength:3
+pageLength:5
 });
 
 });
