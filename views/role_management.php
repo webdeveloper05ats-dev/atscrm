@@ -515,6 +515,12 @@ exit;
 
 /* ---------- Mobile Optimization ---------- */
 @media(max-width:768px){
+
+
+.atsrm-role-ui-field {
+  flex: 1 1;
+  min-width: 160px;
+}
   .atsrm-role-ui-wrap{
     flex-direction:column;
     gap:15px;
@@ -692,7 +698,7 @@ exit;
             <tbody>
               <?php foreach($roles as $r): ?>
               <tr>
-                <td><strong>#<?= $r['id'] ?></strong></td>
+                <td><strong><?= $r['id'] ?></strong></td>
                 <td><?= htmlspecialchars($r['role_name']) ?></td>
                 <td><code><?= htmlspecialchars($r['default_dashboard_slug']) ?></code></td>
                <td align="center">
