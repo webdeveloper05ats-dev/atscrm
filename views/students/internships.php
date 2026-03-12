@@ -49,6 +49,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_internship'])) {
     $completionStatus = trim((string) ($_POST['internship_completion_status'] ?? 'pending'));
     $certificateStatus = trim((string) ($_POST['internship_certificate_status'] ?? 'not_given'));
     $reportStatus = trim((string) ($_POST['internship_report_status'] ?? 'not_provided'));
+    $certificateIssuedAt = trim((string) ($_POST['internship_certificate_issued_at'] ?? ''));
+    $reportIssuedAt = trim((string) ($_POST['internship_report_issued_at'] ?? ''));
     $reportDueDays = trim((string) ($_POST['internship_report_due_days'] ?? ''));
     $reportDueDays = $reportDueDays === '' ? null : (int) $reportDueDays;
 
@@ -72,10 +74,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_internship'])) {
         if ($reportStatus === 'not_provided') {
             $reportDueDays = null;
         }
+        if ($certificateStatus === 'given' && $certificateIssuedAt === '') {
+    throw new Exception('Please select certificate issued date and time.');
+}
+
+if ($certificateStatus === 'not_given') {
+    $certificateIssuedAt = null;
+}
+
+if ($reportStatus === 'provided' && $reportIssuedAt === '') {
+    throw new Exception('Please select report issued date and time.');
+}
+
+if ($reportStatus === 'not_provided') {
+    $reportIssuedAt = null;
+}
 
         $params = [$registrationId];
         $sql = "
-    SELECT id, internship_completion_status, internship_report_status
+    SELECT id, internship_completion_status, internship_report_status, internship_certificate_status
     FROM registrations
     WHERE id = ?
       AND reg_type = 'internship'
@@ -105,26 +122,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_internship'])) {
         }
 
         $upd = $pdo->prepare("
-            UPDATE registrations
-            SET internship_start_date = ?,
-                internship_end_date = ?,
-                internship_completion_status = ?,
-                internship_certificate_status = ?,
-                internship_report_status = ?,
-                internship_report_due_days = ?,
-                updated_at = NOW()
-            WHERE id = ?
-            LIMIT 1
-        ");
-        $upd->execute([
-            $startDate !== '' ? $startDate : null,
-            $endDate !== '' ? $endDate : null,
-            $completionStatus,
-            $certificateStatus,
-            $reportStatus,
-            $reportDueDays,
-            $registrationId
-        ]);
+    UPDATE registrations
+    SET internship_start_date = ?,
+        internship_end_date = ?,
+        internship_completion_status = ?,
+        internship_certificate_status = ?,
+        internship_certificate_issued_at = ?,
+        internship_report_status = ?,
+        internship_report_issued_at = ?,
+        internship_report_due_days = ?,
+        updated_at = NOW()
+    WHERE id = ?
+    LIMIT 1
+");
+$upd->execute([
+    $startDate !== '' ? $startDate : null,
+    $endDate !== '' ? $endDate : null,
+    $completionStatus,
+    $certificateStatus,
+    $certificateIssuedAt !== '' ? date('Y-m-d H:i:s', strtotime($certificateIssuedAt)) : null,
+    $reportStatus,
+    $reportIssuedAt !== '' ? date('Y-m-d H:i:s', strtotime($reportIssuedAt)) : null,
+    $reportDueDays,
+    $registrationId
+]);
 
         setFlash('success', 'Internship details updated successfully.');
     } catch (Exception $e) {
@@ -212,6 +233,8 @@ try {
         r.payment_status,
         r.final_fee,
         r.paid_amount,
+        r.internship_certificate_issued_at,
+        r.internship_report_issued_at,
         r.balance_amount
     FROM registrations r
     $whereSql
@@ -530,7 +553,11 @@ grid-column:1/-1;
                                     data-report="<?= h($r['internship_report_status']) ?>"
                                     data-reportdays="<?= h($r['internship_report_due_days']) ?>"
                                     data-original-completion="<?= h($r['internship_completion_status']) ?>"
-                                    data-original-report="<?= h($r['internship_report_status']) ?>">
+                                    data-original-report="<?= h($r['internship_report_status']) ?>"
+                                    data-certificateissuedat="<?= h(!empty($r['internship_certificate_issued_at']) ? date('Y-m-d\TH:i', strtotime($r['internship_certificate_issued_at'])) : '') ?>"
+                                    data-reportissuedat="<?= h(!empty($r['internship_report_issued_at']) ? date('Y-m-d\TH:i', strtotime($r['internship_report_issued_at'])) : '') ?>"
+                                    data-paymentstatus="<?= h($r['payment_status']) ?>"
+                                    >
                                     <i class="fas fa-pen"></i> Manage
                                 </button>
                             </div>
@@ -589,12 +616,22 @@ grid-column:1/-1;
                 </div>
 
                 <div>
+    <label>Certificate Issued At</label>
+    <input type="datetime-local" name="internship_certificate_issued_at" id="modal_certificate_issued_at">
+</div>
+
+                <div>
                     <label>Report</label>
                     <select name="internship_report_status" id="modal_report">
                         <option value="not_provided">Not Provided</option>
                         <option value="provided">Provided</option>
                     </select>
                 </div>
+
+                <div>
+    <label>Report Issued At</label>
+    <input type="datetime-local" name="internship_report_issued_at" id="modal_report_issued_at">
+</div>
 
                 <div>
                     <label>Report Days</label>
@@ -666,34 +703,39 @@ grid-column:1/-1;
     const certificate = document.getElementById('modal_certificate');
     const report = document.getElementById('modal_report');
     const reportDays = document.getElementById('modal_report_days');
+    const certificateIssuedAt = document.getElementById('modal_certificate_issued_at');
+    const reportIssuedAt = document.getElementById('modal_report_issued_at');
     let isSavedLocked = false;
+    let isUnpaidLocked = false;
 
     const viewModal = document.getElementById('internViewModal');
     const viewBackdrop = document.getElementById('internViewBackdrop');
     const viewClose = document.getElementById('internViewClose');
 
     function syncInternModalState() {
-        const completionValue = completion.value || 'pending';
-        const reportValue = report.value || 'not_provided';
-        const disableReportControls = completionValue === 'in_progress';
+    const completionValue = completion.value || 'pending';
+    const reportValue = report.value || 'not_provided';
+    const disableReportControls = completionValue === 'in_progress';
+    const fullyLocked = isSavedLocked || isUnpaidLocked;
 
-        start.disabled = isSavedLocked;
-        end.disabled = isSavedLocked;
-        completion.disabled = isSavedLocked;
+    start.disabled = fullyLocked;
+    end.disabled = fullyLocked;
+    completion.disabled = fullyLocked;
+    certificate.disabled = fullyLocked || disableReportControls;
+    report.disabled = fullyLocked || disableReportControls;
+    certificateIssuedAt.disabled = fullyLocked || certificate.value !== 'given';
+    reportIssuedAt.disabled = fullyLocked || disableReportControls || reportValue !== 'provided';
+    reportDays.disabled = fullyLocked || disableReportControls || reportValue !== 'provided';
 
-        certificate.disabled = isSavedLocked || disableReportControls;
-        report.disabled = isSavedLocked || disableReportControls;
-
-        if (isSavedLocked || disableReportControls) {
-            reportDays.disabled = true;
-        } else {
-            reportDays.disabled = reportValue !== 'provided';
-        }
-
-        if (reportValue !== 'provided' && !isSavedLocked) {
-            reportDays.value = '';
-        }
+    if (!fullyLocked && certificate.value !== 'given') {
+        certificateIssuedAt.value = '';
     }
+
+    if (!fullyLocked && reportValue !== 'provided') {
+        reportIssuedAt.value = '';
+        reportDays.value = '';
+    }
+}
     function openModal(btn){
         regId.value = btn.dataset.id || '';
         student.textContent = btn.dataset.name || '';
@@ -703,7 +745,10 @@ grid-column:1/-1;
         certificate.value = btn.dataset.certificate || 'not_given';
         report.value = btn.dataset.report || 'not_provided';
         reportDays.value = btn.dataset.reportdays || '';
+        certificateIssuedAt.value = btn.dataset.certificateissuedat || '';
+        reportIssuedAt.value = btn.dataset.reportissuedat || '';
         isSavedLocked = (btn.dataset.originalCompletion === 'completed' && btn.dataset.originalReport === 'provided');
+        isUnpaidLocked = (btn.dataset.paymentstatus === 'unpaid');
 
         syncInternModalState();
 
@@ -761,6 +806,10 @@ grid-column:1/-1;
 
 if (report) {
     report.addEventListener('change', syncInternModalState);
+}
+
+if (certificate) {
+    certificate.addEventListener('change', syncInternModalState);
 }
 
     if (closeBtn) closeBtn.addEventListener('click', closeModal);
