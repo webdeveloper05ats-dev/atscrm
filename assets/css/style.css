@@ -564,6 +564,7 @@ border-radius:6px;
 .crm-table-wrapper{
 width:100%;
 overflow-x:auto;
+overflow-y:hidden;
 }
 
 .crm-table{
