@@ -6,8 +6,8 @@ pageLength: options.pageLength || 5,
 lengthMenu: options.lengthMenu || [5,10,25,50],
 autoWidth:false,
 
-dom:
-"<\"crm-table-header\"fB>" +
+dom: options.dom || 
+"<\"crm-table-header\"lfB>" +
 "rt" +
 "<\"crm-table-footer\"ip>",
 
