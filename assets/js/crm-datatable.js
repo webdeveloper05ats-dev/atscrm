@@ -4,9 +4,12 @@ let settings = {
 
 pageLength: options.pageLength || 5,
 lengthMenu: options.lengthMenu || [5,10,25,50],
-autoWidth:false,
 
-dom: options.dom || 
+autoWidth:false,
+responsive:true,   // ⭐ IMPORTANT
+scrollX:true,      // ⭐ IMPORTANT
+
+dom:
 "<\"crm-table-header\"lfB>" +
 "rt" +
 "<\"crm-table-footer\"ip>",
