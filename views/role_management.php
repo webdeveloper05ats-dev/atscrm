@@ -401,192 +401,6 @@ exit;
   font-size: 0.9rem;
 }
 
-/* ---------- Table ---------- */
-.atsrm-role-ui-table-wrap {
-  overflow-x: auto;
-  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
-}
-.atsrm-role-ui-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.9rem;
-  min-width: 700px;
-}
-.atsrm-role-ui-table th {
-  background: var(--gray-100);
-  padding: 14px 12px;
-  font-weight: 600;
-  color: var(--gray-700);
-  border-bottom: 2px solid var(--gray-300);
-  text-align: left;
-  white-space: nowrap;
-}
-.atsrm-role-ui-table td {
-  padding: 14px 12px;
-  border-bottom: 1px solid var(--gray-200);
-  vertical-align: middle;
-}
-.atsrm-role-ui-table tr:hover td {
-  background: var(--gray-100);
-}
-
-/* ---------- Status Icons ---------- */
-.atsrm-role-ui-table td i.fa-check-circle {
-  color: var(--success);
-  font-size: 1.2rem;
-}
-.atsrm-role-ui-table td i.fa-times-circle {
-  color: var(--danger);
-  font-size: 1.2rem;
-}
-
-/* ---------- Action Buttons ---------- */
-.atsrm-role-ui-actions {
-  display: flex;
-  gap: 8px;
-}
-.atsrm-role-ui-edit,
-.atsrm-role-ui-delete {
-  border: none;
-  width: 34px;
-  height: 34px;
-  border-radius: var(--radius-sm);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: var(--transition);
-  color: white;
-  font-size: 0.9rem;
-  text-decoration: none;
-}
-.atsrm-role-ui-edit {
-  background: var(--info);
-}
-.atsrm-role-ui-edit:hover {
-  background: #138496;
-  transform: scale(1.05);
-}
-.atsrm-role-ui-delete {
-  background: var(--danger);
-}
-.atsrm-role-ui-delete:hover {
-  background: #bd2130;
-  transform: scale(1.05);
-}
-
-/* ---------- Pagination ---------- */
-.atsrm-role-ui-pagination,
-.atsrm-role-pagination {
-  display: flex;
-  gap: 6px;
-  padding: 16px 20px;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  border-top: 1px solid var(--gray-200);
-}
-.atsrm-role-ui-pagination a,
-.atsrm-role-pagination a {
-  padding: 6px 14px;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--gray-300);
-  text-decoration: none;
-  color: var(--gray-700);
-  font-size: 0.9rem;
-  transition: var(--transition);
-  background: white;
-}
-.atsrm-role-ui-pagination a:hover,
-.atsrm-role-pagination a:hover {
-  background: var(--primary-light);
-  border-color: var(--primary);
-  color: var(--primary-dark);
-}
-.atsrm-role-ui-pagination a.active,
-.atsrm-role-pagination a.active {
-  background: var(--primary);
-  color: white;
-  border-color: var(--primary);
-}
-/* hide duplicate pagination if needed */
-.atsrm-role-pagination {
-  display: none;
-}
-
-/* ---------- Mobile Optimization ---------- */
-@media(max-width:768px){
-
-
-.atsrm-role-ui-field {
-  flex: 1 1;
-  min-width: 160px;
-}
-  .atsrm-role-ui-wrap{
-    flex-direction:column;
-    gap:15px;
-  }
-  
-  .atsrm-role-ui-left,
-  .atsrm-role-ui-right{
-    width:100%;
-    flex:100%;
-  }
-  
-  .atsrm-role-ui-form{
-    flex-direction:column;
-    gap:15px;
-  }
-  
-  .atsrm-role-ui-field{
-    width:100%;
-    min-width:100%;
-  }
-  
-  .atsrm-role-ui-field input[type="text"]{
-    width:100%;
-    box-sizing:border-box;
-  }
-  
-  .atsrm-role-ui-field label{
-    margin-bottom:5px;
-    display:block;
-  }
-  
-  .atsrm-role-ui-btn{
-    width:100%;
-    margin-top:5px;
-  }
-  
-  /* Fix for the switch toggles */
-  .atsrm-role-ui-field:has(.atsrm-role-ui-switch) {
-    display:flex;
-    flex-direction:column;
-    align-items:flex-start;
-  }
-  
-  .atsrm-role-ui-switch {
-    margin-top:5px;
-  }
-  
-  /* Better card padding for mobile */
-  .atsrm-role-ui-body{
-    padding:15px;
-  }
-  
-  .atsrm-role-ui-header{
-    padding:12px 15px;
-    font-size:0.95rem;
-  }
-  
-  /* Fix hint text */
-  .atsrm-role-ui-hint{
-    margin-top:5px;
-    font-size:11px;
-  }
-
-  
-}
-
 /* ---------- Alert ---------- */
 .alert {
   padding: 12px 20px;
@@ -598,6 +412,76 @@ exit;
   background: #f8d7da;
   border: 1px solid #f5c6cb;
   color: #721c24;
+}
+
+.crm-right{
+flex:2 1 620px;
+width:100%;
+max-width:100%;
+box-sizing:border-box;
+}
+.crm-card{
+background:#fff;
+border-radius:14px;
+padding:20px;
+box-shadow:0 8px 20px rgba(0,0,0,.05);
+border:1px solid #f1d6e3;
+width:100%;
+max-width:100%;
+box-sizing:border-box;
+}
+
+
+
+/* ======================================================
+DATATABLE MOBILE FIX
+====================================================== */
+
+@media (max-width:768px){
+
+.crm-table-wrapper{
+width:100%;
+overflow-x:auto;
+-webkit-overflow-scrolling:touch;
+}
+
+.crm-table{
+min-width:700px;
+border-collapse:collapse;
+}
+
+/* header stack */
+
+.dataTables_wrapper .dataTables_length,
+.dataTables_wrapper .dataTables_filter,
+.dataTables_wrapper .dt-buttons{
+width:100%;
+display:flex;
+justify-content:center;
+margin-bottom:10px;
+}
+
+/* search */
+
+.dataTables_wrapper .dataTables_filter input{
+width:100% !important;
+max-width:100%;
+}
+
+/* export button */
+
+.crm-export-btn{
+width:100% !important;
+}
+
+/* pagination center */
+
+.dataTables_wrapper .dataTables_paginate{
+display:flex;
+justify-content:center;
+margin-top:10px;
+}
+
 }
 </style>
 
@@ -677,14 +561,17 @@ exit;
     </div>
 
     <!-- RIGHT TABLE CARD -->
-    <div class="atsrm-role-ui-right">
-      <div class="atsrm-role-ui-card">
-        <div class="atsrm-role-ui-header">
-          <i class="fas fa-list" style="margin-right: 8px;"></i>
-          Roles List
-        </div>
-        <div class="atsrm-role-ui-table-wrap">
-          <table class="atsrm-role-ui-table">
+    <div class="crm-right">
+
+    <div class="crm-card">
+
+      <h3> <i class="fas fa-list" style="margin-right: 8px;"></i>
+          Roles List</h3>
+        
+         
+        
+        <div class="crm-table-wrapper">
+          <table  id="usersTable" class="crm-table">
             <thead>
               <tr>
                 <th>ID</th>
@@ -717,12 +604,12 @@ exit;
 </td>
                 <td>
                   <div class="atsrm-role-ui-actions">
-                    <a class="atsrm-role-ui-edit" href="index.php?page=role_management&edit=<?= $r['id'] ?>" data-tooltip="Edit role">
+                    <a class="crm-btn crm-edit" href="index.php?page=role_management&edit=<?= $r['id'] ?>" data-tooltip="Edit role">
                       <i class="fas fa-pen"></i>
                     </a>
-                    <button class="atsrm-role-ui-delete delete-role" data-id="<?= $r['id'] ?>" data-tooltip="Delete role">
+                    <a class="crm-btn crm-delete" title="Delete User" data-id="<?= $r['id'] ?>" data-tooltip="Delete role" >
                       <i class="fas fa-trash"></i>
-                    </button>
+  </a>
                   </div>
                 </td>
               </tr>
@@ -730,6 +617,7 @@ exit;
             </tbody>
           </table>
         </div>
+  </div>
 
         <!-- Pagination -->
         <?php if($totalPages>1): ?>
@@ -777,4 +665,17 @@ document.querySelectorAll('.delete-role').forEach(btn=>{
     });
   });
 });
+</script>
+<script>
+document.addEventListener("DOMContentLoaded", function(){
+
+crmDataTable('#usersTable',{
+pageLength:5,
+lengthMenu:[5,10,20,50],
+ordering:true,
+order:[[1,'asc']]
+});
+
+});
+
 </script>
