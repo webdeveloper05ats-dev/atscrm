@@ -117,11 +117,21 @@ if ($status !== '') {
     $params[] = $status;
 }
 
-if ($handled > 0) {
-    $where[]  = "e.handled_by = ?";
-    $params[] = $handled;
-}
+// If user is Front Office, show only their enquiries
+if ($roleName === 'Front Office') {
 
+    $where[]  = "e.handled_by = ?";
+    $params[] = $userId;
+
+} else {
+
+    // For Admin / other roles allow filter dropdown
+    if ($handled > 0) {
+        $where[]  = "e.handled_by = ?";
+        $params[] = $handled;
+    }
+
+}
 // Date range (enquiry_date preferred, else created_at)
 if ($from !== '') {
     $where[]  = "(DATE(e.enquiry_date) >= ? OR (e.enquiry_date IS NULL AND DATE(e.created_at) >= ?))";
