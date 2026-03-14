@@ -148,7 +148,9 @@ $rows=$st->fetchAll(PDO::FETCH_ASSOC);
 
 }catch(Exception $e){}
 
-function h($v){return htmlspecialchars($v);}
+function h($v){
+return htmlspecialchars((string)($v ?? ''), ENT_QUOTES, 'UTF-8');
+}
 
 function badge($s){
 
@@ -209,32 +211,37 @@ $baseUrl="index.php?page=leads/list&q=$q&status=$status&assigned_to=$assigned";
 </div>
 
 <div class="filter-actions">
+    <!-- Apply button with icon -->
+    <button class="btn-icon" title="Apply filters">
+        <i class="fas fa-filter"></i>
+    </button>
 
-<button class="btn btn-primary">Apply</button>
+    <!-- Reset button with icon -->
+    <a href="index.php?page=leads/list" class="btn-icon" title="Reset filters">
+        <i class="fas fa-undo-alt"></i>
+    </a>
 
-<a href="index.php?page=leads/list" class="btn-reset">Reset</a>
+    <!-- Add Lead button with icon -->
+    <a href="index.php?page=leads/add" class="btn-icon" title="Add new lead">
+        <i class="fas fa-user-plus"></i>
+    </a>
 
-<a href="index.php?page=leads/add" class="btn btn-primary">+ Add Lead</a>
-
-<a href="index.php?page=leads/import" class="btn btn-primary">
-    <i class="fas fa-file-excel"></i> Excel Upload
-</a>
-
-</div>
-
-</div>
-
-</form>
-
+    <!-- Excel Upload button with icon -->
+    <a href="index.php?page=leads/import" class="btn-icon" title="Excel upload">
+        <i class="fas fa-file-excel"></i>
+    </a>
 </div>
 
 <div class="card" style="margin-top:16px;">
 
 <div class="card-header">Leads (<?=$totalRows?>)</div>
 
-<div class="table-wrap">
+<div class="crm-card">
+    <h3> <i class="fas fa-list" style="margin-right: 8px;"></i>
+          Lead List</h3>
+           <div class="crm-table-wrapper">
 
-<table class="lead-table">
+<table id="usersTable" class="crm-table">
 
 <thead>
 <tr>
@@ -245,7 +252,7 @@ $baseUrl="index.php?page=leads/list&q=$q&status=$status&assigned_to=$assigned";
 <th>Status</th>
 <th>Assigned</th>
 <th>Source</th>
-<th class="text-center">Action</th>
+<th>Action</th>
 </tr>
 </thead>
 
@@ -258,7 +265,32 @@ $baseUrl="index.php?page=leads/list&q=$q&status=$status&assigned_to=$assigned";
 <?php endif; ?>
 
 <?php foreach($rows as $r): ?>
+<?php
 
+/* =========================
+LEAD PERMISSIONS
+========================= */
+
+$roleName = $_SESSION['role_name'] ?? '';
+
+$canConvert = false;
+$canEdit = false;
+$canDelete = false;
+
+/* Convert Permission
+Only assigned Front Office can convert */
+if($roleName === 'Front Office' && $r['assigned_to'] == $userId && $r['status']!='converted'){
+$canConvert = true;
+}
+
+/* Edit/Delete Permission
+Only lead creator */
+if($r['created_by'] == $userId){
+$canEdit = true;
+$canDelete = true;
+}
+
+?>
 <tr>
 
 <td><?=$r['id']?></td>
@@ -289,34 +321,45 @@ $baseUrl="index.php?page=leads/list&q=$q&status=$status&assigned_to=$assigned";
 
 <td class="text-center action-col">
 
-<a href="index.php?page=leads/add&id=<?=$r['id']?>" class="btn-icon edit">
+<?php if($canEdit): ?>
+<a href="index.php?page=leads/add&id=<?=$r['id']?>" class="btn-icon edit" title="Edit Lead">
 <i class="fas fa-pen"></i>
 </a>
+<?php endif; ?>
+
 
 <?php if($r['status']=='converted'): ?>
 
-<span class="btn-icon done">
+<span class="btn-icon done" title="Already Converted">
 <i class="fas fa-check"></i>
 </span>
 
 <?php else: ?>
 
-<a href="index.php?page=enquiries/add&lead_id=<?=$r['id']?>" class="btn-icon convert">
+<?php if($canConvert): ?>
+<a href="index.php?page=enquiries/add&lead_id=<?=$r['id']?>" class="btn-icon convert" title="Convert to Enquiry">
 <i class="fas fa-exchange-alt"></i>
 </a>
+<?php endif; ?>
 
 <?php endif; ?>
 
+
+<?php if($canDelete): ?>
+
 <form method="POST" class="deleteForm" style="display:inline">
+
 <input type="hidden" name="csrf_token" value="<?=generateCSRF()?>">
 <input type="hidden" name="id" value="<?=$r['id']?>">
 <input type="hidden" name="delete_lead" value="1">
 
-<button class="btn-icon delete">
+<button class="btn-icon delete" title="Delete Lead">
 <i class="fas fa-trash"></i>
 </button>
 
 </form>
+
+<?php endif; ?>
 
 </td>
 
@@ -329,134 +372,672 @@ $baseUrl="index.php?page=leads/list&q=$q&status=$status&assigned_to=$assigned";
 </table>
 
 </div>
-
-<div class="pagination">
-
-<a href="<?=$baseUrl?>&p=1"><i class="fas fa-angle-double-left"></i></a>
-
-<a href="<?=$baseUrl?>&p=<?=max(1,$page-1)?>">
-<i class="fas fa-angle-left"></i>
-</a>
-
-<span class="page-info">Page <?=$page?> / <?=$totalPages?></span>
-
-<a href="<?=$baseUrl?>&p=<?=min($totalPages,$page+1)?>">
-<i class="fas fa-angle-right"></i>
-</a>
-
-<a href="<?=$baseUrl?>&p=<?=$totalPages?>">
-<i class="fas fa-angle-double-right"></i>
-</a>
-
 </div>
 
-</div>
 
+
+</div>
 <style>
+/* Enhanced UI for Lead Management - Maintains existing class names */
 
-/* FILTER */
-.filter-row{
-display:flex;
-gap:16px;
-align-items:flex-end;
-flex-wrap:wrap;
+:root {
+  --primary: #e91e63;
+  --primary-light: #f8bbd0;
+  --primary-dark: #c2185b;
+  --secondary: #6c757d;
+  --success: #28a745;
+  --danger: #dc3545;
+  --warning: #ffc107;
+  --white: #ffffff;
+  --gray-100: #f8f9fa;
+  --gray-200: #e9ecef;
+  --gray-300: #dee2e6;
+  --gray-400: #ced4da;
+  --gray-500: #adb5bd;
+  --gray-600: #6c757d;
+  --gray-700: #495057;
+  --gray-800: #343a40;
+  --shadow-sm: 0 2px 4px rgba(0,0,0,0.05);
+  --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
+  --shadow-lg: 0 10px 15px rgba(0,0,0,0.1);
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --transition: all 0.2s ease;
+}
+
+
+
+/* Force all icons to be visible */
+.filter-actions .btn-icon {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    background: #e91e63 !important;  /* Pink background */
+    color: white !important;  /* White icons */
+    border-radius: 8px;
+    margin: 0 4px;
+    text-decoration: none;
+    font-size: 16px;
+}
+
+/* Reset button different color */
+.filter-actions .btn-icon[title="Reset filters"] {
+    background: #6c757d !important;
+}
+
+/* Make sure Font Awesome icons are visible */
+.filter-actions .btn-icon i {
+    font-family: "Font Awesome 6 Free" !important;
+    font-weight: 900 !important;
+    font-style: normal !important;
+    color: white !important;
+    font-size: 16px !important;
+    display: inline-block !important;
+}
+
+/* Tooltip styling */
+.filter-actions .btn-icon {
+    position: relative;
+}
+
+.filter-actions .btn-icon:hover::before {
+    content: attr(title);
+    position: absolute;
+    bottom: 120%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #333;
+    color: white;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    white-space: nowrap;
+    z-index: 1000;
+}
+
+/* Card Styling */
+.card {
+  background: var(--white);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--gray-200);
+  margin-bottom: 24px;
+  overflow: hidden;
+}
+
+.card-header {
+  background: var(--gray-100);
+  padding: 16px 20px;
+  font-weight: 600;
+  color: var(--gray-700);
+  border-bottom: 1px solid var(--gray-200);
+  font-size: 16px;
+  letter-spacing: 0.3px;
+}
+
+/* Filter Section Enhancement */
+.filter-row {
+  display: flex;
+  gap: 20px;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  padding: 20px;
+}
+
+.filter-row > div {
+  flex: 1 1 auto;
+  min-width: 180px;
+}
+
+.filter-row label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--gray-600);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
 }
 
 .filter-row input,
-.filter-row select{
-padding:10px;
-border-radius:8px;
-border:1px solid #ddd;
-min-width:200px;
+.filter-row select {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--gray-300);
+  background: var(--white);
+  font-size: 14px;
+  transition: var(--transition);
 }
 
-.filter-actions{
-display:flex;
-gap:10px;
-align-items:center;
+.filter-row input:hover,
+.filter-row select:hover {
+  border-color: var(--primary-light);
 }
 
-/* TABLE */
-.table-wrap{
-padding:16px;
+.filter-row input:focus,
+.filter-row select:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(233, 30, 99, 0.1);
 }
 
-.lead-table{
-width:100%;
-border-collapse:collapse;
+/* Filter Actions */
+.filter-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
 }
 
-.lead-table th{
-background:#f5f6fa;
-padding:14px;
-text-align:left;
-font-weight:700;
+.filter-actions .btn,
+.filter-actions .btn-primary {
+  background: var(--primary);
+  color: var(--white);
+  border: none;
+  padding: 10px 20px;
+  border-radius: var(--radius-md);
+  font-weight: 500;
+  font-size: 14px;
+  cursor: pointer;
+  transition: var(--transition);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
-.lead-table td{
-padding:14px;
-border-bottom:1px solid #eee;
+.filter-actions .btn-primary:hover {
+  background: var(--primary-dark);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
 }
 
-.lead-name{
-font-weight:700;
+.filter-actions .btn-reset {
+  background: transparent;
+  color: var(--gray-600);
+  border: 1px solid var(--gray-300);
+  padding: 10px 20px;
+  border-radius: var(--radius-md);
+  font-weight: 500;
+  font-size: 14px;
+  cursor: pointer;
+  transition: var(--transition);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
-.lead-sub{
-font-size:12px;
-color:#777;
+.filter-actions .btn-reset:hover {
+  background: var(--gray-100);
+  color: var(--gray-800);
+  border-color: var(--gray-400);
 }
 
-/* ACTION BUTTONS */
-.action-col{
-white-space:nowrap;
+/* CRM Card */
+.crm-card {
+  background: var(--white);
+  border-radius: 0;
+  padding: 20px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
-.btn-icon{
-width:36px;
-height:36px;
-border-radius:8px;
-display:inline-flex;
-align-items:center;
-justify-content:center;
-margin:0 2px;
-border:none;
-cursor:pointer;
+.crm-card h3 {
+  margin: 0 0 20px 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--gray-800);
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
-.edit{background:#fff3e0;color:#fb8c00;}
-.convert{background:#e8f5e9;color:#2e7d32;}
-.delete{background:#ffebee;color:#e53935;}
-
-/* PAGINATION */
-.pagination{
-display:flex;
-justify-content:center;
-align-items:center;
-gap:8px;
-padding:16px;
+.crm-card h3 i {
+  color: var(--primary);
 }
 
-.pagination a{
-width:36px;
-height:36px;
-display:flex;
-align-items:center;
-justify-content:center;
-border-radius:8px;
-border:1px solid #ddd;
-text-decoration:none;
-color:#333;
+/* Table Wrapper */
+.crm-table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--gray-200);
 }
 
-.page-info{
-padding:0 8px;
-font-weight:600;
+/* DataTable Customization */
+.dataTables_wrapper {
+  padding: 0;
 }
-.done{
-background:#e3f2fd;
-color:#1565c0;
-cursor:default;
+
+.dataTables_wrapper .dataTables_length,
+.dataTables_wrapper .dataTables_filter {
+  padding: 16px 20px;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--gray-50);
+  border-bottom: 1px solid var(--gray-200);
+}
+
+.dataTables_wrapper .dataTables_length {
+  float: left;
+}
+
+.dataTables_wrapper .dataTables_filter {
+  float: right;
+}
+
+.dataTables_wrapper .dataTables_length label,
+.dataTables_wrapper .dataTables_filter label {
+  font-size: 14px;
+  color: var(--gray-600);
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+}
+
+.dataTables_wrapper .dataTables_length select {
+  width: auto;
+  padding: 8px 12px;
+  border: 1px solid var(--gray-300);
+  border-radius: var(--radius-sm);
+  background: var(--white);
+  font-size: 13px;
+  cursor: pointer;
+  margin: 0 4px;
+}
+
+.dataTables_wrapper .dataTables_filter input {
+  width: 260px !important;
+  padding: 8px 14px;
+  border: 1px solid var(--gray-300);
+  border-radius: 20px;
+  font-size: 13px;
+  transition: var(--transition);
+  background: var(--white);
+}
+
+.dataTables_wrapper .dataTables_filter input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(233, 30, 99, 0.1);
+  outline: none;
+  width: 300px !important;
+}
+
+/* Export Button */
+.dt-buttons {
+  float: left;
+  padding: 16px 20px;
+  background: var(--gray-50);
+  border-bottom: 1px solid var(--gray-200);
+}
+
+.crm-export-btn {
+  background: var(--success) !important;
+  color: var(--white) !important;
+  border: none !important;
+  padding: 8px 16px !important;
+  border-radius: var(--radius-md) !important;
+  font-weight: 500 !important;
+  font-size: 13px !important;
+  transition: var(--transition) !important;
+  box-shadow: none !important;
+}
+
+.crm-export-btn:hover {
+  background: #218838 !important;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm) !important;
+}
+
+/* Table Styles */
+.crm-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--white);
+}
+
+.crm-table th {
+  background: var(--gray-50);
+  padding: 16px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--gray-700);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 2px solid var(--gray-200);
+  white-space: nowrap;
+}
+
+.crm-table td {
+  padding: 16px;
+  font-size: 14px;
+  color: var(--gray-700);
+  border-bottom: 1px solid var(--gray-200);
+  vertical-align: middle;
+}
+
+.crm-table tbody tr:hover td {
+  background: var(--gray-50);
+}
+
+/* Lead Name */
+.lead-name {
+  font-weight: 600;
+  color: var(--gray-800);
+  margin-bottom: 4px;
+}
+
+.lead-sub {
+  font-size: 12px;
+  color: var(--gray-500);
+}
+
+/* Status Badge Enhancement */
+td:contains("new") .badge,
+td .badge[style*="2196f3"] {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-weight: 500;
+  font-size: 12px;
+  background: #e3f2fd !important;
+  color: #1976d2 !important;
+}
+
+td:contains("contacted") .badge,
+td .badge[style*="ff9800"] {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-weight: 500;
+  font-size: 12px;
+  background: #fff3e0 !important;
+  color: #f57c00 !important;
+}
+
+td:contains("qualified") .badge,
+td .badge[style*="9c27b0"] {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-weight: 500;
+  font-size: 12px;
+  background: #f3e5f5 !important;
+  color: #7b1fa2 !important;
+}
+
+td:contains("converted") .badge,
+td .badge[style*="2e7d32"] {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-weight: 500;
+  font-size: 12px;
+  background: #e8f5e8 !important;
+  color: #2e7d32 !important;
+}
+
+td:contains("closed") .badge,
+td .badge[style*="607d8b"] {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-weight: 500;
+  font-size: 12px;
+  background: #eceff1 !important;
+  color: #546e7a !important;
+}
+
+/* Action Icons */
+.btn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-sm);
+  color: var(--white);
+  margin: 0 3px;
+  text-decoration: none;
+  transition: var(--transition);
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.btn-icon.edit {
+  background: var(--primary);
+}
+
+.btn-icon.edit:hover {
+  background: var(--primary-dark);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-sm);
+}
+
+.btn-icon.convert {
+  background: var(--warning);
+  color: var(--gray-800);
+}
+
+.btn-icon.convert:hover {
+  background: #e0a800;
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-sm);
+}
+
+.btn-icon.done {
+  background: var(--success);
+  cursor: default;
+  opacity: 0.8;
+}
+
+.btn-icon.delete {
+  background: var(--danger);
+}
+
+.btn-icon.delete:hover {
+  background: #c82333;
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Action Column */
+.action-col {
+  white-space: nowrap;
+  text-align: center;
+}
+
+/* Pagination Enhancement */
+.dataTables_wrapper .dataTables_paginate {
+  padding: 16px 20px;
+  background: var(--gray-50);
+  border-top: 1px solid var(--gray-200);
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button {
+  border: 1px solid var(--gray-300) !important;
+  background: var(--white) !important;
+  border-radius: var(--radius-sm) !important;
+  color: var(--gray-600) !important;
+  padding: 8px 14px !important;
+  margin: 0 2px !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  transition: var(--transition) !important;
+  cursor: pointer !important;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button.current {
+  background: var(--primary) !important;
+  color: var(--white) !important;
+  border-color: var(--primary) !important;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+  background: var(--gray-100) !important;
+  color: var(--primary-dark) !important;
+  border-color: var(--primary-light) !important;
+  transform: translateY(-1px);
+}
+
+/* Info Text */
+.dataTables_wrapper .dataTables_info {
+  padding: 16px 20px;
+  background: var(--gray-50);
+  border-top: 1px solid var(--gray-200);
+  font-size: 13px;
+  color: var(--gray-600);
+  float: left;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .filter-row {
+    flex-direction: column;
+    gap: 16px;
+  }
+  
+  .filter-row > div {
+    width: 100%;
+  }
+  
+  .filter-actions {
+    width: 100%;
+    justify-content: stretch;
+  }
+  
+  .filter-actions .btn,
+  .filter-actions .btn-primary,
+  .filter-actions .btn-reset {
+    flex: 1;
+    text-align: center;
+    justify-content: center;
+  }
+  
+  .dataTables_wrapper .dataTables_length,
+  .dataTables_wrapper .dataTables_filter {
+    float: none;
+    width: 100%;
+    padding: 12px 16px;
+  }
+  
+  .dataTables_wrapper .dataTables_filter input {
+    width: 100% !important;
+  }
+  
+  .dataTables_wrapper .dataTables_filter input:focus {
+    width: 100% !important;
+  }
+  
+  .dt-buttons {
+    float: none;
+    width: 100%;
+    text-align: center;
+  }
+  
+  .crm-export-btn {
+    width: 100% !important;
+  }
+  
+  .dataTables_wrapper .dataTables_paginate {
+    flex-wrap: wrap;
+  }
+  
+  .dataTables_wrapper .dataTables_paginate .paginate_button {
+    padding: 6px 10px !important;
+  }
+}
+
+/* Animation for delete button */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-2px); }
+  75% { transform: translateX(2px); }
+}
+
+.btn-icon.delete:hover {
+  animation: shake 0.3s ease-in-out;
+}
+
+/* Tooltip for action buttons */
+.btn-icon {
+  position: relative;
+}
+
+.btn-icon::before {
+  content: attr(title);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%) translateY(-5px);
+  background: var(--gray-800);
+  color: var(--white);
+  font-size: 11px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.2s;
+  pointer-events: none;
+  z-index: 1000;
+}
+
+.btn-icon:hover::before {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(-8px);
+}
+
+/* Table row highlight */
+.crm-table tbody tr {
+  transition: var(--transition);
+}
+
+.crm-table tbody tr:active {
+  transform: scale(0.998);
+}
+
+/* Empty state enhancement */
+.crm-table td[colspan="8"] {
+  text-align: center;
+  padding: 60px 20px !important;
+  color: var(--gray-500);
+  font-size: 15px;
+  background: var(--gray-50);
+}
+
+/* Scrollbar styling */
+.crm-table-wrapper::-webkit-scrollbar {
+  height: 8px;
+  width: 8px;
+}
+
+.crm-table-wrapper::-webkit-scrollbar-track {
+  background: var(--gray-100);
+  border-radius: 4px;
+}
+
+.crm-table-wrapper::-webkit-scrollbar-thumb {
+  background: var(--gray-400);
+  border-radius: 4px;
+}
+
+.crm-table-wrapper::-webkit-scrollbar-thumb:hover {
+  background: var(--gray-500);
 }
 </style>
 
@@ -482,6 +1063,20 @@ this.submit();
 });
 
 });
+});
+
+</script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function(){
+
+crmDataTable('#usersTable',{
+pageLength:5,
+lengthMenu:[5,10,20,50],
+ordering:true,
+order:[[1,'asc']]
+});
+
 });
 
 </script>

@@ -947,6 +947,10 @@ $payments = $stmt->fetchAll(PDO::FETCH_ASSOC);
     padding: 12px;
   }
 }
+
+
+
+
 </style>
 
 <h2 class="page-title payments-page-title">Payments</h2>
@@ -1013,12 +1017,14 @@ echo "<span class='status-unpaid'>Unpaid</span>";
 
 <div class="pay-action">
 
+<?php if($roleName === "Front Office"): ?>
 <button
 class="btn-add-payment"
 data-tooltip="Add payment"
 onclick="openPaymentModal(<?= (int)$p['id'] ?>)">
 + Add
 </button>
+<?php endif; ?>
 
 <a
 class="btn-icon btn-view"
