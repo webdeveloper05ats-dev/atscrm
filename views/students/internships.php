@@ -479,7 +479,7 @@ grid-column:1/-1;
 
                         <td>
                             <div class="intern-name"><?= h($r['enquiry_snapshot_name']) ?></div>
-                            <div class="intern-sub"><?= h($r['registration_no']) ?> | <?= h($r['enquiry_snapshot_phone']) ?>
+                            <div class="intern-sub"><?= h($r['registration_no']) ?> | <?= h(visibleStudentContactValue($r['enquiry_snapshot_phone'] ?? '')) ?>
                             </div>
                         </td>
 
@@ -529,8 +529,8 @@ grid-column:1/-1;
                                 <button type="button" class="btn intern-view-btn viewInternBtn"
                                     data-name="<?= h($r['enquiry_snapshot_name']) ?>"
                                     data-regno="<?= h($r['registration_no']) ?>"
-                                    data-phone="<?= h($r['enquiry_snapshot_phone']) ?>"
-                                    data-email="<?= h($r['enquiry_snapshot_email']) ?>"
+                                    data-phone="<?= h(visibleStudentContactValue($r['enquiry_snapshot_phone'] ?? '')) ?>"
+                                    data-email="<?= h(visibleStudentContactValue($r['enquiry_snapshot_email'] ?? '')) ?>"
                                     data-program="<?= h($r['program_name']) ?>" data-batch="<?= h($r['batch_name']) ?>"
                                     data-joined="<?= h($r['joined_on']) ?>" data-notes="<?= h($r['notes']) ?>"
                                     data-days="<?= h($r['internship_days']) ?>"

@@ -297,8 +297,8 @@ if ($paymentId <= 0) {
 
     <?php
       $studentName = $payment['enquiry_snapshot_name'] ?: $payment['enquiry_name'] ?: '-';
-      $studentPhone = $payment['enquiry_snapshot_phone'] ?: $payment['enquiry_phone'] ?: '-';
-      $studentEmail = $payment['enquiry_snapshot_email'] ?: $payment['enquiry_email'] ?: '-';
+      $studentPhone = visibleStudentContactValue($payment['enquiry_snapshot_phone'] ?: $payment['enquiry_phone'] ?: '-');
+      $studentEmail = visibleStudentContactValue($payment['enquiry_snapshot_email'] ?: $payment['enquiry_email'] ?: '-');
       $receiptNo = $payment['receipt_no'] ?: ('RCPT-' . (int)$payment['id']);
       $paymentAmount = (float)($payment['amount'] ?? 0);
       $finalFee = (float)($payment['final_fee'] ?? 0);

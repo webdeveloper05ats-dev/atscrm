@@ -196,11 +196,11 @@ if ($isAjax) {
             </div>
             <div class="pro-info-card">
               <span class="label">Phone</span>
-              <span class="value"><?= h($reg['enquiry_snapshot_phone'] ?: $reg['enquiry_phone'] ?: '-') ?></span>
+              <span class="value"><?= h(visibleStudentContactValue($reg['enquiry_snapshot_phone'] ?: $reg['enquiry_phone'] ?: '-')) ?></span>
             </div>
             <div class="pro-info-card">
               <span class="label">Email</span>
-              <span class="value"><?= h($reg['enquiry_snapshot_email'] ?: $reg['enquiry_email'] ?: '-') ?></span>
+              <span class="value"><?= h(visibleStudentContactValue($reg['enquiry_snapshot_email'] ?: $reg['enquiry_email'] ?: '-')) ?></span>
             </div>
             <div class="pro-info-card">
               <span class="label">Program</span>
@@ -281,11 +281,11 @@ if ($isAjax) {
               </div>
               <div class="pro-info-card">
                 <span class="label">Parent Phone</span>
-                <span class="value"><?= h($profile['parent_phone'] ?? '-') ?></span>
+                <span class="value"><?= h(visibleStudentContactValue($profile['parent_phone'] ?? '-')) ?></span>
               </div>
               <div class="pro-info-card">
                 <span class="label">Emergency Contact</span>
-                <span class="value"><?= h($profile['emergency_contact'] ?? '-') ?></span>
+                <span class="value"><?= h(visibleStudentContactValue($profile['emergency_contact'] ?? '-')) ?></span>
               </div>
             </div>
 
@@ -669,8 +669,8 @@ if ($isAjax) {
       }
 
       $studentName = $student['student_name'] ?: $student['enquiry_snapshot_name'] ?: $student['enquiry_name'] ?: '-';
-      $studentPhone = $student['enquiry_snapshot_phone'] ?: $student['enquiry_phone'] ?: ($student['emergency_contact'] ?: '-');
-      $studentEmail = $student['enquiry_snapshot_email'] ?: $student['enquiry_email'] ?: '-';
+      $studentPhone = visibleStudentContactValue($student['enquiry_snapshot_phone'] ?: $student['enquiry_phone'] ?: ($student['emergency_contact'] ?: '-'));
+      $studentEmail = visibleStudentContactValue($student['enquiry_snapshot_email'] ?: $student['enquiry_email'] ?: '-');
       $studentAddress = $student['address'] ?: '-';
       $cardNo = $student['registration_no'] ?: ('REG-' . $student['id']);
       $programName = $student['program_name'] ?: ucfirst((string) ($student['reg_type'] ?: 'Student'));
@@ -2515,7 +2515,7 @@ function payStatusBadgeList($type)
                   <td>
                     <div class="primary-text"><?= h($r['enquiry_snapshot_name'] ?: $r['enquiry_name'] ?: '-') ?></div>
                     <div class="secondary-text"><i class="fas fa-phone-alt"></i>
-                      <?= h($r['enquiry_snapshot_phone'] ?: $r['enquiry_phone'] ?: '-') ?></div>
+                      <?= h(visibleStudentContactValue($r['enquiry_snapshot_phone'] ?: $r['enquiry_phone'] ?: '-')) ?></div>
                   </td>
 
                   <td>

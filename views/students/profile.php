@@ -309,9 +309,9 @@ PROFILE CARD
 
 <p><strong>Program:</strong> <?= h($reg['program_name']) ?></p>
 
-<p><strong>Phone:</strong> <?= h($reg['enquiry_snapshot_phone']) ?></p>
+<p><strong>Phone:</strong> <?= h(visibleStudentContactValue($reg['enquiry_snapshot_phone'])) ?></p>
 
-<p><strong>Email:</strong> <?= h($reg['enquiry_snapshot_email']) ?></p>
+<p><strong>Email:</strong> <?= h(visibleStudentContactValue($reg['enquiry_snapshot_email'])) ?></p>
 
 </div>
 
@@ -358,7 +358,7 @@ PERSONAL INFORMATION
 
 <tr>
 <td>Parent Phone</td>
-<td><?= h($profile['parent_phone']) ?></td>
+<td><?= h(visibleStudentContactValue($profile['parent_phone'] ?? '-')) ?></td>
 </tr>
 
 <tr>

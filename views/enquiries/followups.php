@@ -2022,44 +2022,112 @@ class="icon-btn btn-done">
 
 </div>
 
+    <form method="GET" action="index.php" style="padding:14px;">
+        <input type="hidden" name="page" value="enquiries/followups">
+        <input type="hidden" name="ui" value="list">
+        <input type="hidden" name="tab" value="<?= h($tab) ?>">
 
+        <div class="filter-grid">
+            <div>
+                <label class="lbl">Search</label>
+                <input type="text" name="q" value="<?= h($q) ?>" placeholder="Name / Phone / Email / Enquiry No">
+            </div>
+            <div>
+                <label class="lbl">Date From</label>
+                <input type="date" name="from" value="<?= h($from) ?>">
+            </div>
+            <div>
+                <label class="lbl">Date To</label>
+                <input type="date" name="to" value="<?= h($to) ?>">
+            </div>
+            <div class="row-right">
+                <button class="btn btn-primary" type="submit">Apply</button>
+                <a class="btn-danger" style="text-decoration:none;padding:10px 14px;border-radius:10px;" href="index.php?page=enquiries/followups&ui=list&tab=<?= h($tab) ?>">Reset</a>
+            </div>
+        </div>
+    </form>
 
+    <div style="padding:14px;">
+        <div class="table-wrap">
+            <table class="modern-table">
+                <thead>
+                    <tr>
+                        <th class="nowrap">Follow-up</th>
+                        <th>Enquiry</th>
+                        <th>Contact</th>
+                        <th class="nowrap">Type</th>
+                        <th class="tc nowrap">Status</th>
+                        <th class="nowrap">Next</th>
+                        <th class="tc nowrap">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                <?php if (empty($followups)): ?>
+                    <tr>
+                        <td colspan="7" class="tc" style="padding:26px;color:var(--text-light);">No follow-ups found.</td>
+                    </tr>
+                <?php else: ?>
+                    <?php foreach ($followups as $f): ?>
+                        <?php
+                            $status = $f['status'] ?? 'pending';
+                            $sBadge = ($status==='done') ? badge('Done','green') : (($status==='missed') ? badge('Missed','red') : badge('Pending','orange'));
+                            $enqNo = $f['enquiry_no'] ?: ('ENQ-'.$f['enquiry_id']);
+                        ?>
+                        <tr>
+                            <td class="nowrap">
+                                <div class="strong"><?= h($f['followup_date']) ?> <?= h($f['followup_time'] ?? '') ?></div>
+                                <div class="sub">#<?= (int)$f['id'] ?></div>
+                            </td>
 
+                            <td>
+                                <div class="strong"><?= h($enqNo) ?></div>
+                                <div class="sub"><?= h($f['enquiry_name'] ?? '-') ?></div>
+                            </td>
 
+                            <td>
+                                <div><?= h($f['enquiry_phone'] ?? '-') ?></div>
+                            </td>
 
-<?php if ($success): ?>
-<script>
-Swal.fire({
-    icon:'success',
-    title:'Success',
-    text:'<?= addslashes($success) ?>',
-    confirmButtonColor:'#e91e63'
-}).then(() => {
+                            <td class="nowrap"><?= h($f['followup_type'] ?? '-') ?></td>
 
-    <?php if ($uiTab === 'add'): ?>
+                            <td class="tc"><?= $sBadge ?></td>
 
-    // After Follow-up Add → go to list
-    window.location.href = "index.php?page=enquiries/followups&ui=list&tab=today";
+                            <td class="nowrap">
+                                <?php if (!empty($f['next_followup_date'])): ?>
+                                    <div class="strong"><?= h($f['next_followup_date']) ?> <?= h($f['next_followup_time'] ?? '') ?></div>
+                                <?php else: ?>
+                                    <div class="sub">-</div>
+                                <?php endif; ?>
+                            </td>
 
-    <?php else: ?>
+                            <td class="tc nowrap">
+                                <button type="button" class="icon-btn btn-view" onclick="openHistoryModal(<?= (int)$f['enquiry_id'] ?>)" title="View Enquiry History">
+                                    <i class="fas fa-eye"></i>
+                                </button>
 
-    window.location.href = "index.php?page=enquiries/followups&ui=list&tab=<?= h($tab) ?>";
+                                <button type="button" class="icon-btn btn-edit" onclick="openEditModal(<?= (int)$f['id'] ?>)" title="Edit Follow-up">
+                                    <i class="fas fa-pen"></i>
+                                </button>
 
-    <?php endif; ?>
+                                <?php if (($f['status'] ?? '') !== 'done'): ?>
+                                    <form method="POST" class="doneForm" style="display:inline;">
+                                        <input type="hidden" name="csrf_token" value="<?= h(generateCSRF()) ?>">
+                                        <input type="hidden" name="followup_id" value="<?= (int)$f['id'] ?>">
+                                        <button type="submit" name="mark_done" class="icon-btn btn-done" title="Mark Done">
+                                            <i class="fas fa-check"></i>
+                                        </button>
+                                    </form>
+                                <?php endif; ?>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
 
-});
-</script>
-<?php endif; ?>
-
-<?php if ($error): ?>
-<script>
-Swal.fire({
-    icon:'error',
-    title:'Error',
-    text:'<?= addslashes($error) ?>',
-    confirmButtonColor:'#e91e63'
-});
-</script>
 <?php endif; ?>
 
 
@@ -2445,18 +2513,4 @@ function mfShowFiles(inp) {
 
     updateBannerByDate();
 })();
-</script>
-
-<script>
-document.addEventListener("DOMContentLoaded", function(){
-
-crmDataTable('#usersTable',{
-pageLength:5,
-lengthMenu:[5,10,20,50],
-ordering:true,
-order:[[1,'asc']]
-});
-
-});
-
 </script>
