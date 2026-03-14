@@ -1054,13 +1054,29 @@ $baseUrl = "index.php?page=attendance&q=" . urlencode($q);
             });
             const json = await res.json();
             if (!json || json.status !== 'success') {
-                alert((json && json.message) ? json.message : 'Unable to save attendance.');
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Attendance Not Saved',
+                    text: (json && json.message) ? json.message : 'Unable to save attendance.',
+                    confirmButtonColor: '#e91e63'
+                });
                 return;
             }
             closeAttendanceEntry();
             await loadAttendanceCalendar(activeAttendanceRegistrationId, activeAttendanceStudentName, activeAttendanceMonth);
+            Swal.fire({
+                icon: 'success',
+                title: 'Attendance Saved',
+                text: json.message || 'Attendance saved successfully.',
+                confirmButtonColor: '#e91e63'
+            });
         } catch (err) {
-            alert('Unable to save attendance.');
+            Swal.fire({
+                icon: 'error',
+                title: 'Attendance Not Saved',
+                text: 'Unable to save attendance.',
+                confirmButtonColor: '#e91e63'
+            });
         } finally {
             if (submitBtn) {
                 submitBtn.classList.remove('is-loading');

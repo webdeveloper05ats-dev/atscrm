@@ -48,7 +48,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
-    echo "<div class='alert alert-success'>Permissions Updated Successfully</div>";
+    setFlash('success', 'Permissions updated successfully.');
+    redirect('index.php?page=roles/permissions&role_id=' . urlencode((string) $roleId));
 }
 ?>
 
