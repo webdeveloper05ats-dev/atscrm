@@ -487,115 +487,56 @@ padding:30px 20px;
 
 }
 
+/* ======================================================
+ATS CRM GLOBAL DATATABLE STYLE
+Reusable for all CRM modules
+====================================================== */
 
-
-/* CRM TABLE CARD */
-
-.crm-table-card{
-background:#fff;
-border-radius:12px;
-padding:18px;
-border:1px solid #f1d6e3;
-box-shadow:0 4px 12px rgba(0,0,0,.05);
-}
-
-/* TOOLBAR */
-
-.crm-table-toolbar{
-display:flex;
-justify-content:space-between;
-align-items:center;
-gap:10px;
-margin-bottom:15px;
-}
-
-/* SEARCH */
-
-.crm-search-box input{
-padding:8px 10px;
-border-radius:6px;
-border:1px solid #ddd;
-width:250px;
-}
-
-/* LIMIT */
-
-.crm-limit-box select{
-padding:8px;
-border-radius:6px;
-border:1px solid #ddd;
-width:80px;
-}
-
-/* MOBILE */
-
-@media (max-width:768px){
-
-.crm-table-toolbar{
-flex-direction:column;
-align-items:stretch;
-}
-
-.crm-search-box input{
-width:100%;
-}
-
-.crm-limit-box select{
-width:100%;
-}
-
-}
-
-.crm-table-toolbar input{
-padding:8px 10px;
-border:1px solid #ddd;
-border-radius:6px;
-min-width:200px;
-}
-
-.crm-table-toolbar select{
-padding:8px;
-border:1px solid #ddd;
-border-radius:6px;
-}
-
-/* TABLE */
+/* ======================================================
+TABLE WRAPPER
+====================================================== */
 
 .crm-table-wrapper{
 width:100%;
 overflow-x:auto;
 }
 
+/* ======================================================
+TABLE
+====================================================== */
+
 .crm-table{
 width:100%;
 border-collapse:collapse;
 min-width:720px;
 border:1px solid #f1d6e3;
+background:#fff;
 }
 
 .crm-table th,
 .crm-table td{
 border:1px solid #f1d6e3;
-padding:10px;
+padding:11px 12px;
 font-size:13px;
 white-space:nowrap;
 }
 
 .crm-table th{
 background:#fff0f5;
-font-weight:600;
-position:sticky;
-top:0;
+font-weight:700;
+color:#444;
 }
 
-/* LOADING */
+/* Row hover */
 
-.crm-loading{
-text-align:center;
-padding:20px;
+.crm-table tbody tr:hover{
+background:#fff6fa;
 }
 
-/* BUTTONS */
+
+/* ======================================================
+ACTION BUTTONS
+====================================================== */
 
 .crm-btn{
 display:inline-flex;
@@ -605,54 +546,239 @@ width:34px;
 height:34px;
 border-radius:8px;
 color:#fff;
-margin-right:5px;
+margin-right:6px;
+font-size:13px;
+transition:all .2s ease;
 }
 
-.crm-edit{background:#e91e63;}
-.crm-delete{background:#dc3545;}
+.crm-btn:hover{
+transform:translateY(-1px);
+}
 
-/* PAGINATION */
+.crm-edit{
+background:#e91e63;
+}
 
-.crm-pagination{
-margin-top:15px;
+.crm-delete{
+background:#dc3545;
+}
+
+
+/* ======================================================
+DATATABLE HEADER LAYOUT
+====================================================== */
+
+.crm-table-header{
+display:flex;
+justify-content:space-between;
+align-items:center;
+flex-wrap:wrap;
+gap:15px;
+margin-bottom:15px;
+}
+
+/* ======================================================
+SHOW ENTRIES
+====================================================== */
+
+.crm-table-header .dataTables_length{
+display:flex !important;
+align-items:center;
+gap:6px;
+font-size:13px;
+white-space:nowrap;
+}
+
+.crm-table-header .dataTables_length label{
+display:flex;
+align-items:center;
+gap:6px;
+}
+
+.crm-table-header .dataTables_length select{
+padding:6px 10px;
+border:1px solid #e6c9d7;
+border-radius:6px;
+font-size:13px;
+background:#fff;
+outline:none;
+}
+
+
+/* ======================================================
+SEARCH BOX
+====================================================== */
+
+.crm-table-header .dataTables_filter{
+position:relative !important;
+display:flex !important;
+align-items:center !important;
+}
+
+.crm-table-header .dataTables_filter input{
+padding:10px 14px 10px 38px !important;
+border:1px solid #e6c9d7 !important;
+border-radius:25px !important;
+width:260px !important;
+font-size:13px !important;
+background:#fff !important;
+outline:none !important;
+transition:all .2s ease !important;
+}
+
+.crm-table-header .dataTables_filter input:focus{
+border-color:#e91e63 !important;
+box-shadow:0 0 0 3px rgba(233,30,99,.12) !important;
+}
+
+.crm-table-header .dataTables_filter::before{
+content:"\f002";
+font-family:"Font Awesome 6 Free";
+font-weight:900;
+position:absolute;
+left:14px;
+top:50%;
+transform:translateY(-50%);
+font-size:12px;
+color:#999;
+}
+
+
+/* ======================================================
+EXPORT BUTTON
+====================================================== */
+
+.crm-export-btn{
+background:#e91e63 !important;
+color:#fff !important;
+border:none !important;
+padding:8px 16px !important;
+border-radius:8px !important;
+font-size:13px !important;
+font-weight:600 !important;
+transition:all .2s ease !important;
+}
+
+.crm-export-btn:hover{
+background:#d81b60 !important;
+}
+
+.dt-button{
+box-shadow:none !important;
+}
+
+
+/* ======================================================
+TABLE FOOTER
+====================================================== */
+
+.crm-table-footer{
+display:flex;
+justify-content:space-between;
+align-items:center;
+flex-wrap:wrap;
+gap:10px;
+margin-top:12px;
+}
+
+
+/* ======================================================
+INFO TEXT
+====================================================== */
+
+.dataTables_wrapper .dataTables_info{
+font-size:13px;
+color:#777;
+}
+
+
+/* ======================================================
+PAGINATION
+====================================================== */
+
+.dataTables_wrapper .dataTables_paginate{
 display:flex;
 gap:6px;
-flex-wrap:wrap;
 }
 
-.crm-page{
-padding:6px 10px;
-border:1px solid #e91e63;
-border-radius:6px;
-cursor:pointer;
+.dataTables_wrapper .dataTables_paginate .paginate_button{
+padding:6px 12px !important;
+border-radius:6px !important;
+border:1px solid #eee !important;
+background:#fff !important;
 font-size:13px;
 }
 
-.crm-page:hover{
-background:#e91e63;
-color:#fff;
+.dataTables_wrapper .dataTables_paginate .paginate_button.current{
+background:#e91e63 !important;
+color:#fff !important;
+border-color:#e91e63 !important;
 }
 
-.crm-active{
-background:#e91e63;
-color:#fff;
+.dataTables_wrapper .dataTables_paginate .paginate_button:hover{
+background:#e91e63 !important;
+color:#fff !important;
 }
 
-/* MOBILE */
+
+/* ======================================================
+MOBILE RESPONSIVE
+====================================================== */
 
 @media(max-width:768px){
 
-.crm-container{
-flex-direction:column;
+.crm-table{
+min-width:600px;
 }
 
-.crm-left,
-.crm-right{
+/* Header stack */
+
+.crm-table-header{
+flex-direction:column;
+align-items:stretch;
+gap:12px;
+}
+
+/* Show entries */
+
+.crm-table-header .dataTables_length{
+justify-content:center;
+}
+
+/* Search */
+
+.crm-table-header .dataTables_filter{
 width:100%;
 }
 
-.crm-table{
-min-width:720px;
+.crm-table-header .dataTables_filter input{
+width:100% !important;
+}
+
+/* Export */
+
+.crm-table-header .dt-buttons{
+width:100%;
+}
+
+.crm-export-btn{
+width:100% !important;
+text-align:center;
+}
+
+/* Footer */
+
+.crm-table-footer{
+flex-direction:column;
+align-items:center;
+gap:8px;
+}
+
+/* Pagination center */
+
+.dataTables_wrapper .dataTables_paginate{
+justify-content:center;
 }
 
 }
+

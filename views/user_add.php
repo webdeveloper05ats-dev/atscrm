@@ -8,7 +8,6 @@ if (!defined('APP_NAME')) {
 $success = "";
 $error   = "";
 
-// Only Super Admin (recommended)
 if (($_SESSION['role_name'] ?? '') !== 'Super Admin') {
     redirect('index.php');
     exit;
@@ -16,15 +15,9 @@ if (($_SESSION['role_name'] ?? '') !== 'Super Admin') {
 
 $loggedInUserId = (int)($_SESSION['user_id'] ?? 0);
 
-// -------------------------------
-// Fetch roles + branches
-// -------------------------------
 $roles = $pdo->query("SELECT id, role_name FROM roles WHERE status=1 ORDER BY role_name ASC")->fetchAll(PDO::FETCH_ASSOC);
 $branches = $pdo->query("SELECT id, branch_name FROM branches WHERE status=1 ORDER BY branch_name ASC")->fetchAll(PDO::FETCH_ASSOC);
 
-// -------------------------------
-// Edit mode
-// -------------------------------
 $editId = (int)($_GET['edit'] ?? 0);
 $editUser = null;
 
@@ -39,9 +32,8 @@ if ($editId > 0) {
     }
 }
 
-// -------------------------------
-// ADD USER
-// -------------------------------
+/* ADD USER */
+
 if (isset($_POST['add_user'])) {
 
     $name      = trim($_POST['name'] ?? '');
@@ -91,9 +83,8 @@ if (isset($_POST['add_user'])) {
     }
 }
 
-// -------------------------------
-// UPDATE USER
-// -------------------------------
+/* UPDATE USER */
+
 if (isset($_POST['update_user'])) {
 
     $id        = (int)($_POST['id'] ?? 0);
@@ -117,6 +108,7 @@ if (isset($_POST['update_user'])) {
         } else {
 
             if ($password !== '') {
+
                 $hash = password_hash($password, PASSWORD_DEFAULT);
 
                 $sql = "
@@ -134,7 +126,9 @@ if (isset($_POST['update_user'])) {
                         user_agent=:ua
                     WHERE id=:id
                 ";
+
             } else {
+
                 $sql = "
                     UPDATE users SET
                         branch_id=:branch_id,
@@ -149,6 +143,7 @@ if (isset($_POST['update_user'])) {
                         user_agent=:ua
                     WHERE id=:id
                 ";
+
             }
 
             $upd = $pdo->prepare($sql);
@@ -177,9 +172,8 @@ if (isset($_POST['update_user'])) {
     }
 }
 
-// -------------------------------
-// DELETE USER
-// -------------------------------
+/* DELETE USER */
+
 if (isset($_GET['delete'])) {
 
     $deleteId = (int)$_GET['delete'];
@@ -187,15 +181,14 @@ if (isset($_GET['delete'])) {
     if ($deleteId === $loggedInUserId) {
         $error = "You cannot delete your own account.";
     } else {
+
         $del = $pdo->prepare("DELETE FROM users WHERE id=?");
         $del->execute([$deleteId]);
+
         $success = "User deleted successfully!";
     }
 }
 
-// -------------------------------
-// Fetch users
-// -------------------------------
 $users = $pdo->query("
     SELECT u.*, r.role_name, b.branch_name
     FROM users u
@@ -205,197 +198,490 @@ $users = $pdo->query("
 ")->fetchAll(PDO::FETCH_ASSOC);
 ?>
 
-<h2 style="margin-bottom:16px;">User Management</h2>
-
-<?php if ($success): ?>
-<script>
-Swal.fire({
-    icon: 'success',
-    title: 'Success',
-    text: '<?= addslashes($success) ?>',
-    confirmButtonColor: '#e91e63'
-}).then(() => {
-    window.location.href = "index.php?page=user_add";
-});
-</script>
-<?php endif; ?>
-
-<?php if ($error): ?>
-<script>
-Swal.fire({
-    icon: 'error',
-    title: 'Error',
-    text: '<?= addslashes($error) ?>',
-    confirmButtonColor: '#e91e63'
-});
-</script>
-<?php endif; ?>
-<?php if ($error): ?>
-    <div class="alert" style="background:#fff0f0;border:1px solid #ffc1c1;color:#b30000;">
-        <?= htmlspecialchars($error) ?>
-    </div>
-<?php endif; ?>
-
+<h2 style="margin-bottom:20px;">User Management</h2>
 <style>
-.action-btn { display:inline-flex; align-items:center; justify-content:center; gap:6px; padding:6px 10px; border-radius:10px; text-decoration:none; }
-.btn-edit { background: var(--primary); color:#fff; }
-.btn-edit:hover { background: var(--primary-dark); color:#fff; }
+/* =====================================================
+ATS CRM - GLOBAL TABLE + DATATABLE STYLE
+Reusable across all CRM pages
+===================================================== */
+
+
+/* =====================================================
+CRM LAYOUT
+===================================================== */
+
+.crm-container{
+display:flex;
+gap:20px;
+flex-wrap:wrap;
+width:100%;
+max-width:100%;
+}
+
+.crm-left{
+flex:1;
+min-width:300px;
+max-width:100%;
+}
+
+.crm-right{
+flex:2;
+min-width:450px;
+max-width:100%;
+}
+
+.crm-card{
+background:#fff;
+border-radius:14px;
+padding:20px;
+box-shadow:0 8px 20px rgba(0,0,0,.05);
+border:1px solid #f1d6e3;
+width:100%;
+max-width:100%;
+box-sizing:border-box;
+}
+
+.crm-card h3{
+margin-bottom:16px;
+}
+
+
+/* =====================================================
+FORM ELEMENTS
+===================================================== */
+
+.crm-form-group{
+margin-bottom:14px;
+}
+
+.crm-form-group label{
+font-weight:600;
+font-size:13px;
+display:block;
+margin-bottom:5px;
+}
+
+.crm-form-group input,
+.crm-form-group select{
+width:100%;
+padding:10px;
+border-radius:8px;
+border:1px solid #ddd;
+box-sizing:border-box;
+}
+
+.crm-form-group input::placeholder{
+font-size:12px;
+color:#aaa;
+}
+
+
+/* =====================================================
+TOGGLE SWITCH
+===================================================== */
+
+.crm-switch{
+position:relative;
+display:inline-block;
+width:46px;
+height:24px;
+}
+
+.crm-switch input{
+display:none;
+}
+
+.crm-slider{
+position:absolute;
+cursor:pointer;
+top:0;
+left:0;
+right:0;
+bottom:0;
+background:#ccc;
+border-radius:20px;
+}
+
+.crm-slider:before{
+position:absolute;
+content:"";
+height:18px;
+width:18px;
+left:3px;
+bottom:3px;
+background:white;
+border-radius:50%;
+transition:.3s;
+}
+
+.crm-switch input:checked + .crm-slider{
+background:#e91e63;
+}
+
+.crm-switch input:checked + .crm-slider:before{
+transform:translateX(22px);
+}
+
+
+/* =====================================================
+CRM TABLE
+===================================================== */
+
+.crm-table{
+width:100%;
+border-collapse:collapse;
+border:1px solid #f1d6e3;
+}
+
+.crm-table th,
+.crm-table td{
+border:1px solid #f1d6e3;
+padding:10px;
+font-size:13px;
+white-space:nowrap;
+}
+
+.crm-table th{
+background:#fff0f5;
+font-weight:600;
+text-align:left;
+}
+
+
+/* =====================================================
+TABLE WRAPPER (SCROLL ON MOBILE)
+===================================================== */
+
+.crm-table-wrapper{
+width:100%;
+max-width:100%;
+overflow-x:auto;
+}
+
+
+/* =====================================================
+ACTION BUTTONS
+===================================================== */
+
+.crm-btn{
+display:inline-flex;
+align-items:center;
+justify-content:center;
+width:34px;
+height:34px;
+border-radius:8px;
+color:#fff;
+margin-right:5px;
+}
+
+.crm-edit{
+background:#e91e63;
+}
+
+.crm-delete{
+background:#dc3545;
+}
+
+
+/* =====================================================
+DATATABLE HEADER AREA
+===================================================== */
+
+.crm-table-header{
+display:flex;
+justify-content:space-between;
+align-items:center;
+margin-bottom:15px;
+flex-wrap:wrap;
+gap:10px;
+}
+
+.crm-table-footer{
+display:flex;
+justify-content:space-between;
+align-items:center;
+margin-top:15px;
+flex-wrap:wrap;
+gap:10px;
+}
+
+
+/* =====================================================
+MOBILE RESPONSIVE
+===================================================== */
+
+@media(max-width:768px){
+
+.crm-container{
+flex-direction:column;
+width:100%;
+}
+
+.crm-left,
+.crm-right{
+width:100%;
+min-width:100%;
+}
+
+.crm-card{
+width:100%;
+max-width:100%;
+}
+
+.crm-table{
+min-width:600px;
+}
+
+.crm-table-wrapper{
+overflow-x:auto;
+}
+
+}
 </style>
+<?php if($success): ?>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
 
-<div class="crm-row">
+Swal.fire({
+icon:"success",
+title:"Success",
+text:"<?= $success ?>",
+confirmButtonColor:"#e91e63"
+});
 
-    <!-- LEFT: ADD / EDIT FORM -->
-    <div class="crm-col-4">
+</script>
 
-        <div class="card">
-            <div class="card-header">
-                <?= $editUser ? 'Edit User' : 'Add New User' ?>
-            </div>
+<?php endif; ?>
+<div class="crm-container">
 
-            <form method="POST">
+<div class="crm-left">
 
-                <?php if ($editUser): ?>
-                    <input type="hidden" name="id" value="<?= (int)$editUser['id'] ?>">
-                <?php endif; ?>
+<div class="crm-card">
 
-                <div class="form-group">
-                    <label>Name</label>
-                    <input type="text" name="name" required value="<?= htmlspecialchars($editUser['name'] ?? '') ?>">
-                </div>
+<h3><?= $editUser ? 'Edit User' : 'Add New User' ?></h3>
 
-                <div class="form-group">
-                    <label>Email</label>
-                    <input type="email" name="email" required value="<?= htmlspecialchars($editUser['email'] ?? '') ?>">
-                </div>
+<form method="POST" id="userForm" novalidate>
 
-                <div class="form-group">
-                    <label>Phone</label>
-                    <input type="text" name="phone" value="<?= htmlspecialchars($editUser['phone'] ?? '') ?>">
-                </div>
+<?php if ($editUser): ?>
+<input type="hidden" name="id" value="<?= (int)$editUser['id'] ?>">
+<?php endif; ?>
 
-                <div class="form-group">
-                    <label>Password <?= $editUser ? '(leave blank to keep same)' : '' ?></label>
-                    <input type="password" name="password" <?= $editUser ? '' : 'required' ?>>
-                </div>
+<div class="crm-form-group">
+<label>Name</label>
+<input type="text" name="name" placeholder="Example: John Smith" required value="<?= htmlspecialchars($editUser['name'] ?? '') ?>">
+</div>
 
-                <div class="form-group">
-                    <label>Role</label>
-                    <select name="role_id" required>
-                        <option value="">Select Role</option>
-                        <?php foreach ($roles as $r): ?>
-                            <option value="<?= (int)$r['id'] ?>"
-                                <?= (isset($editUser['role_id']) && (int)$editUser['role_id'] === (int)$r['id']) ? 'selected' : '' ?>>
-                                <?= htmlspecialchars($r['role_name']) ?>
-                            </option>
-                        <?php endforeach; ?>
-                    </select>
-                </div>
+<div class="crm-form-group">
+<label>Email</label>
+<input type="email" name="email" placeholder="Example: john@gmail.com" required value="<?= htmlspecialchars($editUser['email'] ?? '') ?>">
+</div>
 
-                <div class="form-group">
-                    <label>Branch</label>
-                    <select name="branch_id">
-                        <option value="">All / Not Assigned</option>
-                        <?php foreach ($branches as $b): ?>
-                            <option value="<?= (int)$b['id'] ?>"
-                                <?= (isset($editUser['branch_id']) && (int)$editUser['branch_id'] === (int)$b['id']) ? 'selected' : '' ?>>
-                                <?= htmlspecialchars($b['branch_name']) ?>
-                            </option>
-                        <?php endforeach; ?>
-                    </select>
-                </div>
+<div class="crm-form-group">
+<label>Phone</label>
+<input type="text" name="phone" placeholder="Example: 9876543210" value="<?= htmlspecialchars($editUser['phone'] ?? '') ?>">
+</div>
 
-                <div class="form-group">
-                    <label>Status</label>
-                    <select name="status">
-                        <option value="1" <?= (!isset($editUser['status']) || (int)$editUser['status'] === 1) ? 'selected' : '' ?>>Active</option>
-                        <option value="0" <?= (isset($editUser['status']) && (int)$editUser['status'] === 0) ? 'selected' : '' ?>>Inactive</option>
-                    </select>
-                </div>
+<div class="crm-form-group">
+<label>Password <?= $editUser ? '(leave blank to keep same)' : '' ?></label>
+<input type="password" name="password" placeholder="Enter password">
+</div>
 
-                <?php if ($editUser): ?>
-                    <button type="submit" name="update_user" class="btn btn-primary" style="width:100%;">
-                        <i class="fas fa-save"></i> Update User
-                    </button>
+<div class="crm-form-group">
+<label>Role</label>
+<select name="role_id" required>
 
-                    <a href="index.php?page=user_add" class="btn-danger" style="display:block;text-align:center;margin-top:10px;padding:10px;border-radius:10px;">
-                        Cancel
-                    </a>
-                <?php else: ?>
-                    <button type="submit" name="add_user" class="btn btn-primary" style="width:100%;">
-                        <i class="fas fa-plus"></i> Add User
-                    </button>
-                <?php endif; ?>
+<option value="">Select Role</option>
 
-            </form>
-        </div>
+<?php foreach ($roles as $r): ?>
 
-    </div>
+<option value="<?= $r['id'] ?>" <?= (isset($editUser['role_id']) && $editUser['role_id']==$r['id'])?'selected':'' ?>>
 
-    <!-- RIGHT: LIST -->
-    <div class="crm-col-8">
+<?= htmlspecialchars($r['role_name']) ?>
 
-        <div class="card">
-            <div class="card-header">Users List</div>
+</option>
 
-            <div class="table-responsive">
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th width="60">ID</th>
-                            <th>Name</th>
-                            <th>Email</th>
-                            <th>Role</th>
-                            <th>Branch</th>
-                            <th width="70">Status</th>
-                            <th width="140">Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php foreach ($users as $u): ?>
-                            <tr>
-                                <td><?= (int)$u['id'] ?></td>
-                                <td><?= htmlspecialchars($u['name']) ?></td>
-                                <td><?= htmlspecialchars($u['email']) ?></td>
-                                <td><?= htmlspecialchars($u['role_name'] ?? '-') ?></td>
-                                <td><?= htmlspecialchars($u['branch_name'] ?? 'All') ?></td>
-                                <td style="text-align:center;">
-                                    <?= ((int)$u['status'] === 1)
-                                        ? '<i class="fas fa-check-circle" style="color:green;"></i>'
-                                        : '<i class="fas fa-times-circle" style="color:red;"></i>' ?>
-                                </td>
-                                <td style="white-space:nowrap;">
-                                    <a class="action-btn btn-edit" href="index.php?page=user_add&edit=<?= (int)$u['id'] ?>">
-                                        <i class="fas fa-pen"></i>
-                                    </a>
+<?php endforeach; ?>
 
-                                    <?php if ((int)$u['id'] !== $loggedInUserId): ?>
-                                        <a class="action-btn btn-danger" href="index.php?page=user_add&delete=<?= (int)$u['id'] ?>"
-                                           onclick="return confirm('Delete this user?')">
-                                            <i class="fas fa-trash"></i>
-                                        </a>
-                                    <?php else: ?>
-                                        <span class="action-btn" title="You" style="background:#fff3cd;border:1px solid #ffe69c;">
-                                            <i class="fas fa-user-lock"></i>
-                                        </span>
-                                    <?php endif; ?>
-                                </td>
-                            </tr>
-                        <?php endforeach; ?>
+</select>
+</div>
 
-                        <?php if (count($users) === 0): ?>
-                            <tr>
-                                <td colspan="7" style="text-align:center;color:var(--text-light);padding:18px;">
-                                    No users found.
-                                </td>
-                            </tr>
-                        <?php endif; ?>
+<div class="crm-form-group">
+<label>Branch</label>
+<select name="branch_id">
 
-                    </tbody>
-                </table>
-            </div>
+<option value="">All / Not Assigned</option>
 
-        </div>
+<?php foreach ($branches as $b): ?>
 
-    </div>
+<option value="<?= $b['id'] ?>" <?= (isset($editUser['branch_id']) && $editUser['branch_id']==$b['id'])?'selected':'' ?>>
+
+<?= htmlspecialchars($b['branch_name']) ?>
+
+</option>
+
+<?php endforeach; ?>
+
+</select>
+</div>
+
+<div class="crm-form-group">
+<label>Status</label>
+
+<label class="crm-switch">
+<input type="checkbox" name="status" value="1" <?= (!isset($editUser['status']) || $editUser['status']==1)?'checked':'' ?>>
+<span class="crm-slider"></span>
+</label>
 
 </div>
+
+<button type="submit" name="<?= $editUser ? 'update_user':'add_user' ?>" style="width:100%;background:#e91e63;color:#fff;border:none;padding:10px;border-radius:10px;">
+
+<?= $editUser ? 'Update User':'Add User' ?>
+
+</button>
+
+</form>
+
+</div>
+
+</div>
+
+<div class="crm-right">
+
+<div class="crm-card">
+
+<h3>Users List</h3>
+<div class="crm-table-wrapper">
+<table  id="usersTable" class="crm-table">
+
+<thead>
+
+<tr>
+
+<th>#</th>
+
+<th>Name</th>
+
+<th>Email</th>
+
+<th>Role</th>
+
+<th>Branch</th>
+
+<th>Status</th>
+
+<th>Action</th>
+
+</tr>
+
+</thead>
+
+<tbody>
+
+<?php $i=1; foreach($users as $u): ?>
+
+<tr>
+
+<td><?= $i++ ?></td>
+
+<td><?= htmlspecialchars($u['name']) ?></td>
+
+<td><?= htmlspecialchars($u['email']) ?></td>
+
+<td><?= htmlspecialchars($u['role_name'] ?? '-') ?></td>
+
+<td><?= htmlspecialchars($u['branch_name'] ?? 'All') ?></td>
+
+<td>
+
+<?= ((int)$u['status']==1)
+
+? '<i class="fas fa-check-circle" style="color:green;"></i>'
+
+: '<i class="fas fa-times-circle" style="color:red;"></i>' ?>
+
+</td>
+
+<td>
+
+<a class="crm-btn crm-edit" title="Edit User"
+
+href="index.php?page=user_add&edit=<?= $u['id'] ?>">
+
+<i class="fas fa-pen"></i>
+
+</a>
+
+<?php if ($u['id'] != $loggedInUserId): ?>
+
+<a class="crm-btn crm-delete" title="Delete User"
+
+href="index.php?page=user_add&delete=<?= $u['id'] ?>"
+
+onclick="return confirm('Delete this user?')">
+
+<i class="fas fa-trash"></i>
+
+</a>
+
+<?php endif; ?>
+
+</td>
+
+</tr>
+
+<?php endforeach; ?>
+
+</tbody>
+
+</table>
+
+</div>
+
+</div>
+
+</div>
+
+
+
+<script>
+
+/* ==============================
+FORM VALIDATION
+==============================*/
+
+document.getElementById("userForm").addEventListener("submit", function(e){
+
+let name  = document.querySelector("input[name='name']").value.trim();
+let email = document.querySelector("input[name='email']").value.trim();
+let role  = document.querySelector("select[name='role_id']").value;
+
+if(name === "" || email === "" || role === ""){
+
+e.preventDefault();
+
+Swal.fire({
+icon: "warning",
+title: "Missing Fields",
+text: "Name, Email and Role are required.",
+confirmButtonColor:"#e91e63"
+});
+
+}
+
+});
+
+</script>
+<script>
+document.addEventListener("DOMContentLoaded", function(){
+
+crmDataTable('#usersTable',{
+pageLength:5,
+lengthMenu:[5,10,20,50],
+ordering:true,
+order:[[1,'asc']]
+});
+
+});
+
+</script>

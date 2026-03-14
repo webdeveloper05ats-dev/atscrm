@@ -79,6 +79,16 @@ $userId = (int) ($_SESSION['user_id'] ?? 0);
 $roleId = (int) ($_SESSION['role_id'] ?? 0);
 $branchId = (int) ($_SESSION['branch_id'] ?? 0);
 
+$roleName = '';
+
+try {
+    $r = $pdo->prepare("SELECT name FROM roles WHERE id=? LIMIT 1");
+    $r->execute([$roleId]);
+    $roleName = strtolower(trim((string)$r->fetchColumn()));
+} catch (Exception $e) {
+    $roleName = '';
+}
+
 $canAllBranches = 0;
 try {
   $r = $pdo->prepare("SELECT can_access_all_branches FROM roles WHERE id=? LIMIT 1");
@@ -1322,6 +1332,10 @@ $offset = ($page - 1) * $perPage;
 $where = ["r.registration_status IN ('active','completed')"];
 $params = [];
 
+if ($roleName === 'front office') {
+    $where[] = "r.assigned_to = ?";
+    $params[] = $userId;
+}
 if ($canAllBranches !== 1 && $branchId > 0) {
   $where[] = "r.branch_id = ?";
   $params[] = $branchId;
@@ -1402,6 +1416,12 @@ $summary = ['active' => 0, 'completed' => 0, 'paid' => 0, 'partial' => 0, 'unpai
 try {
   $sumWhere = ["r.registration_status IN ('active','completed')"];
   $sumParams = [];
+
+  // Restrict summary for front office
+if ($roleName === 'front office') {
+    $sumWhere[] = "r.assigned_to = ?";
+    $sumParams[] = $userId;
+}
 
   if ($canAllBranches !== 1 && $branchId > 0) {
     $sumWhere[] = "r.branch_id = ?";
@@ -2625,7 +2645,7 @@ function payStatusBadgeList($type)
 
   async function openHistoryModal(regId) {
     openCrmModal('Student History');
-    const url = `index.php?page=registrations/list&ajax=1&action=view_history&reg_id=${regId}`;
+    const url =`index.php?page=payments/payment_modal&ajax=1&reg_id=${regId}`;
     const html = await loadModalHtml(url);
     document.getElementById('crmModalBody').innerHTML = html;
   }
@@ -2643,15 +2663,22 @@ function payStatusBadgeList($type)
   }
 
   async function openPaymentModal(regId) {
-    openCrmModal('Payment Entry');
-    const url = `index.php?page=registrations/list&ajax=1&action=payment_modal&reg_id=${regId}`;
-    const html = await loadModalHtml(url);
-    document.getElementById('crmModalBody').innerHTML = html;
 
-    const wrapper = document.querySelector('.wrapper');
-    if (wrapper) wrapper.removeAttribute('aria-hidden');
-  }
+console.log("Registration ID:", regId);   // DEBUG
 
+openCrmModal('Payment Entry');
+
+const url =
+`index.php?page=registrations/list&ajax=1&action=payment_modal&reg_id=${regId}`;
+
+const html = await loadModalHtml(url);
+
+document.getElementById('crmModalBody').innerHTML = html;
+
+const wrapper = document.querySelector('.wrapper');
+if (wrapper) wrapper.removeAttribute('aria-hidden');
+
+}
   document.addEventListener('submit', function (e) {
     if (e.target && e.target.id === 'paymentEntryForm') {
       const wrapper = document.querySelector('.wrapper');
