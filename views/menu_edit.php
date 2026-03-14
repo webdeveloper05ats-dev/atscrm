@@ -7,9 +7,6 @@ if (!defined('APP_NAME')) {
     die("Unauthorized access.");
 }
 
-$success = "";
-$error   = "";
-
 $protectedSlugs = ['menu_management'];
 
 $id = (int)($_GET['id'] ?? 0);
@@ -58,14 +55,16 @@ $parent_id=null;
 }
 
 if($menu_name=='' || $menu_slug==''){
-$error="Menu Name and Menu Slug are required.";
+setFlash('error', 'Menu Name and Menu Slug are required.');
+redirect('index.php?page=menu_edit&id=' . $id);
 }else{
 
 $chk=$pdo->prepare("SELECT COUNT(*) FROM menus WHERE menu_slug=? AND id!=?");
 $chk->execute([$menu_slug,$id]);
 
 if($chk->fetchColumn()>0){
-$error="This Menu Slug already exists.";
+setFlash('error', 'This Menu Slug already exists.');
+redirect('index.php?page=menu_edit&id=' . $id);
 }else{
 
 $upd=$pdo->prepare("
@@ -90,7 +89,8 @@ $status,
 $id
 ]);
 
-$success="Menu Updated Successfully!";
+setFlash('success', 'Menu updated successfully.');
+redirect('index.php?page=menu_edit&id=' . $id);
 
 $stmt=$pdo->prepare("SELECT * FROM menus WHERE id=?");
 $stmt->execute([$id]);
@@ -194,26 +194,6 @@ padding:10px 16px;
 border-radius:6px;
 }
 
-/* ===== ALERTS ===== */
-
-.alert-success{
-background:#e8fff0;
-border:1px solid #b9f2cf;
-padding:10px;
-border-radius:6px;
-color:#1f7a3f;
-margin-bottom:15px;
-}
-
-.alert-error{
-background:#fff0f0;
-border:1px solid #ffc1c1;
-padding:10px;
-border-radius:6px;
-color:#b30000;
-margin-bottom:15px;
-}
-
 .alert-warning{
 background:#fff3cd;
 border:1px solid #ffe69c;
@@ -248,14 +228,6 @@ justify-content:center;
 <div class="menu-card">
 
 <div class="menu-title">Edit Menu</div>
-
-<?php if($success): ?>
-<div class="alert-success"><?=htmlspecialchars($success)?></div>
-<?php endif; ?>
-
-<?php if($error): ?>
-<div class="alert-error"><?=htmlspecialchars($error)?></div>
-<?php endif; ?>
 
 <?php if($isProtected): ?>
 <div class="alert-warning">

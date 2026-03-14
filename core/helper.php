@@ -169,7 +169,7 @@ function visibleStudentContactValue($value, string $fallback = '-'): string
     return $value !== '' ? $value : $fallback;
 }
 
-function visibleStudentContactPair($phone = null, $email = null, string $fallback = '-'): string
+function visibleStudentContactPair($phone = null, $email = null, string $fallback = ''): string
 {
     if (isStaffRestrictedFromStudentContacts()) {
         return $fallback;
