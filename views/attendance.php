@@ -14,6 +14,13 @@ if (!function_exists('h')) {
     }
 }
 
+if (!function_exists('ha')) {
+    function ha($v): string
+    {
+        return htmlspecialchars((string) $v, ENT_QUOTES, 'UTF-8');
+    }
+}
+
 $userId = (int) ($_SESSION['user_id'] ?? 0);
 $roleId = (int) ($_SESSION['role_id'] ?? 0);
 $branchId = (int) ($_SESSION['branch_id'] ?? 0);
@@ -36,6 +43,8 @@ function fetchAttendanceStudent(PDO $pdo, int $registrationId, int $userId, int 
             r.branch_id,
             r.registration_no,
             r.joined_on,
+            r.created_at,
+            r.updated_at,
             r.enquiry_snapshot_name,
             r.enquiry_snapshot_phone,
             r.enquiry_snapshot_email,
@@ -64,6 +73,33 @@ function isFutureAttendanceDate(string $date): bool
     return $date > date('Y-m-d');
 }
 
+function resolveAttendanceStartDate(array $student): string
+{
+    $candidates = [];
+
+    $joinedOn = trim((string) ($student['joined_on'] ?? ''));
+    $createdAt = trim((string) ($student['created_at'] ?? ''));
+    $updatedAt = trim((string) ($student['updated_at'] ?? ''));
+
+    if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $joinedOn)) {
+        $candidates[] = $joinedOn;
+    }
+
+    if (preg_match('/^\d{4}-\d{2}-\d{2}/', $createdAt)) {
+        $candidates[] = substr($createdAt, 0, 10);
+    }
+
+    if (preg_match('/^\d{4}-\d{2}-\d{2}/', $updatedAt) && $updatedAt > $createdAt) {
+        $candidates[] = substr($updatedAt, 0, 10);
+    }
+
+    if (empty($candidates)) {
+        return date('Y-m-d');
+    }
+
+    return max($candidates);
+}
+
 function renderAttendanceCalendar(array $student, array $attendanceMap, string $month): string
 {
     $first = DateTime::createFromFormat('Y-m-d', $month . '-01');
@@ -79,6 +115,7 @@ function renderAttendanceCalendar(array $student, array $attendanceMap, string $
     $today = date('Y-m-d');
     $currentMonth = date('Y-m');
     $canGoNextMonth = ($nextMonth <= $currentMonth);
+    $attendanceStartDate = resolveAttendanceStartDate($student);
 
     ob_start();
     ?>
@@ -105,6 +142,11 @@ function renderAttendanceCalendar(array $student, array $attendanceMap, string $
             <span class="att-legend-item"><i class="att-dot att-dot-present"></i> Present</span>
             <span class="att-legend-item"><i class="att-dot att-dot-absent"></i> Absent</span>
             <span class="att-legend-item"><i class="att-dot att-dot-empty"></i> Not Marked</span>
+            <span class="att-legend-item"><i class="att-dot att-dot-locked"></i> Locked</span>
+        </div>
+
+        <div class="att-form-note" style="margin-bottom:16px;">
+            Attendance can be marked only from <b><?= h($attendanceStartDate) ?></b> up to today.
         </div>
 
         <div class="att-grid">
@@ -119,22 +161,27 @@ function renderAttendanceCalendar(array $student, array $attendanceMap, string $
                 $date = $monthKey . '-' . str_pad((string) $day, 2, '0', STR_PAD_LEFT);
                 $record = $attendanceMap[$date] ?? null;
                 $status = strtolower((string) ($record['status'] ?? ''));
+                $isBeforeAssignment = ($date < $attendanceStartDate);
                 $isFutureDate = isFutureAttendanceDate($date);
+                $isLockedDate = ($isBeforeAssignment || $isFutureDate);
                 $cellClass = 'att-status-empty';
                 if ($status === 'present') {
                     $cellClass = 'att-status-present';
                 } elseif ($status === 'absent') {
                     $cellClass = 'att-status-absent';
                 }
-                if ($isFutureDate) {
+                if ($isLockedDate) {
                     $cellClass .= ' att-status-locked';
                 }
+                $lockTitle = $isBeforeAssignment
+                    ? 'Dates before staff assignment are locked'
+                    : 'Future dates are locked';
                 ?>
                 <button type="button"
                     class="att-grid-cell att-grid-day <?= h($cellClass) ?> <?= $date === $today ? 'att-day-today' : '' ?>"
-                    <?= $isFutureDate ? 'disabled title="Future dates are locked"' : "onclick=\"openAttendanceEntry(" . (int) $student['id'] . ", '" . h($student['enquiry_snapshot_name']) . "', '" . h($date) . "')\"" ?>>
+                    <?= $isLockedDate ? 'disabled title="' . h($lockTitle) . '"' : "onclick=\"openAttendanceEntry(" . (int) $student['id'] . ", '" . h($student['enquiry_snapshot_name']) . "', '" . h($date) . "')\"" ?>>
                     <span class="att-day-no"><?= (int) $day ?></span>
-                    <span class="att-day-text"><?= $isFutureDate ? 'Locked' : ($status === 'present' ? 'Present' : ($status === 'absent' ? 'Absent' : 'Mark')) ?></span>
+                    <span class="att-day-text"><?= $isLockedDate ? 'Locked' : ($status === 'present' ? 'Present' : ($status === 'absent' ? 'Absent' : 'Mark')) ?></span>
                 </button>
             <?php endfor; ?>
         </div>
@@ -154,6 +201,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax_save_attendance'
     $status = trim((string) ($_POST['status'] ?? ''));
     $topicsTaught = trim((string) ($_POST['topics_taught'] ?? ''));
     $taskGiven = trim((string) ($_POST['task_given'] ?? ''));
+    $absentInformed = trim((string) ($_POST['absent_informed'] ?? ''));
+    $absentReason = trim((string) ($_POST['absent_reason'] ?? ''));
+    $absentInformedBy = trim((string) ($_POST['absent_informed_by'] ?? ''));
 
     $student = fetchAttendanceStudent($pdo, $registrationId, $userId, $branchId, $canAllBranches);
     if (!$student) {
@@ -162,6 +212,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax_save_attendance'
 
     if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
         responseJson('error', 'Invalid attendance date.');
+    }
+    $attendanceStartDate = resolveAttendanceStartDate($student);
+    if ($date < $attendanceStartDate) {
+        responseJson('error', 'Attendance is locked before the student was assigned to you.');
     }
     if (isFutureAttendanceDate($date)) {
         responseJson('error', 'Future attendance dates are locked.');
@@ -208,8 +262,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax_save_attendance'
         }
 
         if ($status === 'Absent') {
+            if (!in_array($absentInformed, ['yes', 'no'], true)) {
+                responseJson('error', 'Please select whether the student informed or not.');
+            }
+            if ($absentInformed === 'yes' && ($absentReason === '' || $absentInformedBy === '')) {
+                responseJson('error', 'Reason and person who informed are required when informed is yes.');
+            }
+            if ($absentInformed === 'no') {
+                $absentReason = '';
+                $absentInformedBy = '';
+            }
             $topicsTaught = '';
             $taskGiven = '';
+        } else {
+            $absentInformed = '';
+            $absentReason = '';
+            $absentInformedBy = '';
         }
 
         $ins = $pdo->prepare("
@@ -220,10 +288,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax_save_attendance'
                 status,
                 topics_taught,
                 task_given,
+                absent_informed,
+                absent_reason,
+                absent_informed_by,
                 marked_by,
                 created_at,
                 updated_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
         ");
         $ins->execute([
             $registrationId,
@@ -232,6 +303,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax_save_attendance'
             $status,
             $topicsTaught !== '' ? $topicsTaught : null,
             $taskGiven !== '' ? $taskGiven : null,
+            $absentInformed !== '' ? $absentInformed : null,
+            $absentReason !== '' ? $absentReason : null,
+            $absentInformedBy !== '' ? $absentInformedBy : null,
             $userId > 0 ? $userId : null
         ]);
 
@@ -263,7 +337,7 @@ if ($isAjax) {
             $from = $month . '-01';
             $to = date('Y-m-t', strtotime($from));
             $st = $pdo->prepare("
-                SELECT attendance_date, status, topics_taught, task_given
+                SELECT attendance_date, status, topics_taught, task_given, absent_informed, absent_reason, absent_informed_by
                 FROM attendance
                 WHERE registration_id = ?
                   AND attendance_date BETWEEN ? AND ?
@@ -291,6 +365,11 @@ if ($isAjax) {
             echo "<div class='att-empty-note'>Invalid attendance date.</div>";
             exit;
         }
+        $attendanceStartDate = resolveAttendanceStartDate($student);
+        if ($date < $attendanceStartDate) {
+            echo "<div class='att-empty-note att-empty-note-danger'>Attendance is locked before the student was assigned to you.</div>";
+            exit;
+        }
         if (isFutureAttendanceDate($date)) {
             echo "<div class='att-empty-note att-empty-note-danger'>Future attendance dates are locked.</div>";
             exit;
@@ -299,7 +378,7 @@ if ($isAjax) {
         $record = null;
         try {
             $st = $pdo->prepare("
-                SELECT id, status, topics_taught, task_given
+                SELECT id, status, topics_taught, task_given, absent_informed, absent_reason, absent_informed_by
                 FROM attendance
                 WHERE registration_id = ?
                   AND attendance_date = ?
@@ -347,6 +426,33 @@ if ($isAjax) {
                     </div>
                 </div>
 
+                <div id="absentDetailsWrap" style="display:none;">
+                    <div class="att-form-row">
+                        <label class="att-form-label">Has Informed?</label>
+                        <div class="att-radio-row">
+                            <label class="att-radio-option">
+                                <input type="radio" name="absent_informed" value="yes">
+                                <span>Yes</span>
+                            </label>
+                            <label class="att-radio-option">
+                                <input type="radio" name="absent_informed" value="no">
+                                <span>No</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div id="absentInfoDetailsWrap" style="display:none;">
+                        <div class="att-form-row">
+                            <label class="att-form-label">Reason</label>
+                            <textarea name="absent_reason" id="absentReasonInput" class="att-form-control" rows="3"></textarea>
+                        </div>
+                        <div class="att-form-row">
+                            <label class="att-form-label">Person Who Informed</label>
+                            <input type="text" name="absent_informed_by" id="absentInformedByInput" class="att-form-control" placeholder="Student / Parent / Guardian / Other">
+                        </div>
+                    </div>
+                </div>
+
                 <div class="att-form-actions">
                     <button type="button" class="btn" style="background:#f3f4f6;" onclick="closeAttendanceEntry()">Cancel</button>
                     <button type="submit" class="btn btn-primary">Save Attendance</button>
@@ -378,6 +484,22 @@ if ($isAjax) {
                     <label class="att-form-label">Attendance</label>
                     <input type="text" class="att-form-control" value="Absent" readonly>
                 </div>
+
+                <div class="att-form-row">
+                    <label class="att-form-label">Has Informed?</label>
+                    <input type="text" class="att-form-control" value="<?= h(strtolower((string) ($record['absent_informed'] ?? '')) === 'yes' ? 'Yes' : 'No') ?>" readonly>
+                </div>
+
+                <?php if (strtolower((string) ($record['absent_informed'] ?? '')) === 'yes'): ?>
+                    <div class="att-form-row">
+                        <label class="att-form-label">Reason</label>
+                        <textarea class="att-form-control" rows="3" readonly><?= h($record['absent_reason'] ?? '') ?></textarea>
+                    </div>
+                    <div class="att-form-row">
+                        <label class="att-form-label">Person Who Informed</label>
+                        <input type="text" class="att-form-control" value="<?= h($record['absent_informed_by'] ?? '') ?>" readonly>
+                    </div>
+                <?php endif; ?>
 
                 <div class="att-form-note att-form-note-danger">This date is already marked absent. Attendance cannot be changed later.</div>
 
@@ -603,6 +725,7 @@ $baseUrl = "index.php?page=attendance&q=" . urlencode($q);
     .att-dot-present { background:#2e7d32; }
     .att-dot-absent { background:#e53935; }
     .att-dot-empty { background:#cbd5e1; }
+    .att-dot-locked { background:#94a3b8; }
     .att-grid { display:grid; grid-template-columns:repeat(7, minmax(0, 1fr)); gap:10px; }
     .att-grid-head { padding:10px; text-align:center; font-weight:800; color:#475569; background:#f8fafc; border-radius:10px; }
     .att-grid-cell { min-height:88px; border-radius:14px; }
@@ -628,6 +751,9 @@ $baseUrl = "index.php?page=attendance&q=" . urlencode($q);
     .att-form-row { margin-bottom:14px; }
     .att-form-label { display:block; margin-bottom:6px; font-weight:700; color:#334155; }
     .att-form-control { width:100%; border:1px solid #dbe2ea; border-radius:12px; padding:10px 12px; background:#fff; }
+    .att-radio-row { display:flex; gap:18px; flex-wrap:wrap; }
+    .att-radio-option { display:inline-flex; align-items:center; gap:8px; font-weight:700; color:#334155; }
+    .att-radio-option input { margin:0; }
     .att-form-note { padding:12px 14px; border-radius:12px; background:#eff6ff; color:#1d4ed8; font-weight:700; margin-bottom:14px; }
     .att-form-note-danger { background:#fdecec; color:#c62828; }
     .att-form-actions { display:flex; justify-content:flex-end; gap:10px; margin-top:18px; }
@@ -706,6 +832,9 @@ $baseUrl = "index.php?page=attendance&q=" . urlencode($q);
         const statusSelect = document.getElementById('attendanceStatusSelect');
         if (statusSelect) {
             statusSelect.addEventListener('change', syncAttendanceEntryState);
+            document.querySelectorAll('input[name="absent_informed"]').forEach(function (radio) {
+                radio.addEventListener('change', syncAttendanceEntryState);
+            });
             syncAttendanceEntryState();
         }
     }
@@ -717,12 +846,26 @@ $baseUrl = "index.php?page=attendance&q=" . urlencode($q);
     function syncAttendanceEntryState() {
         const statusSelect = document.getElementById('attendanceStatusSelect');
         const presentWrap = document.getElementById('presentDetailsWrap');
+        const absentWrap = document.getElementById('absentDetailsWrap');
+        const absentInfoWrap = document.getElementById('absentInfoDetailsWrap');
         const topicsInput = document.getElementById('topicsTaughtInput');
         const taskInput = document.getElementById('taskGivenInput');
+        const absentReasonInput = document.getElementById('absentReasonInput');
+        const absentInformedByInput = document.getElementById('absentInformedByInput');
         if (!statusSelect || !presentWrap) return;
 
         const isPresent = statusSelect.value === 'Present';
+        const isAbsent = statusSelect.value === 'Absent';
+        const informedRadio = document.querySelector('input[name="absent_informed"]:checked');
+        const hasInformed = isAbsent && informedRadio && informedRadio.value === 'yes';
+
         presentWrap.style.display = isPresent ? 'block' : 'none';
+        if (absentWrap) {
+            absentWrap.style.display = isAbsent ? 'block' : 'none';
+        }
+        if (absentInfoWrap) {
+            absentInfoWrap.style.display = hasInformed ? 'block' : 'none';
+        }
         if (topicsInput) {
             topicsInput.required = isPresent;
             if (!isPresent) topicsInput.value = '';
@@ -730,6 +873,20 @@ $baseUrl = "index.php?page=attendance&q=" . urlencode($q);
         if (taskInput) {
             taskInput.required = isPresent;
             if (!isPresent) taskInput.value = '';
+        }
+        document.querySelectorAll('input[name="absent_informed"]').forEach(function (radio) {
+            radio.required = isAbsent;
+            if (!isAbsent) {
+                radio.checked = false;
+            }
+        });
+        if (absentReasonInput) {
+            absentReasonInput.required = hasInformed;
+            if (!hasInformed) absentReasonInput.value = '';
+        }
+        if (absentInformedByInput) {
+            absentInformedByInput.required = hasInformed;
+            if (!hasInformed) absentInformedByInput.value = '';
         }
     }
 
