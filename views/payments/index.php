@@ -93,7 +93,7 @@ $payments = $stmt->fetchAll(PDO::FETCH_ASSOC);
 /* ===============================
    DATATABLE MODERN
    =============================== */
-#paymentsTable {
+#userTable {
     border-collapse: separate;
     border-spacing: 0 8px;
     margin-top: -8px;
@@ -101,7 +101,7 @@ $payments = $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
 /* Header Styling */
-#paymentsTable thead th {
+#userTable thead th {
     background: transparent;
     font-weight: 600;
     font-size: 13px;
@@ -113,20 +113,20 @@ $payments = $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
 /* Row Styling */
-#paymentsTable tbody tr {
+#userTable tbody tr {
     background: white;
     border-radius: 16px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
     transition: all 0.2s ease;
 }
 
-#paymentsTable tbody tr:hover {
+#userTable tbody tr:hover {
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
     transform: translateY(-2px);
 }
 
 /* Cell Styling */
-#paymentsTable tbody td {
+#userTable tbody td {
     padding: 18px 12px;
     font-size: 14px;
     color: #334155;
@@ -135,20 +135,20 @@ $payments = $stmt->fetchAll(PDO::FETCH_ASSOC);
     border-bottom: 1px solid #f1f5f9;
 }
 
-#paymentsTable tbody td:first-child {
+#userTable tbody td:first-child {
     border-left: 1px solid #f1f5f9;
     border-radius: 16px 0 0 16px;
 }
 
-#paymentsTable tbody td:last-child {
+#userTable tbody td:last-child {
     border-right: 1px solid #f1f5f9;
     border-radius: 0 16px 16px 0;
 }
 
 /* Amount Styling */
-#paymentsTable tbody td:nth-child(3),
-#paymentsTable tbody td:nth-child(4),
-#paymentsTable tbody td:nth-child(5) {
+#userTable tbody td:nth-child(3),
+#userTable tbody td:nth-child(4),
+#userTable tbody td:nth-child(5) {
     font-weight: 600;
     color: #0f172a;
 }
@@ -724,13 +724,135 @@ $payments = $stmt->fetchAll(PDO::FETCH_ASSOC);
       width: 100%;
     }
   }
+
+  /* =====================================================
+CRM LAYOUT
+===================================================== */
+.crm-card{
+background:#fff;
+border-radius:14px;
+padding:20px;
+box-shadow:0 8px 20px rgba(0,0,0,.05);
+border:1px solid #f1d6e3;
+width:100%;
+max-width:100%;
+box-sizing:border-box;
+}
+
+.crm-card h3{
+margin-bottom:16px;
+}
+/* =====================================================
+CRM TABLE
+===================================================== */
+
+.crm-table{
+width:100%;
+border-collapse:collapse;
+border:1px solid #f1d6e3;
+}
+
+.crm-table th,
+.crm-table td{
+border:1px solid #f1d6e3;
+padding:10px;
+font-size:13px;
+white-space:nowrap;
+}
+
+.crm-table th{
+background:#fff0f5;
+font-weight:600;
+text-align:left;
+}
+
+
+/* =====================================================
+TABLE WRAPPER (SCROLL ON MOBILE)
+===================================================== */
+
+.crm-table-wrapper{
+width:100%;
+max-width:100%;
+overflow-x:auto;
+}
+
+
+/* =====================================================
+ACTION BUTTONS
+===================================================== */
+
+.crm-btn{
+display:inline-flex;
+align-items:center;
+justify-content:center;
+width:34px;
+height:34px;
+border-radius:8px;
+color:#fff;
+margin-right:5px;
+}
+
+.crm-edit{
+background:#e91e63;
+}
+
+.crm-delete{
+background:#dc3545;
+}
+
+
+/* =====================================================
+DATATABLE HEADER AREA
+===================================================== */
+
+.crm-table-header{
+display:flex;
+justify-content:space-between;
+align-items:center;
+margin-bottom:15px;
+flex-wrap:wrap;
+gap:10px;
+}
+
+.crm-table-footer{
+display:flex;
+justify-content:space-between;
+align-items:center;
+margin-top:15px;
+flex-wrap:wrap;
+gap:10px;
+}
+
+
+/* =====================================================
+MOBILE RESPONSIVE
+===================================================== */
+
+@media(max-width:768px){
+
+.crm-card{
+width:100%;
+max-width:100%;
+}
+
+.crm-table{
+min-width:600px;
+}
+
+.crm-table-wrapper{
+overflow-x:auto;
+}
+
+}
 </style>
 
-<div class="crm-page">
+<div class="crm-card">
 
-<h2 style="margin-bottom:20px;">Payments</h2>
+<h3>Users List</h3>
+<div class="crm-table-wrapper">
 
-<table id="paymentsTable" class="display" style="width:100%">
+<table id="userTable" class="display" style="width:100%">
 
 <thead>
 <tr>
@@ -813,6 +935,8 @@ title="Student Profile">
 </table>
 
 </div>
+</div>
+</div>
 
 <!-- MODAL -->
 
@@ -847,7 +971,7 @@ document.addEventListener("DOMContentLoaded", function(){
 
 if (window.DataTable) {
 
-new DataTable('#paymentsTable',{
+new DataTable('#userTable',{
 pageLength:10,
 responsive:true,
 order:[[6,'desc']]
