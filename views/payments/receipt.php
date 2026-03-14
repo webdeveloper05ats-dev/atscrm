@@ -308,7 +308,7 @@ if ($paymentId <= 0) {
 
     <div class="receipt-card">
       <div class="receipt-head">
-        <div class="receipt-title">Student Payment</div>
+        <div class="receipt-title">Student Payment Receipt</div>
         <div class="receipt-sub">
           Receipt No: <b><?= h($receiptNo) ?></b> &nbsp;|&nbsp;
           Payment Date: <b><?= h($payment['payment_date'] ?? '-') ?></b>
