@@ -24,6 +24,7 @@ if (!function_exists('ha')) {
 $userId = (int) ($_SESSION['user_id'] ?? 0);
 $roleId = (int) ($_SESSION['role_id'] ?? 0);
 $branchId = (int) ($_SESSION['branch_id'] ?? 0);
+$roleName = trim((string) ($_SESSION['role_name'] ?? ''));
 
 $canAllBranches = 0;
 try {
@@ -34,9 +35,14 @@ try {
     $canAllBranches = 0;
 }
 
-function fetchAttendanceStudent(PDO $pdo, int $registrationId, int $userId, int $branchId, int $canAllBranches)
+function isAttendanceReadOnlyViewer(string $roleName): bool
 {
-    $params = [$registrationId, $userId];
+    return in_array($roleName, ['Super Admin', 'Admin', 'HR', 'Front Office'], true);
+}
+
+function fetchAttendanceStudent(PDO $pdo, int $registrationId, int $userId, int $branchId, int $canAllBranches, bool $canViewAllAttendance)
+{
+    $params = [$registrationId];
     $sql = "
         SELECT
             r.id,
@@ -52,10 +58,14 @@ function fetchAttendanceStudent(PDO $pdo, int $registrationId, int $userId, int 
             r.batch_name
         FROM registrations r
         WHERE r.id = ?
-          AND r.assigned_to = ?
           AND r.reg_type = 'course'
           AND r.registration_status IN ('active','completed')
     ";
+
+    if (!$canViewAllAttendance) {
+        $sql .= " AND r.assigned_to = ?";
+        $params[] = $userId;
+    }
 
     if ($canAllBranches !== 1 && $branchId > 0) {
         $sql .= " AND r.branch_id = ?";
@@ -100,7 +110,7 @@ function resolveAttendanceStartDate(array $student): string
     return max($candidates);
 }
 
-function renderAttendanceCalendar(array $student, array $attendanceMap, string $month): string
+function renderAttendanceCalendar(array $student, array $attendanceMap, string $month, bool $readOnlyMode = false): string
 {
     $first = DateTime::createFromFormat('Y-m-d', $month . '-01');
     if (!$first) {
@@ -146,7 +156,11 @@ function renderAttendanceCalendar(array $student, array $attendanceMap, string $
         </div>
 
         <div class="att-form-note" style="margin-bottom:16px;">
-            Attendance can be marked only from <b><?= h($attendanceStartDate) ?></b> up to today.
+            <?php if ($readOnlyMode): ?>
+                View only access. Attendance is visible from <b><?= h($attendanceStartDate) ?></b> up to today.
+            <?php else: ?>
+                Attendance can be marked only from <b><?= h($attendanceStartDate) ?></b> up to today.
+            <?php endif; ?>
         </div>
 
         <div class="att-grid">
@@ -164,6 +178,7 @@ function renderAttendanceCalendar(array $student, array $attendanceMap, string $
                 $isBeforeAssignment = ($date < $attendanceStartDate);
                 $isFutureDate = isFutureAttendanceDate($date);
                 $isLockedDate = ($isBeforeAssignment || $isFutureDate);
+                $canOpenDay = !$isLockedDate;
                 $cellClass = 'att-status-empty';
                 if ($status === 'present') {
                     $cellClass = 'att-status-present';
@@ -176,12 +191,15 @@ function renderAttendanceCalendar(array $student, array $attendanceMap, string $
                 $lockTitle = $isBeforeAssignment
                     ? 'Dates before staff assignment are locked'
                     : 'Future dates are locked';
+                if ($readOnlyMode && !$isLockedDate) {
+                    $lockTitle = 'View attendance details';
+                }
                 ?>
                 <button type="button"
                     class="att-grid-cell att-grid-day <?= h($cellClass) ?> <?= $date === $today ? 'att-day-today' : '' ?>"
-                    <?= $isLockedDate ? 'disabled title="' . h($lockTitle) . '"' : "onclick=\"openAttendanceEntry(" . (int) $student['id'] . ", '" . h($student['enquiry_snapshot_name']) . "', '" . h($date) . "')\"" ?>>
+                    <?= !$canOpenDay ? 'disabled title="' . h($lockTitle) . '"' : "onclick=\"openAttendanceEntry(" . (int) $student['id'] . ", '" . h($student['enquiry_snapshot_name']) . "', '" . h($date) . "', " . ($readOnlyMode ? 'true' : 'false') . ")\" title=\"" . h($lockTitle) . "\"" ?>>
                     <span class="att-day-no"><?= (int) $day ?></span>
-                    <span class="att-day-text"><?= $isLockedDate ? 'Locked' : ($status === 'present' ? 'Present' : ($status === 'absent' ? 'Absent' : 'Mark')) ?></span>
+                    <span class="att-day-text"><?= $isLockedDate ? 'Locked' : ($status === 'present' ? 'Present' : ($status === 'absent' ? 'Absent' : ($readOnlyMode ? 'View' : 'Mark'))) ?></span>
                 </button>
             <?php endfor; ?>
         </div>
@@ -191,6 +209,11 @@ function renderAttendanceCalendar(array $student, array $attendanceMap, string $
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax_save_attendance'])) {
+    $readOnlyViewer = isAttendanceReadOnlyViewer($roleName);
+    if ($readOnlyViewer) {
+        responseJson('error', 'You have view only access for attendance.');
+    }
+
     $token = $_POST['csrf_token'] ?? '';
     if (!verifyCSRF($token)) {
         responseJson('error', 'Invalid CSRF token.');
@@ -205,7 +228,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax_save_attendance'
     $absentReason = trim((string) ($_POST['absent_reason'] ?? ''));
     $absentInformedBy = trim((string) ($_POST['absent_informed_by'] ?? ''));
 
-    $student = fetchAttendanceStudent($pdo, $registrationId, $userId, $branchId, $canAllBranches);
+    $student = fetchAttendanceStudent($pdo, $registrationId, $userId, $branchId, $canAllBranches, false);
     if (!$student) {
         responseJson('error', 'Student not found or access denied.');
     }
@@ -316,6 +339,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax_save_attendance'
 }
 
 $isAjax = isset($_GET['ajax']) && (int) $_GET['ajax'] === 1;
+$attendanceReadOnlyViewer = isAttendanceReadOnlyViewer($roleName);
 
 if ($isAjax) {
     $action = trim((string) ($_GET['action'] ?? ''));
@@ -323,7 +347,7 @@ if ($isAjax) {
     if ($action === 'calendar') {
         $registrationId = (int) ($_GET['registration_id'] ?? 0);
         $month = trim((string) ($_GET['month'] ?? date('Y-m')));
-        $student = fetchAttendanceStudent($pdo, $registrationId, $userId, $branchId, $canAllBranches);
+        $student = fetchAttendanceStudent($pdo, $registrationId, $userId, $branchId, $canAllBranches, $attendanceReadOnlyViewer);
         if (!$student) {
             echo "<div class='att-empty-note'>Student not found or access denied.</div>";
             exit;
@@ -349,14 +373,14 @@ if ($isAjax) {
         } catch (Exception $e) {
         }
 
-        echo renderAttendanceCalendar($student, $attendanceMap, $month);
+        echo renderAttendanceCalendar($student, $attendanceMap, $month, $attendanceReadOnlyViewer);
         exit;
     }
 
     if ($action === 'entry_form') {
         $registrationId = (int) ($_GET['registration_id'] ?? 0);
         $date = trim((string) ($_GET['date'] ?? ''));
-        $student = fetchAttendanceStudent($pdo, $registrationId, $userId, $branchId, $canAllBranches);
+        $student = fetchAttendanceStudent($pdo, $registrationId, $userId, $branchId, $canAllBranches, $attendanceReadOnlyViewer);
         if (!$student) {
             echo "<div class='att-empty-note'>Student not found or access denied.</div>";
             exit;
@@ -394,6 +418,54 @@ if ($isAjax) {
         $isPresent = $hasRecord && strtolower((string) $record['status']) === 'present';
         $isAbsent = $hasRecord && strtolower((string) $record['status']) === 'absent';
         ?>
+        <?php if ($attendanceReadOnlyViewer): ?>
+            <div class="att-form-note">View only access. Attendance cannot be edited from this account.</div>
+            <div class="att-entry-grid">
+                <div class="att-info-box"><b>Student</b><span><?= h($student['enquiry_snapshot_name']) ?></span></div>
+                <div class="att-info-box"><b>Date</b><span><?= h($date) ?></span></div>
+                <div class="att-info-box att-info-box-full"><b>Program</b><span><?= h($student['program_name']) ?></span></div>
+            </div>
+
+            <?php if (!$hasRecord): ?>
+                <div class="att-empty-note">No attendance recorded for this date.</div>
+            <?php elseif ($isPresent): ?>
+                <div class="att-form-row">
+                    <label class="att-form-label">Attendance</label>
+                    <input type="text" class="att-form-control" value="Present" readonly>
+                </div>
+                <div class="att-form-row">
+                    <label class="att-form-label">Topics Taught</label>
+                    <textarea class="att-form-control" rows="4" readonly><?= h($record['topics_taught'] ?? '') ?></textarea>
+                </div>
+                <div class="att-form-row">
+                    <label class="att-form-label">Task Given</label>
+                    <textarea class="att-form-control" rows="4" readonly><?= h($record['task_given'] ?? '') ?></textarea>
+                </div>
+            <?php else: ?>
+                <div class="att-form-row">
+                    <label class="att-form-label">Attendance</label>
+                    <input type="text" class="att-form-control" value="Absent" readonly>
+                </div>
+                <div class="att-form-row">
+                    <label class="att-form-label">Has Informed?</label>
+                    <input type="text" class="att-form-control" value="<?= h(strtolower((string) ($record['absent_informed'] ?? '')) === 'yes' ? 'Yes' : 'No') ?>" readonly>
+                </div>
+                <?php if (strtolower((string) ($record['absent_informed'] ?? '')) === 'yes'): ?>
+                    <div class="att-form-row">
+                        <label class="att-form-label">Reason</label>
+                        <textarea class="att-form-control" rows="3" readonly><?= h($record['absent_reason'] ?? '') ?></textarea>
+                    </div>
+                    <div class="att-form-row">
+                        <label class="att-form-label">Person Who Informed</label>
+                        <input type="text" class="att-form-control" value="<?= h($record['absent_informed_by'] ?? '') ?>" readonly>
+                    </div>
+                <?php endif; ?>
+            <?php endif; ?>
+
+            <div class="att-form-actions">
+                <button type="button" class="btn" style="background:#f3f4f6;" onclick="closeAttendanceEntry()">Close</button>
+            </div>
+        <?php else: ?>
         <form id="attendanceEntryForm" method="POST">
             <input type="hidden" name="csrf_token" value="<?= h(generateCSRF()) ?>">
             <input type="hidden" name="ajax_save_attendance" value="1">
@@ -508,6 +580,7 @@ if ($isAjax) {
                 </div>
             <?php endif; ?>
         </form>
+        <?php endif; ?>
         <?php
         exit;
     }
@@ -524,8 +597,13 @@ if ($page < 1) {
 $perPage = 12;
 $offset = ($page - 1) * $perPage;
 
-$where = ["r.assigned_to = ?", "r.reg_type = 'course'", "r.registration_status IN ('active','completed')"];
-$params = [$userId];
+$where = ["r.reg_type = 'course'", "r.registration_status IN ('active','completed')"];
+$params = [];
+
+if (!$attendanceReadOnlyViewer) {
+    $where[] = "r.assigned_to = ?";
+    $params[] = $userId;
+}
 
 if ($canAllBranches !== 1 && $branchId > 0) {
     $where[] = "r.branch_id = ?";
@@ -612,7 +690,7 @@ $baseUrl = "index.php?page=attendance&q=" . urlencode($q);
 </div>
 
 <div class="card" style="margin-top:16px;">
-    <div class="card-header">Assigned Course Students (<?= (int) $totalRows ?>)</div>
+    <div class="card-header"><?= $attendanceReadOnlyViewer ? 'All Course Students Attendance (View Only) (' . (int) $totalRows . ')' : 'Assigned Course Students (' . (int) $totalRows . ')' ?></div>
     <div class="att-table-wrap">
         <table class="att-table">
             <thead>
