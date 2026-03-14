@@ -1580,9 +1580,9 @@ width:100%;
 }
 
 .dataTables_wrapper .dataTables_length select {
-  padding: 8px 10px;
+  
   border: 1px solid #000000;
-  border-radius: var(--radius-md);
+  border-radius: 50px;
   background: #fff;
   outline: none;
 }
