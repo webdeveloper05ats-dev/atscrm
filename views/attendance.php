@@ -110,6 +110,26 @@ function resolveAttendanceStartDate(array $student): string
     return max($candidates);
 }
 
+function calculateAttendanceTotalDays(string $startDate): int
+{
+    if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $startDate)) {
+        return 0;
+    }
+
+    $today = date('Y-m-d');
+    if ($startDate > $today) {
+        return 0;
+    }
+
+    try {
+        $start = new DateTime($startDate);
+        $end = new DateTime($today);
+        return ((int) $start->diff($end)->days) + 1;
+    } catch (Exception $e) {
+        return 0;
+    }
+}
+
 function renderAttendanceCalendar(array $student, array $attendanceMap, string $month, bool $readOnlyMode = false): string
 {
     $first = DateTime::createFromFormat('Y-m-d', $month . '-01');
@@ -649,6 +669,8 @@ try {
             r.id,
             r.registration_no,
             r.joined_on,
+            r.created_at,
+            r.updated_at,
             r.enquiry_snapshot_name,
             r.enquiry_snapshot_phone,
             r.enquiry_snapshot_email,
@@ -665,6 +687,37 @@ try {
     $rows = $st->fetchAll(PDO::FETCH_ASSOC);
 } catch (Exception $e) {
     $rows = [];
+}
+
+$attendanceSummaryMap = [];
+if (!empty($rows)) {
+    $registrationIds = array_values(array_filter(array_map(static function ($row) {
+        return (int) ($row['id'] ?? 0);
+    }, $rows)));
+
+    if (!empty($registrationIds)) {
+        try {
+            $placeholders = implode(',', array_fill(0, count($registrationIds), '?'));
+            $st = $pdo->prepare("
+                SELECT
+                    registration_id,
+                    SUM(CASE WHEN status = 'Present' THEN 1 ELSE 0 END) AS present_days,
+                    SUM(CASE WHEN status = 'Absent' THEN 1 ELSE 0 END) AS absent_days
+                FROM attendance
+                WHERE registration_id IN ($placeholders)
+                GROUP BY registration_id
+            ");
+            $st->execute($registrationIds);
+            foreach ($st->fetchAll(PDO::FETCH_ASSOC) as $summaryRow) {
+                $attendanceSummaryMap[(int) $summaryRow['registration_id']] = [
+                    'present_days' => (int) ($summaryRow['present_days'] ?? 0),
+                    'absent_days' => (int) ($summaryRow['absent_days'] ?? 0),
+                ];
+            }
+        } catch (Exception $e) {
+            $attendanceSummaryMap = [];
+        }
+    }
 }
 
 $baseUrl = "index.php?page=attendance&q=" . urlencode($q);
@@ -699,6 +752,9 @@ $baseUrl = "index.php?page=attendance&q=" . urlencode($q);
                     <th>Registration</th>
                     <th>Student</th>
                     <th>Program</th>
+                    <th>Present Days</th>
+                    <th>Absent Days</th>
+                    <th>Total Days</th>
                     <th>Status</th>
                     <th class="text-center">Action</th>
                 </tr>
@@ -706,11 +762,16 @@ $baseUrl = "index.php?page=attendance&q=" . urlencode($q);
             <tbody>
                 <?php if (!$rows): ?>
                     <tr>
-                        <td colspan="6" style="text-align:center;">No assigned course students found.</td>
+                        <td colspan="9" style="text-align:center;">No assigned course students found.</td>
                     </tr>
                 <?php endif; ?>
 
                 <?php foreach ($rows as $r): ?>
+                    <?php
+                    $summary = $attendanceSummaryMap[(int) $r['id']] ?? ['present_days' => 0, 'absent_days' => 0];
+                    $attendanceStartDate = resolveAttendanceStartDate($r);
+                    $totalDays = calculateAttendanceTotalDays($attendanceStartDate);
+                    ?>
                     <tr>
                         <td><?= (int) $r['id'] ?></td>
                         <td>
@@ -727,6 +788,12 @@ $baseUrl = "index.php?page=attendance&q=" . urlencode($q);
                         <td>
                             <div><?= h($r['program_name']) ?></div>
                             <div class="att-sub"><?= h($r['batch_name']) ?></div>
+                        </td>
+                        <td><span class="att-summary-chip att-summary-present"><?= (int) $summary['present_days'] ?></span></td>
+                        <td><span class="att-summary-chip att-summary-absent"><?= (int) $summary['absent_days'] ?></span></td>
+                        <td>
+                            <div class="att-primary"><?= (int) $totalDays ?></div>
+                            <div class="att-sub">From <?= h($attendanceStartDate) ?></div>
                         </td>
                         <td><span class="att-reg-badge"><?= h(ucfirst((string) $r['registration_status'])) ?></span></td>
                         <td class="text-center">
@@ -782,6 +849,9 @@ $baseUrl = "index.php?page=attendance&q=" . urlencode($q);
     .att-primary { font-weight:700; color:#111827; }
     .att-sub { font-size:12px; color:#6b7280; }
     .att-reg-badge { font-weight:700; color:#2e7d32; }
+    .att-summary-chip { display:inline-flex; align-items:center; justify-content:center; min-width:44px; padding:6px 10px; border-radius:999px; font-weight:800; font-size:12px; }
+    .att-summary-present { background:#eaf7ee; color:#2e7d32; }
+    .att-summary-absent { background:#fdecec; color:#c62828; }
     .att-icon-btn { width:38px; height:38px; border-radius:10px; border:none; background:#e8f4fd; color:#1565c0; cursor:pointer; }
     .att-pager { display:flex; justify-content:center; align-items:center; gap:8px; padding:16px; }
     .att-pager a { width:36px; height:36px; display:flex; align-items:center; justify-content:center; border-radius:8px; border:1px solid #ddd; text-decoration:none; color:#333; }
