@@ -1,3 +1,64 @@
+<style>
+    .crm-followup-dashboard{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+gap:18px;
+margin-bottom:25px;
+}
+
+.crm-followup-card{
+display:flex;
+align-items:center;
+gap:14px;
+padding:18px;
+background:#fff;
+border-radius:12px;
+border:1px solid #f1d6e3;
+box-shadow:0 8px 20px rgba(0,0,0,.05);
+cursor:pointer;
+transition:0.25s;
+}
+
+.crm-followup-card:hover{
+transform:translateY(-4px);
+box-shadow:0 12px 30px rgba(0,0,0,.08);
+}
+
+.crm-followup-card .icon{
+width:46px;
+height:46px;
+border-radius:10px;
+display:flex;
+align-items:center;
+justify-content:center;
+color:#fff;
+font-size:18px;
+}
+
+.crm-followup-card.today .icon{
+background:#e91e63;
+}
+
+.crm-followup-card.missed .icon{
+background:#ff5722;
+}
+
+.crm-followup-card.upcoming .icon{
+background:#3f51b5;
+}
+
+.crm-followup-card .info h3{
+margin:0;
+font-size:22px;
+font-weight:700;
+}
+
+.crm-followup-card .info p{
+margin:0;
+font-size:13px;
+color:#777;
+}
+    </style>
 <?php
 // =======================================================
 // Front Office Dashboard
@@ -23,6 +84,61 @@ USER DETAILS
 $userId = (int)($_SESSION['user_id'] ?? 0);
 $userName = $_SESSION['user_name'] ?? 'Front Office';
 $branchName = $_SESSION['branch_name'] ?? 'Branch';
+
+
+
+// ==============================
+// FOLLOWUP DASHBOARD COUNTS
+// ==============================
+
+$todayFollowups = 0;
+$missedFollowups = 0;
+$upcomingFollowups = 0;
+
+try {
+
+    // Today followups
+    $st = $pdo->prepare("
+        SELECT COUNT(*)
+        FROM enquiry_followups
+        WHERE followup_date = CURDATE()
+        AND status = 'pending'
+        AND created_by = ?
+    ");
+    $st->execute([$userId]);
+    $todayFollowups = (int)$st->fetchColumn();
+
+
+    // Missed followups
+    $st = $pdo->prepare("
+        SELECT COUNT(*)
+        FROM enquiry_followups
+        WHERE followup_date < CURDATE()
+        AND status = 'pending'
+        AND created_by = ?
+    ");
+    $st->execute([$userId]);
+    $missedFollowups = (int)$st->fetchColumn();
+
+
+    // Upcoming followups
+    $st = $pdo->prepare("
+        SELECT COUNT(*)
+        FROM enquiry_followups
+        WHERE followup_date > CURDATE()
+        AND status = 'pending'
+        AND created_by = ?
+    ");
+    $st->execute([$userId]);
+    $upcomingFollowups = (int)$st->fetchColumn();
+
+} catch(Exception $e) {
+
+    $todayFollowups = 0;
+    $missedFollowups = 0;
+    $upcomingFollowups = 0;
+
+}
 
 
 /* ======================================================
@@ -285,6 +401,55 @@ You are working under
 </div>
 
 
+<div class="crm-followup-dashboard">
+
+<div class="crm-followup-card today"
+onclick="location.href='index.php?page=enquiries/followups&tab=today'">
+
+<div class="icon">
+<i class="fas fa-bell"></i>
+</div>
+
+<div class="info">
+<h3><?= $todayFollowups ?></h3>
+<p>Today Followups</p>
+</div>
+
+</div>
+
+
+<div class="crm-followup-card missed"
+onclick="location.href='index.php?page=enquiries/followups&tab=missed'">
+
+<div class="icon">
+<i class="fas fa-exclamation-triangle"></i>
+</div>
+
+<div class="info">
+<h3><?= $missedFollowups ?></h3>
+<p>Missed Followups</p>
+</div>
+
+</div>
+
+
+<div class="crm-followup-card upcoming"
+onclick="location.href='index.php?page=enquiries/followups&tab=pending'">
+
+<div class="icon">
+<i class="fas fa-calendar-alt"></i>
+</div>
+
+<div class="info">
+<h3><?= $upcomingFollowups ?></h3>
+<p>Upcoming Followups</p>
+</div>
+
+</div>
+
+</div>
+
+
 
 <!-- ======================================
 STATS CARDS
@@ -338,6 +503,8 @@ Missed: <?= $missedLeads ?>
 </div>
 
 </div>
+
+
 
 </div>
 
