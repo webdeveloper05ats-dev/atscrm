@@ -252,19 +252,19 @@ Swal.fire({
 <div class="card">
   <div class="card-header">Filters</div>
 
-  <form method="GET" action="index.php" class="filter-form">
+  <form method="GET" action="index.php">
     <input type="hidden" name="page" value="enquiries/list">
 
-    <div class="filter-grid">
+    <div class="filter-row">
 
-      <div class="f-group">
+      <div>
         <label>Search</label>
         <input type="text" name="q"
                value="<?= h($q) ?>"
                placeholder="Name / Phone / Email / Enquiry No">
       </div>
 
-      <div class="f-group">
+      <div>
         <label>Status</label>
         <select name="status">
           <option value="">All</option>
@@ -275,7 +275,7 @@ Swal.fire({
         </select>
       </div>
 
-      <div class="f-group">
+      <div>
         <label>Handled By</label>
         <select name="handled_by">
           <option value="">All</option>
@@ -288,28 +288,28 @@ Swal.fire({
         </select>
       </div>
 
-      <div class="f-group">
+      <div>
         <label>Date From</label>
         <input type="date" name="from" value="<?= h($from) ?>">
       </div>
 
-      <div class="f-group">
+      <div>
         <label>Date To</label>
         <input type="date" name="to" value="<?= h($to) ?>">
       </div>
 
-      <div class="f-actions">
-        <button class="btn btn-primary" type="submit">Apply</button>
+      <div class="filter-actions">
+        <!-- Apply button with icon -->
+    <button class="btn-icon" title="Apply filters">
+        <i class="fas fa-filter"></i>
+    </button>
 
-        <a class="btn-light"
-           href="index.php?page=enquiries/list">
-           Reset
-        </a>
+       <!-- Reset button with icon -->
+    <a href="index.php?page=leads/list" class="btn-icon" title="Reset filters">
+        <i class="fas fa-undo-alt"></i>
+    </a>
 
-        <a class="btn btn-primary"
-           href="index.php?page=enquiries/add">
-           + Add
-        </a>
+        
       </div>
 
     </div>
@@ -317,14 +317,17 @@ Swal.fire({
 </div>
 
 <div class="card" style="margin-top:16px;">
-  <div class="card-header">
-    Results (<?= (int)$totalRows ?>)
-  </div>
+  <div class="card" style="margin-top:16px;">
 
-  <div class="table-responsive" style="padding:14px;">
-    <div class="modern-table-wrapper">
+<div class="card-header">Enquiries (<?=$totalRows?>)</div>
 
-<table class="modern-table">
+<div class="crm-card">
+    <h3> <i class="fas fa-list" style="margin-right: 8px;"></i>
+          Enquiry List</h3>
+           <div class="crm-table-wrapper">
+
+<table id="usersTable" class="crm-table">
+
     <thead>
         <tr>
             <th class="col-id">ID</th>
@@ -378,7 +381,7 @@ Swal.fire({
             <td class="text-center action-cell">
                 <!-- ✅ EDIT LINK IS FINE -->
                <a href="index.php?page=registrations/convert&reg_id=<?= (int)$r['id'] ?>"
-   class="icon-btn edit-btn" title="Edit Registration">
+   class="btn-icon edit" title="Edit Registration">
     <i class="fas fa-pen"></i>
 </a>
 
@@ -391,7 +394,7 @@ Swal.fire({
                     <input type="hidden" name="delete_enquiry" value="1">
 
                     <button type="submit"
-                            class="icon-btn delete-btn"
+                            class="btn-icon delete"
                             title="Delete">
                         <i class="fas fa-trash"></i>
                     </button>
@@ -404,7 +407,9 @@ Swal.fire({
 
     </tbody>
 </table>
-
+        </div>
+        </div>
+        </div>
 </div>
 
     <!-- Pagination -->
@@ -432,136 +437,667 @@ Swal.fire({
 </div>
 
 <style>
-.action-btn { display:inline-flex; align-items:center; justify-content:center; gap:6px; padding:6px 10px; border-radius:10px; text-decoration:none; }
-.btn-edit { background: var(--primary); color:#fff; }
-.btn-edit:hover { background: var(--primary-dark); color:#fff; }
-.wbtn { padding:10px 14px; border-radius:12px; border:1px solid #e5e7eb; background:#fff; cursor:pointer; }
-.wbtn:hover { box-shadow: 0 8px 22px rgba(0,0,0,.06); }
+/* Enhanced UI for Lead Management - Maintains existing class names */
 
-/* ===== Compact Filter UI ===== */
-.filter-form { padding:16px; }
-.filter-grid {
-  display:grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap:16px;
-  align-items:end;
+:root {
+  --primary: #e91e63;
+  --primary-light: #f8bbd0;
+  --primary-dark: #c2185b;
+  --secondary: #6c757d;
+  --success: #28a745;
+  --danger: #dc3545;
+  --warning: #ffc107;
+  --white: #ffffff;
+  --gray-100: #f8f9fa;
+  --gray-200: #e9ecef;
+  --gray-300: #dee2e6;
+  --gray-400: #ced4da;
+  --gray-500: #adb5bd;
+  --gray-600: #6c757d;
+  --gray-700: #495057;
+  --gray-800: #343a40;
+  --shadow-sm: 0 2px 4px rgba(0,0,0,0.05);
+  --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
+  --shadow-lg: 0 10px 15px rgba(0,0,0,0.1);
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --transition: all 0.2s ease;
 }
-.f-group label {
-  font-weight:600;
-  font-size:13px;
-  margin-bottom:6px;
-  display:block;
-  color: var(--text-dark);
-}
-.f-group input, .f-group select {
-  width:100%;
-  padding:10px 12px;
-  border-radius:10px;
-  border:1px solid #e5e7eb;
-  background:#fff;
-  transition:all .2s ease;
-}
-.f-group input:focus, .f-group select:focus {
-  border-color: rgba(233,30,99,.5);
-  box-shadow: 0 0 0 3px rgba(233,30,99,.12);
-}
-.f-actions {
-  display:flex;
-  gap:10px;
-  align-items:center;
-  justify-content:flex-end;
-}
-.btn-light {
-  padding:10px 14px;
-  border-radius:10px;
-  border:1px solid #e5e7eb;
-  text-decoration:none;
-  background:#fff;
-  color:#444;
-}
-.btn-light:hover { background:#f8f9fa; }
 
-/* ==============================
-   PREMIUM SaaS TABLE UPGRADE
-================================ */
-.modern-table-wrapper{
-  background:#fff;
-  border-radius:16px;
-  box-shadow:0 10px 35px rgba(0,0,0,.05);
-  border:1px solid rgba(0,0,0,.04);
-  overflow:hidden;
-}
-.modern-table{
-  width:100%;
-  border-collapse:separate;
-  border-spacing:0;
-  font-size:14px;
-}
-.modern-table thead{ background:#f7f8fb; }
-.modern-table th{
-  padding:14px 16px;
-  font-weight:800;
-  font-size:13px;
-  letter-spacing:.2px;
-  color:#333;
-  border-bottom:1px solid #eee;
-  white-space:nowrap;
-}
-.modern-table td{
-  padding:14px 16px;
-  border-bottom:1px solid #f2f2f2;
-  vertical-align:middle;
-}
-.modern-table tbody tr{
-  transition:all .15s ease;
-  border-left:4px solid transparent;
-}
-.modern-table tbody tr:hover{
-  background:#fcfcff;
-  border-left:4px solid var(--primary);
-}
-.primary-text{ font-weight:800; color:#111; }
-.secondary-text{ font-size:12px; color:#888; margin-top:4px; }
-.col-id{ width:70px; text-align:center; font-weight:800; color:#555; }
-.text-center{ text-align:center; }
-.action-cell{ white-space:nowrap; }
 
-/* Action buttons */
-.icon-btn{
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  width:36px;
-  height:36px;
-  border-radius:10px;
-  border:1px solid rgba(0,0,0,.06);
-  cursor:pointer;
-  text-decoration:none;
-  transition:all .15s ease;
-  background:#fff;
+
+/* Force all icons to be visible */
+.filter-actions .btn-icon {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    background: #e91e63 !important;  /* Pink background */
+    color: white !important;  /* White icons */
+    border-radius: 8px;
+    margin: 0 4px;
+    text-decoration: none;
+    font-size: 16px;
 }
-.icon-btn:hover{
-  box-shadow:0 10px 22px rgba(0,0,0,.08);
-  transform:translateY(-1px);
+
+/* Reset button different color */
+.filter-actions .btn-icon[title="Reset filters"] {
+    background: #6c757d !important;
 }
-.edit-btn{
-  background:rgba(233,30,99,.10);
-  color:var(--primary);
-  border-color:rgba(233,30,99,.20);
+
+/* Make sure Font Awesome icons are visible */
+.filter-actions .btn-icon i {
+    font-family: "Font Awesome 6 Free" !important;
+    font-weight: 900 !important;
+    font-style: normal !important;
+    color: white !important;
+    font-size: 16px !important;
+    display: inline-block !important;
 }
-.edit-btn:hover{
-  background:var(--primary);
-  color:#fff;
+
+/* Tooltip styling */
+.filter-actions .btn-icon {
+    position: relative;
 }
-.delete-btn{
-  background:#f7f7f7;
-  color:#666;
+
+.filter-actions .btn-icon:hover::before {
+    content: attr(title);
+    position: absolute;
+    bottom: 120%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #333;
+    color: white;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    white-space: nowrap;
+    z-index: 1000;
 }
-.delete-btn:hover{
-  background:#e53935;
-  color:#fff;
-  border-color:#e53935;
+
+/* Card Styling */
+.card {
+  background: var(--white);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--gray-200);
+  margin-bottom: 24px;
+  overflow: hidden;
 }
+
+.card-header {
+  background: var(--gray-100);
+  padding: 16px 20px;
+  font-weight: 600;
+  color: var(--gray-700);
+  border-bottom: 1px solid var(--gray-200);
+  font-size: 16px;
+  letter-spacing: 0.3px;
+}
+
+/* Filter Section Enhancement */
+.filter-row {
+  display: flex;
+ /* align-items: flex-end;*/
+  flex-wrap: wrap;
+  
+}
+
+.filter-row > div {
+  flex: 1 1 auto;
+  min-width: 180px;
+}
+
+.filter-row label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--gray-600);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.filter-row input,
+.filter-row select {
+  width:75%;
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--gray-300);
+  background: var(--white);
+  font-size: 14px;
+  transition: var(--transition);
+}
+
+.filter-row input:hover,
+.filter-row select:hover {
+  border-color: var(--primary-light);
+}
+
+.filter-row input:focus,
+.filter-row select:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(233, 30, 99, 0.1);
+}
+
+/* Filter Actions */
+.filter-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.filter-actions .btn,
+.filter-actions .btn-primary {
+  background: var(--primary);
+  color: var(--white);
+  border: none;
+  padding: 10px 20px;
+  border-radius: var(--radius-md);
+  font-weight: 500;
+  font-size: 14px;
+  cursor: pointer;
+  transition: var(--transition);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.filter-actions .btn-primary:hover {
+  background: var(--primary-dark);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.filter-actions .btn-reset {
+  background: transparent;
+  color: var(--gray-600);
+  border: 1px solid var(--gray-300);
+  padding: 10px 20px;
+  border-radius: var(--radius-md);
+  font-weight: 500;
+  font-size: 14px;
+  cursor: pointer;
+  transition: var(--transition);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.filter-actions .btn-reset:hover {
+  background: var(--gray-100);
+  color: var(--gray-800);
+  border-color: var(--gray-400);
+}
+
+/* CRM Card */
+.crm-card {
+  background: var(--white);
+  border-radius: 0;
+  padding: 20px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.crm-card h3 {
+  margin: 0 0 20px 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--gray-800);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.crm-card h3 i {
+  color: var(--primary);
+}
+
+/* Table Wrapper */
+.crm-table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--gray-200);
+}
+
+/* DataTable Customization */
+.dataTables_wrapper {
+  padding: 0;
+}
+
+.dataTables_wrapper .dataTables_length,
+.dataTables_wrapper .dataTables_filter {
+  padding: 16px 20px;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--gray-50);
+  border-bottom: 1px solid var(--gray-200);
+}
+
+.dataTables_wrapper .dataTables_length {
+  float: left;
+}
+
+.dataTables_wrapper .dataTables_filter {
+  float: right;
+}
+
+.dataTables_wrapper .dataTables_length label,
+.dataTables_wrapper .dataTables_filter label {
+  font-size: 14px;
+  color: var(--gray-600);
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+}
+
+.dataTables_wrapper .dataTables_length select {
+  width: auto;
+  padding: 8px 12px;
+  border: 1px solid var(--gray-300);
+  border-radius: var(--radius-sm);
+  background: var(--white);
+  font-size: 13px;
+  cursor: pointer;
+  margin: 0 4px;
+}
+
+.dataTables_wrapper .dataTables_filter input {
+  width: 260px !important;
+  padding: 8px 14px;
+  border: 1px solid var(--gray-300);
+  border-radius: 20px;
+  font-size: 13px;
+  transition: var(--transition);
+  background: var(--white);
+}
+
+.dataTables_wrapper .dataTables_filter input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(233, 30, 99, 0.1);
+  outline: none;
+  width: 300px !important;
+}
+
+/* Export Button */
+.dt-buttons {
+  float: left;
+  padding: 16px 20px;
+  background: var(--gray-50);
+  border-bottom: 1px solid var(--gray-200);
+}
+
+.crm-export-btn {
+  background: var(--success) !important;
+  color: var(--white) !important;
+  border: none !important;
+  padding: 8px 16px !important;
+  border-radius: var(--radius-md) !important;
+  font-weight: 500 !important;
+  font-size: 13px !important;
+  transition: var(--transition) !important;
+  box-shadow: none !important;
+}
+
+.crm-export-btn:hover {
+  background: #218838 !important;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm) !important;
+}
+
+/* Table Styles */
+.crm-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--white);
+}
+
+.crm-table th {
+  background: var(--gray-50);
+  padding: 16px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--gray-700);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 2px solid var(--gray-200);
+  white-space: nowrap;
+}
+
+.crm-table td {
+  padding: 16px;
+  font-size: 14px;
+  color: var(--gray-700);
+  border-bottom: 1px solid var(--gray-200);
+  vertical-align: middle;
+}
+
+.crm-table tbody tr:hover td {
+  background: var(--gray-50);
+}
+
+/* Lead Name */
+.lead-name {
+  font-weight: 600;
+  color: var(--gray-800);
+  margin-bottom: 4px;
+}
+
+.lead-sub {
+  font-size: 12px;
+  color: var(--gray-500);
+}
+
+/* Status Badge Enhancement */
+td:contains("new") .badge,
+td .badge[style*="2196f3"] {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-weight: 500;
+  font-size: 12px;
+  background: #e3f2fd !important;
+  color: #1976d2 !important;
+}
+
+td:contains("contacted") .badge,
+td .badge[style*="ff9800"] {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-weight: 500;
+  font-size: 12px;
+  background: #fff3e0 !important;
+  color: #f57c00 !important;
+}
+
+td:contains("qualified") .badge,
+td .badge[style*="9c27b0"] {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-weight: 500;
+  font-size: 12px;
+  background: #f3e5f5 !important;
+  color: #7b1fa2 !important;
+}
+
+td:contains("converted") .badge,
+td .badge[style*="2e7d32"] {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-weight: 500;
+  font-size: 12px;
+  background: #e8f5e8 !important;
+  color: #2e7d32 !important;
+}
+
+td:contains("closed") .badge,
+td .badge[style*="607d8b"] {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-weight: 500;
+  font-size: 12px;
+  background: #eceff1 !important;
+  color: #546e7a !important;
+}
+
+/* Action Icons */
+.btn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-sm);
+  color: var(--white);
+  margin: 0 3px;
+  text-decoration: none;
+  transition: var(--transition);
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.btn-icon.edit {
+  background: var(--primary);
+}
+
+.btn-icon.edit:hover {
+  background: var(--primary-dark);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-sm);
+}
+
+.btn-icon.convert {
+  background: var(--warning);
+  color: var(--gray-800);
+}
+
+.btn-icon.convert:hover {
+  background: #e0a800;
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-sm);
+}
+
+.btn-icon.done {
+  background: var(--success);
+  cursor: default;
+  opacity: 0.8;
+}
+
+.btn-icon.delete {
+  background: var(--danger);
+}
+
+.btn-icon.delete:hover {
+  background: #c82333;
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Action Column */
+.action-col {
+  white-space: nowrap;
+  text-align: center;
+}
+
+/* Pagination Enhancement */
+.dataTables_wrapper .dataTables_paginate {
+  padding: 16px 20px;
+  background: var(--gray-50);
+  border-top: 1px solid var(--gray-200);
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button {
+  border: 1px solid var(--gray-300) !important;
+  background: var(--white) !important;
+  border-radius: var(--radius-sm) !important;
+  color: var(--gray-600) !important;
+  padding: 8px 14px !important;
+  margin: 0 2px !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  transition: var(--transition) !important;
+  cursor: pointer !important;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button.current {
+  background: var(--primary) !important;
+  color: var(--white) !important;
+  border-color: var(--primary) !important;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+  background: var(--gray-100) !important;
+  color: var(--primary-dark) !important;
+  border-color: var(--primary-light) !important;
+  transform: translateY(-1px);
+}
+
+/* Info Text */
+.dataTables_wrapper .dataTables_info {
+  padding: 16px 20px;
+  background: var(--gray-50);
+  border-top: 1px solid var(--gray-200);
+  font-size: 13px;
+  color: var(--gray-600);
+  float: left;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .filter-row {
+    flex-direction: column;
+    gap: 16px;
+  }
+  
+  .filter-row > div {
+    width: 100%;
+  }
+  
+  .filter-actions {
+    width: 100%;
+    justify-content: stretch;
+  }
+  
+  .filter-actions .btn,
+  .filter-actions .btn-primary,
+  .filter-actions .btn-reset {
+    flex: 1;
+    text-align: center;
+    justify-content: center;
+  }
+  
+  .dataTables_wrapper .dataTables_length,
+  .dataTables_wrapper .dataTables_filter {
+    float: none;
+    width: 100%;
+    padding: 12px 16px;
+  }
+  
+  .dataTables_wrapper .dataTables_filter input {
+    width: 100% !important;
+  }
+  
+  .dataTables_wrapper .dataTables_filter input:focus {
+    width: 100% !important;
+  }
+  
+  .dt-buttons {
+    float: none;
+    width: 100%;
+    text-align: center;
+  }
+  
+  .crm-export-btn {
+    width: 100% !important;
+  }
+  
+  .dataTables_wrapper .dataTables_paginate {
+    flex-wrap: wrap;
+  }
+  
+  .dataTables_wrapper .dataTables_paginate .paginate_button {
+    padding: 6px 10px !important;
+  }
+}
+
+/* Animation for delete button */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-2px); }
+  75% { transform: translateX(2px); }
+}
+
+.btn-icon.delete:hover {
+  animation: shake 0.3s ease-in-out;
+}
+
+/* Tooltip for action buttons */
+.btn-icon {
+  position: relative;
+}
+
+.btn-icon::before {
+  content: attr(title);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%) translateY(-5px);
+  background: var(--gray-800);
+  color: var(--white);
+  font-size: 11px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.2s;
+  pointer-events: none;
+  z-index: 1000;
+}
+
+.btn-icon:hover::before {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(-8px);
+}
+
+/* Table row highlight */
+.crm-table tbody tr {
+  transition: var(--transition);
+}
+
+.crm-table tbody tr:active {
+  transform: scale(0.998);
+}
+
+/* Empty state enhancement */
+.crm-table td[colspan="8"] {
+  text-align: center;
+  padding: 60px 20px !important;
+  color: var(--gray-500);
+  font-size: 15px;
+  background: var(--gray-50);
+}
+
+/* Scrollbar styling */
+.crm-table-wrapper::-webkit-scrollbar {
+  height: 8px;
+  width: 8px;
+}
+
+.crm-table-wrapper::-webkit-scrollbar-track {
+  background: var(--gray-100);
+  border-radius: 4px;
+}
+
+.crm-table-wrapper::-webkit-scrollbar-thumb {
+  background: var(--gray-400);
+  border-radius: 4px;
+}
+
+.crm-table-wrapper::-webkit-scrollbar-thumb:hover {
+  background: var(--gray-500);
+}
+
 </style>
 
 <script>
@@ -590,4 +1126,18 @@ document.querySelectorAll('.deleteForm').forEach(form => {
     });
   });
 });
+</script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function(){
+
+crmDataTable('#usersTable',{
+pageLength:5,
+lengthMenu:[5,10,20,50],
+ordering:true,
+order:[[1,'asc']]
+});
+
+});
+
 </script>

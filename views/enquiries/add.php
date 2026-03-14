@@ -608,14 +608,23 @@ select[multiple]:focus{
 <?php endif; ?>
 
 <?php if ($success): ?>
+<?php if ($success): ?>
 <script>
 Swal.fire({
   icon: 'success',
   title: 'Success',
   text: '<?= addslashes($success) ?>',
   confirmButtonColor: '#e91e63'
-}).then(()=> window.location.href="index.php?page=enquiries/list");
+}).then(()=> {
+
+  const enquiryId = <?= (int)$newEnquiryId ?>;
+
+  window.location.href =
+    "index.php?page=enquiries/followups&ui=add&enquiry_id=" + enquiryId;
+
+});
 </script>
+<?php endif; ?>
 <?php endif; ?>
 
 <?php if ($error && $error !== "Access denied for this role."): ?>
