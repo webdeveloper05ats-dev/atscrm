@@ -114,6 +114,126 @@ $isAjax = isset($_GET['ajax']) && (int)$_GET['ajax'] === 1;
 if ($isAjax) {
     $action = $_GET['action'] ?? '';
 
+     // Load followups by tab
+    // Load followups by tab
+if (isset($_GET['tab'])) {
+
+    $tab = $_GET['tab'] ?? 'today';
+
+    $where = "";
+
+    if ($tab === "today") {
+        $where = "WHERE f.followup_date = CURDATE()";
+    }
+    elseif ($tab === "pending") {
+        $where = "WHERE f.status = 'pending'";
+    }
+    elseif ($tab === "missed") {
+        $where = "WHERE f.status = 'missed'";
+    }
+    elseif ($tab === "done") {
+        $where = "WHERE f.status = 'done'";
+    }
+
+    $sql = "
+        SELECT
+            f.*,
+            e.enquiry_no,
+            e.name,
+            e.phone
+        FROM enquiry_followups f
+        JOIN enquiries e ON e.id = f.enquiry_id
+        $where
+        ORDER BY f.followup_date DESC
+    ";
+
+    $st = $pdo->query($sql);
+    $rows = $st->fetchAll(PDO::FETCH_ASSOC);
+
+    if (!$rows) {
+
+        echo "<tr>
+                <td colspan='7' style='text-align:center;color:#888;padding:20px;'>
+                    No followups found
+                </td>
+              </tr>";
+        exit;
+    }
+
+foreach ($rows as $r) {
+
+    $status = $r['status'] ?? 'pending';
+
+    if($status == "done"){
+        $statusBadge = '<span class="tag" style="color:#2e7d32;background:#e8f5e9;">Done</span>';
+    }
+    elseif($status == "missed"){
+        $statusBadge = '<span class="tag" style="color:#d32f2f;background:#ffebee;">Missed</span>';
+    }
+    else{
+        $statusBadge = '<span class="tag" style="color:#ff9800;background:#fff4e5;">Pending</span>';
+    }
+
+    echo "<tr>";
+
+    echo "<td>".$r['followup_date']."</td>";
+
+    echo "<td>
+            <b>".$r['enquiry_no']."</b><br>
+            <small>".$r['name']."</small>
+          </td>";
+
+    echo "<td>".$r['phone']."</td>";
+
+    echo "<td>".$r['followup_type']."</td>";
+
+    echo "<td class='tc'>".$statusBadge."</td>";
+
+    echo "<td>".$r['next_followup_date']."</td>";
+
+    echo "<td>";
+
+    // View button
+    echo "<button type='button'
+    class='icon-btn btn-view'
+    onclick='openHistoryModal(".$r['enquiry_id'].")'>
+    <i class='fas fa-eye'></i>
+    </button>";
+
+    // Edit button
+    echo "<button type='button'
+    class='icon-btn btn-edit'
+    onclick='openEditModal(".$r['id'].")'>
+    <i class='fas fa-pen'></i>
+    </button>";
+
+    // Done button only if not done
+    if($status != "done"){
+
+        echo "<form method='POST' class='doneForm' style='display:inline;'>
+
+        <input type='hidden' name='csrf_token' value='".h(generateCSRF())."'>
+
+        <input type='hidden' name='followup_id' value='".$r['id']."'> 
+
+        <button type='submit'
+        name='mark_done'
+        class='icon-btn btn-done'>
+
+        <i class='fas fa-check'></i>
+
+        </button>
+
+        </form>";
+    }
+
+    echo "</td>";
+
+    echo "</tr>";
+}
+    exit;
+}
+
     // --------------------------------
     // Enquiry full history modal
     // --------------------------------
@@ -951,6 +1071,62 @@ if ($q !== '') {
 
 $whereSql = !empty($where) ? ("WHERE " . implode(" AND ", $where)) : "";
 
+
+
+
+// ==============================
+// FOLLOWUP NOTIFICATION COUNTS
+// ==============================
+
+$todayCount = 0;
+$missedCount = 0;
+$upcomingCount = 0;
+
+try {
+
+    // Today Followups
+    $st = $pdo->prepare("
+        SELECT COUNT(*)
+        FROM enquiry_followups
+        WHERE followup_date = CURDATE()
+        AND status = 'pending'
+        AND created_by = ?
+    ");
+    $st->execute([$userId]);
+    $todayCount = (int)$st->fetchColumn();
+
+
+    // Missed Followups
+    $st = $pdo->prepare("
+        SELECT COUNT(*)
+        FROM enquiry_followups
+        WHERE followup_date < CURDATE()
+        AND status = 'pending'
+        AND created_by = ?
+    ");
+    $st->execute([$userId]);
+    $missedCount = (int)$st->fetchColumn();
+
+
+    // Upcoming Followups
+    $st = $pdo->prepare("
+        SELECT COUNT(*)
+        FROM enquiry_followups
+        WHERE followup_date > CURDATE()
+        AND status = 'pending'
+        AND created_by = ?
+    ");
+    $st->execute([$userId]);
+    $upcomingCount = (int)$st->fetchColumn();
+
+} catch(Exception $e) {
+
+    $todayCount = 0;
+    $missedCount = 0;
+    $upcomingCount = 0;
+
+}
+
 // ------------------------------------
 // Fetch followups
 // ------------------------------------
@@ -1708,9 +1884,77 @@ width:100%;
 }
 
 }
+
+
+.followup-alerts{
+display:flex;
+gap:14px;
+margin-bottom:18px;
+flex-wrap:wrap;
+}
+
+.alert-card{
+flex:1;
+min-width:180px;
+background:#fff;
+border-radius:12px;
+padding:16px;
+display:flex;
+align-items:center;
+gap:12px;
+box-shadow:0 8px 20px rgba(0,0,0,.05);
+border:1px solid #f1d6e3;
+}
+
+.alert-card i{
+font-size:20px;
+}
+
+.alert-card b{
+font-size:20px;
+display:block;
+}
+
+.alert-card span{
+font-size:12px;
+color:#777;
+}
+
+.alert-card.today i{ color:#e91e63; }
+.alert-card.missed i{ color:#ff5722; }
+.alert-card.upcoming i{ color:#3f51b5; }
 </style>
 
 <h2 style="margin-bottom:12px;">Enquiry Follow-ups</h2>
+
+
+<div class="followup-alerts">
+
+<div class="alert-card today">
+<i class="fas fa-bell"></i>
+<div>
+<b><?= $todayCount ?></b>
+<span>Today Followups</span>
+</div>
+</div>
+
+<div class="alert-card missed">
+<i class="fas fa-exclamation-triangle"></i>
+<div>
+<b><?= $missedCount ?></b>
+<span>Missed Followups</span>
+</div>
+</div>
+
+<div class="alert-card upcoming">
+<i class="fas fa-calendar"></i>
+<div>
+<b><?= $upcomingCount ?></b>
+<span>Upcoming Followups</span>
+</div>
+</div>
+
+</div>
 
 
 <div class="crm-followup-layout">
@@ -1728,11 +1972,11 @@ width:100%;
 <div style="padding:14px; padding-bottom:0;">
 
 <div class="top-tabs" style="margin:0;">
-<a class="<?= $tab==='today'?'active':''; ?>" href="index.php?page=enquiries/followups&tab=today">Today</a>
-<a class="<?= $tab==='pending'?'active':''; ?>" href="index.php?page=enquiries/followups&tab=pending">Pending</a>
-<a class="<?= $tab==='missed'?'active':''; ?>" href="index.php?page=enquiries/followups&tab=missed">Missed</a>
-<a class="<?= $tab==='done'?'active':''; ?>" href="index.php?page=enquiries/followups&tab=done">Done</a>
-<a class="<?= $tab==='all'?'active':''; ?>" href="index.php?page=enquiries/followups&tab=all">All</a>
+<a class="followupTab <?= $tab==='today'?'active':''; ?>" data-tab="today">Today</a>
+<a class="followupTab <?= $tab==='pending'?'active':''; ?>" data-tab="pending">Pending</a>
+<a class="followupTab <?= $tab==='missed'?'active':''; ?>" data-tab="missed">Missed</a>
+<a class="followupTab <?= $tab==='done'?'active':''; ?>" data-tab="done">Done</a>
+<a class="followupTab <?= $tab==='all'?'active':''; ?>" data-tab="all">All</a>
 </div>
 
 </div>
@@ -2040,11 +2284,11 @@ Swal.fire({
     <?php if ($uiTab === 'add'): ?>
 
     // After Follow-up Add → go to list
-    window.location.href = "index.php?page=enquiries/followups&ui=list&tab=today";
+    document.querySelector('.followupTab.active').click();
 
     <?php else: ?>
 
-    window.location.href = "index.php?page=enquiries/followups&ui=list&tab=<?= h($tab) ?>";
+    document.querySelector('.followupTab.active').click();
 
     <?php endif; ?>
 
@@ -2446,6 +2690,42 @@ function mfShowFiles(inp) {
 
     updateBannerByDate();
 })();
+</script>
+
+<script>
+
+document.querySelectorAll('.followupTab').forEach(tab => {
+
+    tab.addEventListener('click', function(){
+
+        const tabName = this.dataset.tab;
+
+        fetch("index.php?page=enquiries/followups&ajax=1&tab=" + tabName)
+
+        .then(res => res.text())
+
+        .then(html => {
+
+            const table = $('#usersTable').DataTable();
+
+            table.clear().destroy(); // safely destroy
+
+            document.querySelector("#usersTable tbody").innerHTML = html;
+
+            // recreate DataTable
+            crmDataTable('#usersTable',{
+                pageLength:5,
+                lengthMenu:[5,10,20,50],
+                ordering:true,
+                order:[[1,'asc']]
+            });
+
+        });
+
+    });
+
+});
+
 </script>
 
 <script>
