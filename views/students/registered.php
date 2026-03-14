@@ -285,7 +285,7 @@ function payStatusBadgeStud($type){
                         </td>
                         <td>
                             <div class="stu-name"><?= h($r['enquiry_snapshot_name'] ?: '-') ?></div>
-                            <div class="stu-sub"><?= h($r['enquiry_snapshot_phone'] ?: '-') ?><?= $r['enquiry_snapshot_email'] ? ' | ' . h($r['enquiry_snapshot_email']) : '' ?></div>
+                            <div class="stu-sub"><?= h(visibleStudentContactPair($r['enquiry_snapshot_phone'] ?? '', $r['enquiry_snapshot_email'] ?? '')) ?></div>
                         </td>
                         <td>
                             <div><?= h($r['program_name'] ?: '-') ?></div>

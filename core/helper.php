@@ -153,3 +153,38 @@ function verifyCSRF($token)
 {
     return isset($_SESSION['csrf_token']) && hash_equals($_SESSION['csrf_token'], $token);
 }
+
+function isStaffRestrictedFromStudentContacts(): bool
+{
+    return (($_SESSION['role_name'] ?? '') === 'Staff');
+}
+
+function visibleStudentContactValue($value, string $fallback = '-'): string
+{
+    if (isStaffRestrictedFromStudentContacts()) {
+        return $fallback;
+    }
+
+    $value = trim((string) $value);
+    return $value !== '' ? $value : $fallback;
+}
+
+function visibleStudentContactPair($phone = null, $email = null, string $fallback = '-'): string
+{
+    if (isStaffRestrictedFromStudentContacts()) {
+        return $fallback;
+    }
+
+    $parts = [];
+    $phone = trim((string) $phone);
+    $email = trim((string) $email);
+
+    if ($phone !== '') {
+        $parts[] = $phone;
+    }
+    if ($email !== '') {
+        $parts[] = $email;
+    }
+
+    return !empty($parts) ? implode(' | ', $parts) : $fallback;
+}

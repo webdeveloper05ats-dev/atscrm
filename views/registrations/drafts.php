@@ -521,7 +521,7 @@ $rows=$stmt->fetchAll(PDO::FETCH_ASSOC);
                             <td>
                                 <span class="draft-phone">
                                     <i class="fas fa-phone-alt mr-1 text-muted"></i>
-                                    <?= h($r['enquiry_snapshot_phone']) ?>
+                                    <?= h(visibleStudentContactValue($r['enquiry_snapshot_phone'])) ?>
                                 </span>
                             </td>
 

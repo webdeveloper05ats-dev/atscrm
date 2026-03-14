@@ -548,7 +548,7 @@ $baseUrl = "index.php?page=students/assign"
                             <td><strong><?= h($r['registration_no'] ?: '-') ?></strong></td>
                             <td>
                                 <div class="stu-name"><?= h($r['enquiry_snapshot_name'] ?: '-') ?></div>
-                                <div class="stu-sub"><?= h($r['enquiry_snapshot_phone'] ?: '-') ?></div>
+                                <div class="stu-sub"><?= h(visibleStudentContactValue($r['enquiry_snapshot_phone'] ?? '')) ?></div>
                             </td>
                             <td>
                                 <div><?= h($r['program_name'] ?: '-') ?></div>

@@ -20,6 +20,8 @@ if (!function_exists('h')) {
 $userId   = (int)($_SESSION['user_id'] ?? 0);
 $roleId   = (int)($_SESSION['role_id'] ?? 0);
 $branchId = (int)($_SESSION['branch_id'] ?? 0);
+$roleName = (string)($_SESSION['role_name'] ?? '');
+$hideActionColumn = ($roleName === 'Staff');
 
 /* Branch access flag */
 $canAllBranches = 0;
@@ -168,14 +170,16 @@ $baseUrl = "index.php?page=student_allocation&q=" . urlencode($q);
                 <th>Program</th>
                 <th>Status</th>
                 <th>Payment</th>
-                <th class="text-center">Action</th>
+                <?php if (!$hideActionColumn): ?>
+                    <th class="text-center">Action</th>
+                <?php endif; ?>
             </tr>
             </thead>
 
             <tbody>
             <?php if (!$rows): ?>
                 <tr>
-                    <td colspan="7" style="text-align:center;">No assigned course students found</td>
+                    <td colspan="<?= $hideActionColumn ? '6' : '7' ?>" style="text-align:center;">No assigned course students found</td>
                 </tr>
             <?php endif; ?>
 
@@ -190,10 +194,7 @@ $baseUrl = "index.php?page=student_allocation&q=" . urlencode($q);
 
                     <td>
                         <div class="lead-name"><?= h($r['enquiry_snapshot_name']) ?></div>
-                        <div class="lead-sub">
-                            <?= h($r['enquiry_snapshot_phone']) ?>
-                            <?= !empty($r['enquiry_snapshot_email']) ? " | " . h($r['enquiry_snapshot_email']) : "" ?>
-                        </div>
+                        <div class="lead-sub"><?= h(visibleStudentContactPair($r['enquiry_snapshot_phone'] ?? '', $r['enquiry_snapshot_email'] ?? '')) ?></div>
                     </td>
 
                     <td>
@@ -204,11 +205,13 @@ $baseUrl = "index.php?page=student_allocation&q=" . urlencode($q);
                     <td><?= statusBadge($r['registration_status']) ?></td>
                     <td><?= payBadge($r['payment_status']) ?></td>
 
-                    <td class="text-center action-col">
-                        <a href="index.php?page=registrations/list&q=<?= urlencode((string)$r['registration_no']) ?>" class="btn-icon edit" title="View in Registrations">
-                            <i class="fas fa-eye"></i>
-                        </a>
-                    </td>
+                    <?php if (!$hideActionColumn): ?>
+                        <td class="text-center action-col">
+                            <a href="index.php?page=registrations/list&q=<?= urlencode((string)$r['registration_no']) ?>" class="btn-icon edit" title="View in Registrations">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                        </td>
+                    <?php endif; ?>
                 </tr>
             <?php endforeach; ?>
             </tbody>

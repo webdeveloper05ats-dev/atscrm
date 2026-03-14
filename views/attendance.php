@@ -780,10 +780,7 @@ $baseUrl = "index.php?page=attendance&q=" . urlencode($q);
                         </td>
                         <td>
                             <div class="att-primary"><?= h($r['enquiry_snapshot_name']) ?></div>
-                            <div class="att-sub">
-                                <?= h($r['enquiry_snapshot_phone']) ?>
-                                <?= !empty($r['enquiry_snapshot_email']) ? " | " . h($r['enquiry_snapshot_email']) : "" ?>
-                            </div>
+                            <div class="att-sub"><?= h(visibleStudentContactPair($r['enquiry_snapshot_phone'] ?? '', $r['enquiry_snapshot_email'] ?? '')) ?></div>
                         </td>
                         <td>
                             <div><?= h($r['program_name']) ?></div>

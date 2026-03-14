@@ -1569,7 +1569,7 @@ Swal.fire({
                             </td>
 
                             <td>
-                                <div><?= h($f['enquiry_phone'] ?? '-') ?></div>
+                                <div><?= h(visibleStudentContactValue($f['enquiry_phone'] ?? '-')) ?></div>
                             </td>
 
                             <td class="nowrap"><?= h($f['followup_type'] ?? '-') ?></td>
