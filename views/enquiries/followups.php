@@ -1003,6 +1003,43 @@ try {
 ?>
 
 <style>
+ .filter-grid{
+display:flex;
+flex-wrap:wrap;
+gap:14px;
+align-items:flex-end;
+}
+
+.filter-grid > div{
+flex:1;
+min-width:220px;
+}
+
+.filter-actions{
+display:flex;
+gap:10px;
+align-items:flex-end;
+}
+
+@media(max-width:900px){
+
+.filter-grid{
+flex-direction:column;
+}
+
+.filter-actions{
+width:100%;
+}
+
+.filter-actions button,
+.filter-actions a{
+flex:1;
+text-align:center;
+}
+
+}   
+
+
 .top-tabs { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:12px; }
 .top-tabs a{
   padding:10px 14px; border-radius:999px;
@@ -1017,14 +1054,9 @@ try {
 .grid-2{ display:grid; grid-template-columns: 1fr 1fr; gap:14px; }
 @media(max-width: 1100px){ .grid-2{ grid-template-columns: 1fr; } }
 
-.filter-grid{
-  display:grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap:12px;
-  align-items:end;
-}
+
 .lbl{ font-weight:900; font-size:13px; display:block; margin-bottom:6px; color:#111; }
-.filter-grid input, .filter-grid select, textarea,
+
 .modal-form input, .modal-form select, .modal-form textarea{
   width:100%;
   padding:10px 12px;
@@ -1033,7 +1065,7 @@ try {
   outline:none;
   background:#fff;
 }
-.filter-grid input:focus, .filter-grid select:focus, textarea:focus,
+
 .modal-form input:focus, .modal-form select:focus, .modal-form textarea:focus{
   border-color: rgba(233,30,99,.55);
   box-shadow: 0 0 0 4px rgba(233,30,99,.12);
@@ -1050,36 +1082,9 @@ try {
   border:1px solid rgba(0,0,0,.06);
 }
 
-.table-wrap{
-  background:#fff;
-  border:1px solid rgba(0,0,0,.06);
-  border-radius:16px;
-  box-shadow:0 10px 30px rgba(0,0,0,.04);
-  overflow:hidden;
-}
-.modern-table{
-  width:100%;
-  border-collapse:separate;
-  border-spacing:0;
-  font-size:14px;
-}
-.modern-table thead{ background:#f7f8fb; }
-.modern-table th{
-  padding:14px 14px;
-  font-weight:900;
-  font-size:13px;
-  color:#333;
-  border-bottom:1px solid #eee;
-  text-align:left;
-  white-space:nowrap;
-}
-.modern-table td{
-  padding:14px 14px;
-  border-bottom:1px solid #f2f2f2;
-  vertical-align:middle;
-}
-.modern-table tbody tr{ transition:.15s; border-left:4px solid transparent; }
-.modern-table tbody tr:hover{ background:#fcfcff; border-left:4px solid var(--primary); }
+
+
+
 .tc{ text-align:center; }
 .nowrap{ white-space:nowrap; }
 .strong{ font-weight:900; color:#111; }
@@ -1361,45 +1366,569 @@ try {
   border-color: rgba(233,30,99,.55);
   box-shadow: 0 0 0 4px rgba(233,30,99,.12);
 }
+
+
+.crm-followup-layout{
+display:grid;
+grid-template-columns:2fr 1fr;
+gap:20px;
+align-items:start;
+}
+
+.crm-followup-left{
+min-width:0;
+}
+
+.crm-followup-right{
+position:sticky;
+top:20px;
+}
+
+@media(max-width:1100px){
+
+.crm-followup-layout{
+grid-template-columns:1fr;
+}
+
+.crm-followup-right{
+position:relative;
+}
+
+}
+
+
+.followup-filter-row{
+display:flex;
+align-items:flex-end;
+gap:14px;
+flex-wrap:wrap;
+}
+
+.filter-field{
+flex:1;
+min-width:200px;
+}
+
+.filter-actions{
+display:flex;
+gap:10px;
+align-items:center;
+}
+
+.icon-filter-btn{
+width:42px;
+height:42px;
+border-radius:10px;
+border:none;
+display:flex;
+align-items:center;
+justify-content:center;
+font-size:16px;
+cursor:pointer;
+transition:0.2s;
+}
+
+.apply-btn{
+background:#e91e63;
+color:#fff;
+}
+
+.apply-btn:hover{
+background:#d81b60;
+}
+
+.reset-btn{
+background:#fff;
+border:1px solid #f1b7c8;
+color:#e91e63;
+}
+
+.reset-btn:hover{
+background:#fff0f5;
+}
+
+@media(max-width:900px){
+
+.followup-filter-row{
+flex-direction:column;
+}
+
+.filter-actions{
+width:100%;
+}
+
+.icon-filter-btn{
+width:100%;
+}
+
+}
+
+
+
+/*Datatable CSS */
+.crm-card {
+  background: #fff;
+  border-radius: 14px;
+  padding: 20px;
+  box-shadow: 0 8px 20px rgba(0,0,0,.05);
+  border: 1px solid #f1d6e3;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.crm-card h3 {
+  margin-bottom: 16px;
+}
+
+/* Table */
+.crm-table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.crm-table {
+  width: 100%;
+  border-collapse: collapse;
+  border: 1px solid #f1d6e3;
+}
+
+.crm-table th,
+.crm-table td {
+  border: 1px solid #f1d6e3;
+  padding: 10px;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.crm-table th {
+  background: #fff0f5;
+  font-weight: 600;
+  text-align: left;
+}
+
+/* Actions */
+.crm-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  color: #fff;
+  margin-right: 5px;
+  text-decoration: none;
+  transition: var(--transition);
+}
+
+.crm-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+.crm-edit {
+  background: #e91e63;
+}
+
+.crm-delete {
+  background: #dc3545;
+}
+
+/* DataTable header/footer */
+.crm-table-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.crm-table-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 15px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+/* Search + length */
+.dataTables_wrapper .dataTables_length,
+.dataTables_wrapper .dataTables_filter,
+.dataTables_wrapper .dt-buttons {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  margin-bottom: 10px;
+}
+
+.dataTables_wrapper .dataTables_filter input {
+  width: 100% !important;
+  max-width: 260px;
+  padding: 10px 14px;
+  border: 1px solid var(--primary-light);
+  border-radius: 999px;
+  outline: none;
+  transition: var(--transition);
+}
+
+.dataTables_wrapper .dataTables_filter input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(233,30,99,.12);
+}
+
+.dataTables_wrapper .dataTables_length select {
+  border: 1px solid #000000;
+  border-radius: 50px;
+  background: #fff;
+  outline: none;
+}
+
+/* Export button */
+.crm-export-btn {
+  background: var(--primary) !important;
+  color: #fff !important;
+  border: none !important;
+  padding: 10px 16px !important;
+  border-radius: var(--radius-md) !important;
+  font-weight: 600 !important;
+  transition: var(--transition) !important;
+}
+
+.crm-export-btn:hover {
+  background: var(--primary-dark) !important;
+}
+
+/* Pagination */
+.dataTables_wrapper .dataTables_paginate {
+  display: flex;
+  justify-content: center;
+  margin-top: 10px;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button {
+  border: 1px solid var(--gray-300) !important;
+  background: #fff !important;
+  border-radius: var(--radius-md) !important;
+  color: var(--gray-700) !important;
+  padding: 6px 12px !important;
+  margin-left: 4px;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button.current {
+  background: var(--primary) !important;
+  color: #fff !important;
+  border-color: var(--primary) !important;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+  background: #fff5f9 !important;
+  color: var(--primary-dark) !important;
+  border-color: #f1d6e3 !important;
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+  .crm-table {
+    min-width: 700px;
+  }
+
+  .crm-export-btn {
+    width: 100% !important;
+  }
+
+  .dataTables_wrapper .dataTables_filter input {
+    max-width: 100%;
+  }
+}
+
+
+/* DATATABLE HEADER FIX */
+
+/* Fix DataTables header alignment */
+
+.crm-table-header{
+display:flex !important;
+align-items:center;
+justify-content:space-between;
+flex-wrap:nowrap;
+gap:20px;
+width:100%;
+}
+
+/* Length */
+
+.crm-table-header .dataTables_length{
+display:flex;
+align-items:center;
+gap:6px;
+}
+
+/* Search */
+
+.crm-table-header .dataTables_filter{
+margin-left:auto;
+display:flex;
+align-items:center;
+}
+
+/* Search input */
+
+.crm-table-header .dataTables_filter input{
+width:220px;
+margin-left:6px;
+}
+
+/* Export button */
+
+.crm-table-header .dt-buttons{
+margin-left:10px;
+}
+
+/* Keep everything in one row */
+
+.crm-table-header > div{
+display:flex;
+align-items:center;
+}
+
+/* Mobile */
+
+@media(max-width:768px){
+
+.crm-table-header{
+flex-wrap:wrap;
+}
+
+.crm-table-header .dataTables_filter input{
+width:100%;
+}
+
+}
 </style>
 
 <h2 style="margin-bottom:12px;">Enquiry Follow-ups</h2>
 
-<?php if ($success): ?>
-<script>
-Swal.fire({
-    icon:'success',
-    title:'Success',
-    text:'<?= addslashes($success) ?>',
-    confirmButtonColor:'#e91e63'
-}).then(() => {
-    window.location.href = "index.php?page=enquiries/followups&ui=<?= h($uiTab) ?>&tab=<?= h($tab) ?>";
-});
-</script>
-<?php endif; ?>
 
-<?php if ($error): ?>
-<script>
-Swal.fire({
-    icon:'error',
-    title:'Error',
-    text:'<?= addslashes($error) ?>',
-    confirmButtonColor:'#e91e63'
-});
-</script>
-<?php endif; ?>
+<div class="crm-followup-layout">
 
-<div class="top-tabs">
-    <a class="<?= $uiTab==='add' ? 'active' : '' ?>" href="index.php?page=enquiries/followups&ui=add">Add Follow-up</a>
-    <a class="<?= $uiTab!=='add' ? 'active' : '' ?>" href="index.php?page=enquiries/followups&ui=list&tab=<?= h($tab) ?>">Follow-ups</a>
-</div>
+<!-- ================= LEFT SIDE : FOLLOWUPS ================= -->
 
-<?php if ($uiTab === 'add'): ?>
+<div class="crm-followup-left">
 
 <div class="card section-card">
-    <div class="card-header">
-        <div>Add Follow-up</div>
-    </div>
+
+<div class="card-header">
+<div>Follow-ups</div>
+</div>
+
+<div style="padding:14px; padding-bottom:0;">
+
+<div class="top-tabs" style="margin:0;">
+<a class="<?= $tab==='today'?'active':''; ?>" href="index.php?page=enquiries/followups&tab=today">Today</a>
+<a class="<?= $tab==='pending'?'active':''; ?>" href="index.php?page=enquiries/followups&tab=pending">Pending</a>
+<a class="<?= $tab==='missed'?'active':''; ?>" href="index.php?page=enquiries/followups&tab=missed">Missed</a>
+<a class="<?= $tab==='done'?'active':''; ?>" href="index.php?page=enquiries/followups&tab=done">Done</a>
+<a class="<?= $tab==='all'?'active':''; ?>" href="index.php?page=enquiries/followups&tab=all">All</a>
+</div>
+
+</div>
+
+<form method="GET" action="index.php" style="padding:14px;">
+
+<input type="hidden" name="page" value="enquiries/followups">
+<input type="hidden" name="tab" value="<?= h($tab) ?>">
+
+<div class="followup-filter-row">
+
+<div class="filter-field">
+<label class="lbl">Search</label>
+<input type="text" name="q" value="<?= h($q) ?>" placeholder="Name / Phone / Email / Enquiry No">
+</div>
+
+<div class="filter-field">
+<label class="lbl">Date From</label>
+<input type="date" name="from" value="<?= h($from) ?>">
+</div>
+
+<div class="filter-field">
+<label class="lbl">Date To</label>
+<input type="date" name="to" value="<?= h($to) ?>">
+</div>
+
+<div class="filter-actions">
+
+<button type="submit"
+class="icon-filter-btn apply-btn"
+title="Apply Filter">
+
+<i class="fas fa-search"></i>
+
+</button>
+
+<a href="index.php?page=enquiries/followups&tab=<?= h($tab) ?>"
+class="icon-filter-btn reset-btn"
+title="Reset Filter">
+
+<i class="fas fa-rotate-left"></i>
+
+</a>
+
+</div>
+
+</div>
+
+</form>
+
+<div style="padding:14px;">
+
+<div class="crm-card">
+
+<div class="crm-table-wrapper">
+    
+<h3>Follow Ups</h3>
+<table  id="usersTable" class="crm-table">
+<thead>
+
+<tr>
+<th >Follow-up</th>
+<th>Enquiry</th>
+<th>Contact</th>
+<th >Type</th>
+<th >Status</th>
+<th >Next</th>
+<th >Actions</th>
+</tr>
+
+</thead>
+
+<tbody>
+
+<?php if (empty($followups)): ?>
+
+<tr>
+<td colspan="7" class="tc" style="padding:26px;color:var(--text-light);">
+No follow-ups found.
+</td>
+</tr>
+
+<?php else: ?>
+
+<?php foreach ($followups as $f): ?>
+
+<?php
+$status = $f['status'] ?? 'pending';
+
+$sBadge = ($status==='done')
+? badge('Done','green')
+: (($status==='missed') ? badge('Missed','red') : badge('Pending','orange'));
+
+$enqNo = $f['enquiry_no'] ?: ('ENQ-'.$f['enquiry_id']);
+?>
+
+<tr>
+
+<td >
+<div class="strong"><?= h($f['followup_date']) ?> <?= h($f['followup_time'] ?? '') ?></div>
+<div class="sub">#<?= (int)$f['id'] ?></div>
+</td>
+
+<td>
+<div class="strong"><?= h($enqNo) ?></div>
+<div class="sub"><?= h($f['enquiry_name'] ?? '-') ?></div>
+</td>
+
+<td><?= h($f['enquiry_phone'] ?? '-') ?></td>
+
+<td ><?= h($f['followup_type'] ?? '-') ?></td>
+
+<td class="tc"><?= $sBadge ?></td>
+
+<td>
+
+<?php if (!empty($f['next_followup_date'])): ?>
+
+<div class="strong">
+<?= h($f['next_followup_date']) ?> <?= h($f['next_followup_time'] ?? '') ?>
+</div>
+
+<?php else: ?>
+
+<div class="sub">-</div>
+
+<?php endif; ?>
+
+</td>
+
+<td>
+
+<button type="button"
+class="icon-btn btn-view"
+onclick="openHistoryModal(<?= (int)$f['enquiry_id'] ?>)">
+
+<i class="fas fa-eye"></i>
+
+</button>
+
+<button type="button"
+class="icon-btn btn-edit"
+onclick="openEditModal(<?= (int)$f['id'] ?>)">
+
+<i class="fas fa-pen"></i>
+
+</button>
+
+<?php if (($f['status'] ?? '') !== 'done'): ?>
+
+<form method="POST" class="doneForm" style="display:inline;">
+
+<input type="hidden" name="csrf_token" value="<?= h(generateCSRF()) ?>">
+<input type="hidden" name="followup_id" value="<?= (int)$f['id'] ?>">
+
+<button type="submit"
+name="mark_done"
+class="icon-btn btn-done">
+
+<i class="fas fa-check"></i>
+
+</button>
+
+</form>
+
+<?php endif; ?>
+
+</td>
+
+</tr>
+
+<?php endforeach; ?>
+
+<?php endif; ?>
+
+</tbody>
+
+</table>
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+<!-- ================= RIGHT SIDE : ADD FOLLOWUP ================= -->
+
+<div class="crm-followup-right">
+
+<div class="card section-card">
+
+<div class="card-header">
+<div>Add Follow-up</div>
+</div>
 
     <form method="POST" enctype="multipart/form-data" id="addFollowupForm" style="padding:14px;">
         <input type="hidden" name="csrf_token" value="<?= h(generateCSRF()) ?>">
@@ -1486,133 +2015,55 @@ Swal.fire({
             <a class="btn-danger" style="text-decoration:none;padding:10px 14px;border-radius:10px;" href="index.php?page=enquiries/followups&ui=list&tab=today">Go to List</a>
         </div>
     </form>
+
 </div>
 
-<?php else: ?>
-
-<div class="card section-card">
-    <div class="card-header">
-        <div>Follow-ups</div>
-        <a href="index.php?page=enquiries/followups&ui=add" class="btn btn-primary" style="text-decoration:none;">+ Add</a>
-    </div>
-
-    <div style="padding:14px; padding-bottom:0;">
-        <div class="top-tabs" style="margin:0;">
-            <a class="<?= $tab==='today'?'active':''; ?>" href="index.php?page=enquiries/followups&ui=list&tab=today">Today</a>
-            <a class="<?= $tab==='pending'?'active':''; ?>" href="index.php?page=enquiries/followups&ui=list&tab=pending">Pending</a>
-            <a class="<?= $tab==='missed'?'active':''; ?>" href="index.php?page=enquiries/followups&ui=list&tab=missed">Missed</a>
-            <a class="<?= $tab==='done'?'active':''; ?>" href="index.php?page=enquiries/followups&ui=list&tab=done">Done</a>
-            <a class="<?= $tab==='all'?'active':''; ?>" href="index.php?page=enquiries/followups&ui=list&tab=all">All</a>
-        </div>
-    </div>
-
-    <form method="GET" action="index.php" style="padding:14px;">
-        <input type="hidden" name="page" value="enquiries/followups">
-        <input type="hidden" name="ui" value="list">
-        <input type="hidden" name="tab" value="<?= h($tab) ?>">
-
-        <div class="filter-grid">
-            <div>
-                <label class="lbl">Search</label>
-                <input type="text" name="q" value="<?= h($q) ?>" placeholder="Name / Phone / Email / Enquiry No">
-            </div>
-            <div>
-                <label class="lbl">Date From</label>
-                <input type="date" name="from" value="<?= h($from) ?>">
-            </div>
-            <div>
-                <label class="lbl">Date To</label>
-                <input type="date" name="to" value="<?= h($to) ?>">
-            </div>
-            <div class="row-right">
-                <button class="btn btn-primary" type="submit">Apply</button>
-                <a class="btn-danger" style="text-decoration:none;padding:10px 14px;border-radius:10px;" href="index.php?page=enquiries/followups&ui=list&tab=<?= h($tab) ?>">Reset</a>
-            </div>
-        </div>
-    </form>
-
-    <div style="padding:14px;">
-        <div class="table-wrap">
-            <table class="modern-table">
-                <thead>
-                    <tr>
-                        <th class="nowrap">Follow-up</th>
-                        <th>Enquiry</th>
-                        <th>Contact</th>
-                        <th class="nowrap">Type</th>
-                        <th class="tc nowrap">Status</th>
-                        <th class="nowrap">Next</th>
-                        <th class="tc nowrap">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                <?php if (empty($followups)): ?>
-                    <tr>
-                        <td colspan="7" class="tc" style="padding:26px;color:var(--text-light);">No follow-ups found.</td>
-                    </tr>
-                <?php else: ?>
-                    <?php foreach ($followups as $f): ?>
-                        <?php
-                            $status = $f['status'] ?? 'pending';
-                            $sBadge = ($status==='done') ? badge('Done','green') : (($status==='missed') ? badge('Missed','red') : badge('Pending','orange'));
-                            $enqNo = $f['enquiry_no'] ?: ('ENQ-'.$f['enquiry_id']);
-                        ?>
-                        <tr>
-                            <td class="nowrap">
-                                <div class="strong"><?= h($f['followup_date']) ?> <?= h($f['followup_time'] ?? '') ?></div>
-                                <div class="sub">#<?= (int)$f['id'] ?></div>
-                            </td>
-
-                            <td>
-                                <div class="strong"><?= h($enqNo) ?></div>
-                                <div class="sub"><?= h($f['enquiry_name'] ?? '-') ?></div>
-                            </td>
-
-                            <td>
-                                <div><?= h($f['enquiry_phone'] ?? '-') ?></div>
-                            </td>
-
-                            <td class="nowrap"><?= h($f['followup_type'] ?? '-') ?></td>
-
-                            <td class="tc"><?= $sBadge ?></td>
-
-                            <td class="nowrap">
-                                <?php if (!empty($f['next_followup_date'])): ?>
-                                    <div class="strong"><?= h($f['next_followup_date']) ?> <?= h($f['next_followup_time'] ?? '') ?></div>
-                                <?php else: ?>
-                                    <div class="sub">-</div>
-                                <?php endif; ?>
-                            </td>
-
-                            <td class="tc nowrap">
-                                <button type="button" class="icon-btn btn-view" onclick="openHistoryModal(<?= (int)$f['enquiry_id'] ?>)" title="View Enquiry History">
-                                    <i class="fas fa-eye"></i>
-                                </button>
-
-                                <button type="button" class="icon-btn btn-edit" onclick="openEditModal(<?= (int)$f['id'] ?>)" title="Edit Follow-up">
-                                    <i class="fas fa-pen"></i>
-                                </button>
-
-                                <?php if (($f['status'] ?? '') !== 'done'): ?>
-                                    <form method="POST" class="doneForm" style="display:inline;">
-                                        <input type="hidden" name="csrf_token" value="<?= h(generateCSRF()) ?>">
-                                        <input type="hidden" name="followup_id" value="<?= (int)$f['id'] ?>">
-                                        <button type="submit" name="mark_done" class="icon-btn btn-done" title="Mark Done">
-                                            <i class="fas fa-check"></i>
-                                        </button>
-                                    </form>
-                                <?php endif; ?>
-                            </td>
-                        </tr>
-                    <?php endforeach; ?>
-                <?php endif; ?>
-                </tbody>
-            </table>
-        </div>
-    </div>
 </div>
 
+</div>
+
+
+
+
+
+
+<?php if ($success): ?>
+<script>
+Swal.fire({
+    icon:'success',
+    title:'Success',
+    text:'<?= addslashes($success) ?>',
+    confirmButtonColor:'#e91e63'
+}).then(() => {
+
+    <?php if ($uiTab === 'add'): ?>
+
+    // After Follow-up Add → go to list
+    window.location.href = "index.php?page=enquiries/followups&ui=list&tab=today";
+
+    <?php else: ?>
+
+    window.location.href = "index.php?page=enquiries/followups&ui=list&tab=<?= h($tab) ?>";
+
+    <?php endif; ?>
+
+});
+</script>
 <?php endif; ?>
+
+<?php if ($error): ?>
+<script>
+Swal.fire({
+    icon:'error',
+    title:'Error',
+    text:'<?= addslashes($error) ?>',
+    confirmButtonColor:'#e91e63'
+});
+</script>
+<?php endif; ?>
+
+
+
 
 <div class="modal-backdrop" id="crmModalBackdrop">
     <div class="modal">
@@ -1994,4 +2445,18 @@ function mfShowFiles(inp) {
 
     updateBannerByDate();
 })();
+</script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function(){
+
+crmDataTable('#usersTable',{
+pageLength:5,
+lengthMenu:[5,10,20,50],
+ordering:true,
+order:[[1,'asc']]
+});
+
+});
+
 </script>
