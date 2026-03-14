@@ -64,274 +64,422 @@ $payments = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 
 <style>
-/* ===============================
-   MODERN UI - ATS CRM PAYMENTS
-   =============================== */
-
-/* Import Google Fonts */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-
-/* ===============================
-   PAGE CONTAINER
-   =============================== */
-.crm-page {
-    background: #f8fafc;
-    padding: 30px;
-    border-radius: 24px;
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.05);
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+:root {
+  --primary: #e91e63;
+  --primary-light: #f8bbd0;
+  --primary-dark: #c2185b;
+  --shadow-sm: 0 2px 4px rgba(0,0,0,0.05);
+  --gray-200: #e9ecef;
+  --gray-300: #dee2e6;
+  --gray-400: #ced4da;
+  --gray-700: #495057;
+  --gray-800: #343a40;
+  --gray-900: #212529;
+  --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --transition: all 0.2s ease;
+  --reg-text: #343a40;
+  --reg-muted: #6c757d;
+  --reg-primary: #e91e63;
+  --reg-primary-soft: #fff0f5;
+  --reg-shadow-soft: 0 8px 20px rgba(0,0,0,.05);
 }
 
-.crm-page h2 {
-    margin-bottom: 24px;
-    font-size: 28px;
-    font-weight: 700;
-    color: #0f172a;
-    letter-spacing: -0.01em;
+[data-tooltip] {
+  position: relative;
+  cursor: pointer;
 }
 
-/* ===============================
-   DATATABLE MODERN
-   =============================== */
-#userTable {
-    border-collapse: separate;
-    border-spacing: 0 8px;
-    margin-top: -8px;
-    width: 100%;
+[data-tooltip]:before {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%) translateY(-5px);
+  background: var(--gray-800);
+  color: white;
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  white-space: nowrap;
+  z-index: 10;
+  opacity: 0;
+  visibility: hidden;
+  transition: var(--transition);
+  box-shadow: var(--shadow-sm);
+  pointer-events: none;
+  font-weight: normal;
+  letter-spacing: 0.3px;
 }
 
-/* Header Styling */
-#userTable thead th {
-    background: transparent;
-    font-weight: 600;
-    font-size: 13px;
-    text-transform: uppercase;
-    letter-spacing: 0.03em;
-    color: #64748b;
-    padding: 16px 12px;
-    border: none;
+[data-tooltip]:after {
+  content: '';
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%) translateY(5px);
+  border-width: 5px;
+  border-style: solid;
+  border-color: var(--gray-800) transparent transparent transparent;
+  opacity: 0;
+  visibility: hidden;
+  transition: var(--transition);
+  pointer-events: none;
 }
 
-/* Row Styling */
-#userTable tbody tr {
-    background: white;
-    border-radius: 16px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
-    transition: all 0.2s ease;
+[data-tooltip]:hover:before,
+[data-tooltip]:hover:after {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0);
 }
 
-#userTable tbody tr:hover {
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
-    transform: translateY(-2px);
+.payments-page-title {
+  margin: 0 0 10px;
+  line-height: 1.2;
 }
 
-/* Cell Styling */
-#userTable tbody td {
-    padding: 18px 12px;
-    font-size: 14px;
-    color: #334155;
-    border: none;
-    border-top: 1px solid #f1f5f9;
-    border-bottom: 1px solid #f1f5f9;
+.payments-wrapper {
+  padding: 0;
+  width: 100%;
+  overflow-x: hidden;
 }
 
-#userTable tbody td:first-child {
-    border-left: 1px solid #f1f5f9;
-    border-radius: 16px 0 0 16px;
+.crm-right {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow-x: hidden;
 }
 
-#userTable tbody td:last-child {
-    border-right: 1px solid #f1f5f9;
-    border-radius: 0 16px 16px 0;
+.crm-card {
+  background: #fff;
+  border-radius: 14px;
+  padding: 14px;
+  box-shadow: 0 8px 20px rgba(0,0,0,.05);
+  border: 1px solid #f1d6e3;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
-/* Amount Styling */
-#userTable tbody td:nth-child(3),
-#userTable tbody td:nth-child(4),
-#userTable tbody td:nth-child(5) {
-    font-weight: 600;
-    color: #0f172a;
+.crm-card h3 {
+  margin: 0 0 10px;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--gray-800);
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
-/* ===============================
-   STATUS BADGES
-   =============================== */
+.crm-table-wrapper {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: visible;
+  overflow-y: visible;
+  box-sizing: border-box;
+}
+
+#userTable.crm-table {
+  width: 100%;
+  border-collapse: collapse;
+  border: 1px solid #f1d6e3;
+  table-layout: auto;
+}
+
+#userTable.crm-table th,
+#userTable.crm-table td {
+  border: 1px solid #f1d6e3;
+  padding: 12px 10px;
+  font-size: 13px;
+  white-space: normal;
+  word-break: break-word;
+  vertical-align: middle;
+}
+
+#userTable.crm-table th {
+  background: #fff0f5;
+  font-weight: 600;
+  text-align: left;
+  color: var(--gray-800);
+}
+
+#userTable.crm-table tbody tr:hover {
+  background: #fff9fc;
+}
+
+.crm-table td:nth-child(1),
+.crm-table td:nth-child(2) {
+  font-weight: 700;
+}
+
+.crm-table td:nth-child(2) {
+  color: var(--primary-dark);
+}
+
+.crm-table td:nth-child(3),
+.crm-table td:nth-child(4),
+.crm-table td:nth-child(5) {
+  font-weight: 700;
+  color: var(--gray-900);
+}
+
+.pay-student {
+  font-weight: 700;
+  color: var(--gray-900);
+}
+
+.pay-reg {
+  font-weight: 700;
+  color: var(--primary-dark);
+}
+
+.pay-money {
+  font-weight: 700;
+  color: var(--gray-900);
+}
+
+.status-paid,
+.status-partial,
+.status-unpaid {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 84px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  border: 1px solid transparent;
+}
+
 .status-paid {
-    background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
-    color: #059669;
-    font-weight: 600;
-    padding: 6px 14px;
-    border-radius: 30px;
-    display: inline-block;
-    font-size: 12px;
-    letter-spacing: 0.02em;
-    border: 1px solid rgba(5, 150, 105, 0.15);
+  background: #eaf7ee;
+  color: #2e7d32;
+  border-color: rgba(46,125,50,.18);
 }
 
 .status-partial {
-    background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
-    color: #d97706;
-    font-weight: 600;
-    padding: 6px 14px;
-    border-radius: 30px;
-    display: inline-block;
-    font-size: 12px;
-    letter-spacing: 0.02em;
-    border: 1px solid rgba(217, 119, 6, 0.15);
+  background: #fff8e8;
+  color: #fb8c00;
+  border-color: rgba(251,140,0,.18);
 }
 
 .status-unpaid {
-    background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
-    color: #dc2626;
-    font-weight: 600;
-    padding: 6px 14px;
-    border-radius: 30px;
-    display: inline-block;
-    font-size: 12px;
-    letter-spacing: 0.02em;
-    border: 1px solid rgba(220, 38, 38, 0.15);
+  background: #fdecec;
+  color: #d32f2f;
+  border-color: rgba(211,47,47,.18);
 }
 
-/* ===============================
-   ACTION BUTTONS
-   =============================== */
 .pay-action {
-    display: flex;
-    align-items: center;
-    gap: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: nowrap;
 }
 
 .btn-add-payment {
-    background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
-    border: none;
-    color: white;
-    padding: 8px 16px;
-    border-radius: 30px;
-    font-size: 13px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
-    letter-spacing: 0.02em;
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  padding: 9px 14px;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  transition: var(--transition);
 }
 
 .btn-add-payment:hover {
-    background: linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%);
-    transform: translateY(-2px);
-    box-shadow: 0 8px 18px rgba(99, 102, 241, 0.3);
+  background: var(--primary-dark);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
 }
 
 .btn-icon {
-    width: 36px;
-    height: 36px;
-    border: none;
-    border-radius: 12px;
-    background: #f1f5f9;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    color: #475569;
-}
-
-.btn-icon:hover {
-    background: #e2e8f0;
-    transform: scale(1.05);
-    color: #0f172a;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+  transition: var(--transition);
 }
 
 .btn-view {
-    color: #6366f1;
-    font-size: 14px;
+  background: #e8f4fd;
+  color: #1565c0;
 }
 
-/* ===============================
-   DATATABLE CONTROLS
-   =============================== */
+.btn-view:hover {
+  background: #d9edf9;
+}
+
 .dataTables_wrapper .dataTables_length,
 .dataTables_wrapper .dataTables_filter {
-    margin-bottom: 25px;
+  margin-bottom: 8px;
+}
+
+.dataTables_wrapper .dataTables_length,
+.dataTables_wrapper .dataTables_filter,
+.dataTables_wrapper .dt-buttons {
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+}
+
+.crm-table-header,
+.crm-table-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.crm-table-header {
+  margin-bottom: 10px;
+}
+
+.crm-table-footer {
+  margin-top: 10px;
+}
+
+.dataTables_wrapper .dataTables_length,
+.dataTables_wrapper .dataTables_filter,
+.dataTables_wrapper .dataTables_info,
+.dataTables_wrapper .dataTables_paginate {
+  font-size: 13px;
+  color: var(--gray-700);
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+}
+
+.dataTables_wrapper {
+  width: 100%;
+  overflow-x: hidden;
+  /*overflow-y: hidden;*/
+}
+
+.dataTables_wrapper .dataTables_scroll,
+.dataTables_wrapper .dataTables_scrollHead,
+.dataTables_wrapper .dataTables_scrollHeadInner,
+.dataTables_wrapper .dataTables_scrollBody {
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+.dataTables_wrapper .dataTables_scrollBody {
+  overflow-x: hidden !important;
 }
 
 .dataTables_wrapper .dataTables_length {
-    float: left;
+  flex: 0 0 auto;
 }
 
 .dataTables_wrapper .dataTables_filter {
-    float: right;
+  flex: 1 1 280px;
+  justify-content: center;
+  min-width: 0;
 }
 
-.dataTables_filter label {
-    font-weight: 500;
-    color: #475569;
-    font-size: 13px;
+.dataTables_wrapper .dt-buttons {
+  flex: 0 0 auto;
+  margin-left: auto;
 }
 
-.dataTables_filter input {
-    border: 1px solid #e2e8f0;
-    border-radius: 30px;
-    padding: 8px 16px;
-    margin-left: 8px;
-    font-size: 13px;
-    width: 240px;
-    transition: all 0.2s ease;
-    background: white;
+.dataTables_wrapper .dataTables_length label,
+.dataTables_wrapper .dataTables_filter label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+  color: var(--gray-800);
 }
 
-.dataTables_filter input:focus {
-    border-color: #8b5cf6;
-    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
-    outline: none;
+.dataTables_wrapper .dataTables_filter label {
+  min-width: 0;
+  width: min(100%, 320px);
+  position: relative;
 }
 
-.dataTables_length select {
-    border: 1px solid #e2e8f0;
-    border-radius: 30px;
-    padding: 8px 24px 8px 12px;
-    margin: 0 8px;
-    font-size: 13px;
-    background: white;
-    cursor: pointer;
+.dataTables_wrapper .dataTables_filter input,
+.dataTables_wrapper .dataTables_length select {
+  border: 1px solid var(--gray-300);
+  border-radius: var(--radius-md);
+  padding: 8px 12px;
+  background: #fff;
+  outline: none;
 }
 
-/* Pagination */
-.dataTables_wrapper .dataTables_paginate {
-    margin-top: 25px;
-    display: flex;
-    justify-content: flex-end;
-    gap: 4px;
+.dataTables_wrapper .dataTables_filter input:focus,
+.dataTables_wrapper .dataTables_length select:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-light);
 }
 
-.dataTables_wrapper .paginate_button {
-    border: none !important;
-    background: white !important;
-    margin: 0 2px;
-    border-radius: 12px !important;
-    padding: 8px 14px !important;
-    font-size: 13px;
-    font-weight: 500;
-    color: #475569 !important;
-    transition: all 0.2s ease;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+.dataTables_wrapper .dataTables_filter label:before {
+  content: '\f002';
+  font-family: 'Font Awesome 6 Free';
+  font-weight: 900;
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--gray-400);
+  pointer-events: none;
 }
 
-.dataTables_wrapper .paginate_button.current {
-    background: linear-gradient(135deg, #8b5cf6, #6366f1) !important;
-    color: white !important;
-    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+.dataTables_wrapper .dataTables_filter input {
+  min-width: 0;
+  width: 100% !important;
+  padding-left: 38px;
 }
 
-.dataTables_wrapper .paginate_button:hover {
-    background: #f8fafc !important;
-    transform: translateY(-1px);
+.crm-export-btn {
+  background: var(--primary) !important;
+  color: #fff !important;
+  border: none !important;
+  padding: 10px 16px !important;
+  border-radius: var(--radius-md) !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  box-shadow: none !important;
 }
 
-.dataTables_info {
-    margin-top: 25px;
-    font-size: 13px;
-    color: #64748b;
-    font-weight: 500;
+.crm-export-btn:hover {
+  background: var(--primary-dark) !important;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button {
+  border: 1px solid #f1d6e3 !important;
+  background: #fff !important;
+  border-radius: 8px !important;
+  color: var(--gray-700) !important;
+  padding: 6px 12px !important;
+  margin-left: 4px;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button.current {
+  background: var(--primary) !important;
+  color: #fff !important;
+  border-color: var(--primary) !important;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+  background: #fff5f9 !important;
+  color: var(--primary-dark) !important;
+  border-color: #f1d6e3 !important;
 }
 
 .crm-modal-backdrop {
@@ -725,134 +873,92 @@ $payments = $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
   }
 
-  /* =====================================================
-CRM LAYOUT
-===================================================== */
-.crm-card{
-background:#fff;
-border-radius:14px;
-padding:20px;
-box-shadow:0 8px 20px rgba(0,0,0,.05);
-border:1px solid #f1d6e3;
-width:100%;
-max-width:100%;
-box-sizing:border-box;
-}
-
-.crm-card h3{
-margin-bottom:16px;
-}
-/* =====================================================
-CRM TABLE
-===================================================== */
-
-.crm-table{
-width:100%;
-border-collapse:collapse;
-border:1px solid #f1d6e3;
-}
-
-.crm-table th,
-.crm-table td{
-border:1px solid #f1d6e3;
-padding:10px;
-font-size:13px;
-white-space:nowrap;
-}
-
-.crm-table th{
-background:#fff0f5;
-font-weight:600;
-text-align:left;
-}
-
-
-/* =====================================================
-TABLE WRAPPER (SCROLL ON MOBILE)
-===================================================== */
-
-.crm-table-wrapper{
-width:100%;
-max-width:100%;
-overflow-x:auto;
-}
-
-
-/* =====================================================
-ACTION BUTTONS
-===================================================== */
-
-.crm-btn{
-display:inline-flex;
-align-items:center;
-justify-content:center;
-width:34px;
-height:34px;
-border-radius:8px;
-color:#fff;
-margin-right:5px;
-}
-
-.crm-edit{
-background:#e91e63;
-}
-
-.crm-delete{
-background:#dc3545;
-}
-
-
-/* =====================================================
-DATATABLE HEADER AREA
-===================================================== */
-
-.crm-table-header{
-display:flex;
-justify-content:space-between;
-align-items:center;
-margin-bottom:15px;
-flex-wrap:wrap;
-gap:10px;
-}
-
-.crm-table-footer{
-display:flex;
-justify-content:space-between;
-align-items:center;
-margin-top:15px;
-flex-wrap:wrap;
-gap:10px;
-}
-
-
-/* =====================================================
-MOBILE RESPONSIVE
-===================================================== */
-
 @media(max-width:768px){
+  .crm-table-header,
+  .crm-table-footer {
+    flex-direction: column;
+    align-items: stretch;
+  }
 
-.crm-card{
-width:100%;
-max-width:100%;
-}
+  .dataTables_wrapper .dataTables_length,
+  .dataTables_wrapper .dataTables_filter,
+  .dataTables_wrapper .dt-buttons {
+    flex: 1 1 100%;
+    width: 100%;
+    margin-left: 0;
+  }
 
-.crm-table{
-min-width:600px;
-}
+  .crm-table-wrapper{
+    width:100%;
+    overflow-x: visible;
+    -webkit-overflow-scrolling: touch;
+  }
 
-.crm-table-wrapper{
-overflow-x:auto;
-}
+  #userTable.crm-table{
+    min-width: 0;
+  }
 
+  .dataTables_wrapper .dataTables_length,
+  .dataTables_wrapper .dataTables_filter,
+  .dataTables_wrapper .dt-buttons {
+    width:100%;
+    display:flex;
+    justify-content:center;
+    margin-bottom:10px;
+  }
+
+  .dataTables_wrapper .dataTables_length label,
+  .dataTables_wrapper .dataTables_filter label {
+    width: 100%;
+  }
+
+  .dataTables_wrapper .dataTables_filter input{
+    width:100% !important;
+    max-width:100%;
+    min-width:0;
+  }
+
+  .dataTables_wrapper .dataTables_paginate{
+    display:flex;
+    justify-content:center;
+    margin-top:10px;
+  }
+
+  .crm-export-btn {
+    width: 100% !important;
+  }
+
+  #userTable.crm-table th,
+  #userTable.crm-table td {
+    padding: 10px 8px;
+    font-size: 12px;
+  }
+
+  .pay-action {
+    gap: 6px;
+  }
+
+  .btn-add-payment {
+    padding: 8px 12px;
+    font-size: 12px;
+  }
+
+  .crm-card {
+    padding: 12px;
+  }
 }
 </style>
 
+<h2 class="page-title payments-page-title">Payments</h2>
+
+<div class="payments-wrapper">
+<div class="crm-right">
 <div class="crm-card">
 
-<h3>Users List</h3>
+<h3><i class="fas fa-list"></i> Payments List</h3>
 <div class="crm-table-wrapper">
 
-<table id="userTable" class="display" style="width:100%">
+<table id="userTable" class="crm-table display" style="width:100%">
 
 <thead>
 <tr>
@@ -909,6 +1015,7 @@ echo "<span class='status-unpaid'>Unpaid</span>";
 
 <button
 class="btn-add-payment"
+data-tooltip="Add payment"
 onclick="openPaymentModal(<?= (int)$p['id'] ?>)">
 + Add
 </button>
@@ -916,7 +1023,8 @@ onclick="openPaymentModal(<?= (int)$p['id'] ?>)">
 <a
 class="btn-icon btn-view"
 href="index.php?page=students/profile&id=<?= $p['id'] ?>"
-title="Student Profile">
+title="Student Profile"
+data-tooltip="Student profile">
 
 <i class="fas fa-eye"></i>
 
@@ -934,6 +1042,7 @@ title="Student Profile">
 
 </table>
 
+</div>
 </div>
 </div>
 </div>
@@ -968,17 +1077,25 @@ Loading...
 <script>
 
 document.addEventListener("DOMContentLoaded", function(){
-
-if (window.DataTable) {
-
-new DataTable('#userTable',{
+if (window.jQuery && $.fn.DataTable) {
+$('#userTable').DataTable({
 pageLength:10,
+lengthMenu:[5,10,20,50],
+autoWidth:false,
 responsive:true,
-order:[[6,'desc']]
-});
-
+order:[[6,'desc']],
+dom:'<"crm-table-header"lfB>rt<"crm-table-footer"ip>',
+buttons:[{
+extend:'csvHtml5',
+text:'Export CSV',
+className:'crm-export-btn'
+}],
+language:{
+search:"",
+searchPlaceholder:"Search..."
 }
-
+});
+}
 });
 
 /* ===============================
