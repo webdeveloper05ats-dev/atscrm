@@ -78,6 +78,9 @@ if (!file_exists($viewPath)) {
 $rawPages = [
     'targets/export',
     'targets/export-user-details',
+    'reports/export_course',        // ⭐ ADD THIS
+
+    'reports/export_internship'   // ⭐ ADD THIS
 ];
 
 if ($page === 'leads/import' && isset($_GET['download']) && $_GET['download'] === 'template') {
