@@ -14,15 +14,16 @@ $userId = (int)($_SESSION['user_id'] ?? 0);
 =============================== */
 
 $where = " WHERE r.reg_type='internship' ";
+$params = [];
 
-/* ===============================
-   ROLE RESTRICTION
-=============================== */
+/* Front Office restriction */
 
-if (!in_array($roleId, [1,2])) { // SuperAdmin & HR
-    $where .= " AND r.created_by=".$userId;
+if (!in_array($roleId,[1,2])) {
+
+    $where .= " AND r.assigned_to = ?";
+    $params[] = $userId;
+
 }
-
 /* ===============================
    FILTERS
 =============================== */
@@ -69,7 +70,8 @@ $where
 ORDER BY r.created_at DESC
 ";
 
-$stmt = $pdo->query($sql);
+$stmt = $pdo->prepare($sql);
+$stmt->execute($params);
 $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 /* ===============================
