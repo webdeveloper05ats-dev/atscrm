@@ -78,6 +78,8 @@ if (!file_exists($viewPath)) {
 $rawPages = [
     'targets/export',
     'targets/export-user-details',
+    'reports/export_course',        // ⭐ ADD THIS
+
     'reports/export_internship'   // ⭐ ADD THIS
 ];
 
