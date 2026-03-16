@@ -297,22 +297,27 @@ if (isset($_POST['save_enquiry']) && empty($error)) {
 
     $handledBy = $userId; // default handler
 
-    if (!empty($leadId)) {
+ /* --------------------------------
+   FIX: Get lead assigned staff
+-------------------------------- */
 
-        $leadStmt = $pdo->prepare("
-            SELECT assigned_to
-            FROM leads
-            WHERE id = ?
-            LIMIT 1
-        ");
+if ($leadId > 0 && $handledBy <= 0) {
 
-        $leadStmt->execute([$leadId]);
-        $lead = $leadStmt->fetch(PDO::FETCH_ASSOC);
+    $leadStmt = $pdo->prepare("
+        SELECT assigned_to
+        FROM leads
+        WHERE id = ?
+        LIMIT 1
+    ");
 
-        if ($lead && !empty($lead['assigned_to'])) {
-            $handledBy = (int)$lead['assigned_to']; // correct staff owner
-        }
+    $leadStmt->execute([$leadId]);
+    $lead = $leadStmt->fetch(PDO::FETCH_ASSOC);
+
+    if ($lead && !empty($lead['assigned_to'])) {
+        $handledBy = (int)$lead['assigned_to'];
     }
+
+}
 
     $pdo->beginTransaction();
 
