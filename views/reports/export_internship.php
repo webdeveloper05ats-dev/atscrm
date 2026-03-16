@@ -40,9 +40,8 @@ $where = " WHERE r.reg_type='internship' ";
 /* Role restriction */
 
 if (!in_array($roleId,[1,2])) {
-    $where .= " AND r.created_by=".$userId;
+    $where .= " AND r.assigned_to=".$userId;
 }
-
 /* Filters */
 
 if ($date_from!='') {
