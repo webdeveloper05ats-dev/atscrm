@@ -171,7 +171,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['upload_leads'])) {
 
                     try {
                         $st = $pdo->prepare("
-                            INSERT INTO lead_import_batches
+                            INSERT INTO lead_import0_batches
                             (branch_id, created_by, file_name, total_rows, success_rows, failed_rows, status, created_at)
                             VALUES (?, ?, ?, 0, 0, 0, 'completed', NOW())
                         ");
