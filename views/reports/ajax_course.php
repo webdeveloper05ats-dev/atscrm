@@ -14,13 +14,15 @@ $userId = (int)($_SESSION['user_id'] ?? 0);
 =============================== */
 
 $where = " WHERE r.reg_type='course' ";
+$params = [];
 
-/* ===============================
-   ROLE RESTRICTION
-=============================== */
+/* Front Office restriction */
 
-if (!in_array($roleId, [1,2])) { // SuperAdmin & HR
-    $where .= " AND r.created_by=".$userId;
+if (!in_array($roleId,[1,2])) {
+
+    $where .= " AND r.assigned_to = ?";
+    $params[] = $userId;
+
 }
 
 /* ===============================
