@@ -58,6 +58,7 @@ $totalStudents   = safeCount($pdo, "SELECT COUNT(*) FROM students" . $branchWher
 $totalAttendance = safeCount($pdo, "SELECT COUNT(*) FROM attendance" . $branchWhere, $params);
 $totalClasses    = safeCount($pdo, "SELECT COUNT(*) FROM classes" . $branchWhere, $params);
 $totalAssessment = safeCount($pdo, "SELECT COUNT(*) FROM assessment" . $branchWhere, $params);
+$totalMockInterviews = safeCount($pdo, "SELECT COUNT(*) FROM mock_interviews" . $branchWhere, $params);
 
 // Optional: Today's attendance
 $todayAttendance = 0;
@@ -143,7 +144,7 @@ $branchName = $_SESSION['branch_name'] ?? 'Branch';
     <p style="line-height:1.7; color: var(--text-dark);">
         Hello <strong><?= htmlspecialchars($userName) ?></strong> —
         You are managing students under <strong><?= htmlspecialchars($branchName) ?></strong>.
-        Track attendance, classes, assessments, and progress here.
+        Track attendance, classes, assessments, mock interviews, and progress here.
     </p>
 </div>
 
@@ -172,6 +173,11 @@ $branchName = $_SESSION['branch_name'] ?? 'Branch';
     <div class="card stat-card">
         <h3>Total Assessments</h3>
         <h2><?= (int)$totalAssessment ?></h2>
+    </div>
+
+    <div class="card stat-card">
+        <h3>Mock Interviews</h3>
+        <h2><?= (int)$totalMockInterviews ?></h2>
     </div>
 
 </div>
