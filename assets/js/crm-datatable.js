@@ -6,21 +6,26 @@ pageLength: options.pageLength || 5,
 lengthMenu: options.lengthMenu || [5,10,25,50],
 
 autoWidth:false,
-responsive:true,   // ⭐ IMPORTANT
-scrollX:true,      // ⭐ IMPORTANT
+responsive:true,
+scrollX:true,
 
 dom:
-"<\"crm-table-header\"lfB>" +
-"rt" +
-"<\"crm-table-footer\"ip>",
+options.export === false
+? "<\"crm-table-header\"lf>" +
+  "rt" +
+  "<\"crm-table-footer\"ip>"
+: "<\"crm-table-header\"lfB>" +
+  "rt" +
+  "<\"crm-table-footer\"ip>",
 
-buttons:[
-{
+buttons:
+options.export === false
+? []
+: [{
 extend:'csvHtml5',
 text:'Export CSV',
 className:'crm-export-btn'
-}
-],
+}],
 
 language:{
 search:"",
@@ -29,6 +34,12 @@ searchPlaceholder: options.searchPlaceholder || "Search..."
 
 };
 
-$(tableId).DataTable(settings);
+/* ⭐ MERGE USER OPTIONS */
+
+settings = {...settings, ...options};
+
+/* RETURN DATATABLE INSTANCE */
+
+return $(tableId).DataTable(settings);
 
 }
