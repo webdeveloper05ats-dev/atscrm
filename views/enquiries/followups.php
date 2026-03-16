@@ -152,11 +152,7 @@ if (isset($_GET['tab'])) {
 
     if (!$rows) {
 
-        echo "<tr>
-                <td colspan='7' style='text-align:center;color:#888;padding:20px;'>
-                    No followups found
-                </td>
-              </tr>";
+       
         exit;
     }
 
@@ -1048,10 +1044,19 @@ if ($canAllBranches !== 1 && $branchId > 0) {
     $params[] = $branchId;
 }
 
-if ($tab === 'today')       $where[] = "f.followup_date = CURDATE()";
-elseif ($tab === 'pending') $where[] = "f.status = 'pending'";
-elseif ($tab === 'missed')  $where[] = "f.status = 'missed'";
-elseif ($tab === 'done')    $where[] = "f.status = 'done'";
+if ($tab === 'today') {
+    $where[] = "f.followup_date = CURDATE()";
+}
+elseif ($tab === 'pending') {
+    $where[] = "f.status = 'pending'";
+}
+elseif ($tab === 'missed') {
+    $where[] = "f.followup_date < CURDATE()";
+    $where[] = "f.status = 'pending'";
+}
+elseif ($tab === 'done') {
+    $where[] = "f.status = 'done'";
+}
 
 if ($from !== '') {
     $where[] = "f.followup_date >= ?";
@@ -1923,6 +1928,47 @@ color:#777;
 .alert-card.today i{ color:#e91e63; }
 .alert-card.missed i{ color:#ff5722; }
 .alert-card.upcoming i{ color:#3f51b5; }
+
+
+
+/* ===============================
+DATATABLE HEADER FINAL FIX
+=============================== */
+
+.dataTables_wrapper .dataTables_length,
+.dataTables_wrapper .dataTables_filter,
+.dataTables_wrapper .dt-buttons{
+width:auto !important;
+margin-bottom:0 !important;
+}
+
+.dataTables_wrapper .dataTables_length{
+float:left;
+display:flex;
+align-items:center;
+gap:6px;
+}
+
+.dataTables_wrapper .dataTables_filter{
+float:right;
+display:flex;
+align-items:center;
+gap:6px;
+}
+
+.dataTables_wrapper .dataTables_filter input{
+width:220px !important;
+}
+
+.dataTables_wrapper .dataTables_length select{
+border-radius:8px;
+padding:4px 8px;
+}
+
+.dataTables_wrapper .dataTables_filter input{
+border-radius:20px;
+padding:6px 12px;
+}
 </style>
 
 <h2 style="margin-bottom:12px;">Enquiry Follow-ups</h2>
@@ -2051,15 +2097,7 @@ title="Reset Filter">
 
 <tbody>
 
-<?php if (empty($followups)): ?>
 
-<tr>
-<td colspan="7" class="tc" style="padding:26px;color:var(--text-light);">
-No follow-ups found.
-</td>
-</tr>
-
-<?php else: ?>
 
 <?php foreach ($followups as $f): ?>
 
@@ -2150,7 +2188,7 @@ class="icon-btn btn-done">
 
 <?php endforeach; ?>
 
-<?php endif; ?>
+
 
 </tbody>
 
@@ -2692,52 +2730,78 @@ function mfShowFiles(inp) {
 })();
 </script>
 
+<!-- Make sure these are included BEFORE your custom scripts -->
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
+
+<!-- Your tab switching + DataTables logic -->
 <script>
+document.addEventListener("DOMContentLoaded", function () {
+    // === Initial table initialization on page load ===
+    initFollowupTable();
 
-document.querySelectorAll('.followupTab').forEach(tab => {
+    // === Tab switching logic ===
+    document.querySelectorAll('.followupTab').forEach(tab => {
+        tab.addEventListener('click', function (e) {
+            e.preventDefault(); // prevent default <a> behavior if it's a link
 
-    tab.addEventListener('click', function(){
+            // Remove active class from all tabs
+            document.querySelectorAll('.followupTab').forEach(t => t.classList.remove('active'));
+            // Add active to clicked tab
+            this.classList.add('active');
 
-        const tabName = this.dataset.tab;
+            const tabName = this.dataset.tab;
 
-        fetch("index.php?page=enquiries/followups&ajax=1&tab=" + tabName)
+            fetch(`index.php?page=enquiries/followups&ajax=1&tab=${tabName}`)
+                .then(res => {
+                    if (!res.ok) throw new Error('Network response was not ok');
+                    return res.text();
+                })
+                .then(html => {
+                    // 1. Destroy existing DataTable instance safely
+                    if ($.fn.DataTable.isDataTable('#usersTable')) {
+                        $('#usersTable').DataTable().clear().destroy();
+                    }
 
-        .then(res => res.text())
+                    // 2. Replace tbody content
+                    document.querySelector("#usersTable tbody").innerHTML = html;
 
-        .then(html => {
-
-            const table = $('#usersTable').DataTable();
-
-            table.clear().destroy(); // safely destroy
-
-            document.querySelector("#usersTable tbody").innerHTML = html;
-
-            // recreate DataTable
-            crmDataTable('#usersTable',{
-                pageLength:5,
-                lengthMenu:[5,10,20,50],
-                ordering:true,
-                order:[[1,'asc']]
-            });
-
+                    // 3. Re-initialize DataTable
+                    initFollowupTable();
+                })
+                .catch(error => {
+                    console.error('Error loading tab data:', error);
+                    // Optional: show user-friendly message
+                    document.querySelector("#usersTable tbody").innerHTML = 
+                        '<tr><td colspan="7" style="text-align:center; padding:20px; color:#d32f2f;">Failed to load data. Please try again.</td></tr>';
+                });
         });
-
     });
-
 });
 
-</script>
-
-<script>
-document.addEventListener("DOMContentLoaded", function(){
-
-crmDataTable('#usersTable',{
-pageLength:5,
-lengthMenu:[5,10,20,50],
-ordering:true,
-order:[[1,'asc']]
-});
-
-});
-
+// Helper function – keeps configuration in one place
+function initFollowupTable() {
+    $('#usersTable').DataTable({
+        pageLength: 5,
+        lengthMenu: [5, 10, 20, 50],
+        ordering: true,
+        order: [[0, 'desc']],           // 0 = first column (Follow-up date) – newest first
+        language: {
+            emptyTable:     "No follow-ups found in this category.",
+            infoEmpty:      "Showing 0 to 0 of 0 entries",
+            zeroRecords:    "No matching follow-ups found",
+            lengthMenu:     "Show _MENU_ follow-ups",
+            search:         "Search:",
+            paginate: {
+                first:      "« First",
+                last:       "Last »",
+                next:       "Next →",
+                previous:   "← Prev"
+            }
+        },
+        // Optional: make table responsive on small screens
+        responsive: true
+    });
+}
 </script>
