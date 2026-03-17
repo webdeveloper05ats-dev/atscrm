@@ -541,7 +541,7 @@ $rows=$stmt->fetchAll(PDO::FETCH_ASSOC);
                             <td>
                                 <div class="draft-actions">
                                     <a
-href="index.php?page=registrations/convert&reg_id=<?= $r['id'] ?>&type=<?= h($r['reg_type']) ?>"
+href="index.php?page=registrations/convert & reg_id=<?= $r['id'] ?>&type=<?= h($r['reg_type']) ?>"
 class="btn-continue-draft"
 >
 <i class="fas fa-arrow-right mr-1"></i> Continue
