@@ -1,238 +1,231 @@
 <?php
-// =======================================================
-// HR Dashboard
-// File: views/dashboard/hr.php
-// =======================================================
+if (!defined('APP_NAME')) die("Unauthorized");
 
-requireView('dashboard/hr');
-
-if (!defined('APP_NAME')) {
-    die("Unauthorized access.");
-}
-
-// Role protection (optional but recommended)
 if (($_SESSION['role_name'] ?? '') !== 'HR') {
     redirect('index.php');
     exit;
 }
 
-$pageTitle = "HR Dashboard";
+/* ================= DATA ================= */
 
-// -------------------------------------------------------
-// Branch scope
-// roles.can_access_all_branches : 1 = all branches
-// -------------------------------------------------------
-$roleId   = (int)($_SESSION['role_id'] ?? 0);
-$branchId = (int)($_SESSION['branch_id'] ?? 0);
+function c($pdo,$q){return (int)$pdo->query($q)->fetchColumn();}
+function s($pdo,$q){return (float)$pdo->query($q)->fetchColumn();}
 
-$canAllBranches = 0;
-try {
-    $r = $pdo->prepare("SELECT can_access_all_branches FROM roles WHERE id=? LIMIT 1");
-    $r->execute([$roleId]);
-    $canAllBranches = (int)($r->fetchColumn() ?? 0);
-} catch (Exception $e) {
-    $canAllBranches = 0;
-}
+$totalLeads = c($pdo,"SELECT COUNT(*) FROM leads");
+$leadConverted = c($pdo,"SELECT COUNT(*) FROM leads WHERE status='converted'");
+$leadMissed = $totalLeads - $leadConverted;
 
-// Helpers
-function safeCount(PDO $pdo, string $sql, array $params = []): int {
-    try {
-        $st = $pdo->prepare($sql);
-        $st->execute($params);
-        return (int)$st->fetchColumn();
-    } catch (Exception $e) {
-        return 0;
-    }
-}
+$totalEnquiries = c($pdo,"SELECT COUNT(*) FROM enquiries");
+$enqConverted = c($pdo,"SELECT COUNT(*) FROM enquiries WHERE status='converted'");
+$enqMissed = $totalEnquiries - $enqConverted;
 
-function safeSum(PDO $pdo, string $sql, array $params = []): float {
-    try {
-        $st = $pdo->prepare($sql);
-        $st->execute($params);
-        return (float)$st->fetchColumn();
-    } catch (Exception $e) {
-        return 0.0;
-    }
-}
+$totalStudents = c($pdo,"SELECT COUNT(*) FROM registrations WHERE registration_status='active'");
+$completedStudents = c($pdo,"SELECT COUNT(*) FROM registrations WHERE registration_status='completed'");
+$ongoingStudents = $totalStudents - $completedStudents;
 
-$params = [];
-$branchWhere = "";
+$totalRevenue = s($pdo,"SELECT IFNULL(SUM(amount),0) FROM payments");
 
-if ($canAllBranches !== 1 && $branchId > 0) {
-    $branchWhere = " WHERE branch_id = ? ";
-    $params = [$branchId];
-}
+/* TODAY FOLLOWUPS */
+$todayFollowups = $pdo->query("
+SELECT e.name,e.phone,f.followup_time
+FROM enquiry_followups f
+JOIN enquiries e ON e.id=f.enquiry_id
+WHERE DATE(f.followup_date)=CURDATE()
+LIMIT 5
+")->fetchAll(PDO::FETCH_ASSOC);
 
-// -------------------------------------------------------
-// HR Stats (table names assumed as in your DB list)
-// -------------------------------------------------------
-$totalLeads     = safeCount($pdo, "SELECT COUNT(*) FROM leads" . $branchWhere, $params);
-$totalEnquiries = safeCount($pdo, "SELECT COUNT(*) FROM enquiries" . $branchWhere, $params);
+/* INTERVIEWS */
+$interviews = $pdo->query("
+SELECT company_name,interview_date,status
+FROM interviews ORDER BY interview_date DESC LIMIT 5
+")->fetchAll(PDO::FETCH_ASSOC);
 
-$totalInterviews = safeCount($pdo, "SELECT COUNT(*) FROM interviews" . $branchWhere, $params);
-$totalPlacements = safeCount($pdo, "SELECT COUNT(*) FROM placements" . $branchWhere, $params);
-
-// Optional: Today interviews (interview_date column assumed)
-$todayInterviews = 0;
-try {
-    if ($canAllBranches !== 1 && $branchId > 0) {
-        $todayInterviews = safeCount(
-            $pdo,
-            "SELECT COUNT(*) FROM interviews WHERE DATE(interview_date)=CURDATE() AND branch_id=?",
-            [$branchId]
-        );
-    } else {
-        $todayInterviews = safeCount(
-            $pdo,
-            "SELECT COUNT(*) FROM interviews WHERE DATE(interview_date)=CURDATE()",
-            []
-        );
-    }
-} catch (Exception $e) {
-    $todayInterviews = 0;
-}
-
-// Revenue (payments)
-$totalRevenue = safeSum($pdo, "SELECT IFNULL(SUM(amount),0) FROM payments" . $branchWhere, $params);
-
-// -------------------------------------------------------
-// Quick Access menus for HR
-// -------------------------------------------------------
-$menus = [];
-try {
-    $st = $pdo->prepare("
-        SELECT m.*
-        FROM menus m
-        JOIN role_permissions rp ON rp.menu_id = m.id
-        WHERE rp.role_id = ?
-          AND rp.can_view = 1
-          AND m.status = 1
-        ORDER BY m.parent_id IS NOT NULL, m.parent_id ASC, m.sort_order ASC
-    ");
-    $st->execute([$roleId]);
-    $menus = $st->fetchAll(PDO::FETCH_ASSOC);
-} catch (Exception $e) {
-    $menus = [];
-}
-
-// Build tree
-$tree = [];
-foreach ($menus as $m) {
-    if ($m['parent_id'] === null) {
-        $tree[(int)$m['id']] = $m;
-        $tree[(int)$m['id']]['children'] = [];
-    }
-}
-foreach ($menus as $m) {
-    if ($m['parent_id'] !== null) {
-        $pid = (int)$m['parent_id'];
-        if (isset($tree[$pid])) {
-            $tree[$pid]['children'][] = $m;
-        }
-    }
-}
-
-// Flatten for tiles
-$quickLinks = [];
-foreach ($tree as $parent) {
-    if (!empty($parent['children'])) {
-        foreach ($parent['children'] as $child) {
-            $quickLinks[] = $child;
-        }
-    } else {
-        $quickLinks[] = $parent;
-    }
-}
-
-// Skip the dashboard itself (optional)
-$skipSlugs = ['dashboard/hr'];
-$quickLinks = array_values(array_filter($quickLinks, function($m) use ($skipSlugs) {
-    return !in_array($m['menu_slug'], $skipSlugs, true);
-}));
-
-$userName   = $_SESSION['user_name'] ?? 'HR';
-$branchName = $_SESSION['branch_name'] ?? 'Branch';
+/* REGISTRATIONS */
+$regs = $pdo->query("
+SELECT enquiry_snapshot_name,program_name,registration_status
+FROM registrations ORDER BY id DESC LIMIT 5
+")->fetchAll(PDO::FETCH_ASSOC);
 ?>
 
-<div class="card">
-    <div class="card-header">Welcome HR 👩‍💼</div>
-    <p style="line-height:1.7; color: var(--text-dark);">
-        Hello <strong><?= htmlspecialchars($userName) ?></strong> —
-        You are working under <strong><?= htmlspecialchars($branchName) ?></strong>.
-        Track interviews, placement progress, and conversion outcomes here.
-    </p>
+<style>
+
+/* ===== ROOT ===== */
+.crm{
+background:#f5f7fb;
+padding:20px;
+}
+
+/* ===== CARDS ===== */
+.grid{
+display:grid;
+grid-template-columns:repeat(4,1fr);
+gap:16px;
+margin-bottom:20px;
+}
+
+.kpi{
+padding:18px;
+border-radius:14px;
+color:#fff;
+position:relative;
+overflow:hidden;
+}
+
+.kpi h2{font-size:26px;}
+.kpi small{opacity:.9;}
+
+.kpi i{
+position:absolute;
+right:15px;
+top:15px;
+font-size:26px;
+opacity:.3;
+}
+
+.p1{background:#e91e63;}
+.p2{background:#ff9800;}
+.p3{background:#2e7d32;}
+.p4{background:#3f51b5;}
+
+/* ===== SECTION ===== */
+.section{
+background:#fff;
+padding:18px;
+border-radius:14px;
+box-shadow:0 10px 25px rgba(0,0,0,.05);
+}
+
+/* ===== FLEX ===== */
+.row{
+display:grid;
+grid-template-columns:2fr 1fr;
+gap:20px;
+margin-bottom:20px;
+}
+
+/* ===== TABLE ===== */
+table{width:100%;}
+td{padding:8px;border-bottom:1px solid #eee;}
+
+/* ===== TASK ===== */
+.task{
+display:flex;
+justify-content:space-between;
+padding:10px;
+border-bottom:1px solid #eee;
+}
+
+/* ===== RESPONSIVE ===== */
+@media(max-width:900px){
+.grid{grid-template-columns:1fr 1fr;}
+.row{grid-template-columns:1fr;}
+}
+
+</style>
+
+<div class="crm">
+
+<!-- KPI -->
+<div class="grid">
+
+<div class="kpi p1">
+<h2><?= $totalLeads ?></h2>
+<small><?= $leadConverted ?> Converted | <?= $leadMissed ?> Missed</small>
+<i class="fas fa-user-plus"></i>
 </div>
 
-<div class="dashboard-grid">
+<div class="kpi p2">
+<h2><?= $totalEnquiries ?></h2>
+<small><?= $enqConverted ?> Converted | <?= $enqMissed ?> Missed</small>
+<i class="fas fa-question"></i>
+</div>
 
-    <div class="card stat-card">
-        <h3>Today Interviews</h3>
-        <h2><?= (int)$todayInterviews ?></h2>
-    </div>
+<div class="kpi p3">
+<h2><?= $totalStudents ?></h2>
+<small><?= $completedStudents ?> Completed | <?= $ongoingStudents ?> Ongoing</small>
+<i class="fas fa-user-graduate"></i>
+</div>
 
-    <div class="card stat-card">
-        <h3>Total Interviews</h3>
-        <h2><?= (int)$totalInterviews ?></h2>
-    </div>
-
-    <div class="card stat-card">
-        <h3>Total Placements</h3>
-        <h2><?= (int)$totalPlacements ?></h2>
-    </div>
-
-    <div class="card stat-card">
-        <h3>Total Leads</h3>
-        <h2><?= (int)$totalLeads ?></h2>
-    </div>
-
-    <div class="card stat-card">
-        <h3>Total Enquiries</h3>
-        <h2><?= (int)$totalEnquiries ?></h2>
-    </div>
-
-    <div class="card stat-card">
-        <h3>Total Revenue</h3>
-        <h2>₹ <?= number_format((float)$totalRevenue, 2) ?></h2>
-    </div>
+<div class="kpi p4">
+<h2>₹<?= number_format($totalRevenue) ?></h2>
+<small>Total Revenue</small>
+<i class="fas fa-rupee-sign"></i>
+</div>
 
 </div>
 
-<div class="card" style="margin-top:18px;">
-    <div class="card-header">Quick Access</div>
+<!-- MIDDLE -->
+<div class="row">
 
-    <?php if (empty($quickLinks)): ?>
-        <p style="color:var(--text-light);">
-            No menus are assigned to this role yet. Please ask Super Admin to enable permissions.
-        </p>
-    <?php else: ?>
+<!-- FOLLOWUPS -->
+<div class="section">
+<h3>Today Followups</h3>
 
-        <div class="dashboard-grid" style="margin-top:0;">
-            <?php foreach ($quickLinks as $m): ?>
-                <?php
-                    $slug = $m['menu_slug'];
-                    $name = $m['menu_name'];
-                    $icon = $m['icon'] ?: 'fas fa-circle';
-                ?>
-                <a href="index.php?page=<?= htmlspecialchars($slug) ?>"
-                   style="text-decoration:none;">
-                    <div class="card stat-card" style="text-align:left;">
-                        <div style="display:flex; align-items:center; gap:12px;">
-                            <div style="font-size:22px; color: var(--primary); width:32px;">
-                                <i class="<?= htmlspecialchars($icon) ?>"></i>
-                            </div>
-                            <div>
-                                <div style="font-weight:800; color: var(--text-dark);">
-                                    <?= htmlspecialchars($name) ?>
-                                </div>
-                                <div style="font-size:12px; color: var(--text-light); margin-top:2px;">
-                                    <?= htmlspecialchars($slug) ?>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </a>
-            <?php endforeach; ?>
-        </div>
-
-    <?php endif; ?>
+<?php foreach($todayFollowups as $f): ?>
+<div class="task">
+<div>
+<b><?= $f['name'] ?></b><br>
+<small><?= $f['phone'] ?></small>
 </div>
+<span><?= $f['followup_time'] ?></span>
+</div>
+<?php endforeach; ?>
+
+</div>
+
+<!-- CHART -->
+<div class="section">
+<h3>Revenue</h3>
+<canvas id="chart"></canvas>
+</div>
+
+</div>
+
+<!-- BOTTOM -->
+<div class="row">
+
+<div class="section">
+<h3>Interviews</h3>
+<table>
+<?php foreach($interviews as $i): ?>
+<tr>
+<td><?= $i['company_name'] ?></td>
+<td><?= $i['interview_date'] ?></td>
+<td><?= $i['status'] ?></td>
+</tr>
+<?php endforeach; ?>
+</table>
+</div>
+
+<div class="section">
+<h3>Recent Registrations</h3>
+<table>
+<?php foreach($regs as $r): ?>
+<tr>
+<td><?= $r['enquiry_snapshot_name'] ?></td>
+<td><?= $r['program_name'] ?></td>
+<td><?= $r['registration_status'] ?></td>
+</tr>
+<?php endforeach; ?>
+</table>
+</div>
+
+</div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+new Chart(document.getElementById("chart"),{
+type:'line',
+data:{
+labels:["Mon","Tue","Wed","Thu","Fri"],
+datasets:[{
+label:"Revenue",
+data:[1000,2000,1500,3000,2500],
+borderColor:"#e91e63"
+}]
+}
+});
+</script>
