@@ -62,12 +62,15 @@ if (!function_exists('isValidEmail')) {
 }
 if (!function_exists('generateEnquiryNo')) {
     function generateEnquiryNo(PDO $pdo): string {
-        $prefix = 'ENQ-' . date('Ymd') . '-';
-        $st = $pdo->prepare("SELECT COUNT(*) FROM enquiries WHERE enquiry_date = CURDATE()");
-        $st->execute();
-        $countToday = (int)$st->fetchColumn();
-        return $prefix . str_pad((string)($countToday + 1), 4, '0', STR_PAD_LEFT);
-    }
+
+    // Insert dummy row to get unique ID
+    $pdo->exec("INSERT INTO enquiry_sequence VALUES ()");
+
+    $seqId = (int)$pdo->lastInsertId();
+
+    // Format: ENQ-YYYYMMDD-0001
+    return 'ENQ-' . date('Ymd') . '-' . str_pad($seqId, 4, '0', STR_PAD_LEFT);
+}
 }
 
 // Safe upload (signature)
@@ -161,14 +164,17 @@ if (isset($_POST['save_enquiry']) && empty($error)) {
         $error = "Invalid request (CSRF). Please refresh and try again.";
     } else {
 
-        // Step 1
+        // ===============================
+        // COLLECT FORM DATA
+        // ===============================
+
         $enquiry_date = $_POST['enquiry_date'] ?? date('Y-m-d');
-        $enquiry_no   = trim($_POST['enquiry_no'] ?? '');
         $handledBy    = (int)($_POST['handled_by'] ?? 0);
 
-        $name       = trim($_POST['name'] ?? '');
-        $phone      = toNull($_POST['phone'] ?? '');
-        $email      = toNull($_POST['email'] ?? '');
+        $name  = trim($_POST['name'] ?? '');
+        $phone = toNull($_POST['phone'] ?? '');
+        $email = toNull($_POST['email'] ?? '');
+
         $dob        = toNull($_POST['dob'] ?? '');
         $gender     = toNull($_POST['gender'] ?? '');
         $profession = toNull($_POST['profession'] ?? '');
@@ -176,7 +182,6 @@ if (isset($_POST['save_enquiry']) && empty($error)) {
         $instagram_id = toNull($_POST['instagram_id'] ?? '');
         $course_interest = toNull($_POST['course_interest'] ?? '');
 
-        // Step 2
         $qualification    = toNull($_POST['qualification'] ?? '');
         $year_of_passout  = toIntOrNull($_POST['year_of_passout'] ?? '');
         $college          = toNull($_POST['college'] ?? '');
@@ -187,7 +192,6 @@ if (isset($_POST['save_enquiry']) && empty($error)) {
         $father_occupation = toNull($_POST['father_occupation'] ?? '');
         $father_contact_no = toNull($_POST['father_contact_no'] ?? '');
 
-        // Step 3
         $technologies  = joinCsv($_POST['technologies'] ?? []);
         $interested_in = joinCsv($_POST['interested_in'] ?? []);
         $placements_required = isset($_POST['placements_required']) ? 1 : 0;
@@ -197,257 +201,135 @@ if (isset($_POST['save_enquiry']) && empty($error)) {
 
         $status = 'new';
 
-        // ---------- Validations ----------
+        // ===============================
+        // VALIDATION
+        // ===============================
+
         if ($branchId <= 0) {
-            $error = "Branch missing for your user. Please assign branch to this user.";
+            $error = "Branch missing.";
         } elseif ($name === '') {
             $error = "Name is required.";
         } elseif (!isValidPhone($phone)) {
-            $error = "Invalid phone number format.";
+            $error = "Invalid phone.";
         } elseif (!isValidEmail($email)) {
-            $error = "Invalid email address.";
-        } elseif ($year_of_passout !== null && ($year_of_passout < 1990 || $year_of_passout > 2100)) {
-            $error = "Year of passout is invalid.";
-        } elseif ($percentage_marks !== null && ($percentage_marks < 0 || $percentage_marks > 100)) {
-            $error = "Percentage marks should be between 0 and 100.";
-        } else {
-
-            if ($enquiry_no === '') {
-                $enquiry_no = generateEnquiryNo($pdo);
-            }
-
-            // If opened from lead conversion, prefer lead assigned_to as handled_by
-            if ($leadId > 0 && $handledBy <= 0) {
-                try {
-                    $st = $pdo->prepare("SELECT assigned_to FROM leads WHERE id = ? LIMIT 1");
-                    $st->execute([$leadId]);
-                    $leadAssigned = (int)($st->fetchColumn() ?? 0);
-                    if ($leadAssigned > 0) {
-                        $handledBy = $leadAssigned;
-                    }
-                } catch (Exception $e) {
-                    // ignore
-                }
-            }
-
-            // Auto assign handled_by if still not selected
-            if ($handledBy <= 0) {
-                try {
-                    $auto = $pdo->prepare("
-                        SELECT u.id
-                        FROM users u
-                        JOIN roles r ON r.id = u.role_id
-                        WHERE u.status = 1
-                          AND r.role_name = 'Front Office'
-                          AND (u.branch_id = ? OR u.branch_id IS NULL OR u.branch_id = 0)
-                        ORDER BY u.id ASC
-                        LIMIT 1
-                    ");
-                    $auto->execute([$branchId]);
-                    $autoUser = (int)($auto->fetchColumn() ?? 0);
-                } catch (Exception $e) {
-                    $autoUser = 0;
-                }
-
-                if ($autoUser > 0) {
-                    $handledBy = $autoUser;
-                } else {
-                    try {
-                        $super = $pdo->prepare("
-                            SELECT u.id
-                            FROM users u
-                            JOIN roles r ON r.id = u.role_id
-                            WHERE u.status=1 AND r.role_name='Super Admin'
-                            ORDER BY u.id ASC
-                            LIMIT 1
-                        ");
-                        $super->execute();
-                        $superUser = (int)($super->fetchColumn() ?? 0);
-                    } catch (Exception $e) {
-                        $superUser = 0;
-                    }
-                    $handledBy = $superUser > 0 ? $superUser : $userId;
-                }
-            }
-
-            // Signature uploads
-            $candidate_signature_path = null;
-            $counselor_signature_path = null;
-
-            $cand = uploadSignature($_FILES['candidate_signature'] ?? null, 'enquiries');
-            if ($cand === '__ERROR__SIZE__') $error = "Candidate signature must be under 2MB.";
-            elseif ($cand === '__ERROR__TYPE__') $error = "Candidate signature must be JPG/PNG.";
-            elseif ($cand === '__ERROR__UPLOAD__') $error = "Candidate signature upload failed.";
-            elseif ($cand) $candidate_signature_path = $cand;
-
-            if (empty($error)) {
-                $coun = uploadSignature($_FILES['counselor_signature'] ?? null, 'enquiries');
-                if ($coun === '__ERROR__SIZE__') $error = "Counselor signature must be under 2MB.";
-                elseif ($coun === '__ERROR__TYPE__') $error = "Counselor signature must be JPG/PNG.";
-                elseif ($coun === '__ERROR__UPLOAD__') $error = "Counselor signature upload failed.";
-                elseif ($coun) $counselor_signature_path = $coun;
-            }
-
-            if (empty($error)) {
-                try {
-
-    /* --------------------------------
-       FIX: Get lead assigned staff
-    -------------------------------- */
-
-    $handledBy = $userId; // default handler
-
- /* --------------------------------
-   FIX: Get lead assigned staff
--------------------------------- */
-
-if ($leadId > 0 && $handledBy <= 0) {
-
-    $leadStmt = $pdo->prepare("
-        SELECT assigned_to
-        FROM leads
-        WHERE id = ?
-        LIMIT 1
-    ");
-
-    $leadStmt->execute([$leadId]);
-    $lead = $leadStmt->fetch(PDO::FETCH_ASSOC);
-
-    if ($lead && !empty($lead['assigned_to'])) {
-        $handledBy = (int)$lead['assigned_to'];
-    }
-
-}
-
-    $pdo->beginTransaction();
-
-    $attempts = 0;
-    $newEnquiryId = 0;
-
-    while ($attempts < 2) {
-
-        try {
-
-            $st = $pdo->prepare("
-                INSERT INTO enquiries (
-                    enquiry_date, enquiry_no,
-                    branch_id, name, phone, email, dob, gender, profession, address, instagram_id, course_interest,
-                    qualification, year_of_passout, college, percentage_marks, software_languages_known,
-                    father_name, father_occupation, father_contact_no,
-                    technologies, interested_in, placements_required, know_about, know_about_other,
-                    candidate_signature_path, counselor_signature_path,
-                    status, handled_by, remarks,
-                    created_by, ip_address, user_agent, created_at, updated_at
-                ) VALUES (
-                    :enquiry_date, :enquiry_no,
-                    :branch_id, :name, :phone, :email, :dob, :gender, :profession, :address, :instagram_id, :course_interest,
-                    :qualification, :year_of_passout, :college, :percentage_marks, :software_languages_known,
-                    :father_name, :father_occupation, :father_contact_no,
-                    :technologies, :interested_in, :placements_required, :know_about, :know_about_other,
-                    :candidate_signature_path, :counselor_signature_path,
-                    :status, :handled_by, :remarks,
-                    :created_by, :ip_address, :user_agent, NOW(), NOW()
-                )
-            ");
-
-            $st->execute([
-
-                ':enquiry_date' => $enquiry_date,
-                ':enquiry_no'   => $enquiry_no,
-
-                ':branch_id' => $branchId,
-                ':name'      => $name,
-                ':phone'     => $phone,
-                ':email'     => $email,
-                ':dob'       => $dob,
-                ':gender'    => $gender,
-                ':profession'=> $profession,
-                ':address'   => $address,
-                ':instagram_id' => $instagram_id,
-                ':course_interest' => $course_interest,
-
-                ':qualification' => $qualification,
-                ':year_of_passout' => $year_of_passout,
-                ':college' => $college,
-                ':percentage_marks' => $percentage_marks,
-                ':software_languages_known' => $software_languages_known,
-
-                ':father_name' => $father_name,
-                ':father_occupation' => $father_occupation,
-                ':father_contact_no' => $father_contact_no,
-
-                ':technologies' => $technologies,
-                ':interested_in' => $interested_in,
-                ':placements_required' => $placements_required,
-                ':know_about' => $know_about,
-                ':know_about_other' => $know_about_other,
-
-                ':candidate_signature_path' => $candidate_signature_path,
-                ':counselor_signature_path' => $counselor_signature_path,
-
-                ':status' => $status,
-
-                ':handled_by' => $handledBy,      // ✅ lead assigned staff
-                ':remarks' => $remarks,
-
-                ':created_by' => $userId,         // ✅ logged user
-                ':ip_address' => $_SERVER['REMOTE_ADDR'] ?? null,
-                ':user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? null,
-            ]);
-
-            $newEnquiryId = (int)$pdo->lastInsertId();
-
-            break;
-
-        } catch (Exception $insE) {
-
-            $attempts++;
-
-            if ($attempts >= 2) {
-                throw $insE;
-            }
-
-            $enquiry_no = generateEnquiryNo($pdo);
+            $error = "Invalid email.";
         }
-    }
 
-    /* --------------------------------
-       Update lead as converted
-    -------------------------------- */
+        // ===============================
+        // FILE UPLOAD
+        // ===============================
 
-    if ($leadId > 0 && $newEnquiryId > 0) {
+        $candidate_signature_path = null;
+        $counselor_signature_path = null;
 
-        $upLead = $pdo->prepare("
-            UPDATE leads
-            SET
-                status = 'converted',
-                converted_enquiry_id = :converted_enquiry_id,
-                converted_at = NOW(),
-                updated_by = :updated_by,
-                updated_at = NOW()
-            WHERE id = :lead_id
-            LIMIT 1
-        ");
+        if (empty($error)) {
+            $cand = uploadSignature($_FILES['candidate_signature'] ?? null, 'enquiries');
+            if ($cand && !str_starts_with($cand, '__ERROR__')) {
+                $candidate_signature_path = $cand;
+            }
+        }
 
-        $upLead->execute([
-            ':converted_enquiry_id' => $newEnquiryId,
-            ':updated_by' => $userId,
-            ':lead_id' => $leadId
-        ]);
-    }
+        if (empty($error)) {
+            $coun = uploadSignature($_FILES['counselor_signature'] ?? null, 'enquiries');
+            if ($coun && !str_starts_with($coun, '__ERROR__')) {
+                $counselor_signature_path = $coun;
+            }
+        }
 
-    $pdo->commit();
+        // ===============================
+        // FINAL INSERT (NO DUPLICATE 🔥)
+        // ===============================
 
-    $success = "Enquiry saved successfully!";
+        if (empty($error)) {
+            try {
 
-} catch (Exception $e) {
+                $pdo->beginTransaction();
 
-    if ($pdo->inTransaction()) {
-        $pdo->rollBack();
-    }
+                // ✅ UNIQUE NUMBER (SAFE)
+                $enquiry_no = generateEnquiryNo($pdo);
 
-    $error = "Failed to save enquiry. " . $e->getMessage();
-}
+                // handled_by fallback
+                if ($handledBy <= 0) {
+                    $handledBy = $userId;
+                }
+
+                $st = $pdo->prepare("
+                    INSERT INTO enquiries (
+                        enquiry_date, enquiry_no,
+                        branch_id, name, phone, email, dob, gender, profession, address, instagram_id, course_interest,
+                        qualification, year_of_passout, college, percentage_marks, software_languages_known,
+                        father_name, father_occupation, father_contact_no,
+                        technologies, interested_in, placements_required, know_about, know_about_other,
+                        candidate_signature_path, counselor_signature_path,
+                        status, handled_by, remarks,
+                        created_by, ip_address, user_agent, created_at, updated_at
+                    ) VALUES (
+                        :enquiry_date, :enquiry_no,
+                        :branch_id, :name, :phone, :email, :dob, :gender, :profession, :address, :instagram_id, :course_interest,
+                        :qualification, :year_of_passout, :college, :percentage_marks, :software_languages_known,
+                        :father_name, :father_occupation, :father_contact_no,
+                        :technologies, :interested_in, :placements_required, :know_about, :know_about_other,
+                        :candidate_signature_path, :counselor_signature_path,
+                        :status, :handled_by, :remarks,
+                        :created_by, :ip_address, :user_agent, NOW(), NOW()
+                    )
+                ");
+
+                $st->execute([
+                    ':enquiry_date'=>$enquiry_date,
+                    ':enquiry_no'=>$enquiry_no,
+                    ':branch_id'=>$branchId,
+                    ':name'=>$name,
+                    ':phone'=>$phone,
+                    ':email'=>$email,
+                    ':dob'=>$dob,
+                    ':gender'=>$gender,
+                    ':profession'=>$profession,
+                    ':address'=>$address,
+                    ':instagram_id'=>$instagram_id,
+                    ':course_interest'=>$course_interest,
+
+                    ':qualification'=>$qualification,
+                    ':year_of_passout'=>$year_of_passout,
+                    ':college'=>$college,
+                    ':percentage_marks'=>$percentage_marks,
+                    ':software_languages_known'=>$software_languages_known,
+
+                    ':father_name'=>$father_name,
+                    ':father_occupation'=>$father_occupation,
+                    ':father_contact_no'=>$father_contact_no,
+
+                    ':technologies'=>$technologies,
+                    ':interested_in'=>$interested_in,
+                    ':placements_required'=>$placements_required,
+                    ':know_about'=>$know_about,
+                    ':know_about_other'=>$know_about_other,
+
+                    ':candidate_signature_path'=>$candidate_signature_path,
+                    ':counselor_signature_path'=>$counselor_signature_path,
+
+                    ':status'=>$status,
+                    ':handled_by'=>$handledBy,
+                    ':remarks'=>$remarks,
+
+                    ':created_by'=>$userId,
+                    ':ip_address'=>$_SERVER['REMOTE_ADDR'] ?? null,
+                    ':user_agent'=>$_SERVER['HTTP_USER_AGENT'] ?? null,
+                ]);
+
+                $newEnquiryId = $pdo->lastInsertId();
+
+                $pdo->commit();
+
+                $success = "Enquiry saved successfully!";
+
+            } catch (Exception $e) {
+
+                if ($pdo->inTransaction()) {
+                    $pdo->rollBack();
+                }
+
+                $error = "Error: " . $e->getMessage();
             }
         }
     }
