@@ -716,99 +716,91 @@ if (isset($_POST['add_followup'])) {
 // 2) Mark Done (+ Convert)
 // ------------------------------------
 if (isset($_POST['mark_done'])) {
+
     $token = $_POST['csrf_token'] ?? '';
+
     if (!verifyCSRF($token)) {
         $error = "Invalid request (CSRF).";
     } else {
+
         $fid     = (int)($_POST['followup_id'] ?? 0);
         $convert = (int)($_POST['convert'] ?? 0);
         $regType = trim($_POST['reg_type'] ?? '');
+        $regMode = trim($_POST['reg_mode'] ?? 'draft'); // 🔥 IMPORTANT
 
         if ($fid <= 0) {
             $error = "Invalid follow-up.";
         } else {
-            try {
-                if ($canAllBranches !== 1 && $branchId > 0) {
-                    $st = $pdo->prepare("SELECT id, enquiry_id, branch_id FROM enquiry_followups WHERE id=? AND branch_id=? LIMIT 1");
-                    $st->execute([$fid, $branchId]);
-                } else {
-                    $st = $pdo->prepare("SELECT id, enquiry_id, branch_id FROM enquiry_followups WHERE id=? LIMIT 1");
-                    $st->execute([$fid]);
-                }
 
+            try {
+
+                // GET FOLLOWUP
+                $st = $pdo->prepare("SELECT id, enquiry_id, branch_id FROM enquiry_followups WHERE id=? LIMIT 1");
+                $st->execute([$fid]);
                 $fu = $st->fetch(PDO::FETCH_ASSOC);
+
                 if (!$fu) {
-                    throw new Exception("Follow-up not found / branch restricted.");
+                    throw new Exception("Follow-up not found.");
                 }
 
                 $enquiryId = (int)$fu['enquiry_id'];
-                $fuBranch  = (int)$fu['branch_id'];
 
-                $allowedTypes = ['course', 'internship', 'workshop'];
-                if ($convert === 1 && !in_array($regType, $allowedTypes, true)) {
-                    throw new Exception("Invalid registration type.");
-                }
-
-                if ($canAllBranches !== 1 && $branchId > 0) {
-                    $eq = $pdo->prepare("SELECT id, handled_by, branch_id FROM enquiries WHERE id=? AND branch_id=? LIMIT 1");
-                    $eq->execute([$enquiryId, $branchId]);
-                } else {
-                    $eq = $pdo->prepare("SELECT id, handled_by, branch_id FROM enquiries WHERE id=? LIMIT 1");
-                    $eq->execute([$enquiryId]);
-                }
-
+                // GET ENQUIRY
+                $eq = $pdo->prepare("SELECT id, handled_by, branch_id FROM enquiries WHERE id=? LIMIT 1");
+                $eq->execute([$enquiryId]);
                 $enq = $eq->fetch(PDO::FETCH_ASSOC);
+
                 if (!$enq) {
-                    throw new Exception("Enquiry not found / branch restricted.");
+                    throw new Exception("Enquiry not found.");
                 }
 
                 $assignedTo = (int)($enq['handled_by'] ?? 0);
-                $useBranch  = (int)($enq['branch_id'] ?? $fuBranch);
+                $useBranch  = (int)($enq['branch_id'] ?? 0);
 
                 $pdo->beginTransaction();
 
-                if ($canAllBranches !== 1 && $branchId > 0) {
-                    $up = $pdo->prepare("
-                        UPDATE enquiry_followups
-                        SET 
-                            status='done',
-                            done_at=NOW(),
-                            updated_by=?,
-                            updated_at=NOW()
-                        WHERE id=? AND branch_id=?
-                    ");
-                    $up->execute([$userId, $fid, $branchId]);
-                } else {
-                    $up = $pdo->prepare("
-                        UPDATE enquiry_followups
-                        SET 
-                            status='done',
-                            done_at=NOW(),
-                            updated_by=?,
-                            updated_at=NOW()
-                        WHERE id=?
-                    ");
-                    $up->execute([$userId, $fid]);
-                }
+                // ✅ MARK FOLLOWUP DONE
+                $pdo->prepare("
+                    UPDATE enquiry_followups
+                    SET status='done', done_at=NOW(), updated_at=NOW()
+                    WHERE id=?
+                ")->execute([$fid]);
 
-                if ($canAllBranches !== 1 && $branchId > 0) {
-                    $up2 = $pdo->prepare("UPDATE enquiries SET status='converted', updated_at=NOW(), updated_by=? WHERE id=? AND branch_id=?");
-                    $up2->execute([$userId, $enquiryId, $branchId]);
-                } else {
-                    $up2 = $pdo->prepare("UPDATE enquiries SET status='converted', updated_at=NOW(), updated_by=? WHERE id=?");
-                    $up2->execute([$userId, $enquiryId]);
-                }
+                // ✅ UPDATE ENQUIRY STATUS
+                $pdo->prepare("
+                    UPDATE enquiries
+                    SET status='converted', updated_at=NOW()
+                    WHERE id=?
+                ")->execute([$enquiryId]);
 
                 $regId = 0;
 
                 if ($convert === 1) {
-                    $chk = $pdo->prepare("SELECT id FROM registrations WHERE enquiry_id=? AND reg_type=? ORDER BY id DESC LIMIT 1");
+
+                    // CHECK EXISTING REGISTRATION
+                    $chk = $pdo->prepare("
+                        SELECT id 
+                        FROM registrations 
+                        WHERE enquiry_id=? AND reg_type=? 
+                        ORDER BY id DESC LIMIT 1
+                    ");
                     $chk->execute([$enquiryId, $regType]);
-                    $existing = (int)($chk->fetchColumn() ?? 0);
+                    $existing = (int)$chk->fetchColumn();
 
                     if ($existing > 0) {
+
                         $regId = $existing;
+
+                        // 🔥 UPDATE STATUS (VERY IMPORTANT)
+                        $pdo->prepare("
+                            UPDATE registrations
+                            SET registration_status=?, updated_at=NOW()
+                            WHERE id=?
+                        ")->execute([$regMode, $regId]);
+
                     } else {
+
+                        // 🔥 INSERT NEW REGISTRATION
                         $ins = $pdo->prepare("
                             INSERT INTO registrations
                             (
@@ -821,31 +813,38 @@ if (isset($_POST['mark_done'])) {
                                 created_at,
                                 updated_at
                             )
-                            VALUES
-                            (?, ?, ?, 'draft', ?, ?, NOW(), NOW())
+                            VALUES (?, ?, ?, ?, ?, ?, NOW(), NOW())
                         ");
+
                         $ins->execute([
                             $enquiryId,
                             $useBranch,
                             $regType,
+                            $regMode, // 🔥 FIXED
                             ($assignedTo > 0 ? $assignedTo : null),
                             $userId
                         ]);
+
                         $regId = (int)$pdo->lastInsertId();
                     }
                 }
 
                 $pdo->commit();
 
-                if ($convert === 1) {
+                // ✅ REDIRECT ONLY IF CONVERT NOW
+                if ($convert === 1 && $regMode === 'active') {
+
                     redirect("index.php?page=registrations/convert&enquiry_id={$enquiryId}&type={$regType}&reg_id={$regId}");
                     exit;
                 }
 
                 $success = "Marked as done!";
+
             } catch (Exception $e) {
+
                 if ($pdo->inTransaction()) $pdo->rollBack();
-                $error = "Failed to mark done. " . $e->getMessage();
+                $error = "Error: " . $e->getMessage();
+
             }
         }
     }
@@ -2312,6 +2311,7 @@ class="icon-btn btn-done">
 
 <?php if ($success): ?>
 <script>
+    
 Swal.fire({
     icon:'success',
     title:'Success',
@@ -2361,6 +2361,7 @@ Swal.fire({
 </div>
 
 <script>
+    console.log("DONE SCRIPT LOADED");
 (function () {
     window.ensureMarkDoneField = function (form) {
         if (!form) return;
@@ -2452,97 +2453,86 @@ function mfShowFiles(inp) {
 }
 
 (function () {
-    const forms = document.querySelectorAll('.doneForm');
-    if (!forms.length) return;
 
-    const swalCss = `
-        <style>
-            .swal2-popup{ border-radius:18px !important; }
-            .swal-select-wrap{ padding:6px 0 0; }
-            .swal-modern-select{
-                width:100%;
-                padding:12px 14px;
-                border-radius:14px;
-                border:1px solid #e5e7eb;
-                outline:none;
-                background:#fff;
-                font-weight:800;
-            }
-            .swal-modern-select:focus{
-                border-color: rgba(233,30,99,.55);
-                box-shadow: 0 0 0 4px rgba(233,30,99,.12);
-            }
-        </style>
-    `;
+const forms = document.querySelectorAll('.doneForm');
+if (!forms.length) return;
 
-    forms.forEach((f) => {
-        f.addEventListener('submit', function (e) {
-            e.preventDefault();
+forms.forEach((f) => {
 
-            Swal.fire({
-                icon: 'question',
-                title: 'Mark as Done?',
-                html: `
-                    ${swalCss}
-                    <div style="text-align:left;font-size:13px;color:#666;margin-bottom:10px;">
-                        If you mark as done, this enquiry can be converted to Registration.
-                    </div>
-                `,
-                showDenyButton: true,
-                showCancelButton: true,
-                confirmButtonText: 'Done + Convert',
-                denyButtonText: 'Only Done',
-                cancelButtonText: 'Cancel',
-                confirmButtonColor: '#e91e63',
-            }).then((r) => {
-                if (r.isDenied) {
-                    setHiddenField(f, 'convert', '0');
-                    ensureMarkDoneField(f);
-                    f.submit();
-                    return;
-                }
+f.addEventListener('submit', function(e){
 
-                if (r.isConfirmed) {
-                    Swal.fire({
-                        icon: 'info',
-                        title: 'Choose Registration Type',
-                        html: `
-                            ${swalCss}
-                            <div class="swal-select-wrap">
-                                <select id="regTypeSelect" class="swal-modern-select">
-                                    <option value="">Select type</option>
-                                    <option value="course">Course</option>
-                                    <option value="internship">Internship</option>
-                                    <option value="workshop">Workshop</option>
-                                </select>
-                            </div>
-                        `,
-                        showCancelButton: true,
-                        confirmButtonText: 'Convert',
-                        cancelButtonText: 'Cancel',
-                        confirmButtonColor: '#e91e63',
-                        focusConfirm: false,
-                        preConfirm: () => {
-                            const sel = document.getElementById('regTypeSelect');
-                            const value = sel ? sel.value : '';
-                            if (!value) {
-                                Swal.showValidationMessage('Please choose a type');
-                                return false;
-                            }
-                            return value;
-                        },
-                    }).then((x) => {
-                        if (!x.isConfirmed) return;
+e.preventDefault();
 
-                        setHiddenField(f, 'convert', '1');
-                        setHiddenField(f, 'reg_type', x.value);
-                        ensureMarkDoneField(f);
-                        f.submit();
-                    });
-                }
-            });
-        });
-    });
+// STEP 1 → SELECT TYPE
+Swal.fire({
+title:'Select Registration Type',
+html:`
+<select id="regTypeSelect" class="swal-modern-select">
+<option value="">Select type</option>
+<option value="course">Course</option>
+<option value="internship">Internship</option>
+<option value="workshop">Workshop</option>
+</select>
+`,
+showCancelButton:true,
+confirmButtonText:'Next',
+confirmButtonColor:'#e91e63',
+
+preConfirm:()=>{
+const t=document.getElementById('regTypeSelect').value;
+if(!t){
+Swal.showValidationMessage('Please select type');
+return false;
+}
+return t;
+}
+
+}).then((r)=>{
+
+if(!r.isConfirmed) return;
+
+const type=r.value;
+
+// STEP 2 → CONVERT OR DRAFT
+Swal.fire({
+title:'Convert Registration?',
+text:'Do you want to convert now or save as draft?',
+showDenyButton:true,
+showCancelButton:true,
+confirmButtonText:'Convert Now',
+denyButtonText:'Save Draft',
+confirmButtonColor:'#e91e63'
+
+}).then((x)=>{
+
+if(x.isConfirmed){
+
+setHiddenField(f,'convert','1');
+setHiddenField(f,'reg_type',type);
+setHiddenField(f,'reg_mode','active');
+ensureMarkDoneField(f);
+f.submit();
+
+}
+
+if(x.isDenied){
+
+setHiddenField(f,'convert','1');
+setHiddenField(f,'reg_type',type);
+setHiddenField(f,'reg_mode','draft');
+ensureMarkDoneField(f);
+f.submit();
+
+}
+
+});
+
+});
+
+});
+
+});
+
 })();
 
 (function () {
