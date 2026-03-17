@@ -541,12 +541,11 @@ $rows=$stmt->fetchAll(PDO::FETCH_ASSOC);
                             <td>
                                 <div class="draft-actions">
                                     <a
-                                        href="index.php?page=registrations/convert & reg_id=<?=$r['id']?>"
-                                        class="btn-continue-draft"
-                                    >
-                                        <i class="fas fa-arrow-right mr-1"></i> Continue
-                                    </a>
-
+href="index.php?page=registrations/convert&reg_id=<?= $r['id'] ?>&type=<?= h($r['reg_type']) ?>"
+class="btn-continue-draft"
+>
+<i class="fas fa-arrow-right mr-1"></i> Continue
+</a>
                                     <form method="POST" style="display:inline;">
                                         <input type="hidden" name="csrf_token" value="<?= generateCSRF() ?>">
                                         <input type="hidden" name="reg_id" value="<?= $r['id'] ?>">
