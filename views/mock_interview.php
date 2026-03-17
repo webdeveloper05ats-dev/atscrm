@@ -57,6 +57,23 @@ function mockInterviewAssessmentTableExists(PDO $pdo): bool
     return $exists;
 }
 
+function mockInterviewHrWorkflowTableExists(PDO $pdo): bool
+{
+    static $exists = null;
+    if ($exists !== null) {
+        return $exists;
+    }
+
+    try {
+        $st = $pdo->query("SHOW TABLES LIKE 'student_hr_interviews'");
+        $exists = (bool) $st->fetchColumn();
+    } catch (Exception $e) {
+        $exists = false;
+    }
+
+    return $exists;
+}
+
 function mockInterviewToNull($value): ?float
 {
     $value = trim((string) $value);
@@ -117,9 +134,15 @@ try {
 
 $tableReady = mockInterviewTableExists($pdo);
 $assessmentTableReady = mockInterviewAssessmentTableExists($pdo);
+$hrWorkflowTableReady = mockInterviewHrWorkflowTableExists($pdo);
+$csrfToken = generateCSRF();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_mock_interview'])) {
-    if (!$tableReady) {
+    $token = $_POST['csrf_token'] ?? '';
+    if (!verifyCSRF($token)) {
+        setFlash('error', 'Invalid request. Please refresh and try again.');
+        redirect('index.php?page=mock_interview');
+    } elseif (!$tableReady) {
         setFlash('error', 'Mock interview table not found. Run mock_interview_setup.sql first.');
         redirect('index.php?page=mock_interview');
     } else {
@@ -196,6 +219,87 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_mock_interview']
     }
 }
 
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['send_to_hr'])) {
+    $token = $_POST['csrf_token'] ?? '';
+    if (!verifyCSRF($token)) {
+        setFlash('error', 'Invalid request. Please refresh and try again.');
+        redirect('index.php?page=mock_interview');
+    } elseif (!$hrWorkflowTableReady) {
+        setFlash('error', 'HR interview workflow table not found. Run mock_interview_setup.sql first.');
+        redirect('index.php?page=mock_interview');
+    } elseif (!$tableReady) {
+        setFlash('error', 'Enter mock interview marks before sending students to HR.');
+        redirect('index.php?page=mock_interview');
+    } else {
+        try {
+            $registrationId = (int) ($_POST['registration_id'] ?? 0);
+            if ($registrationId <= 0) {
+                throw new RuntimeException('Invalid student selected.');
+            }
+
+            $sql = "
+                SELECT
+                    r.id,
+                    r.branch_id,
+                    mi.mock_average
+                FROM registrations r
+                INNER JOIN mock_interviews mi ON mi.registration_id = r.id
+                WHERE r.id = ?
+                  AND r.assigned_to = ?
+                  AND r.reg_type = 'course'
+                  AND r.registration_status IN ('active','completed')
+            ";
+            $params = [$registrationId, $userId];
+
+            if ($canAllBranches !== 1 && $branchId > 0) {
+                $sql .= " AND r.branch_id = ?";
+                $params[] = $branchId;
+            }
+
+            $sql .= " LIMIT 1";
+            $st = $pdo->prepare($sql);
+            $st->execute($params);
+            $studentRow = $st->fetch(PDO::FETCH_ASSOC);
+
+            if (!$studentRow) {
+                throw new RuntimeException('Mock interview record not found or access denied.');
+            }
+
+            if (!isset($studentRow['mock_average']) || $studentRow['mock_average'] === null) {
+                throw new RuntimeException('Mock interview marks are required before sending to HR.');
+            }
+
+            $upsert = $pdo->prepare("
+                INSERT INTO student_hr_interviews (
+                    registration_id,
+                    branch_id,
+                    staff_user_id,
+                    sent_to_hr_by,
+                    sent_to_hr_at,
+                    interview_status
+                ) VALUES (?, ?, ?, ?, NOW(), 'pending')
+                ON DUPLICATE KEY UPDATE
+                    branch_id = VALUES(branch_id),
+                    staff_user_id = VALUES(staff_user_id),
+                    sent_to_hr_by = VALUES(sent_to_hr_by),
+                    sent_to_hr_at = VALUES(sent_to_hr_at)
+            ");
+            $upsert->execute([
+                $registrationId,
+                (int) $studentRow['branch_id'],
+                $userId,
+                $userId,
+            ]);
+
+            setFlash('success', 'Student sent to HR for interview processing.');
+            redirect('index.php?page=mock_interview');
+        } catch (Exception $e) {
+            setFlash('error', $e->getMessage());
+            redirect('index.php?page=mock_interview');
+        }
+    }
+}
+
 $q = trim((string) ($_GET['q'] ?? ''));
 $where = [
     "r.assigned_to = ?",
@@ -224,6 +328,8 @@ $rows = [];
 try {
     $assessmentSelect = $assessmentTableReady ? "a.average_marks AS assessment_average," : "NULL AS assessment_average,";
     $assessmentJoin = $assessmentTableReady ? "LEFT JOIN assessment a ON a.registration_id = r.id" : "";
+    $hrSelect = $hrWorkflowTableReady ? "shi.sent_to_hr_at, shi.interview_status," : "NULL AS sent_to_hr_at, NULL AS interview_status,";
+    $hrJoin = $hrWorkflowTableReady ? "LEFT JOIN student_hr_interviews shi ON shi.registration_id = r.id" : "";
     $sql = "
         SELECT
             r.id,
@@ -236,11 +342,13 @@ try {
             r.batch_name,
             r.registration_status,
             {$assessmentSelect}
+            {$hrSelect}
             mi.theoretical_marks,
             mi.machine_task_marks,
             mi.mock_average
         FROM registrations r
         {$assessmentJoin}
+        {$hrJoin}
         LEFT JOIN mock_interviews mi ON mi.registration_id = r.id
         WHERE " . implode(' AND ', $where) . "
         ORDER BY r.id DESC
@@ -289,6 +397,12 @@ try {
             </div>
         <?php endif; ?>
 
+        <?php if (!$hrWorkflowTableReady): ?>
+            <div class="mock-alert mock-alert-warning">
+                HR interview workflow table is missing. Run <b>mock_interview_setup.sql</b> to enable sending students to HR.
+            </div>
+        <?php endif; ?>
+
         <div class="table-wrap">
             <table class="mock-table">
                 <thead>
@@ -301,13 +415,14 @@ try {
                         <th>Mock Avg</th>
                         <th>Assessment Avg</th>
                         <th>Overall Avg</th>
+                        <th>HR Status</th>
                         <th>Action</th>
                     </tr>
                 </thead>
                 <tbody>
                     <?php if (empty($rows)): ?>
                         <tr>
-                            <td colspan="9" class="mock-empty">No assigned course students found.</td>
+                            <td colspan="10" class="mock-empty">No assigned course students found.</td>
                         </tr>
                     <?php else: ?>
                         <?php foreach ($rows as $r): ?>
@@ -316,6 +431,8 @@ try {
                             $mockAverage = isset($r['mock_average']) ? round((float) $r['mock_average'], 2) : null;
                             $assessmentAverage = isset($r['assessment_average']) ? round((float) $r['assessment_average'], 2) : null;
                             $overallAverage = overallPerformanceAverage($assessmentAverage, $mockAverage);
+                            $hrStatus = trim((string) ($r['interview_status'] ?? ''));
+                            $sentToHrAt = trim((string) ($r['sent_to_hr_at'] ?? ''));
                             ?>
                             <tr>
                                 <td>
@@ -350,10 +467,30 @@ try {
                                     </span>
                                 </td>
                                 <td>
+                                    <?php if ($sentToHrAt !== ''): ?>
+                                        <span class="mock-pill mock-pill-success">
+                                            <?= h(ucwords(str_replace('_', ' ', $hrStatus !== '' ? $hrStatus : 'pending'))) ?>
+                                        </span>
+                                        <div class="mock-sub">Sent <?= h(date('d M Y', strtotime($sentToHrAt))) ?></div>
+                                    <?php else: ?>
+                                        <span class="mock-pill mock-pill-muted">Not Sent</span>
+                                    <?php endif; ?>
+                                </td>
+                                <td>
                                     <form method="POST" id="<?= h($formId) ?>" class="mock-row-form">
+                                        <input type="hidden" name="csrf_token" value="<?= h($csrfToken) ?>">
                                         <input type="hidden" name="registration_id" value="<?= (int) $r['id'] ?>">
                                         <button type="submit" name="save_mock_interview" value="1" class="btn btn-primary mock-save-btn">Save</button>
                                     </form>
+                                    <?php if ($hrWorkflowTableReady): ?>
+                                        <form method="POST" class="mock-row-form">
+                                            <input type="hidden" name="csrf_token" value="<?= h($csrfToken) ?>">
+                                            <input type="hidden" name="registration_id" value="<?= (int) $r['id'] ?>">
+                                            <button type="submit" name="send_to_hr" value="1" class="btn mock-send-btn" <?= $mockAverage === null ? 'disabled' : '' ?>>
+                                                <?= $sentToHrAt !== '' ? 'Re-send to HR' : 'Send to HR' ?>
+                                            </button>
+                                        </form>
+                                    <?php endif; ?>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
@@ -525,12 +662,34 @@ try {
     color:#1d4ed8;
 }
 
+.mock-pill-success{
+    background:#ecfdf5;
+    color:#047857;
+}
+
+.mock-pill-muted{
+    background:#f1f5f9;
+    color:#475569;
+}
+
 .mock-row-form{
-    margin:0;
+    margin:0 0 8px;
 }
 
 .mock-save-btn{
     min-width:78px;
+}
+
+.mock-send-btn{
+    min-width:102px;
+    background:#fff7ed;
+    color:#c2410c;
+    border:1px solid #fdba74;
+}
+
+.mock-send-btn[disabled]{
+    opacity:.55;
+    cursor:not-allowed;
 }
 
 .mock-empty{

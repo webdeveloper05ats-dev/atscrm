@@ -84,6 +84,29 @@ function uploadManyFiles(array $files, string $folder): array {
     return $out;
 }
 
+function followupMakeRegistrationNo(PDO $pdo): string {
+    $prefix = 'REG-' . date('Ym') . '-';
+    $like   = $prefix . '%';
+
+    $st = $pdo->prepare("
+        SELECT COUNT(*)
+        FROM registrations
+        WHERE registration_no LIKE ?
+    ");
+    $st->execute([$like]);
+    $seq = (int)$st->fetchColumn() + 1;
+
+    do {
+        $candidate = $prefix . str_pad((string)$seq, 4, '0', STR_PAD_LEFT);
+        $chk = $pdo->prepare("SELECT COUNT(*) FROM registrations WHERE registration_no=?");
+        $chk->execute([$candidate]);
+        $exists = (int)$chk->fetchColumn() > 0;
+        $seq++;
+    } while ($exists);
+
+    return $candidate;
+}
+
 // ------------------------------------
 // Session & Role scope
 // ------------------------------------
@@ -728,11 +751,20 @@ if (isset($_POST['mark_done'])) {
         $regType = trim($_POST['reg_type'] ?? '');
         $regMode = trim($_POST['reg_mode'] ?? 'draft'); // 🔥 IMPORTANT
 
-        if ($fid <= 0) {
+        if ($convert !== 1) {
+            $error = "Please choose Course or Internship, then select Convert Now or Save Draft.";
+        } elseif ($fid <= 0) {
             $error = "Invalid follow-up.";
         } else {
 
             try {
+                if (!in_array($regType, ['course', 'internship'], true)) {
+                    throw new Exception("Please select whether the student is joining Course or Internship.");
+                }
+
+                if (!in_array($regMode, ['active', 'draft'], true)) {
+                    throw new Exception("Please choose whether to convert now or save as draft.");
+                }
 
                 // GET FOLLOWUP
                 $st = $pdo->prepare("SELECT id, enquiry_id, branch_id FROM enquiry_followups WHERE id=? LIMIT 1");
@@ -746,7 +778,11 @@ if (isset($_POST['mark_done'])) {
                 $enquiryId = (int)$fu['enquiry_id'];
 
                 // GET ENQUIRY
-                $eq = $pdo->prepare("SELECT id, handled_by, branch_id FROM enquiries WHERE id=? LIMIT 1");
+                $eq = $pdo->prepare("
+                    SELECT id, handled_by, branch_id, name, phone, email, course_interest
+                    FROM enquiries
+                    WHERE id=? LIMIT 1
+                ");
                 $eq->execute([$enquiryId]);
                 $enq = $eq->fetch(PDO::FETCH_ASSOC);
 
@@ -754,8 +790,14 @@ if (isset($_POST['mark_done'])) {
                     throw new Exception("Enquiry not found.");
                 }
 
-                $assignedTo = (int)($enq['handled_by'] ?? 0);
-                $useBranch  = (int)($enq['branch_id'] ?? 0);
+                $assignedTo  = (int)($enq['handled_by'] ?? 0);
+                $useBranch   = (int)($enq['branch_id'] ?? 0);
+                $studentName = trim((string)($enq['name'] ?? ''));
+                $studentPhone = trim((string)($enq['phone'] ?? ''));
+                $studentEmail = trim((string)($enq['email'] ?? ''));
+                $programName = trim((string)($enq['course_interest'] ?? ''));
+                $joinedOn    = date('Y-m-d');
+                $sourceType  = 'direct';
 
                 $pdo->beginTransaction();
 
@@ -792,37 +834,96 @@ if (isset($_POST['mark_done'])) {
                         $regId = $existing;
 
                         // 🔥 UPDATE STATUS (VERY IMPORTANT)
+                        $stReg = $pdo->prepare("
+                            SELECT registration_no
+                            FROM registrations
+                            WHERE id=? LIMIT 1
+                        ");
+                        $stReg->execute([$regId]);
+                        $regRow = $stReg->fetch(PDO::FETCH_ASSOC) ?: [];
+
+                        $registrationNo = trim((string)($regRow['registration_no'] ?? ''));
+                        if ($registrationNo === '') {
+                            $registrationNo = followupMakeRegistrationNo($pdo);
+                        }
+
                         $pdo->prepare("
                             UPDATE registrations
-                            SET registration_status=?, updated_at=NOW()
+                            SET
+                                registration_no=?,
+                                source_type=COALESCE(source_type, ?),
+                                joined_on=COALESCE(joined_on, ?),
+                                enquiry_snapshot_name=CASE
+                                    WHEN COALESCE(NULLIF(enquiry_snapshot_name, ''), '')='' THEN ?
+                                    ELSE enquiry_snapshot_name
+                                END,
+                                enquiry_snapshot_phone=CASE
+                                    WHEN COALESCE(NULLIF(enquiry_snapshot_phone, ''), '')='' THEN ?
+                                    ELSE enquiry_snapshot_phone
+                                END,
+                                enquiry_snapshot_email=CASE
+                                    WHEN COALESCE(NULLIF(enquiry_snapshot_email, ''), '')='' THEN ?
+                                    ELSE enquiry_snapshot_email
+                                END,
+                                program_name=CASE
+                                    WHEN COALESCE(NULLIF(program_name, ''), '')='' THEN ?
+                                    ELSE program_name
+                                END,
+                                registration_status=?,
+                                updated_at=NOW()
                             WHERE id=?
-                        ")->execute([$regMode, $regId]);
+                        ")->execute([
+                            $registrationNo,
+                            $sourceType,
+                            $joinedOn,
+                            $studentName,
+                            $studentPhone,
+                            $studentEmail,
+                            $programName,
+                            $regMode,
+                            $regId
+                        ]);
 
                     } else {
 
                         // 🔥 INSERT NEW REGISTRATION
+                        $registrationNo = followupMakeRegistrationNo($pdo);
                         $ins = $pdo->prepare("
                             INSERT INTO registrations
                             (
+                                registration_no,
                                 enquiry_id,
                                 branch_id,
                                 reg_type,
+                                source_type,
                                 registration_status,
                                 assigned_to,
                                 created_by,
+                                joined_on,
+                                enquiry_snapshot_name,
+                                enquiry_snapshot_phone,
+                                enquiry_snapshot_email,
+                                program_name,
                                 created_at,
                                 updated_at
                             )
-                            VALUES (?, ?, ?, ?, ?, ?, NOW(), NOW())
+                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
                         ");
 
                         $ins->execute([
+                            $registrationNo,
                             $enquiryId,
                             $useBranch,
                             $regType,
+                            $sourceType,
                             $regMode, // 🔥 FIXED
                             ($assignedTo > 0 ? $assignedTo : null),
-                            $userId
+                            $userId,
+                            $joinedOn,
+                            $studentName,
+                            $studentPhone,
+                            $studentEmail,
+                            $programName
                         ]);
 
                         $regId = (int)$pdo->lastInsertId();
@@ -832,13 +933,14 @@ if (isset($_POST['mark_done'])) {
                 $pdo->commit();
 
                 // ✅ REDIRECT ONLY IF CONVERT NOW
-                if ($convert === 1 && $regMode === 'active') {
+                if ($regMode === 'active') {
 
                     redirect("index.php?page=registrations/convert&enquiry_id={$enquiryId}&type={$regType}&reg_id={$regId}");
                     exit;
                 }
 
-                $success = "Marked as done!";
+                redirect("index.php?page=registrations/drafts");
+                exit;
 
             } catch (Exception $e) {
 
@@ -2452,12 +2554,77 @@ function mfShowFiles(inp) {
     }).join(' ');
 }
 
+document.addEventListener('submit', function(e){
+const f = e.target;
+if(!f || !f.classList || !f.classList.contains('doneForm')) return;
+if(f.dataset.doneFlowBound === '1' || f.dataset.confirmed === '1') return;
+
+e.preventDefault();
+
+Swal.fire({
+title:'Select Student Type',
+html:`
+<select id="regTypeSelect" class="swal-modern-select">
+<option value="">Select type</option>
+<option value="course">Course</option>
+<option value="internship">Internship</option>
+</select>
+`,
+showCancelButton:true,
+confirmButtonText:'Next',
+cancelButtonText:'Cancel',
+confirmButtonColor:'#e91e63',
+preConfirm:()=>{
+const t=document.getElementById('regTypeSelect').value;
+if(!t){
+Swal.showValidationMessage('Please select type');
+return false;
+}
+return t;
+}
+}).then((r)=>{
+if(!r.isConfirmed) return;
+
+const type=r.value;
+
+Swal.fire({
+title:'Complete Follow-up',
+text:'Choose where this student should go next.',
+showDenyButton:true,
+showCancelButton:true,
+confirmButtonText:'Convert Now',
+denyButtonText:'Save Draft',
+cancelButtonText:'Cancel',
+confirmButtonColor:'#e91e63'
+}).then((x)=>{
+if(x.isConfirmed){
+setHiddenField(f,'convert','1');
+setHiddenField(f,'reg_type',type);
+setHiddenField(f,'reg_mode','active');
+ensureMarkDoneField(f);
+f.dataset.confirmed = '1';
+f.submit();
+}
+
+if(x.isDenied){
+setHiddenField(f,'convert','1');
+setHiddenField(f,'reg_type',type);
+setHiddenField(f,'reg_mode','draft');
+ensureMarkDoneField(f);
+f.dataset.confirmed = '1';
+f.submit();
+}
+});
+});
+});
+
 (function () {
 
 const forms = document.querySelectorAll('.doneForm');
 if (!forms.length) return;
 
 forms.forEach((f) => {
+f.dataset.doneFlowBound = '1';
 
 f.addEventListener('submit', function(e){
 
@@ -2465,17 +2632,17 @@ e.preventDefault();
 
 // STEP 1 → SELECT TYPE
 Swal.fire({
-title:'Select Registration Type',
+title:'Select Student Type',
 html:`
 <select id="regTypeSelect" class="swal-modern-select">
 <option value="">Select type</option>
 <option value="course">Course</option>
 <option value="internship">Internship</option>
-<option value="workshop">Workshop</option>
 </select>
 `,
 showCancelButton:true,
 confirmButtonText:'Next',
+cancelButtonText:'Cancel',
 confirmButtonColor:'#e91e63',
 
 preConfirm:()=>{
@@ -2495,12 +2662,13 @@ const type=r.value;
 
 // STEP 2 → CONVERT OR DRAFT
 Swal.fire({
-title:'Convert Registration?',
-text:'Do you want to convert now or save as draft?',
+title:'Complete Follow-up',
+text:'Choose where this student should go next.',
 showDenyButton:true,
 showCancelButton:true,
 confirmButtonText:'Convert Now',
 denyButtonText:'Save Draft',
+cancelButtonText:'Cancel',
 confirmButtonColor:'#e91e63'
 
 }).then((x)=>{
@@ -2511,6 +2679,7 @@ setHiddenField(f,'convert','1');
 setHiddenField(f,'reg_type',type);
 setHiddenField(f,'reg_mode','active');
 ensureMarkDoneField(f);
+f.dataset.confirmed = '1';
 f.submit();
 
 }
@@ -2521,8 +2690,13 @@ setHiddenField(f,'convert','1');
 setHiddenField(f,'reg_type',type);
 setHiddenField(f,'reg_mode','draft');
 ensureMarkDoneField(f);
+f.dataset.confirmed = '1';
 f.submit();
 
+}
+
+if(x.isDismissed){
+return;
 }
 
 });
