@@ -74,6 +74,23 @@ function mockInterviewHrWorkflowTableExists(PDO $pdo): bool
     return $exists;
 }
 
+function mockInterviewWorkflowColumnsReady(PDO $pdo): bool
+{
+    static $exists = null;
+    if ($exists !== null) {
+        return $exists;
+    }
+
+    try {
+        $st = $pdo->query("SHOW COLUMNS FROM mock_interviews LIKE 'workflow_status'");
+        $exists = (bool) $st->fetchColumn();
+    } catch (Exception $e) {
+        $exists = false;
+    }
+
+    return $exists;
+}
+
 function mockInterviewToNull($value): ?float
 {
     $value = trim((string) $value);
@@ -106,6 +123,11 @@ function mockInterviewAverage(?float $theoretical, ?float $machineTask): ?float
     return round(array_sum($marks) / count($marks), 2);
 }
 
+function mockInterviewIsReadyForCompletion(?float $theoretical, ?float $machineTask): bool
+{
+    return $theoretical !== null && $machineTask !== null;
+}
+
 function overallPerformanceAverage(?float $assessmentAverage, ?float $mockAverage): ?float
 {
     $marks = array_values(array_filter([$assessmentAverage, $mockAverage], static function ($value) {
@@ -135,6 +157,7 @@ try {
 $tableReady = mockInterviewTableExists($pdo);
 $assessmentTableReady = mockInterviewAssessmentTableExists($pdo);
 $hrWorkflowTableReady = mockInterviewHrWorkflowTableExists($pdo);
+$workflowColumnsReady = $tableReady ? mockInterviewWorkflowColumnsReady($pdo) : false;
 $csrfToken = generateCSRF();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_mock_interview'])) {
@@ -219,6 +242,82 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_mock_interview']
     }
 }
 
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['mark_mock_done'])) {
+    $token = $_POST['csrf_token'] ?? '';
+    if (!verifyCSRF($token)) {
+        setFlash('error', 'Invalid request. Please refresh and try again.');
+        redirect('index.php?page=mock_interview');
+    } elseif (!$tableReady) {
+        setFlash('error', 'Mock interview table not found. Run mock_interview_setup.sql first.');
+        redirect('index.php?page=mock_interview');
+    } elseif (!$workflowColumnsReady) {
+        setFlash('error', 'Mock interview workflow columns are missing. Run mock_interview_placement_workflow.sql first.');
+        redirect('index.php?page=mock_interview');
+    } else {
+        try {
+            $registrationId = (int) ($_POST['registration_id'] ?? 0);
+            if ($registrationId <= 0) {
+                throw new RuntimeException('Invalid student selected.');
+            }
+
+            $sql = "
+                SELECT
+                    r.id,
+                    mi.theoretical_marks,
+                    mi.machine_task_marks
+                FROM registrations r
+                INNER JOIN mock_interviews mi ON mi.registration_id = r.id
+                WHERE r.id = ?
+                  AND r.assigned_to = ?
+                  AND r.reg_type = 'course'
+                  AND r.registration_status IN ('active','completed')
+            ";
+            $params = [$registrationId, $userId];
+
+            if ($canAllBranches !== 1 && $branchId > 0) {
+                $sql .= " AND r.branch_id = ?";
+                $params[] = $branchId;
+            }
+
+            $sql .= " LIMIT 1";
+            $st = $pdo->prepare($sql);
+            $st->execute($params);
+            $studentRow = $st->fetch(PDO::FETCH_ASSOC);
+
+            if (!$studentRow) {
+                throw new RuntimeException('Mock interview record not found or access denied.');
+            }
+
+            $theoreticalMarks = isset($studentRow['theoretical_marks']) && $studentRow['theoretical_marks'] !== null
+                ? (float) $studentRow['theoretical_marks']
+                : null;
+            $machineTaskMarks = isset($studentRow['machine_task_marks']) && $studentRow['machine_task_marks'] !== null
+                ? (float) $studentRow['machine_task_marks']
+                : null;
+
+            if (!mockInterviewIsReadyForCompletion($theoreticalMarks, $machineTaskMarks)) {
+                throw new RuntimeException('Enter both mock interview marks before marking the student as done.');
+            }
+
+            $st = $pdo->prepare("
+                UPDATE mock_interviews
+                SET workflow_status = 'done',
+                    completed_at = NOW(),
+                    completed_by = ?
+                WHERE registration_id = ?
+                LIMIT 1
+            ");
+            $st->execute([$userId, $registrationId]);
+
+            setFlash('success', 'Mock interview marked as done.');
+            redirect('index.php?page=mock_interview');
+        } catch (Exception $e) {
+            setFlash('error', $e->getMessage());
+            redirect('index.php?page=mock_interview');
+        }
+    }
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['send_to_hr'])) {
     $token = $_POST['csrf_token'] ?? '';
     if (!verifyCSRF($token)) {
@@ -229,6 +328,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['send_to_hr'])) {
         redirect('index.php?page=mock_interview');
     } elseif (!$tableReady) {
         setFlash('error', 'Enter mock interview marks before sending students to HR.');
+        redirect('index.php?page=mock_interview');
+    } elseif (!$workflowColumnsReady) {
+        setFlash('error', 'Mock interview workflow columns are missing. Run mock_interview_placement_workflow.sql first.');
         redirect('index.php?page=mock_interview');
     } else {
         try {
@@ -241,6 +343,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['send_to_hr'])) {
                 SELECT
                     r.id,
                     r.branch_id,
+                    r.registration_status,
+                    mi.workflow_status,
                     mi.mock_average
                 FROM registrations r
                 INNER JOIN mock_interviews mi ON mi.registration_id = r.id
@@ -269,8 +373,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['send_to_hr'])) {
                 throw new RuntimeException('Mock interview marks are required before sending to HR.');
             }
 
+            if (($studentRow['workflow_status'] ?? '') !== 'done') {
+                throw new RuntimeException('Mark the mock interview as done before sending the student to HR.');
+            }
+
             $upsert = $pdo->prepare("
                 INSERT INTO student_hr_interviews (
+                
                     registration_id,
                     branch_id,
                     staff_user_id,
@@ -290,6 +399,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['send_to_hr'])) {
                 $userId,
                 $userId,
             ]);
+
+            $st = $pdo->prepare("
+                UPDATE mock_interviews
+                SET workflow_status = 'sent_to_hr'
+                WHERE registration_id = ?
+                LIMIT 1
+            ");
+            $st->execute([$registrationId]);
 
             setFlash('success', 'Student sent to HR for interview processing.');
             redirect('index.php?page=mock_interview');
@@ -330,6 +447,7 @@ try {
     $assessmentJoin = $assessmentTableReady ? "LEFT JOIN assessment a ON a.registration_id = r.id" : "";
     $hrSelect = $hrWorkflowTableReady ? "shi.sent_to_hr_at, shi.interview_status," : "NULL AS sent_to_hr_at, NULL AS interview_status,";
     $hrJoin = $hrWorkflowTableReady ? "LEFT JOIN student_hr_interviews shi ON shi.registration_id = r.id" : "";
+    $workflowSelect = $workflowColumnsReady ? "mi.workflow_status" : "NULL AS workflow_status";
     $sql = "
         SELECT
             r.id,
@@ -345,7 +463,8 @@ try {
             {$hrSelect}
             mi.theoretical_marks,
             mi.machine_task_marks,
-            mi.mock_average
+            mi.mock_average,
+            {$workflowSelect}
         FROM registrations r
         {$assessmentJoin}
         {$hrJoin}
@@ -403,6 +522,12 @@ try {
             </div>
         <?php endif; ?>
 
+        <?php if (!$workflowColumnsReady): ?>
+            <div class="mock-alert mock-alert-warning">
+                Mock interview workflow columns are missing. Run <b>mock_interview_placement_workflow.sql</b> to enable Mark Done and Send to HR.
+            </div>
+        <?php endif; ?>
+
         <div class="table-wrap">
             <table class="mock-table">
                 <thead>
@@ -433,6 +558,11 @@ try {
                             $overallAverage = overallPerformanceAverage($assessmentAverage, $mockAverage);
                             $hrStatus = trim((string) ($r['interview_status'] ?? ''));
                             $sentToHrAt = trim((string) ($r['sent_to_hr_at'] ?? ''));
+                            $workflowStatus = trim((string) ($r['workflow_status'] ?? 'pending'));
+                            $theoreticalMarks = isset($r['theoretical_marks']) && $r['theoretical_marks'] !== null ? (float) $r['theoretical_marks'] : null;
+                            $machineTaskMarks = isset($r['machine_task_marks']) && $r['machine_task_marks'] !== null ? (float) $r['machine_task_marks'] : null;
+                            $canMarkDone = mockInterviewIsReadyForCompletion($theoreticalMarks, $machineTaskMarks);
+                            $canSendToHr = $canMarkDone && $workflowStatus === 'done';
                             ?>
                             <tr>
                                 <td>
@@ -472,8 +602,13 @@ try {
                                             <?= h(ucwords(str_replace('_', ' ', $hrStatus !== '' ? $hrStatus : 'pending'))) ?>
                                         </span>
                                         <div class="mock-sub">Sent <?= h(date('d M Y', strtotime($sentToHrAt))) ?></div>
+                                        <div class="mock-sub">Workflow: <?= h(ucwords(str_replace('_', ' ', $workflowStatus))) ?></div>
+                                    <?php elseif ($workflowStatus === 'done'): ?>
+                                        <span class="mock-pill mock-pill-primary">Done</span>
+                                        <div class="mock-sub">Ready for HR send</div>
                                     <?php else: ?>
-                                        <span class="mock-pill mock-pill-muted">Not Sent</span>
+                                        <span class="mock-pill mock-pill-muted"><?= h(ucwords(str_replace('_', ' ', $workflowStatus ?: 'pending'))) ?></span>
+                                        <div class="mock-sub">Complete both marks first</div>
                                     <?php endif; ?>
                                 </td>
                                 <td>
@@ -482,11 +617,18 @@ try {
                                         <input type="hidden" name="registration_id" value="<?= (int) $r['id'] ?>">
                                         <button type="submit" name="save_mock_interview" value="1" class="btn btn-primary mock-save-btn">Save</button>
                                     </form>
+                                    <form method="POST" class="mock-row-form">
+                                        <input type="hidden" name="csrf_token" value="<?= h($csrfToken) ?>">
+                                        <input type="hidden" name="registration_id" value="<?= (int) $r['id'] ?>">
+                                            <button type="submit" name="mark_mock_done" value="1" class="btn mock-done-btn" <?= ($canMarkDone && $workflowColumnsReady) ? '' : 'disabled' ?>>
+                                                <?= $workflowStatus === 'done' || $workflowStatus === 'sent_to_hr' ? 'Done' : 'Mark Done' ?>
+                                            </button>
+                                        </form>
                                     <?php if ($hrWorkflowTableReady): ?>
                                         <form method="POST" class="mock-row-form">
                                             <input type="hidden" name="csrf_token" value="<?= h($csrfToken) ?>">
                                             <input type="hidden" name="registration_id" value="<?= (int) $r['id'] ?>">
-                                            <button type="submit" name="send_to_hr" value="1" class="btn mock-send-btn" <?= $mockAverage === null ? 'disabled' : '' ?>>
+                                            <button type="submit" name="send_to_hr" value="1" class="btn mock-send-btn" <?= ($canSendToHr && $workflowColumnsReady) ? '' : 'disabled' ?>>
                                                 <?= $sentToHrAt !== '' ? 'Re-send to HR' : 'Send to HR' ?>
                                             </button>
                                         </form>
@@ -678,6 +820,18 @@ try {
 
 .mock-save-btn{
     min-width:78px;
+}
+
+.mock-done-btn{
+    min-width:102px;
+    background:#f59e0b;
+    color:#fff;
+    border:1px solid #f59e0b;
+}
+
+.mock-done-btn[disabled]{
+    opacity:.55;
+    cursor:not-allowed;
 }
 
 .mock-send-btn{
