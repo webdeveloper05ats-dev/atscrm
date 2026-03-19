@@ -26,13 +26,16 @@ $dashboardSlug = $defaultPage ?? 'dashboard/superadmin'; // fallback
 $stmt = $pdo->prepare("
     SELECT m.*
     FROM menus m
-    JOIN role_permissions rp ON rp.menu_id = m.id
-    WHERE rp.role_id = :role_id
-      AND rp.can_view = 1
-      AND m.status = 1
+    LEFT JOIN role_permissions rp 
+        ON rp.menu_id = m.id AND rp.role_id = :role_id
+    WHERE (rp.can_view = 1 OR :is_admin = 1)
+    AND m.status = 1
     ORDER BY m.parent_id ASC, m.sort_order ASC
 ");
-$stmt->execute(['role_id' => $role_id]);
+$stmt->execute([
+    'role_id' => $role_id,
+    'is_admin' => ($role_id == 1 ? 1 : 0)
+]);
 $menus = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 // -------------------------------

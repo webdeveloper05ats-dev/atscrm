@@ -66,7 +66,7 @@ if (empty($_SESSION['csrf_token'])) {
 // -------------------------------
 // Auto Include Database
 // -------------------------------
-
+require_once CONFIG_PATH . 'database.php';
 
 // -------------------------------
 // Auto Include Helpers
