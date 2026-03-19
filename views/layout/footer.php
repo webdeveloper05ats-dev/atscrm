@@ -183,5 +183,368 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 </script>
 
+
+
+<script>
+$(document).ready(function(){
+
+    if($('#createReportForm').length){
+
+        $('#createReportForm').on('submit', function(e){
+            e.preventDefault();
+
+            let formData = $(this).serialize();
+
+            $.ajax({
+                url: 'ajax/reports/create_report.php',
+                type: 'POST',
+                data: formData,
+                success: function(res){
+
+                    if(res.status === 'success' || res.status === 'exists'){
+
+                        Swal.fire({
+                            icon: res.status === 'exists' ? 'info' : 'success',
+                            title: res.status === 'exists' ? 'Already Exists' : 'Success',
+                            text: res.message,
+                            timer: 1200,
+                            showConfirmButton: false
+                        });
+
+                        setTimeout(function(){
+                            window.location = 'index.php?page=reports/create&report_id=' + res.report_id;
+                        }, 1200);
+
+                    } else {
+                        Swal.fire('Error', res.message, 'error');
+                    }
+
+                },
+                error: function(){
+                    Swal.fire('Error','Server error','error');
+                }
+            });
+
+        });
+
+    }
+
+});
+</script>
+
+
+<script>
+$(document).ready(function(){
+
+    /* =========================
+       CREATE REPORT (AJAX)
+    ========================== */
+    if($('#createReportForm').length){
+
+        $('#createReportForm').on('submit', function(e){
+            e.preventDefault();
+
+            let formData = $(this).serialize();
+
+            $.ajax({
+                url: 'ajax/reports/create_report.php',
+                type: 'POST',
+                data: formData,
+                dataType: 'json',
+                success: function(res){
+
+                    if(res.status === 'success' || res.status === 'exists'){
+
+                        Swal.fire({
+                            icon: res.status === 'exists' ? 'info' : 'success',
+                            title: res.status === 'exists' ? 'Already Exists' : 'Success',
+                            text: res.message,
+                            timer: 1200,
+                            showConfirmButton: false
+                        });
+
+                        setTimeout(function(){
+                            window.location = 'index.php?page=reports/create&report_id=' + res.report_id;
+                        }, 1200);
+
+                    } else {
+                        Swal.fire('Error', res.message, 'error');
+                    }
+
+                },
+                error: function(){
+                    Swal.fire('Error','Server error','error');
+                }
+            });
+
+        });
+
+    }
+
+    /* =========================
+       ACTIVITY SAVE (AJAX)
+    ========================== */
+    $(document).on('submit','#activityForm',function(e){
+        e.preventDefault();
+
+        let formData = $(this).serialize();
+
+        $.ajax({
+            url: 'ajax/reports/save_activity.php',
+            type: 'POST',
+            data: formData,
+            dataType: 'json',
+            success: function(res){
+
+                if(res.status === 'success'){
+
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Saved',
+                        text: res.message,
+                        timer: 1200,
+                        showConfirmButton: false
+                    });
+
+                    let reportId = $('input[name="report_id"]').val();
+
+                    setTimeout(function(){
+                        window.location = 'index.php?page=reports/create&report_id=' + reportId;
+                    }, 1200);
+
+                } else {
+                    Swal.fire('Error', res.message, 'error');
+                }
+
+            },
+            error: function(){
+                Swal.fire('Error','Server error','error');
+            }
+        });
+
+    });
+
+});
+
+
+/* =========================
+   REGISTRATION MODULE
+========================= */
+
+$(document).on('click','#addRow',function(){
+
+    $('#regBody').append(`
+    <tr>
+        <td><input name="name[]" class="form-control"></td>
+        <td><input name="department[]" class="form-control"></td>
+        <td><input name="contact_no[]" class="form-control"></td>
+        <td><input name="college[]" class="form-control"></td>
+        <td><input type="date" name="reg_date[]" class="form-control"></td>
+        <td><input name="course[]" class="form-control"></td>
+        <td><input name="billing[]" class="form-control"></td>
+        <td><input name="collection[]" class="form-control"></td>
+        <td><input name="balance[]" class="form-control"></td>
+        <td><input name="payment_mode[]" class="form-control"></td>
+        <td><button type="button" class="btn btn-danger removeRow">X</button></td>
+    </tr>
+    `);
+
+});
+
+$(document).on('click','.removeRow',function(){
+    $(this).closest('tr').remove();
+});
+
+$(document).on('submit','#registrationForm',function(e){
+    e.preventDefault();
+
+    let formData = $(this).serialize();
+
+    $.post('ajax/reports/save_registration.php', formData, function(res){
+
+        if(res.status === 'success'){
+
+            Swal.fire({
+                icon:'success',
+                title:'Saved',
+                text:res.message,
+                timer:1200,
+                showConfirmButton:false
+            });
+
+            let reportId = $('input[name="report_id"]').val();
+
+            setTimeout(()=>{
+                window.location='index.php?page=reports/create&report_id='+reportId;
+            },1200);
+
+        } else {
+            Swal.fire('Error',res.message,'error');
+        }
+
+    },'json');
+});
+
+
+/* =========================
+   HOURLY MODULE
+========================= */
+
+$(document).on('click','#addHourlyRow',function(){
+
+    $('#hourlyBody').append(`
+    <tr>
+        <td><input name="time_slot[]" class="form-control"></td>
+        <td><input name="particulars[]" class="form-control"></td>
+        <td><input name="activities[]" class="form-control"></td>
+        <td><button type="button" class="btn btn-danger removeRow">X</button></td>
+    </tr>
+    `);
+
+});
+
+$(document).on('submit','#hourlyForm',function(e){
+    e.preventDefault();
+
+    let formData = $(this).serialize();
+
+    $.post('ajax/reports/save_hourly.php', formData, function(res){
+
+        if(res.status === 'success'){
+
+            Swal.fire({
+                icon:'success',
+                title:'Saved',
+                text:res.message,
+                timer:1200,
+                showConfirmButton:false
+            });
+
+            let reportId = $('input[name="report_id"]').val();
+
+            setTimeout(()=>{
+                window.location='index.php?page=reports/create&report_id='+reportId;
+            },1200);
+
+        } else {
+            Swal.fire('Error',res.message,'error');
+        }
+
+    },'json');
+
+});
+
+
+
+
+$(function(){
+
+/* SEARCH */
+$('#searchCollege').keyup(function(){
+
+    let q = $(this).val();
+
+    if(q.length < 2){
+        $('#searchResults').html('');
+        return;
+    }
+
+    $.get('ajax/reports/search_contacts.php?q='+q,function(res){
+
+        let html = '';
+
+        res.forEach(function(item){
+
+            html += `
+            <div class="list-group-item search-item"
+                data-id="${item.id}"
+                data-name="${item.name}">
+                ${item.name}
+            </div>`;
+        });
+
+        html += `
+        <div class="list-group-item add-new text-primary">
+            ➕ Add New Contact
+        </div>`;
+
+        $('#searchResults').html(html);
+
+    },'json');
+
+});
+
+/* SELECT */
+$(document).on('click','.search-item',function(){
+
+    let id = $(this).data('id');
+    let name = $(this).data('name');
+
+    addRow(id,name);
+
+    $('#searchResults').html('');
+    $('#searchCollege').val('');
+
+});
+
+/* ADD NEW */
+$(document).on('click','.add-new',function(){
+
+    let name = prompt("Enter Name");
+
+    if(!name) return;
+
+    $.post('ajax/reports/add_contact.php',{name:name},function(res){
+
+        if(res.status==='success'){
+            addRow(res.id,name);
+        }
+
+    },'json');
+
+});
+
+/* ADD ROW */
+function addRow(id,name){
+
+    let row = `
+    <tr>
+        <td>
+            ${name}
+            <input type="hidden" name="ref_id[]" value="${id}">
+        </td>
+        <td><input name="status[]" class="form-control"></td>
+        <td><input name="remarks[]" class="form-control"></td>
+        <td><input type="date" name="follow_date[]" class="form-control"></td>
+        <td><button type="button" class="btn btn-danger remove">X</button></td>
+    </tr>`;
+
+    $('#followupTable').append(row);
+}
+
+/* REMOVE */
+$(document).on('click','.remove',function(){
+    $(this).closest('tr').remove();
+});
+
+/* SAVE */
+$('#followupForm').submit(function(e){
+    e.preventDefault();
+
+    $.post('ajax/reports/save_followups.php', $(this).serialize(), function(res){
+
+        if(res.status==='success'){
+            Swal.fire('Success',res.message,'success');
+        }else{
+            Swal.fire('Error',res.message,'error');
+        }
+
+    },'json');
+
+});
+
+});
+</script>
+
 </body>
 </html>
