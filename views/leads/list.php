@@ -178,957 +178,1017 @@ $map=[
 
 $c=$map[$s]??'#999';
 
-return "<span style='font-weight:700;color:$c'>".ucfirst($s)."</span>";
+return "<span class='status-badge' style='--badge-color:$c'>".ucfirst($s)."</span>";
 }
 
 $baseUrl="index.php?page=leads/list&q=$q&status=$status&assigned_to=$assigned";
 
 ?>
 
-<h2 style="margin-bottom:20px;">Lead Management</h2>
+<!-- Display success/error messages if any -->
+<?php if($success): ?>
+<div class="alert-success"><?=h($success)?></div>
+<?php endif; ?>
+<?php if($error): ?>
+<div class="alert-error"><?=h($error)?></div>
+<?php endif; ?>
 
+<div class="leads-dashboard">
+    <!-- Header with title and stats -->
+    <div class="dashboard-header">
+        <h2><i class="fas fa-users" style="margin-right: 12px; color: #e91e63;"></i>Lead Management</h2>
+        <div class="header-stats">
+            <span class="stat-item"><i class="fas fa-database"></i> Total: <?=$totalRows?></span>
+        </div>
+    </div>
+
+    <!-- Main Card -->
+ <!-- Filter Section - Icons only with tooltips -->
 <div class="card">
-
-<div class="card-header">Filters</div>
-
-<form method="GET" action="index.php">
-
-<input type="hidden" name="page" value="leads/list">
-
-<div class="filter-row">
-
-<div>
-<label>Search</label>
-<input type="text" name="q" value="<?=h($q)?>">
+    <div class="card-header">
+        <i class="fas fa-sliders-h" style="margin-right: 8px;"></i> Filter Leads
+    </div>
+    
+    <form method="GET" action="index.php" class="filter-form">
+        <input type="hidden" name="page" value="leads/list">
+        
+        <div class="filter-grid">
+            <div class="filter-item">
+                <label><i class="fas fa-search"></i> Search</label>
+                <input type="text" name="q" value="<?=h($q)?>" placeholder="Name or phone...">
+            </div>
+            
+            <div class="filter-item">
+                <label><i class="fas fa-tag"></i> Status</label>
+                <select name="status">
+                    <option value="">All Status</option>
+                    <option value="new" <?=$status=='new'?'selected':''?>>New</option>
+                    <option value="contacted" <?=$status=='contacted'?'selected':''?>>Contacted</option>
+                    <option value="qualified" <?=$status=='qualified'?'selected':''?>>Qualified</option>
+                    <option value="converted" <?=$status=='converted'?'selected':''?>>Converted</option>
+                    <option value="closed" <?=$status=='closed'?'selected':''?>>Closed</option>
+                </select>
+            </div>
+            
+            <div class="filter-item">
+                <label><i class="fas fa-user-check"></i> Assigned</label>
+                <select name="assigned_to">
+                    <option value="">All Assignees</option>
+                    <?php foreach($staff as $s): ?>
+                    <option value="<?=$s['id']?>" <?=$assigned==$s['id']?'selected':''?>><?=$s['name']?> (<?=$s['role_name']?>)</option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            
+            <div class="filter-actions">
+                <button type="submit" class="btn-icon-only apply" title="Apply filters">
+                    <i class="fas fa-filter"></i>
+                </button>
+                <a href="index.php?page=leads/list" class="btn-icon-only reset" title="Reset filters">
+                    <i class="fas fa-undo-alt"></i>
+                </a>
+                <a href="index.php?page=leads/add" class="btn-icon-only add" title="Add new lead">
+                    <i class="fas fa-user-plus"></i>
+                </a>
+                <a href="index.php?page=leads/import" class="btn-icon-only import" title="Excel import">
+                    <i class="fas fa-file-excel"></i>
+                </a>
+            </div>
+        </div>
+    </form>
 </div>
 
-<div>
-<label>Status</label>
-<select name="status">
-<option value="">All</option>
-<option value="new">New</option>
-<option value="contacted">Contacted</option>
-<option value="qualified">Qualified</option>
-<option value="converted">Converted</option>
-<option value="closed">Closed</option>
-</select>
+    <!-- Leads Table Card -->
+    <div class="card">
+        <div class="card-header">
+            <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+                <div>
+                    <i class="fas fa-list" style="margin-right: 8px;"></i> Lead List
+                </div>
+                <div class="entries-control">
+                    <span>Show</span>
+                    <select class="entries-select" onchange="changePerPage(this.value)">
+                        <option value="5" <?=$perPage==5?'selected':''?>>5</option>
+                        <option value="10" <?=$perPage==10?'selected':''?>>10</option>
+                        <option value="20" <?=$perPage==20?'selected':''?>>20</option>
+                        <option value="50" <?=$perPage==50?'selected':''?>>50</option>
+                    </select>
+                    <span>entries</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="table-container">
+            <table class="leads-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Lead</th>
+                        <th>Contact</th>
+                        <th>Academic / Org</th>
+                        <th>Status</th>
+                        <th>Assigned</th>
+                        <th>Source</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php if(!$rows): ?>
+                    <tr>
+                        <td colspan="8" class="no-data">
+                            <i class="fas fa-inbox"></i> No leads found
+                        </td>
+                    </tr>
+                    <?php endif; ?>
+                    
+                    <?php 
+                    $sn = $offset + 1;
+                    foreach($rows as $r): 
+                    ?>
+                    
+                    <?php
+                    /* =========================
+                    LEAD PERMISSIONS
+                    ========================= */
+                    $roleName = $_SESSION['role_name'] ?? '';
+                    $canConvert = false;
+                    $canEdit = false;
+                    $canDelete = false;
+
+                    /* Convert Permission */
+                    if($roleName === 'Front Office' && $r['assigned_to'] == $userId && $r['status']!='converted'){
+                        $canConvert = true;
+                    }
+
+                    /* Edit/Delete Permission */
+                    if($r['created_by'] == $userId && $r['status']!='converted'){
+                        $canEdit = true;
+                        $canDelete = true;
+                    }
+                    ?>
+                    
+                    <tr>
+                        <td class="id-col">#<?=$sn?></td>
+                        
+                        <td class="lead-col">
+                            <div class="lead-name"><?=h($r['name'])?></div>
+                            <div class="lead-interest"><?=h($r['course_interest'])?></div>
+                        </td>
+                        
+                        <td class="contact-col">
+                            <div class="contact-phone">
+                                <i class="fas fa-phone-alt"></i> <?=h($r['phone'])?>
+                            </div>
+                            <div class="contact-email">
+                                <i class="fas fa-envelope"></i> <?=h($r['email'])?>
+                            </div>
+                        </td>
+                        
+                        <td class="academic-col">
+                            <div class="org-name"><?=h($r['company_college_name'])?></div>
+                            <div class="dept-year">
+                                <?=h($r['department'])?>
+                                <?= !empty($r['lead_year']) ? ' | ' . h($r['lead_year']) : '' ?>
+                            </div>
+                        </td>
+                        
+                        <td class="status-col"><?=badge($r['status'])?></td>
+                        
+                        <td class="assigned-col">
+                            <span class="assigned-badge">
+                                <i class="fas fa-user-circle"></i> <?=h($r['assigned_name'])?>
+                            </span>
+                        </td>
+                        
+                        <td class="source-col">
+                            <span class="source-badge">
+                                <?php
+                                $sourceIcon = 'fa-link';
+                                if($r['source'] == 'Instagram') $sourceIcon = 'fa-instagram';
+                                if($r['source'] == 'Facebook') $sourceIcon = 'fa-facebook';
+                                if($r['source'] == 'Google Ads') $sourceIcon = 'fa-google';
+                                if($r['source'] == 'Walk-in') $sourceIcon = 'fa-walking';
+                                ?>
+                                <i class="fab <?=$sourceIcon?>"></i> <?=h($r['source'])?>
+                            </span>
+                        </td>
+                        
+                        <td class="actions-col">
+                            <div class="action-buttons">
+                                <?php if($canEdit): ?>
+                                <a href="index.php?page=leads/add&id=<?=$r['id']?>" class="action-btn edit" title="Edit Lead">
+                                    <i class="fas fa-pen"></i>
+                                </a>
+                                <?php endif; ?>
+                                
+                                <?php if($r['status']=='converted'): ?>
+                                <span class="action-btn done" title="Already Converted">
+                                    <i class="fas fa-check"></i>
+                                </span>
+                                <?php else: ?>
+                                    <?php if($canConvert): ?>
+                                    <a href="index.php?page=enquiries/add&lead_id=<?=$r['id']?>" class="action-btn convert" title="Convert to Enquiry">
+                                        <i class="fas fa-exchange-alt"></i>
+                                    </a>
+                                    <?php endif; ?>
+                                <?php endif; ?>
+                                
+                                <?php if($canDelete): ?>
+                                <form method="POST" class="delete-form" data-id="<?=$r['id']?>" style="display:inline">
+                                    <input type="hidden" name="csrf_token" value="<?=generateCSRF()?>">
+                                    <input type="hidden" name="id" value="<?=$r['id']?>">
+                                    <input type="hidden" name="delete_lead" value="1">
+                                    <button type="submit" class="action-btn delete" title="Delete Lead">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                                <?php endif; ?>
+                            </div>
+                        </td>
+                    </tr>
+                    <?php $sn++; ?>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Pagination -->
+        <?php if($totalPages > 1): ?>
+        <div class="pagination-wrapper">
+            <div class="pagination-info">
+                Showing <?=($offset+1)?> to <?=min($offset+$perPage, $totalRows)?> of <?=$totalRows?> entries
+            </div>
+            <div class="pagination">
+                <?php if($page > 1): ?>
+                <a href="<?=$baseUrl?>&p=<?=($page-1)?>" class="page-link prev">
+                    <i class="fas fa-chevron-left"></i> Previous
+                </a>
+                <?php endif; ?>
+                
+                <?php
+                $start = max(1, $page - 2);
+                $end = min($totalPages, $page + 2);
+                for($i = $start; $i <= $end; $i++):
+                ?>
+                <a href="<?=$baseUrl?>&p=<?=$i?>" class="page-link <?=$i==$page?'active':''?>"><?=$i?></a>
+                <?php endfor; ?>
+                
+                <?php if($page < $totalPages): ?>
+                <a href="<?=$baseUrl?>&p=<?=($page+1)?>" class="page-link next">
+                    Next <i class="fas fa-chevron-right"></i>
+                </a>
+                <?php endif; ?>
+            </div>
+        </div>
+        <?php endif; ?>
+    </div>
 </div>
 
-<div>
-<label>Assigned</label>
-<select name="assigned_to">
-<option value="">All</option>
-<?php foreach($staff as $s): ?>
-<option value="<?=$s['id']?>"><?=$s['name']?> (<?=$s['role_name']?>)</option>
-<?php endforeach; ?>
-</select>
-</div>
-
-<div class="filter-actions">
-    <!-- Apply button with icon -->
-    <button class="btn-icon" title="Apply filters">
-        <i class="fas fa-filter"></i>
-    </button>
-
-    <!-- Reset button with icon -->
-    <a href="index.php?page=leads/list" class="btn-icon" title="Reset filters">
-        <i class="fas fa-undo-alt"></i>
-    </a>
-
-    <!-- Add Lead button with icon -->
-    <a href="index.php?page=leads/add" class="btn-icon" title="Add new lead">
-        <i class="fas fa-user-plus"></i>
-    </a>
-
-    <!-- Excel Upload button with icon -->
-    <a href="index.php?page=leads/import" class="btn-icon" title="Excel upload">
-        <i class="fas fa-file-excel"></i>
-    </a>
-</div>
-</form>
-<div class="card" style="margin-top:16px;">
-
-<div class="card-header">Leads (<?=$totalRows?>)</div>
-
-<div class="crm-card">
-    <h3> <i class="fas fa-list" style="margin-right: 8px;"></i>
-          Lead List</h3>
-           <div class="crm-table-wrapper">
-
-<table id="usersTable" class="crm-table">
-
-<thead>
-<tr>
-<th>ID</th>
-<th>Lead</th>
-<th>Contact</th>
-<th>Academic / Org</th>
-<th>Status</th>
-<th>Assigned</th>
-<th>Source</th>
-<th>Action</th>
-</tr>
-</thead>
-
-<tbody>
-
-<?php if(!$rows): ?>
-<tr>
-<td colspan="8" style="text-align:center;">No leads found</td>
-</tr>
-<?php endif; ?>
-
-<?php 
-$sn = $offset + 1;   // start from pagination
-foreach($rows as $r): 
-  
-?>
-
-<?php
-
-/* =========================
-LEAD PERMISSIONS
-========================= */
-
-$roleName = $_SESSION['role_name'] ?? '';
-
-$canConvert = false;
-$canEdit = false;
-$canDelete = false;
-
-/* Convert Permission */
-if($roleName === 'Front Office' && $r['assigned_to'] == $userId && $r['status']!='converted'){
-$canConvert = true;
-}
-
-/* Edit/Delete Permission */
-if($r['created_by'] == $userId && $r['status']!='converted'){
-$canEdit = true;
-$canDelete = true;
-}
-
-?>
-<tr>
-
-<td><?=$sn?></td>
-
-<td>
-<div class="lead-name"><?=h($r['name'])?></div>
-<div class="lead-sub"><?=h($r['course_interest'])?></div>
-</td>
-
-<td>
-<div><?=h($r['phone'])?></div>
-<div class="lead-sub"><?=h($r['email'])?></div>
-</td>
-
-<td>
-<div><?= h($r['company_college_name']) ?></div>
-<div class="lead-sub">
-    <?= h($r['department']) ?>
-    <?= !empty($r['lead_year']) ? ' | ' . h($r['lead_year']) : '' ?>
-</div>
-</td>
-
-<td><?=badge($r['status'])?></td>
-
-<td><?=h($r['assigned_name'])?></td>
-
-<td><?=h($r['source'])?></td>
-
-<td class="text-center action-col">
-
-<?php if($canEdit): ?>
-<a href="index.php?page=leads/add&id=<?=$r['id']?>" class="btn-icon edit" title="Edit Lead">
-<i class="fas fa-pen"></i>
-</a>
-<?php endif; ?>
-
-
-<?php if($r['status']=='converted'): ?>
-
-<span class="btn-icon done" title="Already Converted">
-<i class="fas fa-check"></i>
-</span>
-
-<?php else: ?>
-
-<?php if($canConvert): ?>
-<a href="index.php?page=enquiries/add&lead_id=<?=$r['id']?>" class="btn-icon convert" title="Convert to Enquiry">
-<i class="fas fa-exchange-alt"></i>
-</a>
-<?php endif; ?>
-
-<?php endif; ?>
-
-
-<?php if($canDelete): ?>
-
-<form method="POST" class="deleteForm" data-id="<?=$r['id']?>" style="display:inline">
-
-<input type="hidden" name="csrf_token" value="<?=generateCSRF()?>">
-<input type="hidden" name="id" value="<?=$r['id']?>">
-<input type="hidden" name="delete_lead" value="1">
-
-<button type="submit" class="btn-icon delete" title="Delete Lead">
-<i class="fas fa-trash"></i>
-</button>
-
-</form>
-
-<?php endif; ?>
-
-</td>
-
-</tr>
-<?php $sn++; ?>
-<?php endforeach; ?>
-
-</tbody>
-
-</table>
-
-</div>
-</div>
-
-
-
-</div>
 <style>
-/* Enhanced UI for Lead Management - Maintains existing class names */
-
+/* Professional UI Redesign - Pink Theme */
 :root {
-  --primary: #e91e63;
-  --primary-light: #f8bbd0;
-  --primary-dark: #c2185b;
-  --secondary: #6c757d;
-  --success: #28a745;
-  --danger: #dc3545;
-  --warning: #ffc107;
-  --white: #ffffff;
-  --gray-100: #f8f9fa;
-  --gray-200: #e9ecef;
-  --gray-300: #dee2e6;
-  --gray-400: #ced4da;
-  --gray-500: #adb5bd;
-  --gray-600: #6c757d;
-  --gray-700: #495057;
-  --gray-800: #343a40;
-  --shadow-sm: 0 2px 4px rgba(0,0,0,0.05);
-  --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
-  --shadow-lg: 0 10px 15px rgba(0,0,0,0.1);
-  --radius-sm: 6px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
-  --transition: all 0.2s ease;
+    --primary: #e91e63;
+    --primary-light: #fce4ec;
+    --primary-dark: #c2185b;
+    --secondary: #6c757d;
+    --success: #2e7d32;
+    --danger: #dc3545;
+    --warning: #ff9800;
+    --info: #2196f3;
+    --dark: #343a40;
+    --light: #f8f9fa;
+    --border: #e9ecef;
+    --text: #495057;
+    --text-light: #6c757d;
+    --white: #ffffff;
+    --shadow: 0 4px 6px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.1);
+    --shadow-hover: 0 10px 15px rgba(0, 0, 0, 0.1);
+    --radius: 12px;
+    --radius-sm: 8px;
 }
 
+* {
+    box-sizing: border-box;
+}
 
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+    background: #f4f7fc;
+    color: var(--text);
+    line-height: 1.5;
+}
 
-/* Force all icons to be visible */
-.filter-actions .btn-icon {
-    display: inline-flex !important;
+.leads-dashboard {
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.dashboard-header h2 {
+    font-size: 1.8rem;
+    font-weight: 600;
+    color: var(--dark);
+    display: flex;
+    align-items: center;
+}
+
+.header-stats {
+    background: white;
+    padding: 10px 20px;
+    border-radius: 40px;
+    box-shadow: var(--shadow);
+    font-weight: 500;
+}
+
+.stat-item {
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.stat-item i {
+    color: var(--primary);
+}
+
+/* Card Styles */
+.card {
+    background: var(--white);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    margin-bottom: 24px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+}
+
+.card-header {
+    padding: 16px 20px;
+    background: var(--light);
+    border-bottom: 1px solid var(--border);
+    font-weight: 600;
+    color: var(--dark);
+    font-size: 1rem;
+}
+
+/* Filter Grid - Single Row */
+.filter-form {
+    padding: 20px;
+}
+
+.filter-grid {
+    display: flex;
+    gap: 16px;
+    align-items: flex-end;
+    flex-wrap: wrap;
+}
+
+.filter-item {
+    flex: 1 1 180px;
+    min-width: 160px;
+}
+
+.filter-item label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    color: var(--text-light);
+    margin-bottom: 6px;
+}
+
+.filter-item label i {
+    color: var(--primary);
+    font-size: 0.8rem;
+}
+
+.filter-item input,
+.filter-item select {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-size: 0.9rem;
+    transition: all 0.2s;
+    background: white;
+}
+
+.filter-item input:hover,
+.filter-item select:hover {
+    border-color: var(--primary);
+}
+
+.filter-item input:focus,
+.filter-item select:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(233, 30, 99, 0.1);
+}
+
+.filter-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-left: auto;
+}
+
+.btn-filter, .btn-reset, .btn-add, .btn-excel {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 18px;
+    border-radius: var(--radius-sm);
+    font-size: 0.9rem;
+    font-weight: 500;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+
+.btn-filter {
+    background: var(--primary);
+    color: white;
+    box-shadow: 0 2px 8px rgba(233, 30, 99, 0.3);
+}
+
+.btn-filter:hover {
+    background: var(--primary-dark);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(233, 30, 99, 0.4);
+}
+
+.btn-reset {
+    background: var(--secondary);
+    color: white;
+}
+
+.btn-reset:hover {
+    background: #5a6268;
+    transform: translateY(-2px);
+}
+
+.btn-add {
+    background: var(--success);
+    color: white;
+}
+
+.btn-add:hover {
+    background: #1e5f23;
+    transform: translateY(-2px);
+}
+
+.btn-excel {
+    background: #1e7e34;
+    color: white;
+}
+
+.btn-excel:hover {
+    background: #146c28;
+    transform: translateY(-2px);
+}
+
+/* Entries Control */
+.entries-control {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: white;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+}
+
+.entries-select {
+    padding: 4px 8px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 0.85rem;
+    cursor: pointer;
+}
+
+/* Table Styles */
+.table-container {
+    padding: 20px;
+    overflow-x: auto;
+}
+
+.leads-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+}
+
+.leads-table th {
+    text-align: left;
+    padding: 14px 16px;
+    background: #fafbfc;
+    color: var(--text-light);
+    font-weight: 600;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    border-bottom: 2px solid var(--border);
+}
+
+.leads-table td {
+    padding: 16px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+}
+
+.leads-table tbody tr:hover {
+    background: #fafbfc;
+}
+
+/* Lead Column */
+.lead-name {
+    font-weight: 600;
+    color: var(--dark);
+    margin-bottom: 4px;
+}
+
+.lead-interest {
+    font-size: 0.8rem;
+    color: var(--text-light);
+}
+
+/* Contact Column */
+.contact-phone, .contact-email {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85rem;
+}
+
+.contact-phone i, .contact-email i {
+    color: var(--primary);
+    width: 16px;
+    font-size: 0.75rem;
+}
+
+.contact-email {
+    color: var(--text-light);
+    margin-top: 4px;
+}
+
+/* Academic Column */
+.org-name {
+    font-weight: 500;
+    margin-bottom: 4px;
+}
+
+.dept-year {
+    font-size: 0.8rem;
+    color: var(--text-light);
+}
+
+/* Status Badge */
+.status-badge {
+    display: inline-block;
+    padding: 5px 12px;
+    border-radius: 30px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: capitalize;
+    background: rgba(33, 150, 243, 0.1);
+    color: var(--info);
+}
+
+/* Dynamic status colors via inline style */
+.status-badge[style*="2196f3"] {
+    background: rgba(33, 150, 243, 0.1);
+    color: #1976d2;
+}
+.status-badge[style*="ff9800"] {
+    background: rgba(255, 152, 0, 0.1);
+    color: #f57c00;
+}
+.status-badge[style*="9c27b0"] {
+    background: rgba(156, 39, 176, 0.1);
+    color: #7b1fa2;
+}
+.status-badge[style*="2e7d32"] {
+    background: rgba(46, 125, 50, 0.1);
+    color: #2e7d32;
+}
+.status-badge[style*="607d8b"] {
+    background: rgba(96, 125, 139, 0.1);
+    color: #546e7a;
+}
+
+/* Assigned Badge */
+.assigned-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    background: #e9ecef;
+    border-radius: 30px;
+    font-size: 0.8rem;
+    color: var(--dark);
+}
+
+/* Source Badge */
+.source-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    background: #f1f3f5;
+    border-radius: 30px;
+    font-size: 0.8rem;
+}
+
+/* Action Buttons */
+.action-buttons {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.action-btn {
+    display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 38px;
-    height: 38px;
-    background: #e91e63 !important;  /* Pink background */
-    color: white !important;  /* White icons */
+    width: 34px;
+    height: 34px;
     border-radius: 8px;
-    margin: 0 4px;
+    color: white;
     text-decoration: none;
-    font-size: 16px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 0.9rem;
 }
 
-/* Reset button different color */
-.filter-actions .btn-icon[title="Reset filters"] {
-    background: #6c757d !important;
+.action-btn.edit {
+    background: var(--primary);
+}
+.action-btn.edit:hover {
+    background: var(--primary-dark);
+    transform: translateY(-2px);
 }
 
-/* Make sure Font Awesome icons are visible */
-.filter-actions .btn-icon i {
-    font-family: "Font Awesome 6 Free" !important;
-    font-weight: 900 !important;
-    font-style: normal !important;
-    color: white !important;
-    font-size: 16px !important;
-    display: inline-block !important;
+.action-btn.convert {
+    background: var(--warning);
+    color: white;
+}
+.action-btn.convert:hover {
+    background: #e68900;
+    transform: translateY(-2px);
 }
 
-/* Tooltip styling */
-.filter-actions .btn-icon {
+.action-btn.done {
+    background: var(--success);
+    opacity: 0.8;
+    cursor: default;
+}
+
+.action-btn.delete {
+    background: var(--danger);
+}
+.action-btn.delete:hover {
+    background: #bd2130;
+    transform: translateY(-2px);
+}
+
+/* Pagination */
+.pagination-wrapper {
+    padding: 20px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.pagination-info {
+    color: var(--text-light);
+    font-size: 0.85rem;
+}
+
+.pagination {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.page-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    border-radius: 8px;
+    background: white;
+    color: var(--text);
+    text-decoration: none;
+    border: 1px solid var(--border);
+    transition: all 0.2s;
+    font-size: 0.9rem;
+}
+
+.page-link:hover {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+}
+
+.page-link.active {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+}
+
+.page-link.prev, .page-link.next {
+    background: #f8f9fa;
+}
+
+/* No Data */
+.no-data {
+    text-align: center;
+    padding: 60px !important;
+    color: var(--text-light);
+    font-size: 1rem;
+}
+
+.no-data i {
+    font-size: 2rem;
+    display: block;
+    margin-bottom: 12px;
+    color: var(--border);
+}
+
+/* Alerts */
+.alert-success, .alert-error {
+    padding: 16px 20px;
+    border-radius: var(--radius);
+    margin-bottom: 20px;
+    font-weight: 500;
+}
+
+.alert-success {
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.alert-error {
+    background: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+    .filter-grid {
+        gap: 12px;
+    }
+    
+    .filter-item {
+        flex: 1 1 150px;
+    }
+}
+
+@media (max-width: 992px) {
+    .filter-actions {
+        margin-left: 0;
+        width: 100%;
+        justify-content: flex-end;
+    }
+}
+
+@media (max-width: 768px) {
+    .dashboard-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+    
+    .filter-grid {
+        flex-direction: column;
+    }
+    
+    .filter-item {
+        width: 100%;
+    }
+    
+    .filter-actions {
+        justify-content: stretch;
+    }
+    
+    .btn-filter, .btn-reset, .btn-add, .btn-excel {
+        flex: 1;
+        justify-content: center;
+    }
+    
+    .pagination-wrapper {
+        flex-direction: column;
+        align-items: center;
+    }
+}
+
+
+/* Icon-only buttons with modern tooltips */
+.filter-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-left: auto;
+}
+
+.btn-icon-only {
     position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    font-size: 1.1rem;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: white;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
 }
 
-.filter-actions .btn-icon:hover::before {
+/* Individual button colors */
+.btn-icon-only.apply {
+    background: #e91e63;
+}
+.btn-icon-only.apply:hover {
+    background: #c2185b;
+    transform: translateY(-3px);
+    box-shadow: 0 8px 15px rgba(233, 30, 99, 0.3);
+}
+
+.btn-icon-only.reset {
+    background: #6c757d;
+}
+.btn-icon-only.reset:hover {
+    background: #5a6268;
+    transform: translateY(-3px);
+    box-shadow: 0 8px 15px rgba(108, 117, 125, 0.3);
+}
+
+.btn-icon-only.add {
+    background: #2e7d32;
+}
+.btn-icon-only.add:hover {
+    background: #1e5f23;
+    transform: translateY(-3px);
+    box-shadow: 0 8px 15px rgba(46, 125, 50, 0.3);
+}
+
+.btn-icon-only.import {
+    background: #1e7e34;
+}
+.btn-icon-only.import:hover {
+    background: #146c28;
+    transform: translateY(-3px);
+    box-shadow: 0 8px 15px rgba(30, 126, 52, 0.3);
+}
+
+/* Modern Tooltip */
+.btn-icon-only::before {
     content: attr(title);
     position: absolute;
     bottom: 120%;
     left: 50%;
-    transform: translateX(-50%);
-    background: #333;
+    transform: translateX(-50%) translateY(5px);
+    background: #1e293b;
     color: white;
-    padding: 5px 10px;
-    border-radius: 4px;
-    font-size: 12px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    padding: 6px 12px;
+    border-radius: 8px;
     white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    letter-spacing: 0.3px;
+    pointer-events: none;
     z-index: 1000;
 }
 
-/* Card Styling */
-.card {
-  background: var(--white);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm);
-  border: 1px solid var(--gray-200);
-  margin-bottom: 24px;
-  overflow: hidden;
+.btn-icon-only::after {
+    content: '';
+    position: absolute;
+    bottom: 120%;
+    left: 50%;
+    transform: translateX(-50%) translateY(13px);
+    border-width: 5px;
+    border-style: solid;
+    border-color: #1e293b transparent transparent transparent;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.2s ease;
+    pointer-events: none;
+    z-index: 1000;
 }
 
-.card-header {
-  background: var(--gray-100);
-  padding: 16px 20px;
-  font-weight: 600;
-  color: var(--gray-700);
-  border-bottom: 1px solid var(--gray-200);
-  font-size: 16px;
-  letter-spacing: 0.3px;
+.btn-icon-only:hover::before {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(0);
 }
 
-/* Filter Section Enhancement */
-.filter-row {
-  display: flex;
-  gap: 20px;
-  align-items: flex-end;
-  flex-wrap: wrap;
-  padding: 20px;
+.btn-icon-only:hover::after {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(8px);
 }
 
-.filter-row > div {
-  flex: 1 1 auto;
-  min-width: 180px;
-}
-
-.filter-row label {
-  display: block;
-  margin-bottom: 6px;
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--gray-600);
-  text-transform: uppercase;
-  letter-spacing: 0.3px;
-}
-
-.filter-row input,
-.filter-row select {
-  width: 100%;
-  padding: 10px 12px;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--gray-300);
-  background: var(--white);
-  font-size: 14px;
-  transition: var(--transition);
-}
-
-.filter-row input:hover,
-.filter-row select:hover {
-  border-color: var(--primary-light);
-}
-
-.filter-row input:focus,
-.filter-row select:focus {
-  outline: none;
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(233, 30, 99, 0.1);
-}
-
-/* Filter Actions */
-.filter-actions {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  flex-wrap: wrap;
-}
-
-.filter-actions .btn,
-.filter-actions .btn-primary {
-  background: var(--primary);
-  color: var(--white);
-  border: none;
-  padding: 10px 20px;
-  border-radius: var(--radius-md);
-  font-weight: 500;
-  font-size: 14px;
-  cursor: pointer;
-  transition: var(--transition);
-  text-decoration: none;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.filter-actions .btn-primary:hover {
-  background: var(--primary-dark);
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-md);
-}
-
-.filter-actions .btn-reset {
-  background: transparent;
-  color: var(--gray-600);
-  border: 1px solid var(--gray-300);
-  padding: 10px 20px;
-  border-radius: var(--radius-md);
-  font-weight: 500;
-  font-size: 14px;
-  cursor: pointer;
-  transition: var(--transition);
-  text-decoration: none;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.filter-actions .btn-reset:hover {
-  background: var(--gray-100);
-  color: var(--gray-800);
-  border-color: var(--gray-400);
-}
-
-/* CRM Card */
-.crm-card {
-  background: var(--white);
-  border-radius: 0;
-  padding: 20px;
-  width: 100%;
-  box-sizing: border-box;
-}
-
-.crm-card h3 {
-  margin: 0 0 20px 0;
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--gray-800);
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.crm-card h3 i {
-  color: var(--primary);
-}
-
-/* Table Wrapper */
-.crm-table-wrapper {
-  width: 100%;
-  overflow-x: auto;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--gray-200);
-}
-
-/* DataTable Customization */
-.dataTables_wrapper {
-  padding: 0;
-}
-
-.dataTables_wrapper .dataTables_length,
-.dataTables_wrapper .dataTables_filter {
-  padding: 16px 20px;
-  margin: 0;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  background: var(--gray-50);
-  border-bottom: 1px solid var(--gray-200);
-}
-
-.dataTables_wrapper .dataTables_length {
-  float: left;
-}
-
-.dataTables_wrapper .dataTables_filter {
-  float: right;
-}
-
-.dataTables_wrapper .dataTables_length label,
-.dataTables_wrapper .dataTables_filter label {
-  font-size: 14px;
-  color: var(--gray-600);
-  font-weight: 500;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin: 0;
-}
-
-.dataTables_wrapper .dataTables_length select {
-  width: auto;
-  padding: 8px 12px;
-  border: 1px solid var(--gray-300);
-  border-radius: var(--radius-sm);
-  background: var(--white);
-  font-size: 13px;
-  cursor: pointer;
-  margin: 0 4px;
-}
-
-.dataTables_wrapper .dataTables_filter input {
-  width: 260px !important;
-  padding: 8px 14px;
-  border: 1px solid var(--gray-300);
-  border-radius: 20px;
-  font-size: 13px;
-  transition: var(--transition);
-  background: var(--white);
-}
-
-.dataTables_wrapper .dataTables_filter input:focus {
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(233, 30, 99, 0.1);
-  outline: none;
-  width: 300px !important;
-}
-
-/* Export Button */
-.dt-buttons {
-  float: left;
-  padding: 16px 20px;
-  background: var(--gray-50);
-  border-bottom: 1px solid var(--gray-200);
-}
-
-.crm-export-btn {
-  background: var(--success) !important;
-  color: var(--white) !important;
-  border: none !important;
-  padding: 8px 16px !important;
-  border-radius: var(--radius-md) !important;
-  font-weight: 500 !important;
-  font-size: 13px !important;
-  transition: var(--transition) !important;
-  box-shadow: none !important;
-}
-
-.crm-export-btn:hover {
-  background: #218838 !important;
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-sm) !important;
-}
-
-/* Table Styles */
-.crm-table {
-  width: 100%;
-  border-collapse: collapse;
-  background: var(--white);
-}
-
-.crm-table th {
-  background: var(--gray-50);
-  padding: 16px;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--gray-700);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  border-bottom: 2px solid var(--gray-200);
-  white-space: nowrap;
-}
-
-.crm-table td {
-  padding: 16px;
-  font-size: 14px;
-  color: var(--gray-700);
-  border-bottom: 1px solid var(--gray-200);
-  vertical-align: middle;
-}
-
-.crm-table tbody tr:hover td {
-  background: var(--gray-50);
-}
-
-/* Lead Name */
-.lead-name {
-  font-weight: 600;
-  color: var(--gray-800);
-  margin-bottom: 4px;
-}
-
-.lead-sub {
-  font-size: 12px;
-  color: var(--gray-500);
-}
-
-/* Status Badge Enhancement */
-td:contains("new") .badge,
-td .badge[style*="2196f3"] {
-  display: inline-block;
-  padding: 6px 12px;
-  border-radius: 20px;
-  font-weight: 500;
-  font-size: 12px;
-  background: #e3f2fd !important;
-  color: #1976d2 !important;
-}
-
-td:contains("contacted") .badge,
-td .badge[style*="ff9800"] {
-  display: inline-block;
-  padding: 6px 12px;
-  border-radius: 20px;
-  font-weight: 500;
-  font-size: 12px;
-  background: #fff3e0 !important;
-  color: #f57c00 !important;
-}
-
-td:contains("qualified") .badge,
-td .badge[style*="9c27b0"] {
-  display: inline-block;
-  padding: 6px 12px;
-  border-radius: 20px;
-  font-weight: 500;
-  font-size: 12px;
-  background: #f3e5f5 !important;
-  color: #7b1fa2 !important;
-}
-
-td:contains("converted") .badge,
-td .badge[style*="2e7d32"] {
-  display: inline-block;
-  padding: 6px 12px;
-  border-radius: 20px;
-  font-weight: 500;
-  font-size: 12px;
-  background: #e8f5e8 !important;
-  color: #2e7d32 !important;
-}
-
-td:contains("closed") .badge,
-td .badge[style*="607d8b"] {
-  display: inline-block;
-  padding: 6px 12px;
-  border-radius: 20px;
-  font-weight: 500;
-  font-size: 12px;
-  background: #eceff1 !important;
-  color: #546e7a !important;
-}
-
-/* Action Icons */
-.btn-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 34px;
-  height: 34px;
-  border-radius: var(--radius-sm);
-  color: var(--white);
-  margin: 0 3px;
-  text-decoration: none;
-  transition: var(--transition);
-  border: none;
-  cursor: pointer;
-  font-size: 14px;
-}
-
-.btn-icon.edit {
-  background: var(--primary);
-}
-
-.btn-icon.edit:hover {
-  background: var(--primary-dark);
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-sm);
-}
-
-.btn-icon.convert {
-  background: var(--warning);
-  color: var(--gray-800);
-}
-
-.btn-icon.convert:hover {
-  background: #e0a800;
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-sm);
-}
-
-.btn-icon.done {
-  background: var(--success);
-  cursor: default;
-  opacity: 0.8;
-}
-
-.btn-icon.delete {
-  background: var(--danger);
-}
-
-.btn-icon.delete:hover {
-  background: #c82333;
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-sm);
-}
-
-/* Action Column */
-.action-col {
-  white-space: nowrap;
-  text-align: center;
-}
-
-/* Pagination Enhancement */
-.dataTables_wrapper .dataTables_paginate {
-  padding: 16px 20px;
-  background: var(--gray-50);
-  border-top: 1px solid var(--gray-200);
-  display: flex;
-  justify-content: center;
-  gap: 4px;
-}
-
-.dataTables_wrapper .dataTables_paginate .paginate_button {
-  border: 1px solid var(--gray-300) !important;
-  background: var(--white) !important;
-  border-radius: var(--radius-sm) !important;
-  color: var(--gray-600) !important;
-  padding: 8px 14px !important;
-  margin: 0 2px !important;
-  font-size: 13px !important;
-  font-weight: 500 !important;
-  transition: var(--transition) !important;
-  cursor: pointer !important;
-}
-
-.dataTables_wrapper .dataTables_paginate .paginate_button.current {
-  background: var(--primary) !important;
-  color: var(--white) !important;
-  border-color: var(--primary) !important;
-}
-
-.dataTables_wrapper .dataTables_paginate .paginate_button:hover {
-  background: var(--gray-100) !important;
-  color: var(--primary-dark) !important;
-  border-color: var(--primary-light) !important;
-  transform: translateY(-1px);
-}
-
-/* Info Text */
-.dataTables_wrapper .dataTables_info {
-  padding: 16px 20px;
-  background: var(--gray-50);
-  border-top: 1px solid var(--gray-200);
-  font-size: 13px;
-  color: var(--gray-600);
-  float: left;
+/* Active state for current page */
+.btn-icon-only:active {
+    transform: scale(0.95);
 }
 
 /* Responsive */
 @media (max-width: 768px) {
-  .filter-row {
-    flex-direction: column;
-    gap: 16px;
-  }
-  
-  .filter-row > div {
-    width: 100%;
-  }
-  
-  .filter-actions {
-    width: 100%;
-    justify-content: stretch;
-  }
-  
-  .filter-actions .btn,
-  .filter-actions .btn-primary,
-  .filter-actions .btn-reset {
-    flex: 1;
-    text-align: center;
-    justify-content: center;
-  }
-  
-  .dataTables_wrapper .dataTables_length,
-  .dataTables_wrapper .dataTables_filter {
-    float: none;
-    width: 100%;
-    padding: 12px 16px;
-  }
-  
-  .dataTables_wrapper .dataTables_filter input {
-    width: 100% !important;
-  }
-  
-  .dataTables_wrapper .dataTables_filter input:focus {
-    width: 100% !important;
-  }
-  
-  .dt-buttons {
-    float: none;
-    width: 100%;
-    text-align: center;
-  }
-  
-  .crm-export-btn {
-    width: 100% !important;
-  }
-  
-  .dataTables_wrapper .dataTables_paginate {
-    flex-wrap: wrap;
-  }
-  
-  .dataTables_wrapper .dataTables_paginate .paginate_button {
-    padding: 6px 10px !important;
-  }
-}
-
-/* Animation for delete button */
-@keyframes shake {
-  0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-2px); }
-  75% { transform: translateX(2px); }
-}
-
-.btn-icon.delete:hover {
-  animation: shake 0.3s ease-in-out;
-}
-
-/* Tooltip for action buttons */
-.btn-icon {
-  position: relative;
-}
-
-.btn-icon::before {
-  content: attr(title);
-  position: absolute;
-  bottom: 100%;
-  left: 50%;
-  transform: translateX(-50%) translateY(-5px);
-  background: var(--gray-800);
-  color: var(--white);
-  font-size: 11px;
-  padding: 4px 8px;
-  border-radius: 4px;
-  white-space: nowrap;
-  opacity: 0;
-  visibility: hidden;
-  transition: all 0.2s;
-  pointer-events: none;
-  z-index: 1000;
-}
-
-.btn-icon:hover::before {
-  opacity: 1;
-  visibility: visible;
-  transform: translateX(-50%) translateY(-8px);
-}
-
-/* Table row highlight */
-.crm-table tbody tr {
-  transition: var(--transition);
-}
-
-.crm-table tbody tr:active {
-  transform: scale(0.998);
-}
-
-/* Empty state enhancement */
-.crm-table td[colspan="8"] {
-  text-align: center;
-  padding: 60px 20px !important;
-  color: var(--gray-500);
-  font-size: 15px;
-  background: var(--gray-50);
-}
-
-/* Scrollbar styling */
-.crm-table-wrapper::-webkit-scrollbar {
-  height: 8px;
-  width: 8px;
-}
-
-.crm-table-wrapper::-webkit-scrollbar-track {
-  background: var(--gray-100);
-  border-radius: 4px;
-}
-
-.crm-table-wrapper::-webkit-scrollbar-thumb {
-  background: var(--gray-400);
-  border-radius: 4px;
-}
-
-.crm-table-wrapper::-webkit-scrollbar-thumb:hover {
-  background: var(--gray-500);
+    .filter-actions {
+        width: 100%;
+        justify-content: stretch;
+    }
+    
+    .btn-icon-only {
+        flex: 1;
+        width: auto;
+        height: 46px;
+    }
 }
 </style>
 
 <script>
-document.addEventListener("DOMContentLoaded", function(){
-
-document.querySelectorAll('.deleteForm').forEach(form=>{
-form.addEventListener('submit',function(e){
-
-e.preventDefault();
-
-let id = this.dataset.id;
-let csrf = this.querySelector('[name="csrf_token"]').value;
-
-Swal.fire({
-title:'Delete Lead?',
-text:'This action cannot be undone!',
-icon:'warning',
-showCancelButton:true,
-confirmButtonText:'Yes, delete it!'
-}).then(result=>{
-
-if(result.isConfirmed){
-
-fetch('index.php?page=leads/list', {
-method: 'POST',
-headers: {
-'Content-Type': 'application/x-www-form-urlencoded'
-},
-body: `delete_lead=1&id=${id}&csrf_token=${csrf}`
-})
-.then(res => res.text())
-.then(data => {
-
-Swal.fire({
-icon:'success',
-title:'Deleted!',
-text:'Lead deleted successfully'
-}).then(()=>{
-location.reload(); // optional (can remove later)
-});
-
-})
-.catch(()=>{
-
-Swal.fire({
-icon:'error',
-title:'Error',
-text:'Something went wrong'
-});
-
-});
-
+// Per page change
+function changePerPage(val) {
+    const url = new URL(window.location.href);
+    url.searchParams.set('per_page', val);
+    url.searchParams.set('p', 1);
+    window.location.href = url.toString();
 }
 
-});
-
-});
-});
-
-});
-
-</script>
-
-<script>
 document.addEventListener("DOMContentLoaded", function(){
-
-crmDataTable('#usersTable',{
-pageLength:5,
-lengthMenu:[5,10,20,50],
-ordering:true,
-order:[[1,'asc']]
+    // Delete confirmation
+    document.querySelectorAll('.delete-form').forEach(form=>{
+        form.addEventListener('submit', function(e){
+            e.preventDefault();
+            
+            let id = this.dataset.id;
+            let csrf = this.querySelector('[name="csrf_token"]').value;
+            
+            Swal.fire({
+                title: 'Delete Lead?',
+                text: 'This action cannot be undone!',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Yes, delete it!',
+                confirmButtonColor: '#e91e63'
+            }).then(result => {
+                if(result.isConfirmed){
+                    fetch('index.php?page=leads/list', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                        },
+                        body: `delete_lead=1&id=${id}&csrf_token=${csrf}`
+                    })
+                    .then(res => res.text())
+                    .then(data => {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Deleted!',
+                            text: 'Lead deleted successfully',
+                            confirmButtonColor: '#e91e63'
+                        }).then(() => {
+                            location.reload();
+                        });
+                    })
+                    .catch(() => {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: 'Something went wrong',
+                            confirmButtonColor: '#e91e63'
+                        });
+                    });
+                }
+            });
+        });
+    });
 });
-
-});
-
 </script>
