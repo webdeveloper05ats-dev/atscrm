@@ -19,6 +19,7 @@ $canAllBranches=(int)$st->fetchColumn();
 }catch(Exception $e){}
 
 /* DELETE */
+/* DELETE */
 if($_SERVER['REQUEST_METHOD']==='POST' && isset($_POST['delete_lead'])){
 
 $token=$_POST['csrf_token']??'';
@@ -31,12 +32,17 @@ $id=(int)($_POST['id']??0);
 
 try{
 
-if(!$canAllBranches){
-$chk=$pdo->prepare("SELECT COUNT(*) FROM leads WHERE id=? AND branch_id=?");
-$chk->execute([$id,$branchId]);
+/* ✅ Only creator + not converted */
+$chk=$pdo->prepare("
+SELECT COUNT(*) FROM leads 
+WHERE id=? 
+AND created_by=? 
+AND status!='converted'
+");
+$chk->execute([$id,$userId]);
+
 if(!$chk->fetchColumn()){
-throw new Exception("Access denied");
-}
+throw new Exception("Access denied or already converted");
 }
 
 $st=$pdo->prepare("DELETE FROM leads WHERE id=?");
@@ -105,14 +111,11 @@ $where[]="l.assigned_to=?";
 $params[]=$assigned;
 }
 
-$where[]="(l.name LIKE ? OR l.phone LIKE ? OR l.email LIKE ? OR l.company_college_name LIKE ? OR l.department LIKE ? OR l.lead_year LIKE ?)";
-$like="%$q%";
-$params[]=$like;
-$params[]=$like;
-$params[]=$like;
-$params[]=$like;
-$params[]=$like;
-$params[]=$like;
+if($q != ''){
+    $where[] = "(l.name LIKE ? OR l.phone LIKE ?)";
+    $params[] = "%$q%";
+    $params[] = "%$q%";
+}
 
 $whereSql='';
 if($where)$whereSql="WHERE ".implode(" AND ",$where);
@@ -132,8 +135,19 @@ $rows=[];
 try{
 
 $sql="
-SELECT
-l.*,
+SELECT 
+l.id,
+l.name,
+l.phone,
+l.email,
+l.company_college_name,
+l.department,
+l.lead_year,
+l.status,
+l.assigned_to,
+l.created_by,
+l.source,
+l.course_interest,
 u.name assigned_name
 FROM leads l
 LEFT JOIN users u ON u.id=l.assigned_to
@@ -231,7 +245,7 @@ $baseUrl="index.php?page=leads/list&q=$q&status=$status&assigned_to=$assigned";
         <i class="fas fa-file-excel"></i>
     </a>
 </div>
-
+</form>
 <div class="card" style="margin-top:16px;">
 
 <div class="card-header">Leads (<?=$totalRows?>)</div>
@@ -264,7 +278,12 @@ $baseUrl="index.php?page=leads/list&q=$q&status=$status&assigned_to=$assigned";
 </tr>
 <?php endif; ?>
 
-<?php foreach($rows as $r): ?>
+<?php 
+$sn = $offset + 1;   // start from pagination
+foreach($rows as $r): 
+  
+?>
+
 <?php
 
 /* =========================
@@ -277,15 +296,13 @@ $canConvert = false;
 $canEdit = false;
 $canDelete = false;
 
-/* Convert Permission
-Only assigned Front Office can convert */
+/* Convert Permission */
 if($roleName === 'Front Office' && $r['assigned_to'] == $userId && $r['status']!='converted'){
 $canConvert = true;
 }
 
-/* Edit/Delete Permission
-Only lead creator */
-if($r['created_by'] == $userId){
+/* Edit/Delete Permission */
+if($r['created_by'] == $userId && $r['status']!='converted'){
 $canEdit = true;
 $canDelete = true;
 }
@@ -293,7 +310,7 @@ $canDelete = true;
 ?>
 <tr>
 
-<td><?=$r['id']?></td>
+<td><?=$sn?></td>
 
 <td>
 <div class="lead-name"><?=h($r['name'])?></div>
@@ -347,13 +364,13 @@ $canDelete = true;
 
 <?php if($canDelete): ?>
 
-<form method="POST" class="deleteForm" style="display:inline">
+<form method="POST" class="deleteForm" data-id="<?=$r['id']?>" style="display:inline">
 
 <input type="hidden" name="csrf_token" value="<?=generateCSRF()?>">
 <input type="hidden" name="id" value="<?=$r['id']?>">
 <input type="hidden" name="delete_lead" value="1">
 
-<button class="btn-icon delete" title="Delete Lead">
+<button type="submit" class="btn-icon delete" title="Delete Lead">
 <i class="fas fa-trash"></i>
 </button>
 
@@ -364,7 +381,7 @@ $canDelete = true;
 </td>
 
 </tr>
-
+<?php $sn++; ?>
 <?php endforeach; ?>
 
 </tbody>
@@ -1042,27 +1059,62 @@ td .badge[style*="607d8b"] {
 </style>
 
 <script>
+document.addEventListener("DOMContentLoaded", function(){
 
 document.querySelectorAll('.deleteForm').forEach(form=>{
 form.addEventListener('submit',function(e){
 
-if(this.dataset.confirmed)return;
-
 e.preventDefault();
+
+let id = this.dataset.id;
+let csrf = this.querySelector('[name="csrf_token"]').value;
 
 Swal.fire({
 title:'Delete Lead?',
+text:'This action cannot be undone!',
 icon:'warning',
 showCancelButton:true,
-confirmButtonText:'Delete'
-}).then(r=>{
-if(r.isConfirmed){
-this.dataset.confirmed=1;
-this.submit();
-}
+confirmButtonText:'Yes, delete it!'
+}).then(result=>{
+
+if(result.isConfirmed){
+
+fetch('index.php?page=leads/list', {
+method: 'POST',
+headers: {
+'Content-Type': 'application/x-www-form-urlencoded'
+},
+body: `delete_lead=1&id=${id}&csrf_token=${csrf}`
+})
+.then(res => res.text())
+.then(data => {
+
+Swal.fire({
+icon:'success',
+title:'Deleted!',
+text:'Lead deleted successfully'
+}).then(()=>{
+location.reload(); // optional (can remove later)
+});
+
+})
+.catch(()=>{
+
+Swal.fire({
+icon:'error',
+title:'Error',
+text:'Something went wrong'
 });
 
 });
+
+}
+
+});
+
+});
+});
+
 });
 
 </script>
