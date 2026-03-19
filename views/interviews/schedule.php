@@ -385,6 +385,9 @@ if ($tableReady) {
                                         <a href="index.php?page=interviews/placement&registration_id=<?= (int) $r['registration_id'] ?>" class="btn hrsch-placement-btn">
                                             Placement
                                         </a>
+                                        <a href="index.php?page=reports/student_overall&registration_id=<?= (int) $r['registration_id'] ?>" class="btn" style="background:#f8fafc;border:1px solid #cbd5e1;color:#334155;">
+                                            Overall Report
+                                        </a>
                                     </div>
                                 </td>
                             </tr>

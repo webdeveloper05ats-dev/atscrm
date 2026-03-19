@@ -344,6 +344,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['send_to_hr'])) {
                     r.id,
                     r.branch_id,
                     r.registration_status,
+                    r.payment_status,
+                    r.balance_amount,
                     mi.workflow_status,
                     mi.mock_average
                 FROM registrations r
@@ -375,6 +377,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['send_to_hr'])) {
 
             if (($studentRow['workflow_status'] ?? '') !== 'done') {
                 throw new RuntimeException('Mark the mock interview as done before sending the student to HR.');
+            }
+
+            if (($studentRow['payment_status'] ?? '') !== 'paid' || (float) ($studentRow['balance_amount'] ?? 0) > 0) {
+                throw new RuntimeException('Student can be sent to HR only after full fee payment is completed.');
             }
 
             $upsert = $pdo->prepare("
@@ -459,6 +465,8 @@ try {
             r.program_name,
             r.batch_name,
             r.registration_status,
+            r.payment_status,
+            r.balance_amount,
             {$assessmentSelect}
             {$hrSelect}
             mi.theoretical_marks,
@@ -562,7 +570,8 @@ try {
                             $theoreticalMarks = isset($r['theoretical_marks']) && $r['theoretical_marks'] !== null ? (float) $r['theoretical_marks'] : null;
                             $machineTaskMarks = isset($r['machine_task_marks']) && $r['machine_task_marks'] !== null ? (float) $r['machine_task_marks'] : null;
                             $canMarkDone = mockInterviewIsReadyForCompletion($theoreticalMarks, $machineTaskMarks);
-                            $canSendToHr = $canMarkDone && $workflowStatus === 'done';
+                            $feesPaidInFull = (($r['payment_status'] ?? '') === 'paid') && ((float) ($r['balance_amount'] ?? 0) <= 0);
+                            $canSendToHr = $canMarkDone && $workflowStatus === 'done' && $feesPaidInFull;
                             ?>
                             <tr>
                                 <td>
@@ -605,7 +614,7 @@ try {
                                         <div class="mock-sub">Workflow: <?= h(ucwords(str_replace('_', ' ', $workflowStatus))) ?></div>
                                     <?php elseif ($workflowStatus === 'done'): ?>
                                         <span class="mock-pill mock-pill-primary">Done</span>
-                                        <div class="mock-sub">Ready for HR send</div>
+                                        <div class="mock-sub"><?= $feesPaidInFull ? 'Ready for HR send' : 'Full fee payment required before HR send' ?></div>
                                     <?php else: ?>
                                         <span class="mock-pill mock-pill-muted"><?= h(ucwords(str_replace('_', ' ', $workflowStatus ?: 'pending'))) ?></span>
                                         <div class="mock-sub">Complete both marks first</div>

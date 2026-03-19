@@ -649,6 +649,9 @@ if ($hrWorkflowReady) {
                                         <button type="button" class="btn placement-view-btn js-placement-view" data-registration-id="<?= (int) $row['registration_id'] ?>" data-student-name="<?= placementWorkflowH($row['enquiry_snapshot_name'] ?: '-') ?>">
                                             View Interviews
                                         </button>
+                                        <a href="index.php?page=reports/student_overall&registration_id=<?= (int) $row['registration_id'] ?>" class="btn" style="background:#f8fafc;border:1px solid #cbd5e1;color:#334155;">
+                                            Overall Report
+                                        </a>
                                     </div>
                                 </td>
                             </tr>

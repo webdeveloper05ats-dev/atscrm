@@ -799,6 +799,9 @@ $baseUrl = "index.php?page=attendance&q=" . urlencode($q);
                                 title="Attendance Calendar">
                                 <i class="fas fa-calendar-check"></i>
                             </button>
+                            <a href="index.php?page=reports/student_schedule&registration_id=<?= (int) $r['id'] ?>" class="att-icon-btn att-icon-btn-report" title="Student Schedule Report">
+                                <i class="fas fa-file-alt"></i>
+                            </a>
                         </td>
                     </tr>
                 <?php endforeach; ?>
@@ -850,6 +853,7 @@ $baseUrl = "index.php?page=attendance&q=" . urlencode($q);
     .att-summary-present { background:#eaf7ee; color:#2e7d32; }
     .att-summary-absent { background:#fdecec; color:#c62828; }
     .att-icon-btn { width:38px; height:38px; border-radius:10px; border:none; background:#e8f4fd; color:#1565c0; cursor:pointer; }
+    .att-icon-btn-report { display:inline-flex; align-items:center; justify-content:center; text-decoration:none; background:#fff7ed; color:#c2410c; margin-left:6px; }
     .att-pager { display:flex; justify-content:center; align-items:center; gap:8px; padding:16px; }
     .att-pager a { width:36px; height:36px; display:flex; align-items:center; justify-content:center; border-radius:8px; border:1px solid #ddd; text-decoration:none; color:#333; }
     .att-page-info { padding:0 8px; font-weight:600; }
