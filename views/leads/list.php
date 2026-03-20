@@ -130,7 +130,7 @@ $totalRows=$st->fetchColumn();
 
 $totalPages=max(1,ceil($totalRows/$perPage));
 
-/* FETCH */
+/* FETCH - Get ALL records for DataTable */
 $rows=[];
 try{
 
@@ -153,14 +153,18 @@ FROM leads l
 LEFT JOIN users u ON u.id=l.assigned_to
 $whereSql
 ORDER BY l.id DESC
-LIMIT $perPage OFFSET $offset
-";
+"; // Removed LIMIT and OFFSET
 
 $st=$pdo->prepare($sql);
 $st->execute($params);
 $rows=$st->fetchAll(PDO::FETCH_ASSOC);
 
-}catch(Exception $e){}
+// Update total rows to actual count
+$totalRows = count($rows);
+
+}catch(Exception $e){
+    $totalRows = 0;
+}
 
 function h($v){
 return htmlspecialchars((string)($v ?? ''), ENT_QUOTES, 'UTF-8');
@@ -258,190 +262,182 @@ $baseUrl="index.php?page=leads/list&q=$q&status=$status&assigned_to=$assigned";
     </form>
 </div>
 
-    <!-- Leads Table Card -->
-    <div class="card">
-        <div class="card-header">
-            <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
-                <div>
-                    <i class="fas fa-list" style="margin-right: 8px;"></i> Lead List
-                </div>
-                <div class="entries-control">
-                    <span>Show</span>
-                    <select class="entries-select" onchange="changePerPage(this.value)">
-                        <option value="5" <?=$perPage==5?'selected':''?>>5</option>
-                        <option value="10" <?=$perPage==10?'selected':''?>>10</option>
-                        <option value="20" <?=$perPage==20?'selected':''?>>20</option>
-                        <option value="50" <?=$perPage==50?'selected':''?>>50</option>
-                    </select>
-                    <span>entries</span>
-                </div>
+   <!-- Leads Table Card -->
+<div class="card">
+    <div class="card-header">
+        <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+            <div>
+                <i class="fas fa-list" style="margin-right: 8px;"></i> Lead List
             </div>
+            <!-- This will be replaced by DataTable's native show entries dropdown -->
         </div>
-        
-        <div class="table-container">
-            <table class="leads-table">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Lead</th>
-                        <th>Contact</th>
-                        <th>Academic / Org</th>
-                        <th>Status</th>
-                        <th>Assigned</th>
-                        <th>Source</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php if(!$rows): ?>
-                    <tr>
-                        <td colspan="8" class="no-data">
-                            <i class="fas fa-inbox"></i> No leads found
-                        </td>
-                    </tr>
-                    <?php endif; ?>
-                    
-                    <?php 
-                    $sn = $offset + 1;
-                    foreach($rows as $r): 
-                    ?>
-                    
-                    <?php
-                    /* =========================
-                    LEAD PERMISSIONS
-                    ========================= */
-                    $roleName = $_SESSION['role_name'] ?? '';
-                    $canConvert = false;
-                    $canEdit = false;
-                    $canDelete = false;
-
-                    /* Convert Permission */
-                    if($roleName === 'Front Office' && $r['assigned_to'] == $userId && $r['status']!='converted'){
-                        $canConvert = true;
-                    }
-
-                    /* Edit/Delete Permission */
-                    if($r['created_by'] == $userId && $r['status']!='converted'){
-                        $canEdit = true;
-                        $canDelete = true;
-                    }
-                    ?>
-                    
-                    <tr>
-                        <td class="id-col">#<?=$sn?></td>
-                        
-                        <td class="lead-col">
-                            <div class="lead-name"><?=h($r['name'])?></div>
-                            <div class="lead-interest"><?=h($r['course_interest'])?></div>
-                        </td>
-                        
-                        <td class="contact-col">
-                            <div class="contact-phone">
-                                <i class="fas fa-phone-alt"></i> <?=h($r['phone'])?>
-                            </div>
-                            <div class="contact-email">
-                                <i class="fas fa-envelope"></i> <?=h($r['email'])?>
-                            </div>
-                        </td>
-                        
-                        <td class="academic-col">
-                            <div class="org-name"><?=h($r['company_college_name'])?></div>
-                            <div class="dept-year">
-                                <?=h($r['department'])?>
-                                <?= !empty($r['lead_year']) ? ' | ' . h($r['lead_year']) : '' ?>
-                            </div>
-                        </td>
-                        
-                        <td class="status-col"><?=badge($r['status'])?></td>
-                        
-                        <td class="assigned-col">
-                            <span class="assigned-badge">
-                                <i class="fas fa-user-circle"></i> <?=h($r['assigned_name'])?>
-                            </span>
-                        </td>
-                        
-                        <td class="source-col">
-                            <span class="source-badge">
-                                <?php
-                                $sourceIcon = 'fa-link';
-                                if($r['source'] == 'Instagram') $sourceIcon = 'fa-instagram';
-                                if($r['source'] == 'Facebook') $sourceIcon = 'fa-facebook';
-                                if($r['source'] == 'Google Ads') $sourceIcon = 'fa-google';
-                                if($r['source'] == 'Walk-in') $sourceIcon = 'fa-walking';
-                                ?>
-                                <i class="fab <?=$sourceIcon?>"></i> <?=h($r['source'])?>
-                            </span>
-                        </td>
-                        
-                        <td class="actions-col">
-                            <div class="action-buttons">
-                                <?php if($canEdit): ?>
-                                <a href="index.php?page=leads/add&id=<?=$r['id']?>" class="action-btn edit" title="Edit Lead">
-                                    <i class="fas fa-pen"></i>
-                                </a>
-                                <?php endif; ?>
-                                
-                                <?php if($r['status']=='converted'): ?>
-                                <span class="action-btn done" title="Already Converted">
-                                    <i class="fas fa-check"></i>
-                                </span>
-                                <?php else: ?>
-                                    <?php if($canConvert): ?>
-                                    <a href="index.php?page=enquiries/add&lead_id=<?=$r['id']?>" class="action-btn convert" title="Convert to Enquiry">
-                                        <i class="fas fa-exchange-alt"></i>
-                                    </a>
-                                    <?php endif; ?>
-                                <?php endif; ?>
-                                
-                                <?php if($canDelete): ?>
-                                <form method="POST" class="delete-form" data-id="<?=$r['id']?>" style="display:inline">
-                                    <input type="hidden" name="csrf_token" value="<?=generateCSRF()?>">
-                                    <input type="hidden" name="id" value="<?=$r['id']?>">
-                                    <input type="hidden" name="delete_lead" value="1">
-                                    <button type="submit" class="action-btn delete" title="Delete Lead">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </form>
-                                <?php endif; ?>
-                            </div>
-                        </td>
-                    </tr>
-                    <?php $sn++; ?>
-                    <?php endforeach; ?>
-                </tbody>
-            </table>
-        </div>
-        
-        <!-- Pagination -->
-        <?php if($totalPages > 1): ?>
-        <div class="pagination-wrapper">
-            <div class="pagination-info">
-                Showing <?=($offset+1)?> to <?=min($offset+$perPage, $totalRows)?> of <?=$totalRows?> entries
-            </div>
-            <div class="pagination">
-                <?php if($page > 1): ?>
-                <a href="<?=$baseUrl?>&p=<?=($page-1)?>" class="page-link prev">
-                    <i class="fas fa-chevron-left"></i> Previous
-                </a>
+    </div>
+    
+    <div class="table-container">
+        <table class="leads-table" id="leadsTable">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Lead</th>
+                    <th>Contact</th>
+                    <th>Academic / Org</th>
+                    <th>Status</th>
+                    <th>Assigned</th>
+                    <th>Source</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php if(!$rows): ?>
+                <tr>
+                    <td colspan="8" class="no-data">
+                        <i class="fas fa-inbox"></i> No leads found
+                    </td>
+                </tr>
                 <?php endif; ?>
+                
+                <?php 
+                $sn = $offset + 1;
+                foreach($rows as $r): 
+                ?>
                 
                 <?php
-                $start = max(1, $page - 2);
-                $end = min($totalPages, $page + 2);
-                for($i = $start; $i <= $end; $i++):
+                /* =========================
+                LEAD PERMISSIONS
+                ========================= */
+                $roleName = $_SESSION['role_name'] ?? '';
+                $canConvert = false;
+                $canEdit = false;
+                $canDelete = false;
+
+                /* Convert Permission */
+                if($roleName === 'Front Office' && $r['assigned_to'] == $userId && $r['status']!='converted'){
+                    $canConvert = true;
+                }
+
+                /* Edit/Delete Permission */
+                if($r['created_by'] == $userId && $r['status']!='converted'){
+                    $canEdit = true;
+                    $canDelete = true;
+                }
                 ?>
-                <a href="<?=$baseUrl?>&p=<?=$i?>" class="page-link <?=$i==$page?'active':''?>"><?=$i?></a>
-                <?php endfor; ?>
                 
-                <?php if($page < $totalPages): ?>
-                <a href="<?=$baseUrl?>&p=<?=($page+1)?>" class="page-link next">
-                    Next <i class="fas fa-chevron-right"></i>
-                </a>
-                <?php endif; ?>
-            </div>
-        </div>
-        <?php endif; ?>
+                <tr>
+                    <td class="id-col">#<?=$sn?></td>
+                    
+                    <td class="lead-col">
+                        <div class="lead-name"><?=h($r['name'])?></div>
+                        <div class="lead-interest"><?=h($r['course_interest'])?></div>
+                    </td>
+                    
+                    <td class="contact-col">
+                        <div class="contact-phone">
+                            <i class="fas fa-phone-alt"></i> <?=h($r['phone'])?>
+                        </div>
+                        <div class="contact-email">
+                            <i class="fas fa-envelope"></i> <?=h($r['email'])?>
+                        </div>
+                    </td>
+                    
+                    <td class="academic-col">
+                        <div class="org-name"><?=h($r['company_college_name'])?></div>
+                        <div class="dept-year">
+                            <?=h($r['department'])?>
+                            <?= !empty($r['lead_year']) ? ' | ' . h($r['lead_year']) : '' ?>
+                        </div>
+                    </td>
+                    
+                    <td class="status-col"><?=badge($r['status'])?></td>
+                    
+                    <td class="assigned-col">
+                        <span class="assigned-badge">
+                            <i class="fas fa-user-circle"></i> <?=h($r['assigned_name'] ?: 'Unassigned')?>
+                        </span>
+                    </td>
+                    
+                    <td class="source-col">
+                        <span class="source-badge">
+                            <?php
+                            $sourceIcon = 'fa-link';
+                            if($r['source'] == 'Instagram') $sourceIcon = 'fa-instagram';
+                            if($r['source'] == 'Facebook') $sourceIcon = 'fa-facebook';
+                            if($r['source'] == 'Google Ads') $sourceIcon = 'fa-google';
+                            if($r['source'] == 'Walk-in') $sourceIcon = 'fa-walking';
+                            if($r['source'] == 'Website') $sourceIcon = 'fa-globe';
+                            if($r['source'] == 'Reference') $sourceIcon = 'fa-user-friends';
+                            ?>
+                            <i class="fab <?=$sourceIcon?>"></i> <?=h($r['source'])?>
+                        </span>
+                    </td>
+                    
+                    <td class="actions-col">
+                        <div class="action-buttons">
+                            <?php if($canEdit): ?>
+                            <a href="index.php?page=leads/add&id=<?=$r['id']?>" class="action-btn edit" title="Edit Lead">
+                                <i class="fas fa-pen"></i>
+                            </a>
+                            <?php endif; ?>
+                            
+                            <?php if($r['status']=='converted'): ?>
+                            <span class="action-btn done" title="Already Converted">
+                                <i class="fas fa-check"></i>
+                            </span>
+                            <?php else: ?>
+                                <?php if($canConvert): ?>
+                                <a href="index.php?page=enquiries/add&lead_id=<?=$r['id']?>" class="action-btn convert" title="Convert to Enquiry">
+                                    <i class="fas fa-exchange-alt"></i>
+                                </a>
+                                <?php endif; ?>
+                            <?php endif; ?>
+                            
+                            <?php if($canDelete): ?>
+                            <form method="POST" class="delete-form" data-id="<?=$r['id']?>" style="display:inline">
+                                <input type="hidden" name="csrf_token" value="<?=generateCSRF()?>">
+                                <input type="hidden" name="id" value="<?=$r['id']?>">
+                                <input type="hidden" name="delete_lead" value="1">
+                                <button type="submit" class="action-btn delete" title="Delete Lead">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </form>
+                            <?php endif; ?>
+                        </div>
+                    </td>
+                </tr>
+                <?php $sn++; ?>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
     </div>
+    
+    <!-- Server-side pagination (hidden by default, shown only if DataTable fails) -->
+    <?php if($totalPages > 1): ?>
+    <div class="pagination-wrapper server-pagination" style="display: none;">
+        <div class="pagination-info">
+            Showing <?=($offset+1)?> to <?=min($offset+$perPage, $totalRows)?> of <?=$totalRows?> entries
+        </div>
+        <div class="pagination">
+            <?php if($page > 1): ?>
+            <a href="<?=$baseUrl?>&p=<?=($page-1)?>" class="page-link prev">
+                <i class="fas fa-chevron-left"></i> Previous
+            </a>
+            <?php endif; ?>
+            
+            <?php
+            $start = max(1, $page - 2);
+            $end = min($totalPages, $page + 2);
+            for($i = $start; $i <= $end; $i++):
+            ?>
+            <a href="<?=$baseUrl?>&p=<?=$i?>" class="page-link <?=$i==$page?'active':''?>"><?=$i?></a>
+            <?php endfor; ?>
+            
+            <?php if($page < $totalPages): ?>
+            <a href="<?=$baseUrl?>&p=<?=($page+1)?>" class="page-link next">
+                Next <i class="fas fa-chevron-right"></i>
+            </a>
+            <?php endif; ?>
+        </div>
+    </div>
+    <?php endif; ?>
 </div>
 
 <style>
@@ -1190,5 +1186,19 @@ document.addEventListener("DOMContentLoaded", function(){
             });
         });
     });
+});
+</script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function(){
+    
+    crmDataTable('#leadsTable', {
+        pageLength: 10,  // Show 10 entries by default (like your image)
+        lengthMenu: [5, 10, 20, 50, 100], // Options for show entries
+        ordering: true,
+        order: [[0, 'desc']], // Sort by ID (column 0) descending
+        searchPlaceholder: "Search leads..." // Custom placeholder
+    });
+    
 });
 </script>
