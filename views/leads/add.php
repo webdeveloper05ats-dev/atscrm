@@ -81,9 +81,9 @@ if(isset($_POST['save_lead']) && empty($error)){
         $assign = (int)($_POST['assigned_to'] ?? 0);
         $remarks= toNull($_POST['remarks'] ?? '');
 
-        if($name===''){
-            $error="Lead name is required.";
-        }else{
+        if($name==='' || $phone===null || $email===null){
+    $error="Please fill Name, Phone and Email.";
+}else{
 
             try{
 
@@ -200,7 +200,7 @@ confirmButtonColor:'#e91e63'
 Lead Information
 </div>
 
-<form method="POST" style="padding:16px;">
+<form method="POST" style="padding:16px;" novalidate>
 
 <input type="hidden" name="csrf_token" value="<?= h(generateCSRF()) ?>">
 
@@ -213,13 +213,13 @@ value="<?= h($_POST['name'] ?? $lead['name'] ?? '') ?>">
 </div>
 
 <div class="form-group">
-<label>Phone</label>
-<input type="text" name="phone"
+<label>Phone *</label>
+<input type="number" name="phone" 
 value="<?= h($_POST['phone'] ?? $lead['phone'] ?? '') ?>">
 </div>
 
 <div class="form-group">
-<label>Email</label>
+<label>Email *</label>
 <input type="email" name="email"
 value="<?= h($_POST['email'] ?? $lead['email'] ?? '') ?>">
 </div>
@@ -355,3 +355,81 @@ text-decoration:none;
 }
 
 </style>
+
+<script>
+document.addEventListener("DOMContentLoaded", function(){
+
+    const form = document.querySelector("form");
+
+    form.addEventListener("submit", function(e){
+
+        let name = form.querySelector('[name="name"]').value.trim();
+        let phone = form.querySelector('[name="phone"]').value.trim();
+        let email = form.querySelector('[name="email"]').value.trim();
+
+        // Name check
+        if(name === ""){
+            e.preventDefault();
+            Swal.fire({
+                icon:'warning',
+                title:'Validation Error',
+                text:'Name is required',
+                confirmButtonColor:'#e91e63'
+            });
+            return;
+        }
+
+        // Phone check
+        if(phone === ""){
+            e.preventDefault();
+            Swal.fire({
+                icon:'warning',
+                title:'Validation Error',
+                text:'Phone number is required',
+                confirmButtonColor:'#e91e63'
+            });
+            return;
+        }
+
+        // Phone format (10 digits basic)
+        if(!/^[0-9]{10}$/.test(phone)){
+            e.preventDefault();
+            Swal.fire({
+                icon:'warning',
+                title:'Invalid Phone',
+                text:'Enter valid 10 digit phone number',
+                confirmButtonColor:'#e91e63'
+            });
+            return;
+        }
+
+        // Email check
+        if(email === ""){
+            e.preventDefault();
+            Swal.fire({
+                icon:'warning',
+                title:'Validation Error',
+                text:'Email is required',
+                confirmButtonColor:'#e91e63'
+            });
+            return;
+        }
+
+        // Email format
+        let emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+        if(!emailPattern.test(email)){
+            e.preventDefault();
+            Swal.fire({
+                icon:'warning',
+                title:'Invalid Email',
+                text:'Enter valid email address',
+                confirmButtonColor:'#e91e63'
+            });
+            return;
+        }
+
+    });
+
+});
+</script>
