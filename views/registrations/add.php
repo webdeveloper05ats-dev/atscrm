@@ -598,804 +598,1459 @@ $final_fee           = $registration['final_fee'] ?? '0.00';
 $isEditMode = !empty($registration['id']);
 ?>
 
+<!-- Professional UI - White, Pink & Light Pink Theme -->
 <style>
-:root{
-  --reg-primary:#e91e63;
-  --reg-primary-dark:#c2185b;
-  --reg-primary-soft:#fff4f8;
-  --reg-border:#ececf2;
-  --reg-text:#202437;
-  --reg-muted:#6b7280;
-  --reg-bg:#f6f7fb;
-  --reg-card:#ffffff;
-  --reg-success:#16a34a;
-  --reg-warning:#f59e0b;
-  --reg-danger:#dc2626;
-  --reg-shadow:0 20px 50px rgba(15, 23, 42, 0.08);
-  --reg-shadow-soft:0 10px 30px rgba(15, 23, 42, 0.05);
+/* ========================================
+   Design System - Pink Blossom
+   Pure White, Pink & Light Pink Theme
+======================================== */
+:root {
+    /* Primary Colors - Pink Family */
+    --pink-50: #fff5f9;
+    --pink-100: #ffeaf3;
+    --pink-200: #ffd5e8;
+    --pink-300: #ffb5d6;
+    --pink-400: #ff8abe;
+    --pink-500: #f65a9f;
+    --pink-600: #e91e63;
+    --pink-700: #c2185b;
+    --pink-800: #9e154c;
+    --pink-900: #7a113c;
+    
+    /* Neutral Colors - Clean Whites & Grays */
+    --white: #ffffff;
+    --white-50: #fefeff;
+    --white-100: #fcfaff;
+    --white-200: #faf5fc;
+    --gray-50: #f8f9fa;
+    --gray-100: #f1f3f5;
+    --gray-200: #e9ecef;
+    --gray-300: #dee2e6;
+    --gray-400: #ced4da;
+    --gray-500: #adb5bd;
+    --gray-600: #868e96;
+    --gray-700: #495057;
+    --gray-800: #343a40;
+    --gray-900: #212529;
+    
+    /* Functional Colors */
+    --success: #40c057;
+    --warning: #fd7e14;
+    --danger: #fa5252;
+    --info: #4dabf7;
+    
+    /* Shadows - Soft Pink Tint */
+    --shadow-xs: 0 2px 4px rgba(233, 30, 99, 0.02);
+    --shadow-sm: 0 4px 8px rgba(233, 30, 99, 0.04);
+    --shadow-md: 0 8px 20px rgba(233, 30, 99, 0.08);
+    --shadow-lg: 0 16px 32px rgba(233, 30, 99, 0.12);
+    --shadow-xl: 0 24px 48px -12px rgba(233, 30, 99, 0.18);
+    
+    /* Border Radius */
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --radius-lg: 16px;
+    --radius-xl: 24px;
+    --radius-2xl: 32px;
+    --radius-full: 9999px;
+    
+    /* Transitions */
+    --transition-all: all 0.2s ease;
+    
+    /* Typography */
+    --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
-.reg-page{
-  background:linear-gradient(180deg, #fff 0%, #fff6fa 18%, #f8f9fd 100%);
-  padding:18px;
-  border-radius:24px;
+
+/* ========================================
+   Base Styles
+======================================== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
 }
-.reg-topbar{
-  display:flex;
-  align-items:flex-start;
-  justify-content:space-between;
-  gap:16px;
-  flex-wrap:wrap;
-  margin-bottom:18px;
+
+body {
+    font-family: var(--font-sans);
+    background: linear-gradient(135deg, var(--white) 0%, var(--pink-50) 50%, var(--white) 100%);
+    color: var(--gray-800);
+    line-height: 1.5;
 }
-.reg-title-wrap h2{
-  margin:0;
-  font-size:28px;
-  font-weight:900;
-  color:var(--reg-text);
-  letter-spacing:.2px;
+
+/* ========================================
+   Main Container
+======================================== */
+.reg-portal {
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 24px;
+    min-height: 100vh;
 }
-.reg-subtitle{
-  margin-top:6px;
-  color:var(--reg-muted);
-  font-size:14px;
-  line-height:1.6;
+
+/* ========================================
+   Header Section
+======================================== */
+.reg-header {
+    margin-bottom: 24px;
+    padding: 20px 24px;
+    background: var(--white);
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--pink-100);
+    box-shadow: var(--shadow-md);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
 }
-.reg-badges{
-  display:flex;
-  gap:10px;
-  flex-wrap:wrap;
+
+.reg-header-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
 }
-.reg-badge{
-  display:inline-flex;
-  align-items:center;
-  gap:8px;
-  padding:10px 14px;
-  border-radius:999px;
-  font-size:13px;
-  font-weight:800;
-  background:#fff;
-  border:1px solid rgba(233,30,99,.12);
-  color:var(--reg-primary-dark);
-  box-shadow:var(--reg-shadow-soft);
+
+.reg-header-icon {
+    width: 56px;
+    height: 56px;
+    background: linear-gradient(135deg, var(--pink-500), var(--pink-600));
+    border-radius: var(--radius-lg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 24px;
+    box-shadow: var(--shadow-md);
 }
-.reg-badge i{ font-size:12px; }
-.reg-layout{
-  display:grid;
-  grid-template-columns:340px minmax(0, 1fr);
-  gap:18px;
-  align-items:start;
+
+.reg-header-content h1 {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--gray-800);
+    margin: 0 0 4px 0;
 }
-.reg-sidebar{ position:sticky; top:14px; }
-.reg-panel{
-  background:var(--reg-card);
-  border:1px solid rgba(15,23,42,.06);
-  border-radius:22px;
-  box-shadow:var(--reg-shadow);
-  overflow:hidden;
+
+.reg-header-content p {
+    font-size: 14px;
+    color: var(--gray-600);
+    margin: 0;
 }
-.reg-panel + .reg-panel{ margin-top:16px; }
-.reg-panel-head{
-  padding:18px 20px;
-  border-bottom:1px solid #f1f3f7;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:10px;
-  background:linear-gradient(180deg, #fff, #fffafb);
+
+.reg-header-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: var(--pink-50);
+    border: 1px solid var(--pink-200);
+    border-radius: var(--radius-full);
+    color: var(--pink-600);
+    font-size: 13px;
+    font-weight: 600;
 }
-.reg-panel-title{
-  margin:0;
-  font-size:16px;
-  font-weight:900;
-  color:var(--reg-text);
-  display:flex;
-  align-items:center;
-  gap:10px;
+
+/* ========================================
+   Layout Grid
+======================================== */
+.reg-grid {
+    display: grid;
+    grid-template-columns: 340px 1fr;
+    gap: 24px;
+    align-items: start;
 }
-.reg-panel-title i{
-  width:34px;
-  height:34px;
-  border-radius:12px;
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  background:var(--reg-primary-soft);
-  color:var(--reg-primary);
-  font-size:14px;
+
+/* ========================================
+   Sidebar Cards
+======================================== */
+.reg-sidebar {
+    position: sticky;
+    top: 20px;
 }
-.reg-panel-body{ padding:18px 20px 20px; }
-.reg-summary-card{ background:linear-gradient(135deg, #fff 0%, #fff7fb 100%); }
-.reg-summary-list{ display:grid; gap:12px; }
-.reg-summary-item{
-  display:flex;
-  align-items:flex-start;
-  gap:12px;
-  padding:14px;
-  border:1px solid #f1e3ea;
-  border-radius:16px;
-  background:#fff;
+
+.reg-card {
+    background: var(--white);
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--pink-100);
+    overflow: hidden;
+    box-shadow: var(--shadow-md);
+    margin-bottom: 20px;
 }
-.reg-summary-item .icon{
-  width:40px;
-  height:40px;
-  border-radius:14px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  background:var(--reg-primary-soft);
-  color:var(--reg-primary);
-  font-size:15px;
-  flex-shrink:0;
+
+.reg-card-header {
+    padding: 18px 20px;
+    background: linear-gradient(135deg, var(--white), var(--pink-50));
+    border-bottom: 1px solid var(--pink-100);
+    display: flex;
+    align-items: center;
+    gap: 12px;
 }
-.reg-summary-item .meta .label{
-  display:block;
-  font-size:12px;
-  font-weight:800;
-  color:var(--reg-muted);
-  text-transform:uppercase;
-  letter-spacing:.5px;
-  margin-bottom:4px;
+
+.reg-card-header-icon {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, var(--pink-500), var(--pink-600));
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 18px;
 }
-.reg-summary-item .meta .value{
-  display:block;
-  font-size:14px;
-  font-weight:800;
-  color:var(--reg-text);
-  word-break:break-word;
+
+.reg-card-header h3 {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--gray-800);
+    margin: 0;
 }
-.reg-note{
-  margin-top:14px;
-  padding:14px 16px;
-  border-radius:16px;
-  background:#fff8ec;
-  border:1px solid #fde7b0;
-  color:#8a5a00;
-  font-size:13px;
-  line-height:1.7;
+
+.reg-card-header p {
+    font-size: 12px;
+    color: var(--gray-500);
+    margin: 2px 0 0 0;
 }
-.reg-form-shell{ display:grid; gap:18px; }
-.reg-section-grid{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:14px;
+
+.reg-card-content {
+    padding: 20px;
 }
-.reg-section-grid .full{ grid-column:1 / -1; }
-.reg-field{
-  display:flex;
-  flex-direction:column;
-  gap:7px;
+
+/* ========================================
+   Summary Items
+======================================== */
+.reg-summary-items {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
 }
-.reg-label{
-  font-size:13px;
-  font-weight:800;
-  color:var(--reg-text);
-  margin:0;
+
+.reg-summary-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px;
+    background: var(--pink-50);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--pink-100);
+    transition: var(--transition-all);
 }
-.reg-label .req{ color:var(--reg-danger); margin-left:4px; }
-.reg-input,.reg-select,.reg-textarea{
-  width:100%;
-  min-height:46px;
-  padding:11px 14px;
-  border:1px solid #dfe3ea;
-  border-radius:14px;
-  background:#fff;
-  color:var(--reg-text);
-  font-size:14px;
-  transition:.2s ease;
-  outline:none;
+
+.reg-summary-item:hover {
+    background: var(--white);
+    border-color: var(--pink-300);
+    transform: translateX(4px);
 }
-.reg-textarea{ min-height:auto; resize:vertical; }
-.reg-input:focus,.reg-select:focus,.reg-textarea:focus{
-  border-color:rgba(233,30,99,.55);
-  box-shadow:0 0 0 4px rgba(233,30,99,.10);
+
+.reg-summary-icon {
+    width: 40px;
+    height: 40px;
+    background: var(--white);
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--pink-600);
+    font-size: 16px;
+    box-shadow: var(--shadow-xs);
 }
-.reg-input[readonly]{
-  background:#f9fafc;
-  color:#6b7280;
-  font-weight:700;
+
+.reg-summary-details {
+    flex: 1;
 }
-.reg-form-main{
-  background:var(--reg-card);
-  border:1px solid rgba(15,23,42,.06);
-  border-radius:22px;
-  box-shadow:var(--reg-shadow);
-  overflow:hidden;
+
+.reg-summary-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--gray-500);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    margin-bottom: 2px;
 }
-.reg-form-head{
-  padding:20px 22px;
-  border-bottom:1px solid #eef1f5;
-  background:linear-gradient(180deg, #fff 0%, #fffafe 100%);
+
+.reg-summary-value {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--gray-800);
 }
-.reg-form-head h3{
-  margin:0;
-  font-size:18px;
-  font-weight:900;
-  color:var(--reg-text);
+
+/* ========================================
+   Info Note
+======================================== */
+.reg-note-card {
+    margin-top: 16px;
+    padding: 16px;
+    background: var(--pink-50);
+    border-radius: var(--radius-lg);
+    border-left: 3px solid var(--pink-500);
+    font-size: 13px;
+    color: var(--gray-700);
+    line-height: 1.6;
 }
-.reg-form-head p{
-  margin:6px 0 0;
-  color:var(--reg-muted);
-  font-size:13px;
+
+.reg-note-card strong {
+    color: var(--pink-600);
 }
-.reg-form-body{ padding:22px; }
-.reg-block{
-  border:1px solid #eef1f5;
-  border-radius:20px;
-  background:#fff;
-  overflow:hidden;
+
+/* ========================================
+   Progress Steps
+======================================== */
+.reg-progress {
+    margin-bottom: 24px;
+    background: var(--white);
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--pink-100);
+    padding: 20px;
+    box-shadow: var(--shadow-md);
 }
-.reg-block + .reg-block{ margin-top:18px; }
-.reg-block-head{
-  padding:16px 18px;
-  border-bottom:1px solid #eef1f5;
-  background:#fcfcfe;
-  display:flex;
-  align-items:center;
-  gap:12px;
+
+.reg-steps-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
 }
-.reg-block-head .step{
-  width:34px;
-  height:34px;
-  border-radius:12px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  background:var(--reg-primary-soft);
-  color:var(--reg-primary);
-  font-size:14px;
-  font-weight:900;
-  flex-shrink:0;
+
+.reg-steps-container::before {
+    content: '';
+    position: absolute;
+    top: 24px;
+    left: 40px;
+    right: 40px;
+    height: 2px;
+    background: var(--pink-200);
+    z-index: 1;
 }
-.reg-block-head .titles h4{
-  margin:0;
-  font-size:15px;
-  font-weight:900;
-  color:var(--reg-text);
+
+.reg-step-item {
+    position: relative;
+    z-index: 2;
+    background: var(--white);
+    text-align: center;
+    flex: 1;
 }
-.reg-block-head .titles p{
-  margin:4px 0 0;
-  font-size:12px;
-  color:var(--reg-muted);
+
+.reg-step-circle {
+    width: 48px;
+    height: 48px;
+    background: var(--white);
+    border: 2px solid var(--pink-200);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 8px;
+    font-weight: 600;
+    font-size: 18px;
+    color: var(--gray-500);
+    transition: var(--transition-all);
+    cursor: pointer;
 }
-.reg-block-body{ padding:18px; }
-.reg-quick-stats{
-  display:grid;
-  grid-template-columns:repeat(3, 1fr);
-  gap:12px;
-  margin-bottom:18px;
+
+.reg-step-item.active .reg-step-circle {
+    background: linear-gradient(135deg, var(--pink-500), var(--pink-600));
+    border-color: var(--pink-500);
+    color: white;
+    transform: scale(1.05);
+    box-shadow: var(--shadow-md);
 }
-.reg-stat{
-  padding:14px;
-  border-radius:18px;
-  border:1px solid #eef1f5;
-  background:linear-gradient(180deg, #fff, #fbfcff);
+
+.reg-step-item.completed .reg-step-circle {
+    background: var(--success);
+    border-color: var(--success);
+    color: white;
 }
-.reg-stat .label{
-  display:block;
-  font-size:12px;
-  font-weight:800;
-  color:var(--reg-muted);
-  margin-bottom:6px;
+
+.reg-step-label {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--gray-600);
 }
-.reg-stat .value{
-  display:block;
-  font-size:18px;
-  font-weight:900;
-  color:var(--reg-text);
+
+.reg-step-item.active .reg-step-label {
+    color: var(--pink-600);
+    font-weight: 600;
 }
-.reg-actions-wrap{
-  position:sticky;
-  bottom:0;
-  margin-top:20px;
-  padding-top:4px;
+
+/* ========================================
+   Main Form Card
+======================================== */
+.reg-main-card {
+    background: var(--white);
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--pink-100);
+    overflow: hidden;
+    box-shadow: var(--shadow-lg);
 }
-.reg-actions{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  gap:14px;
-  flex-wrap:wrap;
-  padding:16px 18px;
-  border:1px solid #eef1f5;
-  border-radius:20px;
-  background:rgba(255,255,255,.88);
-  backdrop-filter:blur(8px);
-  box-shadow:var(--reg-shadow-soft);
+
+.reg-main-header {
+    padding: 24px 28px;
+    background: linear-gradient(135deg, var(--white), var(--pink-50));
+    border-bottom: 1px solid var(--pink-100);
 }
-.reg-actions-left,.reg-actions-right{
-  display:flex;
-  gap:10px;
-  flex-wrap:wrap;
-  align-items:center;
+
+.reg-main-header h2 {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--gray-800);
+    margin: 0 0 4px 0;
 }
-.reg-btn{
-  border:none;
-  border-radius:14px;
-  padding:12px 18px;
-  font-size:14px;
-  font-weight:800;
-  line-height:1;
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  gap:8px;
-  text-decoration:none !important;
-  cursor:pointer;
-  transition:.2s ease;
-  min-height:46px;
+
+.reg-main-header p {
+    font-size: 14px;
+    color: var(--gray-600);
+    margin: 0;
 }
-.reg-btn:hover{ transform:translateY(-1px); }
-.reg-btn-primary{
-  background:linear-gradient(135deg, var(--reg-primary), var(--reg-primary-dark));
-  color:#fff;
-  box-shadow:0 14px 26px rgba(233,30,99,.22);
+
+.reg-main-body {
+    padding: 28px;
 }
-.reg-btn-warning{
-  background:linear-gradient(135deg, #f59e0b, #d97706);
-  color:#fff;
-  box-shadow:0 14px 26px rgba(245,158,11,.22);
+
+/* ========================================
+   Form Steps Container
+======================================== */
+.reg-step-container {
+    display: none;
 }
-.reg-btn-danger{
-  background:linear-gradient(135deg, #ef4444, #dc2626);
-  color:#fff;
-  box-shadow:0 14px 26px rgba(239,68,68,.20);
+
+.reg-step-container.active {
+    display: block;
+    animation: fadeIn 0.3s ease;
 }
-.reg-btn-light{
-  background:#fff;
-  color:var(--reg-text);
-  border:1px solid #dfe3ea;
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
 }
-@media (max-width: 1200px){
-  .reg-layout{ grid-template-columns:1fr; }
-  .reg-sidebar{ position:static; }
+
+/* ========================================
+   Section Blocks
+======================================== */
+.reg-section {
+    background: var(--white);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--pink-100);
+    overflow: hidden;
+    margin-bottom: 20px;
 }
-@media (max-width: 992px){
-  .reg-section-grid,.reg-quick-stats{ grid-template-columns:1fr; }
-  .reg-form-body,.reg-panel-body{ padding:16px; }
-  .reg-form-head,.reg-panel-head{ padding:16px; }
-  .reg-page{ padding:12px; border-radius:18px; }
+
+.reg-section-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px 20px;
+    background: var(--pink-50);
+    border-bottom: 1px solid var(--pink-100);
 }
-@media (max-width: 576px){
-  .reg-title-wrap h2{ font-size:22px; }
-  .reg-actions{ padding:14px; }
-  .reg-btn{ width:100%; }
-  .reg-actions-left,.reg-actions-right{ width:100%; }
+
+.reg-section-step {
+    width: 36px;
+    height: 36px;
+    background: linear-gradient(135deg, var(--pink-500), var(--pink-600));
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 600;
+    font-size: 15px;
+}
+
+.reg-section-title h4 {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--gray-800);
+    margin: 0 0 2px 0;
+}
+
+.reg-section-title p {
+    font-size: 12px;
+    color: var(--gray-600);
+    margin: 0;
+}
+
+.reg-section-content {
+    padding: 20px;
+}
+
+/* ========================================
+   Form Grid
+======================================== */
+.reg-form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+}
+
+.reg-form-grid .full-width {
+    grid-column: 1 / -1;
+}
+
+/* ========================================
+   Form Fields
+======================================== */
+.reg-field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.reg-field-label {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--gray-700);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.reg-field-label .required {
+    color: var(--pink-600);
+    font-size: 14px;
+}
+
+.reg-field-input,
+.reg-field-select,
+.reg-field-textarea {
+    width: 100%;
+    padding: 10px 14px;
+    border: 2px solid var(--pink-100);
+    border-radius: var(--radius-md);
+    font-size: 14px;
+    color: var(--gray-800);
+    background: var(--white);
+    transition: var(--transition-all);
+    font-family: inherit;
+}
+
+.reg-field-input:hover,
+.reg-field-select:hover,
+.reg-field-textarea:hover {
+    border-color: var(--pink-300);
+    background: var(--pink-50);
+}
+
+.reg-field-input:focus,
+.reg-field-select:focus,
+.reg-field-textarea:focus {
+    outline: none;
+    border-color: var(--pink-500);
+    box-shadow: 0 0 0 3px rgba(233, 30, 99, 0.1);
+    background: var(--white);
+}
+
+.reg-field-input[readonly] {
+    background: var(--pink-50);
+    border-color: var(--pink-200);
+    color: var(--gray-600);
+    font-weight: 500;
+}
+
+.reg-field-textarea {
+    min-height: 90px;
+    resize: vertical;
+}
+
+/* ========================================
+   Navigation Buttons
+======================================== */
+.reg-nav {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 2px solid var(--pink-100);
+}
+
+.reg-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 12px 24px;
+    border-radius: var(--radius-md);
+    font-size: 14px;
+    font-weight: 500;
+    border: none;
+    cursor: pointer;
+    transition: var(--transition-all);
+    text-decoration: none;
+    min-width: 120px;
+}
+
+.reg-btn-primary {
+    background: linear-gradient(135deg, var(--pink-500), var(--pink-600));
+    color: white;
+    box-shadow: var(--shadow-sm);
+}
+
+.reg-btn-primary:hover {
+    background: linear-gradient(135deg, var(--pink-600), var(--pink-700));
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.reg-btn-secondary {
+    background: var(--pink-50);
+    color: var(--pink-700);
+    border: 1px solid var(--pink-200);
+}
+
+.reg-btn-secondary:hover {
+    background: var(--pink-100);
+    transform: translateY(-2px);
+}
+
+.reg-btn-outline {
+    background: transparent;
+    color: var(--gray-600);
+    border: 2px solid var(--pink-200);
+}
+
+.reg-btn-outline:hover {
+    border-color: var(--pink-500);
+    color: var(--pink-600);
+    background: var(--pink-50);
+    transform: translateY(-2px);
+}
+
+.reg-btn-warning {
+    background: linear-gradient(135deg, #ff8787, #ff6b6b);
+    color: white;
+}
+
+.reg-btn-warning:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.reg-btn-danger {
+    background: linear-gradient(135deg, #ff8787, #fa5252);
+    color: white;
+}
+
+.reg-btn-danger:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+/* ========================================
+   Action Buttons Group
+======================================== */
+.reg-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+/* ========================================
+   Quick Stats
+======================================== */
+.reg-quick-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-top: 16px;
+}
+
+.reg-stat-item {
+    padding: 12px;
+    background: var(--pink-50);
+    border-radius: var(--radius-md);
+    text-align: center;
+}
+
+.reg-stat-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--gray-500);
+    text-transform: uppercase;
+    margin-bottom: 4px;
+}
+
+.reg-stat-value {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--pink-600);
+}
+
+/* ========================================
+   Responsive Design
+======================================== */
+@media (max-width: 1200px) {
+    .reg-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .reg-sidebar {
+        position: static;
+    }
+    
+    .reg-steps-container::before {
+        display: none;
+    }
+    
+    .reg-step-item {
+        min-width: 70px;
+    }
+}
+
+@media (max-width: 768px) {
+    .reg-portal {
+        padding: 16px;
+    }
+    
+    .reg-form-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .reg-main-body {
+        padding: 20px;
+    }
+    
+    .reg-section-content {
+        padding: 16px;
+    }
+    
+    .reg-nav {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .reg-btn {
+        width: 100%;
+    }
+    
+    .reg-step-circle {
+        width: 40px;
+        height: 40px;
+        font-size: 16px;
+    }
 }
 </style>
 
-<div class="reg-page">
-  <div class="reg-topbar">
-    <div class="reg-title-wrap">
-      <h2><?= $isEditMode ? 'Edit Direct / Walk-in Registration' : 'Add Direct / Walk-in Registration' ?></h2>
-      <div class="reg-subtitle">
-        Create clean, complete, and professional registration entries for direct or walk-in students.
-      </div>
+<!-- Main Application - White & Pink Theme -->
+<div class="reg-portal">
+    
+    <!-- Header -->
+    <div class="reg-header">
+        <div class="reg-header-left">
+            <div class="reg-header-icon">
+                <i class="fas fa-user-plus"></i>
+            </div>
+            <div class="reg-header-content">
+                <h1><?= $isEditMode ? 'Edit Registration' : 'New Student Registration' ?></h1>
+                <p>Complete the registration in 6 simple steps</p>
+            </div>
+        </div>
+        <div class="reg-header-badge">
+            <i class="fas fa-store-alt"></i>
+            Direct / Walk-in • <?= h($registration_no) ?>
+        </div>
     </div>
-
-    <div class="reg-badges">
-      <span class="reg-badge"><i class="fas fa-user-check"></i> User Friendly Form</span>
-      <span class="reg-badge"><i class="fas fa-file-signature"></i> Sales Ready UI</span>
-      <span class="reg-badge"><i class="fas fa-shield-alt"></i> Secure Entry</span>
+    
+    <?php if ($error): ?>
+    <script>
+    Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: '<?= addslashes($error) ?>',
+        confirmButtonColor: '#e91e63'
+    });
+    </script>
+    <?php endif; ?>
+    
+    <!-- Main Grid -->
+    <div class="reg-grid">
+        
+        <!-- Sidebar -->
+        <aside class="reg-sidebar">
+            
+            <!-- Registration Summary Card -->
+            <div class="reg-card">
+                <div class="reg-card-header">
+                    <div class="reg-card-header-icon">
+                        <i class="fas fa-file-invoice"></i>
+                    </div>
+                    <div>
+                        <h3>Registration Summary</h3>
+                        <p>Key information</p>
+                    </div>
+                </div>
+                <div class="reg-card-content">
+                    <div class="reg-summary-items">
+                        <div class="reg-summary-item">
+                            <div class="reg-summary-icon">
+                                <i class="fas fa-hashtag"></i>
+                            </div>
+                            <div class="reg-summary-details">
+                                <div class="reg-summary-label">Registration No.</div>
+                                <div class="reg-summary-value"><?= h($registration_no) ?></div>
+                            </div>
+                        </div>
+                        
+                        <div class="reg-summary-item">
+                            <div class="reg-summary-icon">
+                                <i class="fas fa-calendar-alt"></i>
+                            </div>
+                            <div class="reg-summary-details">
+                                <div class="reg-summary-label">Joined On</div>
+                                <div class="reg-summary-value"><?= date('d M Y', strtotime($joined_on)) ?></div>
+                            </div>
+                        </div>
+                        
+                        <div class="reg-summary-item">
+                            <div class="reg-summary-icon">
+                                <i class="fas fa-id-card"></i>
+                            </div>
+                            <div class="reg-summary-details">
+                                <div class="reg-summary-label">Registration ID</div>
+                                <div class="reg-summary-value">#<?= (int)($registration['id'] ?? 'New') ?></div>
+                            </div>
+                        </div>
+                        
+                        <div class="reg-summary-item">
+                            <div class="reg-summary-icon">
+                                <i class="fas fa-tag"></i>
+                            </div>
+                            <div class="reg-summary-details">
+                                <div class="reg-summary-label">Source Type</div>
+                                <div class="reg-summary-value">Direct / Walk-in</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="reg-note-card">
+                        <strong>Note:</strong> Payment collection can be managed from the Registration List page.
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Quick Stats Card -->
+            <div class="reg-card">
+                <div class="reg-card-header">
+                    <div class="reg-card-header-icon">
+                        <i class="fas fa-chart-pie"></i>
+                    </div>
+                    <div>
+                        <h3>Quick Overview</h3>
+                        <p>Current status</p>
+                    </div>
+                </div>
+                <div class="reg-card-content">
+                    <div class="reg-quick-stats">
+                        <div class="reg-stat-item">
+                            <div class="reg-stat-label">Mode</div>
+                            <div class="reg-stat-value"><?= $isEditMode ? 'Edit' : 'New' ?></div>
+                        </div>
+                        <div class="reg-stat-item">
+                            <div class="reg-stat-label">Status</div>
+                            <div class="reg-stat-value"><?= ucfirst($registration_status) ?></div>
+                        </div>
+                        <div class="reg-stat-item">
+                            <div class="reg-stat-label">Type</div>
+                            <div class="reg-stat-value"><?= ucfirst($reg_type) ?></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+        </aside>
+        
+        <!-- Main Form -->
+        <main>
+            
+            <!-- Progress Steps -->
+            <div class="reg-progress">
+                <div class="reg-steps-container">
+                    <div class="reg-step-item active" data-step="1">
+                        <div class="reg-step-circle">1</div>
+                        <div class="reg-step-label">Basic</div>
+                    </div>
+                    <div class="reg-step-item" data-step="2">
+                        <div class="reg-step-circle">2</div>
+                        <div class="reg-step-label">Personal</div>
+                    </div>
+                    <div class="reg-step-item" data-step="3">
+                        <div class="reg-step-circle">3</div>
+                        <div class="reg-step-label">Academic</div>
+                    </div>
+                    <div class="reg-step-item" data-step="4">
+                        <div class="reg-step-circle">4</div>
+                        <div class="reg-step-label">Parent</div>
+                    </div>
+                    <div class="reg-step-item" data-step="5">
+                        <div class="reg-step-circle">5</div>
+                        <div class="reg-step-label">Fee</div>
+                    </div>
+                    <div class="reg-step-item" data-step="6">
+                        <div class="reg-step-circle">6</div>
+                        <div class="reg-step-label">Notes</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Form Card -->
+            <div class="reg-main-card">
+                <div class="reg-main-header">
+                    <h2>Registration Form</h2>
+                    <p>Fill in the details below to complete the registration</p>
+                </div>
+                
+                <div class="reg-main-body">
+                    <form method="POST" id="registrationForm">
+                        <input type="hidden" name="csrf_token" value="<?= h(generateCSRF()) ?>">
+                        <input type="hidden" name="save_registration" value="1">
+                        <input type="hidden" name="reg_id" value="<?= (int)($registration['id'] ?? 0) ?>">
+                        <input type="hidden" name="registration_status" id="registration_status_input" value="<?= h($registration_status) ?>">
+                        
+                        <!-- Step 1: Basic Registration Details -->
+                        <div class="reg-step-container active" id="step1">
+                            <div class="reg-section">
+                                <div class="reg-section-header">
+                                    <div class="reg-section-step">01</div>
+                                    <div class="reg-section-title">
+                                        <h4>Basic Registration Details</h4>
+                                        <p>Core registration information</p>
+                                    </div>
+                                </div>
+                                <div class="reg-section-content">
+                                    <div class="reg-form-grid">
+                                        <div class="reg-field">
+                                            <label class="reg-field-label">Registration No.</label>
+                                            <input class="reg-field-input" type="text" name="registration_no" value="<?= h($registration_no) ?>" readonly>
+                                        </div>
+                                        
+                                        <div class="reg-field">
+                                            <label class="reg-field-label">Joined On</label>
+                                            <input class="reg-field-input" type="date" name="joined_on" value="<?= h($joined_on) ?>">
+                                        </div>
+                                        
+                                        <div class="reg-field">
+                                            <label class="reg-field-label">Registration Type</label>
+                                            <select class="reg-field-select" name="reg_type">
+                                                <option value="course" <?= $reg_type==='course'?'selected':''; ?>>Course</option>
+                                                <option value="internship" <?= $reg_type==='internship'?'selected':''; ?>>Internship</option>
+                                                <option value="workshop" <?= $reg_type==='workshop'?'selected':''; ?>>Workshop</option>
+                                            </select>
+                                        </div>
+                                        
+                                        <div class="reg-field">
+                                            <label class="reg-field-label">Front Office Owner <span class="required">*</span></label>
+                                            <select class="reg-field-select" name="assigned_to" id="assigned_to" required>
+                                                <option value="">-- Select Front Office --</option>
+                                                <?php foreach ($frontOfficeUsers as $u): ?>
+                                                    <option value="<?= (int)$u['id'] ?>" <?= $assigned_to === (int)$u['id'] ? 'selected' : '' ?>>
+                                                        <?= h($u['name']) ?>
+                                                    </option>
+                                                <?php endforeach; ?>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="reg-nav">
+                                <div></div>
+                                <button type="button" class="reg-btn reg-btn-primary" onclick="validateAndNext(1, 2)">
+                                    Next <i class="fas fa-arrow-right"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Step 2: Student Personal Details -->
+                        <div class="reg-step-container" id="step2">
+                            <div class="reg-section">
+                                <div class="reg-section-header">
+                                    <div class="reg-section-step">02</div>
+                                    <div class="reg-section-title">
+                                        <h4>Personal Details</h4>
+                                        <p>Student's personal information</p>
+                                    </div>
+                                </div>
+                                <div class="reg-section-content">
+                                    <div class="reg-form-grid">
+                                        <div class="reg-field full-width">
+                                            <label class="reg-field-label">Full Name <span class="required">*</span></label>
+                                            <input class="reg-field-input capitalize-input" type="text" name="student_name" id="student_name" value="<?= h($student_name) ?>" required placeholder="Enter student's full name" oninput="capitalizeFirstLetter(this)">
+                                        </div>
+                                        
+                                        <div class="reg-field">
+                                            <label class="reg-field-label">Phone <span class="required">*</span></label>
+                                            <input class="reg-field-input" type="tel" name="phone" id="phone" value="<?= h($phone) ?>" required placeholder="10-digit mobile number" maxlength="10" oninput="validatePhone(this)">
+                                        </div>
+                                        
+                                        <div class="reg-field">
+                                            <label class="reg-field-label">Email <span class="required">*</span></label>
+                                            <input class="reg-field-input" type="email" name="email" id="email" value="<?= h($email) ?>" required placeholder="student@example.com" onblur="validateEmail(this)">
+                                        </div>
+                                        
+                                        <div class="reg-field">
+                                            <label class="reg-field-label">Gender</label>
+                                            <select class="reg-field-select" name="gender">
+                                                <option value="">-- Select --</option>
+                                                <option value="male" <?= $gender==='male'?'selected':''; ?>>Male</option>
+                                                <option value="female" <?= $gender==='female'?'selected':''; ?>>Female</option>
+                                                <option value="other" <?= $gender==='other'?'selected':''; ?>>Other</option>
+                                            </select>
+                                        </div>
+                                        
+                                        <div class="reg-field">
+                                            <label class="reg-field-label">Date of Birth</label>
+                                            <input class="reg-field-input" type="date" name="dob" value="<?= h($dob) ?>">
+                                        </div>
+                                        
+                                        <div class="reg-field">
+                                            <label class="reg-field-label">Aadhaar Number</label>
+                                            <input class="reg-field-input" type="text" name="aadhaar_no" value="<?= h($aadhaar_no) ?>" placeholder="12-digit Aadhaar number" maxlength="12" oninput="validateAadhaar(this)">
+                                        </div>
+                                        
+                                        <div class="reg-field full-width">
+                                            <label class="reg-field-label">Address</label>
+                                            <textarea class="reg-field-textarea capitalize-text" name="address" rows="3" placeholder="Enter complete address" oninput="capitalizeSentences(this)"><?= h($address) ?></textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="reg-nav">
+                                <button type="button" class="reg-btn reg-btn-outline" onclick="prevStep(1)">
+                                    <i class="fas fa-arrow-left"></i> Previous
+                                </button>
+                                <button type="button" class="reg-btn reg-btn-primary" onclick="validateStep2()">
+                                    Next <i class="fas fa-arrow-right"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Step 3: Academic & Program Details -->
+                        <div class="reg-step-container" id="step3">
+                            <div class="reg-section">
+                                <div class="reg-section-header">
+                                    <div class="reg-section-step">03</div>
+                                    <div class="reg-section-title">
+                                        <h4>Academic Information</h4>
+                                        <p>Program and education details</p>
+                                    </div>
+                                </div>
+                                <div class="reg-section-content">
+                                    <div class="reg-form-grid">
+                                        <div class="reg-field">
+                                            <label class="reg-field-label">Program Name</label>
+                                            <input class="reg-field-input capitalize-input" type="text" name="program_name" value="<?= h($program_name) ?>" placeholder="e.g., Full Stack Development" oninput="capitalizeFirstLetter(this)">
+                                        </div>
+                                        
+                                        <div class="reg-field">
+                                            <label class="reg-field-label">Batch Name</label>
+                                            <input class="reg-field-input" type="text" name="batch_name" value="<?= h($batch_name) ?>" placeholder="e.g., Batch 2024-A">
+                                        </div>
+                                        
+                                        <div class="reg-field">
+                                            <label class="reg-field-label">Qualification</label>
+                                            <input class="reg-field-input capitalize-input" type="text" name="qualification" value="<?= h($qualification) ?>" placeholder="e.g., B.Tech Computer Science" oninput="capitalizeFirstLetter(this)">
+                                        </div>
+                                        
+                                        <div class="reg-field">
+                                            <label class="reg-field-label">College/University</label>
+                                            <input class="reg-field-input capitalize-input" type="text" name="college_name" value="<?= h($college_name) ?>" placeholder="Enter college name" oninput="capitalizeFirstLetter(this)">
+                                        </div>
+                                        
+                                        <div class="reg-field">
+                                            <label class="reg-field-label">Year of Passing</label>
+                                            <input class="reg-field-input" type="text" name="year_of_passout" value="<?= h($year_of_passout) ?>" placeholder="e.g., 2024" maxlength="4" oninput="validateYear(this)">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="reg-nav">
+                                <button type="button" class="reg-btn reg-btn-outline" onclick="prevStep(2)">
+                                    <i class="fas fa-arrow-left"></i> Previous
+                                </button>
+                                <button type="button" class="reg-btn reg-btn-primary" onclick="nextStep(4)">
+                                    Next <i class="fas fa-arrow-right"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Step 4: Parent & Emergency Details -->
+                        <div class="reg-step-container" id="step4">
+                            <div class="reg-section">
+                                <div class="reg-section-header">
+                                    <div class="reg-section-step">04</div>
+                                    <div class="reg-section-title">
+                                        <h4>Parent & Emergency</h4>
+                                        <p>Secondary contact information</p>
+                                    </div>
+                                </div>
+                                <div class="reg-section-content">
+                                    <div class="reg-form-grid">
+                                        <div class="reg-field">
+                                            <label class="reg-field-label">Parent/Guardian Name</label>
+                                            <input class="reg-field-input capitalize-input" type="text" name="parent_name" value="<?= h($parent_name) ?>" placeholder="Enter parent name" oninput="capitalizeFirstLetter(this)">
+                                        </div>
+                                        
+                                        <div class="reg-field">
+                                            <label class="reg-field-label">Parent Phone</label>
+                                            <input class="reg-field-input" type="tel" name="parent_phone" value="<?= h($parent_phone) ?>" placeholder="10-digit mobile number" maxlength="10" oninput="validatePhone(this)">
+                                        </div>
+                                        
+                                        <div class="reg-field">
+                                            <label class="reg-field-label">Parent Occupation</label>
+                                            <input class="reg-field-input capitalize-input" type="text" name="parent_occupation" value="<?= h($parent_occupation) ?>" placeholder="e.g., Business, Teacher" oninput="capitalizeFirstLetter(this)">
+                                        </div>
+                                        
+                                        <div class="reg-field">
+                                            <label class="reg-field-label">Emergency Contact</label>
+                                            <input class="reg-field-input" type="tel" name="emergency_contact" value="<?= h($emergency_contact) ?>" placeholder="Alternate contact number" maxlength="10" oninput="validatePhone(this)">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="reg-nav">
+                                <button type="button" class="reg-btn reg-btn-outline" onclick="prevStep(3)">
+                                    <i class="fas fa-arrow-left"></i> Previous
+                                </button>
+                                <button type="button" class="reg-btn reg-btn-primary" onclick="nextStep(5)">
+                                    Next <i class="fas fa-arrow-right"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Step 5: Fee Details -->
+                        <div class="reg-step-container" id="step5">
+                            <div class="reg-section">
+                                <div class="reg-section-header">
+                                    <div class="reg-section-step">05</div>
+                                    <div class="reg-section-title">
+                                        <h4>Fee Structure</h4>
+                                        <p>Program fee details</p>
+                                    </div>
+                                </div>
+                                <div class="reg-section-content">
+                                    <div class="reg-form-grid">
+                                        <div class="reg-field">
+                                            <label class="reg-field-label">Total Fee (₹)</label>
+                                            <input class="reg-field-input fee-calc" type="number" step="0.01" name="total_fee" value="<?= h($total_fee) ?>" placeholder="0.00">
+                                        </div>
+                                        
+                                        <div class="reg-field">
+                                            <label class="reg-field-label">Discount (₹)</label>
+                                            <input class="reg-field-input fee-calc" type="number" step="0.01" name="discount_amount" value="<?= h($discount_amount) ?>" placeholder="0.00">
+                                        </div>
+                                        
+                                        <div class="reg-field">
+                                            <label class="reg-field-label">Final Fee (₹)</label>
+                                            <input class="reg-field-input" type="number" step="0.01" name="final_fee" id="final_fee" value="<?= h($final_fee) ?>" placeholder="0.00" readonly>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="reg-nav">
+                                <button type="button" class="reg-btn reg-btn-outline" onclick="prevStep(4)">
+                                    <i class="fas fa-arrow-left"></i> Previous
+                                </button>
+                                <button type="button" class="reg-btn reg-btn-primary" onclick="nextStep(6)">
+                                    Next <i class="fas fa-arrow-right"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Step 6: Additional Notes -->
+                        <div class="reg-step-container" id="step6">
+                            <div class="reg-section">
+                                <div class="reg-section-header">
+                                    <div class="reg-section-step">06</div>
+                                    <div class="reg-section-title">
+                                        <h4>Additional Information</h4>
+                                        <p>Notes and remarks</p>
+                                    </div>
+                                </div>
+                                <div class="reg-section-content">
+                                    <div class="reg-form-grid">
+                                        <div class="reg-field full-width">
+                                            <label class="reg-field-label">Registration Notes</label>
+                                            <textarea class="reg-field-textarea" name="notes" rows="4" placeholder="Add any notes about this registration..."><?= h($notes) ?></textarea>
+                                        </div>
+                                        
+                                        <div class="reg-field full-width">
+                                            <label class="reg-field-label">Internal Remarks</label>
+                                            <textarea class="reg-field-textarea" name="remarks" rows="4" placeholder="Private remarks (visible only to staff)..."><?= h($remarks) ?></textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="reg-nav">
+                                <button type="button" class="reg-btn reg-btn-outline" onclick="prevStep(5)">
+                                    <i class="fas fa-arrow-left"></i> Previous
+                                </button>
+                                <div class="reg-actions">
+                                    <button type="button" class="reg-btn reg-btn-primary" onclick="submitRegistrationForm('active')">
+                                        <i class="fas fa-check-circle"></i> Confirm
+                                    </button>
+                                    <button type="button" class="reg-btn reg-btn-secondary" onclick="submitRegistrationForm('draft')">
+                                        <i class="fas fa-save"></i> Draft
+                                    </button>
+                                    <?php if (!empty($registration['id'])): ?>
+                                        <button type="submit" name="delete_registration" class="reg-btn reg-btn-danger" onclick="return confirmDeleteReg(event)">
+                                            <i class="fas fa-trash-alt"></i> Delete
+                                        </button>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+                        </div>
+                        
+                    </form>
+                </div>
+            </div>
+            
+        </main>
     </div>
-  </div>
-
-  <?php if ($error): ?>
-  <script>
-  Swal.fire({
-    icon:'error',
-    title:'Error',
-    text:'<?= addslashes($error) ?>',
-    confirmButtonColor:'#e91e63'
-  });
-  </script>
-  <?php endif; ?>
-
-  <div class="reg-layout">
-    <aside class="reg-sidebar">
-      <div class="reg-panel reg-summary-card">
-        <div class="reg-panel-head">
-          <h3 class="reg-panel-title">
-            <i class="fas fa-clipboard-list"></i>
-            Registration Summary
-          </h3>
-        </div>
-        <div class="reg-panel-body">
-          <div class="reg-summary-list">
-            <div class="reg-summary-item">
-              <div class="icon"><i class="fas fa-hashtag"></i></div>
-              <div class="meta">
-                <span class="label">Registration No</span>
-                <span class="value"><?= h($registration_no) ?></span>
-              </div>
-            </div>
-
-            <div class="reg-summary-item">
-              <div class="icon"><i class="fas fa-sign-in-alt"></i></div>
-              <div class="meta">
-                <span class="label">Source Type</span>
-                <span class="value">Direct / Walk-in</span>
-              </div>
-            </div>
-
-            <div class="reg-summary-item">
-              <div class="icon"><i class="fas fa-id-badge"></i></div>
-              <div class="meta">
-                <span class="label">Registration ID</span>
-                <span class="value"><?= (int)($registration['id'] ?? 0) ?></span>
-              </div>
-            </div>
-
-            <div class="reg-summary-item">
-              <div class="icon"><i class="fas fa-credit-card"></i></div>
-              <div class="meta">
-                <span class="label">Payments</span>
-                <span class="value">Handled later in Registration List</span>
-              </div>
-            </div>
-          </div>
-
-          <div class="reg-note">
-            <b>Note:</b> This page is only for registration entry. Payment collection and follow-up payment updates can be managed later from the registration list page.
-          </div>
-        </div>
-      </div>
-
-      <div class="reg-panel">
-        <div class="reg-panel-head">
-          <h3 class="reg-panel-title">
-            <i class="fas fa-bolt"></i>
-            Quick Overview
-          </h3>
-        </div>
-        <div class="reg-panel-body">
-          <div class="reg-quick-stats">
-            <div class="reg-stat">
-              <span class="label">Mode</span>
-              <span class="value"><?= $isEditMode ? 'Edit' : 'New' ?></span>
-            </div>
-            <div class="reg-stat">
-              <span class="label">Status</span>
-              <span class="value"><?= h(ucfirst($registration_status)) ?></span>
-            </div>
-            <div class="reg-stat">
-              <span class="label">Type</span>
-              <span class="value"><?= h(ucfirst($reg_type)) ?></span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </aside>
-
-    <section class="reg-form-main">
-      <div class="reg-form-head">
-        <h3>Registration Form</h3>
-        <p>Fill the student details, academic details, and fee details below.</p>
-      </div>
-
-      <div class="reg-form-body">
-        <form method="POST" id="registrationForm">
-          <input type="hidden" name="csrf_token" value="<?= h(generateCSRF()) ?>">
-          <input type="hidden" name="save_registration" value="1">
-          <input type="hidden" name="reg_id" value="<?= (int)($registration['id'] ?? 0) ?>">
-          <input type="hidden" name="registration_status" id="registration_status_input" value="<?= h($registration_status) ?>">
-
-          <div class="reg-form-shell">
-            <div class="reg-block">
-              <div class="reg-block-head">
-                <div class="step">1</div>
-                <div class="titles">
-                  <h4>Basic Registration Details</h4>
-                  <p>Core registration information for the student entry.</p>
-                </div>
-              </div>
-              <div class="reg-block-body">
-                <div class="reg-section-grid">
-                  <div class="reg-field">
-                    <label class="reg-label">Registration No</label>
-                    <input class="reg-input" type="text" name="registration_no" value="<?= h($registration_no) ?>" readonly>
-                  </div>
-
-                  <div class="reg-field">
-                    <label class="reg-label">Joined On</label>
-                    <input class="reg-input" type="date" name="joined_on" value="<?= h($joined_on) ?>">
-                  </div>
-
-                  <div class="reg-field">
-                    <label class="reg-label">Registration Type</label>
-                    <select class="reg-select" name="reg_type">
-                      <option value="course" <?= $reg_type==='course'?'selected':''; ?>>Course</option>
-                      <option value="internship" <?= $reg_type==='internship'?'selected':''; ?>>Internship</option>
-                      <option value="workshop" <?= $reg_type==='workshop'?'selected':''; ?>>Workshop</option>
-                    </select>
-                  </div>
-
-                  <div class="reg-field">
-                    <label class="reg-label">Front Office Owner <span class="req">*</span></label>
-                    <select class="reg-select" name="assigned_to" required>
-                      <option value="">-- Select Front Office --</option>
-                      <?php foreach ($frontOfficeUsers as $u): ?>
-                        <option value="<?= (int)$u['id'] ?>" <?= $assigned_to === (int)$u['id'] ? 'selected' : '' ?>>
-                          <?= h($u['name']) ?>
-                        </option>
-                      <?php endforeach; ?>
-                    </select>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div class="reg-block">
-              <div class="reg-block-head">
-                <div class="step">2</div>
-                <div class="titles">
-                  <h4>Student Personal Details</h4>
-                  <p>Main student information for contact and profile records.</p>
-                </div>
-              </div>
-              <div class="reg-block-body">
-                <div class="reg-section-grid">
-                  <div class="reg-field">
-                    <label class="reg-label">Student Name <span class="req">*</span></label>
-                    <input class="reg-input" type="text" name="student_name" value="<?= h($student_name) ?>" required placeholder="Enter student full name">
-                  </div>
-
-                  <div class="reg-field">
-                    <label class="reg-label">Phone</label>
-                    <input class="reg-input" type="text" name="phone" value="<?= h($phone) ?>" placeholder="Enter mobile number">
-                  </div>
-
-                  <div class="reg-field">
-                    <label class="reg-label">Email</label>
-                    <input class="reg-input" type="email" name="email" value="<?= h($email) ?>" placeholder="Enter email address">
-                  </div>
-
-                  <div class="reg-field">
-                    <label class="reg-label">Gender</label>
-                    <select class="reg-select" name="gender">
-                      <option value="">-- Select --</option>
-                      <option value="male" <?= $gender==='male'?'selected':''; ?>>Male</option>
-                      <option value="female" <?= $gender==='female'?'selected':''; ?>>Female</option>
-                      <option value="other" <?= $gender==='other'?'selected':''; ?>>Other</option>
-                    </select>
-                  </div>
-
-                  <div class="reg-field">
-                    <label class="reg-label">DOB</label>
-                    <input class="reg-input" type="date" name="dob" value="<?= h($dob) ?>">
-                  </div>
-
-                  <div class="reg-field">
-                    <label class="reg-label">Aadhaar No</label>
-                    <input class="reg-input" type="text" name="aadhaar_no" value="<?= h($aadhaar_no) ?>" placeholder="Enter Aadhaar number">
-                  </div>
-
-                  <div class="reg-field full">
-                    <label class="reg-label">Address</label>
-                    <textarea class="reg-textarea" name="address" rows="3" placeholder="Enter full address"><?= h($address) ?></textarea>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div class="reg-block">
-              <div class="reg-block-head">
-                <div class="step">3</div>
-                <div class="titles">
-                  <h4>Academic & Program Details</h4>
-                  <p>Program, batch, and education details of the student.</p>
-                </div>
-              </div>
-              <div class="reg-block-body">
-                <div class="reg-section-grid">
-                  <div class="reg-field">
-                    <label class="reg-label">Program Name</label>
-                    <input class="reg-input" type="text" name="program_name" value="<?= h($program_name) ?>" placeholder="Enter program name">
-                  </div>
-
-                  <div class="reg-field">
-                    <label class="reg-label">Batch Name</label>
-                    <input class="reg-input" type="text" name="batch_name" value="<?= h($batch_name) ?>" placeholder="Enter batch name">
-                  </div>
-
-                  <div class="reg-field">
-                    <label class="reg-label">Qualification</label>
-                    <input class="reg-input" type="text" name="qualification" value="<?= h($qualification) ?>" placeholder="Enter qualification">
-                  </div>
-
-                  <div class="reg-field">
-                    <label class="reg-label">College Name</label>
-                    <input class="reg-input" type="text" name="college_name" value="<?= h($college_name) ?>" placeholder="Enter college name">
-                  </div>
-
-                  <div class="reg-field">
-                    <label class="reg-label">Year of Passout</label>
-                    <input class="reg-input" type="text" name="year_of_passout" value="<?= h($year_of_passout) ?>" placeholder="Enter passout year">
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div class="reg-block">
-              <div class="reg-block-head">
-                <div class="step">4</div>
-                <div class="titles">
-                  <h4>Parent & Emergency Details</h4>
-                  <p>Useful for contact, follow-up, and support communication.</p>
-                </div>
-              </div>
-              <div class="reg-block-body">
-                <div class="reg-section-grid">
-                  <div class="reg-field">
-                    <label class="reg-label">Parent Name</label>
-                    <input class="reg-input" type="text" name="parent_name" value="<?= h($parent_name) ?>" placeholder="Enter parent name">
-                  </div>
-
-                  <div class="reg-field">
-                    <label class="reg-label">Parent Phone</label>
-                    <input class="reg-input" type="text" name="parent_phone" value="<?= h($parent_phone) ?>" placeholder="Enter parent phone number">
-                  </div>
-
-                  <div class="reg-field">
-                    <label class="reg-label">Parent Occupation</label>
-                    <input class="reg-input" type="text" name="parent_occupation" value="<?= h($parent_occupation) ?>" placeholder="Enter parent occupation">
-                  </div>
-
-                  <div class="reg-field">
-                    <label class="reg-label">Emergency Contact</label>
-                    <input class="reg-input" type="text" name="emergency_contact" value="<?= h($emergency_contact) ?>" placeholder="Enter emergency contact number">
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div class="reg-block">
-              <div class="reg-block-head">
-                <div class="step">5</div>
-                <div class="titles">
-                  <h4>Fee Details</h4>
-                  <p>Enter fee breakdown clearly for easy calculation and confirmation.</p>
-                </div>
-              </div>
-              <div class="reg-block-body">
-                <div class="reg-section-grid">
-                  <div class="reg-field">
-                    <label class="reg-label">Total Fee</label>
-                    <input class="reg-input fee-calc" type="number" step="0.01" name="total_fee" value="<?= h($total_fee) ?>" placeholder="0.00">
-                  </div>
-
-                  <div class="reg-field">
-                    <label class="reg-label">Discount Amount</label>
-                    <input class="reg-input fee-calc" type="number" step="0.01" name="discount_amount" value="<?= h($discount_amount) ?>" placeholder="0.00">
-                  </div>
-
-                  <div class="reg-field">
-                    <label class="reg-label">Final Fee</label>
-                    <input class="reg-input" type="number" step="0.01" name="final_fee" value="<?= h($final_fee) ?>" placeholder="0.00">
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div class="reg-block">
-              <div class="reg-block-head">
-                <div class="step">6</div>
-                <div class="titles">
-                  <h4>Additional Notes</h4>
-                  <p>Keep internal notes and remarks for future reference.</p>
-                </div>
-              </div>
-              <div class="reg-block-body">
-                <div class="reg-section-grid">
-                  <div class="reg-field full">
-                    <label class="reg-label">Registration Notes</label>
-                    <textarea class="reg-textarea" name="notes" rows="3" placeholder="Enter registration notes"><?= h($notes) ?></textarea>
-                  </div>
-
-                  <div class="reg-field full">
-                    <label class="reg-label">Profile Remarks</label>
-                    <textarea class="reg-textarea" name="remarks" rows="3" placeholder="Enter internal remarks"><?= h($remarks) ?></textarea>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div class="reg-actions-wrap">
-              <div class="reg-actions">
-                <div class="reg-actions-left">
-                  <button type="button" class="reg-btn reg-btn-primary" onclick="submitRegistrationForm('active')">
-                    <i class="fas fa-check-circle"></i>
-                    Confirm Registration
-                  </button>
-
-                  <button type="button" class="reg-btn reg-btn-warning" onclick="submitRegistrationForm('draft')">
-                    <i class="fas fa-save"></i>
-                    Save for Later
-                  </button>
-
-                  <?php if (!empty($registration['id'])): ?>
-                    <button type="submit" name="delete_registration" class="reg-btn reg-btn-danger" onclick="return confirmDeleteReg(event)">
-                      <i class="fas fa-trash-alt"></i>
-                      Delete
-                    </button>
-                  <?php endif; ?>
-                </div>
-
-                <div class="reg-actions-right">
-                  <a href="index.php?page=registrations/drafts" class="reg-btn reg-btn-light">
-                    <i class="fas fa-arrow-left"></i>
-                    Back
-                  </a>
-                </div>
-              </div>
-            </div>
-          </div>
-        </form>
-      </div>
-    </section>
-  </div>
 </div>
 
 <script>
-(function(){
-  const total = document.querySelector('input[name="total_fee"]');
-  const discount = document.querySelector('input[name="discount_amount"]');
-  const finalFee = document.querySelector('input[name="final_fee"]');
+// Step Navigation
+let currentStep = 1;
 
-  function calc(){
-    if (!total || !discount || !finalFee) return;
-    const t = parseFloat(total.value || 0);
-    const d = parseFloat(discount.value || 0);
-    let f = t - d;
-    if (f < 0) f = 0;
-    finalFee.value = f.toFixed(2);
-  }
-
-  [total, discount].forEach(el => {
-    if (el) el.addEventListener('input', calc);
-  });
-})();
-
-function submitRegistrationForm(status){
-  document.getElementById('registration_status_input').value = status;
-
-  Swal.fire({
-    icon:'question',
-    title: status === 'active' ? 'Confirm Registration?' : 'Save as Draft?',
-    text: status === 'active'
-      ? 'This student will move to confirmed registrations list.'
-      : 'This student will be saved under drafts.',
-    showCancelButton:true,
-    confirmButtonText: status === 'active' ? 'Confirm' : 'Save Draft',
-    cancelButtonText:'Cancel',
-    confirmButtonColor:'#e91e63'
-  }).then((r)=>{
-    if (r.isConfirmed) {
-      document.getElementById('registrationForm').submit();
+function nextStep(step) {
+    document.querySelectorAll('.reg-step-container').forEach(el => el.classList.remove('active'));
+    document.getElementById(`step${step}`).classList.add('active');
+    
+    document.querySelectorAll('.reg-step-item').forEach(el => el.classList.remove('active'));
+    document.querySelector(`.reg-step-item[data-step="${step}"]`).classList.add('active');
+    
+    for (let i = 1; i < step; i++) {
+        document.querySelector(`.reg-step-item[data-step="${i}"]`).classList.add('completed');
     }
-  });
+    
+    currentStep = step;
 }
 
-function confirmDeleteReg(e){
-  e.preventDefault();
+function prevStep(step) {
+    document.querySelectorAll('.reg-step-container').forEach(el => el.classList.remove('active'));
+    document.getElementById(`step${step}`).classList.add('active');
+    
+    document.querySelectorAll('.reg-step-item').forEach(el => el.classList.remove('active'));
+    document.querySelector(`.reg-step-item[data-step="${step}"]`).classList.add('active');
+    
+    currentStep = step;
+}
 
-  Swal.fire({
-    icon:'warning',
-    title:'Delete Registration?',
-    text:'This will delete the registration permanently.',
-    showCancelButton:true,
-    confirmButtonText:'Yes, Delete',
-    cancelButtonText:'Cancel',
-    confirmButtonColor:'#d32f2f'
-  }).then((r)=>{
-    if (r.isConfirmed) {
-      const btn = document.querySelector('button[name="delete_registration"]');
-      if (btn) {
-        btn.removeAttribute('onclick');
-        btn.click();
-      }
+// Click on step circles
+document.querySelectorAll('.reg-step-item').forEach(step => {
+    step.addEventListener('click', function() {
+        const stepNum = parseInt(this.dataset.step);
+        if (stepNum <= currentStep) {
+            nextStep(stepNum);
+        } else {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Cannot Skip Steps',
+                text: 'Please complete the current step first.',
+                confirmButtonColor: '#e91e63'
+            });
+        }
+    });
+});
+
+// Validation Functions
+function validateAndNext(current, next) {
+    if (current === 1) {
+        const assignedTo = document.getElementById('assigned_to').value;
+        if (!assignedTo) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Required Field',
+                text: 'Please select Front Office Owner',
+                confirmButtonColor: '#e91e63'
+            });
+            return false;
+        }
     }
-  });
+    nextStep(next);
+}
 
-  return false;
+function validateStep2() {
+    const name = document.getElementById('student_name').value.trim();
+    const phone = document.getElementById('phone').value.trim();
+    const email = document.getElementById('email').value.trim();
+    
+    if (!name) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Required Field',
+            text: 'Please enter student name',
+            confirmButtonColor: '#e91e63'
+        });
+        return false;
+    }
+    
+    if (!phone) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Required Field',
+            text: 'Please enter phone number',
+            confirmButtonColor: '#e91e63'
+        });
+        return false;
+    }
+    
+    if (phone.length !== 10 || !/^\d+$/.test(phone)) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Invalid Phone',
+            text: 'Please enter a valid 10-digit phone number',
+            confirmButtonColor: '#e91e63'
+        });
+        return false;
+    }
+    
+    if (!email) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Required Field',
+            text: 'Please enter email address',
+            confirmButtonColor: '#e91e63'
+        });
+        return false;
+    }
+    
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Invalid Email',
+            text: 'Please enter a valid email address',
+            confirmButtonColor: '#e91e63'
+        });
+        return false;
+    }
+    
+    nextStep(3);
+}
+
+// Capitalization Functions
+function capitalizeFirstLetter(input) {
+    let value = input.value;
+    if (value.length > 0) {
+        value = value.toLowerCase().replace(/\b\w/g, char => char.toUpperCase());
+        input.value = value;
+    }
+}
+
+function capitalizeSentences(textarea) {
+    let value = textarea.value;
+    if (value.length > 0) {
+        value = value.toLowerCase().replace(/(^\s*\w|[.!?]\s*\w)/g, char => char.toUpperCase());
+        textarea.value = value;
+    }
+}
+
+// Validation Functions for Inputs
+function validatePhone(input) {
+    input.value = input.value.replace(/[^0-9]/g, '').substring(0, 10);
+}
+
+function validateAadhaar(input) {
+    input.value = input.value.replace(/[^0-9]/g, '').substring(0, 12);
+}
+
+function validateYear(input) {
+    input.value = input.value.replace(/[^0-9]/g, '').substring(0, 4);
+}
+
+function validateEmail(input) {
+    const email = input.value.trim();
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    
+    if (email && !emailRegex.test(email)) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Invalid Email',
+            text: 'Please enter a valid email address',
+            confirmButtonColor: '#e91e63',
+            timer: 2000
+        });
+    }
+}
+
+// Fee Calculator
+(function(){
+    const total = document.querySelector('input[name="total_fee"]');
+    const discount = document.querySelector('input[name="discount_amount"]');
+    const finalFee = document.getElementById('final_fee');
+    
+    function calc(){
+        if (!total || !discount || !finalFee) return;
+        const t = parseFloat(total.value || 0);
+        const d = parseFloat(discount.value || 0);
+        let f = t - d;
+        if (f < 0) f = 0;
+        finalFee.value = f.toFixed(2);
+    }
+    
+    if (total && discount) {
+        [total, discount].forEach(el => {
+            if (el) el.addEventListener('input', calc);
+        });
+    }
+})();
+
+// Form Submission
+function submitRegistrationForm(status) {
+    document.getElementById('registration_status_input').value = status;
+    
+    const titles = {
+        'active': {
+            title: 'Confirm Registration?',
+            text: 'This student will be moved to active registrations.'
+        },
+        'draft': {
+            title: 'Save as Draft?',
+            text: 'This registration will be saved in drafts.'
+        }
+    };
+    
+    const config = titles[status] || titles.draft;
+    
+    Swal.fire({
+        icon: 'question',
+        title: config.title,
+        text: config.text,
+        showCancelButton: true,
+        confirmButtonText: status === 'active' ? 'Confirm' : 'Save Draft',
+        cancelButtonText: 'Cancel',
+        confirmButtonColor: '#e91e63'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            document.getElementById('registrationForm').submit();
+        }
+    });
+}
+
+function confirmDeleteReg(e) {
+    e.preventDefault();
+    
+    Swal.fire({
+        icon: 'warning',
+        title: 'Delete Registration?',
+        text: 'This action cannot be undone.',
+        showCancelButton: true,
+        confirmButtonText: 'Yes, Delete',
+        confirmButtonColor: '#e91e63'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            const form = document.getElementById('registrationForm');
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'delete_registration';
+            input.value = '1';
+            form.appendChild(input);
+            form.submit();
+        }
+    });
+    
+    return false;
 }
 </script>
