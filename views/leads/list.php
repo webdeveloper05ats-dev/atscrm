@@ -476,6 +476,14 @@ function changePerPage(val) {
 }
 
 document.addEventListener("DOMContentLoaded", function(){
+    document.querySelectorAll('.btn-icon-only[title], .action-btn[title], .source-icon[title]').forEach(el => {
+        const tip = (el.getAttribute('title') || '').trim();
+        if (!tip) return;
+        el.setAttribute('data-tooltip', tip);
+        el.setAttribute('aria-label', tip);
+        el.removeAttribute('title');
+    });
+
     // Delete confirmation
     document.querySelectorAll('.delete-form').forEach(form=>{
         form.addEventListener('submit', function(e){
