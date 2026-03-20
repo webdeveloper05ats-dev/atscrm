@@ -1,3 +1,4 @@
+ <link rel="stylesheet" href="<?= BASE_URL ?>assets/css/lead.css">
 <?php
 if (!defined('APP_NAME')) {
     die("Unauthorized access.");
@@ -265,11 +266,13 @@ $baseUrl="index.php?page=leads/list&q=$q&status=$status&assigned_to=$assigned";
    <!-- Leads Table Card -->
 <div class="card">
     <div class="card-header">
-        <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
-            <div>
-                <i class="fas fa-list" style="margin-right: 8px;"></i> Lead List
-            </div>
-            <!-- This will be replaced by DataTable's native show entries dropdown -->
+        <div class="table-header-flex">
+         <div class="table-title">
+            <i class="fas fa-list"></i> Lead List
+         </div>
+
+        <!-- ✅ DataTable controls will be injected here -->
+         <div id="datatableControls"></div>
         </div>
     </div>
     
@@ -356,19 +359,40 @@ $baseUrl="index.php?page=leads/list&q=$q&status=$status&assigned_to=$assigned";
                     </td>
                     
                     <td class="source-col">
-                        <span class="source-badge">
-                            <?php
-                            $sourceIcon = 'fa-link';
-                            if($r['source'] == 'Instagram') $sourceIcon = 'fa-instagram';
-                            if($r['source'] == 'Facebook') $sourceIcon = 'fa-facebook';
-                            if($r['source'] == 'Google Ads') $sourceIcon = 'fa-google';
-                            if($r['source'] == 'Walk-in') $sourceIcon = 'fa-walking';
-                            if($r['source'] == 'Website') $sourceIcon = 'fa-globe';
-                            if($r['source'] == 'Reference') $sourceIcon = 'fa-user-friends';
-                            ?>
-                            <i class="fab <?=$sourceIcon?>"></i> <?=h($r['source'])?>
-                        </span>
-                    </td>
+    <?php
+    $sourceIcon = 'fa-link';
+    $iconType = 'fas';
+
+    if($r['source'] == 'Instagram'){
+        $sourceIcon = 'fa-instagram';
+        $iconType = 'fab';
+    }
+    elseif($r['source'] == 'Facebook'){
+        $sourceIcon = 'fa-facebook';
+        $iconType = 'fab';
+    }
+    elseif($r['source'] == 'Google Ads'){
+        $sourceIcon = 'fa-google';
+        $iconType = 'fab';
+    }
+    elseif($r['source'] == 'Walk-in'){
+        $sourceIcon = 'fa-walking';
+        $iconType = 'fas';
+    }
+    elseif($r['source'] == 'Website'){
+        $sourceIcon = 'fa-globe';
+        $iconType = 'fas';
+    }
+    elseif($r['source'] == 'Reference'){
+        $sourceIcon = 'fa-user-friends';
+        $iconType = 'fas';
+    }
+    ?>
+
+    <span class="source-icon" title="<?=h($r['source'])?>">
+        <i class="<?=$iconType?> <?=$sourceIcon?>"></i>
+    </span>
+</td>
                     
                     <td class="actions-col">
                         <div class="action-buttons">
@@ -440,694 +464,6 @@ $baseUrl="index.php?page=leads/list&q=$q&status=$status&assigned_to=$assigned";
     <?php endif; ?>
 </div>
 
-<style>
-/* Professional UI Redesign - Pink Theme */
-:root {
-    --primary: #e91e63;
-    --primary-light: #fce4ec;
-    --primary-dark: #c2185b;
-    --secondary: #6c757d;
-    --success: #2e7d32;
-    --danger: #dc3545;
-    --warning: #ff9800;
-    --info: #2196f3;
-    --dark: #343a40;
-    --light: #f8f9fa;
-    --border: #e9ecef;
-    --text: #495057;
-    --text-light: #6c757d;
-    --white: #ffffff;
-    --shadow: 0 4px 6px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.1);
-    --shadow-hover: 0 10px 15px rgba(0, 0, 0, 0.1);
-    --radius: 12px;
-    --radius-sm: 8px;
-}
-
-* {
-    box-sizing: border-box;
-}
-
-body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-    background: #f4f7fc;
-    color: var(--text);
-    line-height: 1.5;
-}
-
-.leads-dashboard {
-    max-width: 1600px;
-    margin: 0 auto;
-    padding: 20px;
-}
-
-.dashboard-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 24px;
-}
-
-.dashboard-header h2 {
-    font-size: 1.8rem;
-    font-weight: 600;
-    color: var(--dark);
-    display: flex;
-    align-items: center;
-}
-
-.header-stats {
-    background: white;
-    padding: 10px 20px;
-    border-radius: 40px;
-    box-shadow: var(--shadow);
-    font-weight: 500;
-}
-
-.stat-item {
-    color: var(--text);
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.stat-item i {
-    color: var(--primary);
-}
-
-/* Card Styles */
-.card {
-    background: var(--white);
-    border-radius: var(--radius);
-    box-shadow: var(--shadow);
-    margin-bottom: 24px;
-    overflow: hidden;
-    border: 1px solid var(--border);
-}
-
-.card-header {
-    padding: 16px 20px;
-    background: var(--light);
-    border-bottom: 1px solid var(--border);
-    font-weight: 600;
-    color: var(--dark);
-    font-size: 1rem;
-}
-
-/* Filter Grid - Single Row */
-.filter-form {
-    padding: 20px;
-}
-
-.filter-grid {
-    display: flex;
-    gap: 16px;
-    align-items: flex-end;
-    flex-wrap: wrap;
-}
-
-.filter-item {
-    flex: 1 1 180px;
-    min-width: 160px;
-}
-
-.filter-item label {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 0.75rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.3px;
-    color: var(--text-light);
-    margin-bottom: 6px;
-}
-
-.filter-item label i {
-    color: var(--primary);
-    font-size: 0.8rem;
-}
-
-.filter-item input,
-.filter-item select {
-    width: 100%;
-    padding: 10px 12px;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    font-size: 0.9rem;
-    transition: all 0.2s;
-    background: white;
-}
-
-.filter-item input:hover,
-.filter-item select:hover {
-    border-color: var(--primary);
-}
-
-.filter-item input:focus,
-.filter-item select:focus {
-    outline: none;
-    border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(233, 30, 99, 0.1);
-}
-
-.filter-actions {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-    margin-left: auto;
-}
-
-.btn-filter, .btn-reset, .btn-add, .btn-excel {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 10px 18px;
-    border-radius: var(--radius-sm);
-    font-size: 0.9rem;
-    font-weight: 500;
-    text-decoration: none;
-    border: none;
-    cursor: pointer;
-    transition: all 0.2s;
-    white-space: nowrap;
-}
-
-.btn-filter {
-    background: var(--primary);
-    color: white;
-    box-shadow: 0 2px 8px rgba(233, 30, 99, 0.3);
-}
-
-.btn-filter:hover {
-    background: var(--primary-dark);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(233, 30, 99, 0.4);
-}
-
-.btn-reset {
-    background: var(--secondary);
-    color: white;
-}
-
-.btn-reset:hover {
-    background: #5a6268;
-    transform: translateY(-2px);
-}
-
-.btn-add {
-    background: var(--success);
-    color: white;
-}
-
-.btn-add:hover {
-    background: #1e5f23;
-    transform: translateY(-2px);
-}
-
-.btn-excel {
-    background: #1e7e34;
-    color: white;
-}
-
-.btn-excel:hover {
-    background: #146c28;
-    transform: translateY(-2px);
-}
-
-/* Entries Control */
-.entries-control {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    background: white;
-    padding: 5px 12px;
-    border-radius: 20px;
-    font-size: 0.85rem;
-}
-
-.entries-select {
-    padding: 4px 8px;
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    font-size: 0.85rem;
-    cursor: pointer;
-}
-
-/* Table Styles */
-.table-container {
-    padding: 20px;
-    overflow-x: auto;
-}
-
-.leads-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 0.9rem;
-}
-
-.leads-table th {
-    text-align: left;
-    padding: 14px 16px;
-    background: #fafbfc;
-    color: var(--text-light);
-    font-weight: 600;
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    letter-spacing: 0.3px;
-    border-bottom: 2px solid var(--border);
-}
-
-.leads-table td {
-    padding: 16px;
-    border-bottom: 1px solid var(--border);
-    vertical-align: middle;
-}
-
-.leads-table tbody tr:hover {
-    background: #fafbfc;
-}
-
-/* Lead Column */
-.lead-name {
-    font-weight: 600;
-    color: var(--dark);
-    margin-bottom: 4px;
-}
-
-.lead-interest {
-    font-size: 0.8rem;
-    color: var(--text-light);
-}
-
-/* Contact Column */
-.contact-phone, .contact-email {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 0.85rem;
-}
-
-.contact-phone i, .contact-email i {
-    color: var(--primary);
-    width: 16px;
-    font-size: 0.75rem;
-}
-
-.contact-email {
-    color: var(--text-light);
-    margin-top: 4px;
-}
-
-/* Academic Column */
-.org-name {
-    font-weight: 500;
-    margin-bottom: 4px;
-}
-
-.dept-year {
-    font-size: 0.8rem;
-    color: var(--text-light);
-}
-
-/* Status Badge */
-.status-badge {
-    display: inline-block;
-    padding: 5px 12px;
-    border-radius: 30px;
-    font-size: 0.75rem;
-    font-weight: 600;
-    text-transform: capitalize;
-    background: rgba(33, 150, 243, 0.1);
-    color: var(--info);
-}
-
-/* Dynamic status colors via inline style */
-.status-badge[style*="2196f3"] {
-    background: rgba(33, 150, 243, 0.1);
-    color: #1976d2;
-}
-.status-badge[style*="ff9800"] {
-    background: rgba(255, 152, 0, 0.1);
-    color: #f57c00;
-}
-.status-badge[style*="9c27b0"] {
-    background: rgba(156, 39, 176, 0.1);
-    color: #7b1fa2;
-}
-.status-badge[style*="2e7d32"] {
-    background: rgba(46, 125, 50, 0.1);
-    color: #2e7d32;
-}
-.status-badge[style*="607d8b"] {
-    background: rgba(96, 125, 139, 0.1);
-    color: #546e7a;
-}
-
-/* Assigned Badge */
-.assigned-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 4px 12px;
-    background: #e9ecef;
-    border-radius: 30px;
-    font-size: 0.8rem;
-    color: var(--dark);
-}
-
-/* Source Badge */
-.source-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 4px 12px;
-    background: #f1f3f5;
-    border-radius: 30px;
-    font-size: 0.8rem;
-}
-
-/* Action Buttons */
-.action-buttons {
-    display: flex;
-    gap: 6px;
-    flex-wrap: wrap;
-}
-
-.action-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 34px;
-    height: 34px;
-    border-radius: 8px;
-    color: white;
-    text-decoration: none;
-    border: none;
-    cursor: pointer;
-    transition: all 0.2s;
-    font-size: 0.9rem;
-}
-
-.action-btn.edit {
-    background: var(--primary);
-}
-.action-btn.edit:hover {
-    background: var(--primary-dark);
-    transform: translateY(-2px);
-}
-
-.action-btn.convert {
-    background: var(--warning);
-    color: white;
-}
-.action-btn.convert:hover {
-    background: #e68900;
-    transform: translateY(-2px);
-}
-
-.action-btn.done {
-    background: var(--success);
-    opacity: 0.8;
-    cursor: default;
-}
-
-.action-btn.delete {
-    background: var(--danger);
-}
-.action-btn.delete:hover {
-    background: #bd2130;
-    transform: translateY(-2px);
-}
-
-/* Pagination */
-.pagination-wrapper {
-    padding: 20px;
-    border-top: 1px solid var(--border);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 16px;
-}
-
-.pagination-info {
-    color: var(--text-light);
-    font-size: 0.85rem;
-}
-
-.pagination {
-    display: flex;
-    gap: 6px;
-    flex-wrap: wrap;
-}
-
-.page-link {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 8px 14px;
-    border-radius: 8px;
-    background: white;
-    color: var(--text);
-    text-decoration: none;
-    border: 1px solid var(--border);
-    transition: all 0.2s;
-    font-size: 0.9rem;
-}
-
-.page-link:hover {
-    background: var(--primary);
-    color: white;
-    border-color: var(--primary);
-}
-
-.page-link.active {
-    background: var(--primary);
-    color: white;
-    border-color: var(--primary);
-}
-
-.page-link.prev, .page-link.next {
-    background: #f8f9fa;
-}
-
-/* No Data */
-.no-data {
-    text-align: center;
-    padding: 60px !important;
-    color: var(--text-light);
-    font-size: 1rem;
-}
-
-.no-data i {
-    font-size: 2rem;
-    display: block;
-    margin-bottom: 12px;
-    color: var(--border);
-}
-
-/* Alerts */
-.alert-success, .alert-error {
-    padding: 16px 20px;
-    border-radius: var(--radius);
-    margin-bottom: 20px;
-    font-weight: 500;
-}
-
-.alert-success {
-    background: #d4edda;
-    color: #155724;
-    border: 1px solid #c3e6cb;
-}
-
-.alert-error {
-    background: #f8d7da;
-    color: #721c24;
-    border: 1px solid #f5c6cb;
-}
-
-/* Responsive */
-@media (max-width: 1200px) {
-    .filter-grid {
-        gap: 12px;
-    }
-    
-    .filter-item {
-        flex: 1 1 150px;
-    }
-}
-
-@media (max-width: 992px) {
-    .filter-actions {
-        margin-left: 0;
-        width: 100%;
-        justify-content: flex-end;
-    }
-}
-
-@media (max-width: 768px) {
-    .dashboard-header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 12px;
-    }
-    
-    .filter-grid {
-        flex-direction: column;
-    }
-    
-    .filter-item {
-        width: 100%;
-    }
-    
-    .filter-actions {
-        justify-content: stretch;
-    }
-    
-    .btn-filter, .btn-reset, .btn-add, .btn-excel {
-        flex: 1;
-        justify-content: center;
-    }
-    
-    .pagination-wrapper {
-        flex-direction: column;
-        align-items: center;
-    }
-}
-
-
-/* Icon-only buttons with modern tooltips */
-.filter-actions {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-    margin-left: auto;
-}
-
-.btn-icon-only {
-    position: relative;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 42px;
-    height: 42px;
-    border-radius: 12px;
-    font-size: 1.1rem;
-    text-decoration: none;
-    border: none;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    color: white;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-}
-
-/* Individual button colors */
-.btn-icon-only.apply {
-    background: #e91e63;
-}
-.btn-icon-only.apply:hover {
-    background: #c2185b;
-    transform: translateY(-3px);
-    box-shadow: 0 8px 15px rgba(233, 30, 99, 0.3);
-}
-
-.btn-icon-only.reset {
-    background: #6c757d;
-}
-.btn-icon-only.reset:hover {
-    background: #5a6268;
-    transform: translateY(-3px);
-    box-shadow: 0 8px 15px rgba(108, 117, 125, 0.3);
-}
-
-.btn-icon-only.add {
-    background: #2e7d32;
-}
-.btn-icon-only.add:hover {
-    background: #1e5f23;
-    transform: translateY(-3px);
-    box-shadow: 0 8px 15px rgba(46, 125, 50, 0.3);
-}
-
-.btn-icon-only.import {
-    background: #1e7e34;
-}
-.btn-icon-only.import:hover {
-    background: #146c28;
-    transform: translateY(-3px);
-    box-shadow: 0 8px 15px rgba(30, 126, 52, 0.3);
-}
-
-/* Modern Tooltip */
-.btn-icon-only::before {
-    content: attr(title);
-    position: absolute;
-    bottom: 120%;
-    left: 50%;
-    transform: translateX(-50%) translateY(5px);
-    background: #1e293b;
-    color: white;
-    font-size: 0.75rem;
-    font-weight: 500;
-    padding: 6px 12px;
-    border-radius: 8px;
-    white-space: nowrap;
-    opacity: 0;
-    visibility: hidden;
-    transition: all 0.2s ease;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    letter-spacing: 0.3px;
-    pointer-events: none;
-    z-index: 1000;
-}
-
-.btn-icon-only::after {
-    content: '';
-    position: absolute;
-    bottom: 120%;
-    left: 50%;
-    transform: translateX(-50%) translateY(13px);
-    border-width: 5px;
-    border-style: solid;
-    border-color: #1e293b transparent transparent transparent;
-    opacity: 0;
-    visibility: hidden;
-    transition: all 0.2s ease;
-    pointer-events: none;
-    z-index: 1000;
-}
-
-.btn-icon-only:hover::before {
-    opacity: 1;
-    visibility: visible;
-    transform: translateX(-50%) translateY(0);
-}
-
-.btn-icon-only:hover::after {
-    opacity: 1;
-    visibility: visible;
-    transform: translateX(-50%) translateY(8px);
-}
-
-/* Active state for current page */
-.btn-icon-only:active {
-    transform: scale(0.95);
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-    .filter-actions {
-        width: 100%;
-        justify-content: stretch;
-    }
-    
-    .btn-icon-only {
-        flex: 1;
-        width: auto;
-        height: 46px;
-    }
-}
-</style>
 
 <script>
 // Per page change
@@ -1193,12 +529,27 @@ document.addEventListener("DOMContentLoaded", function(){
 document.addEventListener("DOMContentLoaded", function(){
     
     crmDataTable('#leadsTable', {
-        pageLength: 10,  // Show 10 entries by default (like your image)
-        lengthMenu: [5, 10, 20, 50, 100], // Options for show entries
+        pageLength: 10,
+        lengthMenu: [5, 10, 20, 50, 100],
         ordering: true,
-        order: [[0, 'desc']], // Sort by ID (column 0) descending
-        searchPlaceholder: "Search leads..." // Custom placeholder
+        order: [[0, 'desc']],
+        searchPlaceholder: "Search leads...",
+        
+        dom:
+            "<'dt-top'lfB>" +
+            "rt" +
+            "<'dt-bottom'ip>"
     });
-    
+
+    // ✅ STEP 3 (PASTE HERE ONLY)
+    setTimeout(() => {
+        const controls = document.querySelector('.dt-top');
+        const target = document.getElementById('datatableControls');
+
+        if (controls && target) {
+            target.appendChild(controls);
+        }
+    }, 100);
+
 });
 </script>
