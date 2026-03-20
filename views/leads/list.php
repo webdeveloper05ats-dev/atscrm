@@ -98,7 +98,8 @@ if(!$canAllBranches){
 $allowedRolesToSeeAll = ['Super Admin','HR','Marketing'];
 
 if(!in_array($_SESSION['role_name'],$allowedRolesToSeeAll)){
-    $where[]="l.assigned_to=?";
+    $where[]="(l.assigned_to=? OR l.created_by=?)";
+    $params[]=$userId;
     $params[]=$userId;
 }
 
