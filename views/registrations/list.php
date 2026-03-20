@@ -1,3 +1,4 @@
+ <link rel="stylesheet" href="<?= BASE_URL ?>assets/css/reglist.css">
 <?php
 // =====================================
 // Registrations - List
@@ -69,6 +70,45 @@ if (!function_exists('recalcRegistrationPaymentsSummary')) {
             WHERE id=?
         ");
     $upd->execute([$paidSum, $balance, $paymentStatus, $regId]);
+  }
+}
+if (!function_exists('isRegistrationCertificateIssued')) {
+  function isRegistrationCertificateIssued(array $row): bool
+  {
+    $boolLikeKeys = ['certificate_issued', 'is_certificate_issued', 'certificate_given', 'is_certificate_given'];
+    foreach ($boolLikeKeys as $k) {
+      if (array_key_exists($k, $row)) {
+        $v = $row[$k];
+        if ((int) $v === 1) {
+          return true;
+        }
+        $s = strtolower(trim((string) $v));
+        if (in_array($s, ['1', 'true', 'yes', 'issued', 'given'], true)) {
+          return true;
+        }
+      }
+    }
+
+    $statusKeys = ['certificate_status', 'cert_status', 'certificate_state'];
+    foreach ($statusKeys as $k) {
+      if (array_key_exists($k, $row)) {
+        $s = strtolower(trim((string) ($row[$k] ?? '')));
+        if (in_array($s, ['issued', 'given', 'completed', 'done'], true)) {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }
+}
+if (!function_exists('canDeleteRegistrationRecord')) {
+  function canDeleteRegistrationRecord(array $row): bool
+  {
+    $isCompleted = strtolower(trim((string) ($row['registration_status'] ?? ''))) === 'completed';
+    $isPaid = strtolower(trim((string) ($row['payment_status'] ?? ''))) === 'paid';
+    $isCertIssued = isRegistrationCertificateIssued($row);
+    return $isCompleted && $isPaid && $isCertIssued;
   }
 }
 
@@ -680,341 +720,7 @@ if ($isAjax) {
         data-program="<?= h($programName) ?>" data-phone="<?= h($studentPhone) ?>" data-email="<?= h($studentEmail) ?>"
         data-address="<?= h($studentAddress) ?>" data-photo="<?= h($photoPath) ?>">
 
-        <style>
-          .idc-wrap {
-            display: grid;
-            grid-template-columns: 320px 1fr;
-            gap: 18px;
-          }
-
-          .idc-panel {
-            background: #fff;
-            border: 1px solid #ead7e2;
-            border-radius: 18px;
-            padding: 16px;
-          }
-
-          .idc-title {
-            font-size: 15px;
-            font-weight: 900;
-            color: #111827;
-            margin-bottom: 12px;
-          }
-
-          .idc-field {
-            margin-bottom: 12px;
-          }
-
-          .idc-label {
-            display: block;
-            font-size: 12px;
-            font-weight: 800;
-            color: #6b7280;
-            margin-bottom: 6px;
-            text-transform: uppercase;
-          }
-
-          .idc-input,
-          .idc-textarea {
-            width: 100%;
-            border: 1px solid #d8dee8;
-            border-radius: 12px;
-            padding: 10px 12px;
-            font-size: 14px;
-            outline: none;
-            background: #fff;
-          }
-
-          .idc-textarea {
-            min-height: 88px;
-            resize: vertical;
-          }
-
-          .idc-photo-actions {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            margin-top: 8px;
-          }
-
-          .idc-btn {
-            border: none;
-            border-radius: 12px;
-            padding: 10px 14px;
-            font-weight: 800;
-            cursor: pointer;
-          }
-
-          .idc-btn-primary {
-            background: #e91e63;
-            color: #fff;
-          }
-
-          .idc-btn-light {
-            background: #f3f4f6;
-            color: #111827;
-          }
-
-          .idc-btn-dark {
-            background: #111827;
-            color: #fff;
-          }
-
-          .idc-preview-area {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 18px;
-            align-items: flex-start;
-          }
-
-          .idc-card {
-            width: 320px;
-            min-height: 510px;
-            background: #fff;
-            border-radius: 22px;
-            overflow: hidden;
-            border: 2px solid #f0d3e1;
-            box-shadow: 0 16px 40px rgba(15, 23, 42, .10);
-            position: relative;
-          }
-
-          .idc-card::before,
-          .idc-card::after {
-            content: "";
-            position: absolute;
-            background: rgba(233, 30, 99, .18);
-            z-index: 0;
-          }
-
-          .idc-card::before {
-            width: 140px;
-            height: 140px;
-            border-radius: 50%;
-            top: -40px;
-            left: -55px;
-          }
-
-          .idc-card::after {
-            width: 120px;
-            height: 120px;
-            border-radius: 50%;
-            right: -45px;
-            bottom: -30px;
-          }
-
-          .idc-card-inner {
-            position: relative;
-            z-index: 1;
-            padding: 20px 20px 24px;
-          }
-
-          .idc-brand {
-            text-align: center;
-            margin-bottom: 12px;
-          }
-
-          .idc-brand-logo {
-            width: 120px;
-            max-width: 100%;
-            height: auto;
-            display: block;
-            margin: 0 auto 8px;
-          }
-
-          .idc-brand-name {
-            font-size: 18px;
-            font-weight: 900;
-            letter-spacing: 1px;
-            color: #111827;
-            margin-top: 2px;
-          }
-
-          .idc-brand-tag {
-            font-size: 14px;
-            font-weight: 700;
-            color: #d946ef;
-            margin-top: 2px;
-          }
-
-          .idc-photo {
-            width: 160px;
-            height: 160px;
-            border-radius: 50%;
-            margin: 14px auto 16px;
-            border: 6px solid #ef5bb5;
-            overflow: hidden;
-            background: #f8d7ea;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-          }
-
-          .idc-photo img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            display: block;
-          }
-
-          .idc-photo-placeholder {
-            font-size: 13px;
-            font-weight: 800;
-            color: #9d174d;
-            text-align: center;
-            padding: 18px;
-          }
-
-          .idc-student-name {
-            text-align: center;
-            font-size: 17px;
-            font-weight: 900;
-            color: #ec4899;
-            text-transform: uppercase;
-            line-height: 1.35;
-            margin-top: 6px;
-          }
-
-          .idc-program {
-            text-align: center;
-            font-size: 15px;
-            font-weight: 900;
-            color: #111827;
-            text-transform: uppercase;
-            margin-top: 8px;
-          }
-
-          .idc-cardno {
-            text-align: center;
-            font-size: 20px;
-            font-weight: 900;
-            color: #111827;
-            margin-top: 8px;
-          }
-
-          .idc-website {
-            text-align: center;
-            font-size: 13px;
-            font-weight: 900;
-            color: #ec4899;
-            margin-top: 18px;
-          }
-
-          .idc-back-title {
-            font-size: 15px;
-            font-weight: 900;
-            color: #111827;
-            margin-bottom: 12px;
-          }
-
-          .idc-back-lines {
-            font-size: 14px;
-            line-height: 1.65;
-            color: #111827;
-          }
-
-          .idc-back-lines b {
-            display: inline-block;
-            min-width: 120px;
-          }
-
-          .idc-sign-row {
-            display: flex;
-            justify-content: space-between;
-            gap: 18px;
-            margin: 24px 0 14px;
-          }
-
-          .idc-sign-box {
-            flex: 1;
-            text-align: center;
-            font-size: 12px;
-            font-weight: 800;
-            color: #374151;
-          }
-
-          .idc-sign-line {
-            height: 42px;
-            border-bottom: 1px solid #111827;
-            margin-bottom: 8px;
-          }
-
-          .idc-office {
-            margin-top: 18px;
-            border-top: 1px dashed #d4d4d8;
-            padding-top: 14px;
-            text-align: center;
-            font-size: 13px;
-            line-height: 1.6;
-            color: #111827;
-            font-weight: 700;
-          }
-
-          .idc-video-wrap {
-            display: none;
-            margin-top: 10px;
-          }
-
-          .idc-video {
-            width: 100%;
-            border-radius: 14px;
-            background: #111;
-          }
-
-          .idc-helper {
-            font-size: 12px;
-            color: #6b7280;
-            margin-top: 6px;
-          }
-
-          .idc-sign-upload-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-            margin-top: 12px;
-          }
-
-          .idc-sign-box {
-            flex: 1;
-            text-align: center;
-            font-size: 12px;
-            font-weight: 800;
-            color: #374151;
-            position: relative;
-          }
-
-          .idc-sign-preview {
-            height: 54px;
-            display: flex;
-            align-items: flex-end;
-            justify-content: center;
-            margin-bottom: -10px;
-            position: relative;
-            z-index: 2;
-            overflow: visible;
-          }
-
-          .idc-sign-preview img {
-            max-width: 110px;
-            max-height: 46px;
-            object-fit: contain;
-            display: block;
-            background: transparent;
-          }
-
-          .idc-sign-line {
-            height: 18px;
-            border-bottom: 1px solid #111827;
-            margin-bottom: 8px;
-            position: relative;
-            z-index: 1;
-          }
-
-          @media (max-width: 980px) {
-            .idc-wrap {
-              grid-template-columns: 1fr;
-            }
-          }
-        </style>
+        
 
         <div class="idc-wrap">
           <div class="idc-panel">
@@ -1174,7 +880,7 @@ if (isset($_POST['delete_registration'])) {
       try {
         if ($canAllBranches !== 1 && $branchId > 0) {
           $st = $pdo->prepare("
-                        SELECT id
+                        SELECT *
                         FROM registrations
                         WHERE id=? AND branch_id=? AND registration_status IN ('active','completed')
                         LIMIT 1
@@ -1182,7 +888,7 @@ if (isset($_POST['delete_registration'])) {
           $st->execute([$regId, $branchId]);
         } else {
           $st = $pdo->prepare("
-                        SELECT id
+                        SELECT *
                         FROM registrations
                         WHERE id=? AND registration_status IN ('active','completed')
                         LIMIT 1
@@ -1190,14 +896,18 @@ if (isset($_POST['delete_registration'])) {
           $st->execute([$regId]);
         }
 
-        if (!(int) $st->fetchColumn()) {
+        $regForDelete = $st->fetch(PDO::FETCH_ASSOC);
+        if (!$regForDelete) {
           throw new Exception("Registration not found or access denied.");
+        }
+        if (!canDeleteRegistrationRecord($regForDelete)) {
+          throw new Exception("Delete allowed only after course/internship completion, full payment, and certificate issued.");
         }
 
         $del = $pdo->prepare("DELETE FROM registrations WHERE id=?");
         $del->execute([$regId]);
 
-        $success = "Registration deleted successfully!";
+        $success = "Record deleted successfully.";
       } catch (Exception $e) {
         $error = "Delete failed. " . $e->getMessage();
       }
@@ -1332,7 +1042,7 @@ $offset = ($page - 1) * $perPage;
 $where = ["r.registration_status IN ('active','completed')"];
 $params = [];
 
-if ($roleName === 'front office') {
+if (in_array($roleName, ['front office', 'corporate executive', 'corporte excutive'], true)) {
     $where[] = "r.assigned_to = ?";
     $params[] = $userId;
 }
@@ -1418,7 +1128,7 @@ try {
   $sumParams = [];
 
   // Restrict summary for front office
-if ($roleName === 'front office') {
+if (in_array($roleName, ['front office', 'corporate executive', 'corporte excutive'], true)) {
     $sumWhere[] = "r.assigned_to = ?";
     $sumParams[] = $userId;
 }
@@ -1454,7 +1164,7 @@ if ($roleName === 'front office') {
 }
 
 /* =========================================================
-   Fetch Rows
+   Fetch Rows (all rows for client-side table)
 ========================================================= */
 $rows = [];
 try {
@@ -1470,11 +1180,13 @@ try {
         LEFT JOIN users u ON u.id = r.assigned_to
         $whereSql
         ORDER BY r.id DESC
-        LIMIT $perPage OFFSET $offset
     ";
   $st = $pdo->prepare($sql);
   $st->execute($params);
   $rows = $st->fetchAll(PDO::FETCH_ASSOC);
+  $totalRows = count($rows);
+  $totalPages = 1;
+  $page = 1;
 } catch (Exception $e) {
   $rows = [];
 }
@@ -1524,825 +1236,7 @@ function payStatusBadgeList($type)
 }
 ?>
 
-<style>
-  :root {
-    --reg-primary: #e91e63;
-    --reg-primary-dark: #c2185b;
-    --reg-primary-soft: #fff4f8;
-    --reg-text: #1f2937;
-    --reg-muted: #6b7280;
-    --reg-border: #e8edf3;
-    --reg-card: #ffffff;
-    --reg-bg: #f6f8fc;
-    --reg-shadow: 0 16px 40px rgba(15, 23, 42, .06);
-    --reg-shadow-soft: 0 10px 25px rgba(15, 23, 42, .04);
-  }
 
-  .reg-page {
-    background: linear-gradient(180deg, #fff 0%, #fff7fb 18%, #f7f9fd 100%);
-    border-radius: 24px;
-    padding: 18px;
-  }
-
-  .reg-page-top {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    gap: 14px;
-    flex-wrap: wrap;
-    margin-bottom: 18px;
-  }
-
-  .reg-page-title h2 {
-    margin: 0;
-    font-size: 28px;
-    font-weight: 900;
-    color: var(--reg-text);
-  }
-
-  .reg-page-title p {
-    margin: 6px 0 0;
-    color: var(--reg-muted);
-    font-size: 14px;
-  }
-
-  .reg-page-chips {
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-  }
-
-  .reg-chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    background: #fff;
-    color: var(--reg-primary-dark);
-    border: 1px solid rgba(233, 30, 99, .12);
-    border-radius: 999px;
-    padding: 10px 14px;
-    font-size: 13px;
-    font-weight: 800;
-    box-shadow: var(--reg-shadow-soft);
-  }
-
-  .summary-box {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 14px;
-    margin-bottom: 18px;
-  }
-
-  .summary-card {
-    position: relative;
-    overflow: hidden;
-    background: var(--reg-card);
-    border: 1px solid rgba(15, 23, 42, .06);
-    border-radius: 18px;
-    padding: 16px;
-    box-shadow: var(--reg-shadow);
-  }
-
-  .summary-card:before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 4px;
-    background: linear-gradient(90deg, var(--reg-primary), #ff6ba6);
-  }
-
-  .summary-title {
-    font-size: 12px;
-    color: var(--reg-muted);
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: .5px;
-  }
-
-  .summary-value {
-    margin-top: 8px;
-    font-size: 26px;
-    font-weight: 900;
-    color: var(--reg-text);
-  }
-
-  .summary-icon {
-    position: absolute;
-    right: 14px;
-    bottom: 12px;
-    font-size: 26px;
-    color: rgba(233, 30, 99, .10);
-  }
-
-  .pro-card {
-    background: var(--reg-card);
-    border: 1px solid rgba(15, 23, 42, .06);
-    border-radius: 22px;
-    box-shadow: var(--reg-shadow);
-    overflow: hidden;
-  }
-
-  .pro-card+.pro-card {
-    margin-top: 16px;
-  }
-
-  .pro-card-head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    padding: 18px 20px;
-    border-bottom: 1px solid #eef2f6;
-    background: linear-gradient(180deg, #fff 0%, #fffafe 100%);
-  }
-
-  .pro-card-title {
-    margin: 0;
-    font-size: 16px;
-    font-weight: 900;
-    color: var(--reg-text);
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-
-  .pro-card-title i {
-    width: 34px;
-    height: 34px;
-    border-radius: 12px;
-    background: var(--reg-primary-soft);
-    color: var(--reg-primary);
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 14px;
-  }
-
-  .pro-card-body {
-    padding: 18px;
-  }
-
-  /* compact single line filter toolbar */
-  .reg-toolbar-form {
-    display: flex;
-    align-items: flex-end;
-    gap: 12px;
-    flex-wrap: wrap;
-  }
-
-  .reg-toolbar-item {
-    min-width: 140px;
-    flex: 0 0 auto;
-  }
-
-  .reg-toolbar-item.search {
-    min-width: 260px;
-    flex: 1 1 280px;
-  }
-
-  .reg-toolbar-item.date {
-    min-width: 150px;
-  }
-
-  .reg-toolbar-item.actions {
-    display: flex;
-    gap: 10px;
-    align-items: flex-end;
-    margin-left: auto;
-  }
-
-  .reg-label {
-    display: block;
-    font-weight: 800;
-    font-size: 12px;
-    margin-bottom: 6px;
-    color: var(--reg-text);
-  }
-
-  .reg-input,
-  .reg-select {
-    width: 100%;
-    min-height: 44px;
-    padding: 10px 12px;
-    border: 1px solid #dfe5ec;
-    border-radius: 14px;
-    outline: none;
-    background: #fff;
-    transition: .2s ease;
-    color: var(--reg-text);
-    font-size: 14px;
-  }
-
-  .reg-input:focus,
-  .reg-select:focus,
-  .m-input:focus {
-    border-color: rgba(233, 30, 99, .55);
-    box-shadow: 0 0 0 4px rgba(233, 30, 99, .12);
-  }
-
-  .pro-btn {
-    border: none;
-    border-radius: 14px;
-    padding: 12px 18px;
-    font-size: 14px;
-    font-weight: 800;
-    line-height: 1;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    text-decoration: none !important;
-    cursor: pointer;
-    transition: .2s ease;
-    min-height: 44px;
-    white-space: nowrap;
-  }
-
-  .pro-btn:hover {
-    transform: translateY(-1px);
-  }
-
-  .pro-btn-primary {
-    background: linear-gradient(135deg, var(--reg-primary), var(--reg-primary-dark));
-    color: #fff;
-    box-shadow: 0 14px 26px rgba(233, 30, 99, .22);
-  }
-
-  .pro-btn-light {
-    background: #fff;
-    color: var(--reg-text);
-    border: 1px solid #dfe5ec;
-  }
-
-  .reg-table-wrap {
-    background: #fff;
-    border: 1px solid rgba(15, 23, 42, .06);
-    border-radius: 18px;
-    box-shadow: var(--reg-shadow-soft);
-    overflow: auto;
-  }
-
-  .reg-table {
-    width: 100%;
-    border-collapse: separate;
-    border-spacing: 0;
-    min-width: 1100px;
-  }
-
-  .reg-table th {
-    background: #fcf6f9;
-    padding: 16px 14px;
-    font-size: 12px;
-    font-weight: 900;
-    text-align: left;
-    border-bottom: 1px solid #eee;
-    white-space: nowrap;
-    color: #8a003f;
-    text-transform: uppercase;
-    letter-spacing: .5px;
-  }
-
-  .reg-table td {
-    padding: 16px 14px;
-    border-bottom: 1px solid #f2f4f8;
-    vertical-align: top;
-  }
-
-  .reg-table tbody tr:hover {
-    background: #fcfdff;
-  }
-
-  .primary-text {
-    font-weight: 800;
-    color: var(--reg-text);
-    line-height: 1.5;
-  }
-
-  .secondary-text {
-    font-size: 12px;
-    color: var(--reg-muted);
-    margin-top: 6px;
-    line-height: 1.5;
-  }
-
-  .badge-pill-custom {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 6px 12px;
-    border-radius: 999px;
-    font-size: 12px;
-    font-weight: 800;
-    border: 1px solid rgba(0, 0, 0, .06);
-    margin-right: 6px;
-    margin-bottom: 6px;
-  }
-
-  .action-group {
-    display: flex;
-    justify-content: center;
-    gap: 8px;
-    flex-wrap: wrap;
-  }
-
-  .icon-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 40px;
-    height: 40px;
-    border-radius: 12px;
-    border: 1px solid rgba(0, 0, 0, .08);
-    background: #fff;
-    cursor: pointer;
-    text-decoration: none;
-    transition: .18s ease;
-    font-size: 14px;
-  }
-
-  .icon-btn:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 10px 20px rgba(0, 0, 0, .08);
-  }
-
-  .btn-view {
-    background: rgba(233, 30, 99, .10);
-    color: #b0004f;
-    border-color: rgba(233, 30, 99, .18);
-  }
-
-  .btn-view:hover {
-    background: #b0004f;
-    color: #fff;
-  }
-
-  .btn-edit {
-    background: #f3edff;
-    color: #5b2dab;
-    border-color: #ded3f6;
-  }
-
-  .btn-edit:hover {
-    background: #5b2dab;
-    color: #fff;
-  }
-
-  .btn-payment {
-    background: #fff4dc;
-    color: #8a5a00;
-    border-color: #ffe2a8;
-  }
-
-  .btn-payment:hover {
-    background: #8a5a00;
-    color: #fff;
-  }
-
-  .btn-delete {
-    background: #fdf2f2;
-    color: #b91c1c;
-    border-color: #fecaca;
-  }
-
-  .btn-delete:hover {
-    background: #dc2626;
-    color: #fff;
-    border-color: #dc2626;
-  }
-
-  .btn-idcard {
-    background: #f3e8ff;
-    color: #7c3aed;
-  }
-
-  .btn-idcard:hover {
-    background: #7c3aed;
-    color: #fff;
-    border-color: #7c3aed;
-  }
-
-
-  .reg-footer {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 10px;
-    flex-wrap: wrap;
-    margin-top: 16px;
-  }
-
-  .page-btn {
-    min-height: 42px;
-    padding: 10px 14px;
-    border-radius: 12px;
-    border: 1px solid #e5e7eb;
-    background: #fff;
-    text-decoration: none;
-    color: #333;
-    font-weight: 700;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .page-btn:hover {
-    box-shadow: 0 8px 20px rgba(0, 0, 0, .06);
-    color: #111;
-  }
-
-  .crm-modal-backdrop {
-    position: fixed;
-    inset: 0;
-    background: rgba(15, 23, 42, .48);
-    backdrop-filter: blur(5px);
-    display: none;
-    align-items: center;
-    justify-content: center;
-    padding: 18px;
-    z-index: 99999;
-  }
-
-  .crm-modal {
-    width: min(1180px, 96vw);
-    background: #fff;
-    border-radius: 24px;
-    border: 1px solid rgba(0, 0, 0, .08);
-    box-shadow: 0 20px 70px rgba(0, 0, 0, .22);
-    overflow: hidden;
-  }
-
-  .crm-modal-header {
-    padding: 18px 20px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 1px solid #edf1f5;
-    background: linear-gradient(180deg, #fff 0%, #fffafe 100%);
-  }
-
-  .crm-modal-title {
-    font-weight: 900;
-    font-size: 20px;
-    color: var(--reg-text);
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-
-  .crm-modal-close {
-    width: 42px;
-    height: 42px;
-    border-radius: 14px;
-    border: 1px solid rgba(0, 0, 0, .08);
-    background: #fff;
-    cursor: pointer;
-    font-size: 20px;
-    transition: .2s ease;
-  }
-
-  .crm-modal-close:hover {
-    background: #f8fafc;
-  }
-
-  .crm-modal-body {
-    padding: 20px;
-    max-height: 82vh;
-    overflow: auto;
-    background: #fbfcff;
-  }
-
-  .pro-modal-wrap {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-  }
-
-  .pro-modal-section {
-    border: 1px solid #edf1f5;
-    border-radius: 20px;
-    padding: 18px;
-    background: #fff;
-    box-shadow: var(--reg-shadow-soft);
-  }
-
-  .pro-modal-head {
-    display: flex;
-    align-items: flex-start;
-    gap: 12px;
-    margin-bottom: 16px;
-  }
-
-  .pro-modal-head-icon {
-    width: 42px;
-    height: 42px;
-    border-radius: 14px;
-    background: var(--reg-primary-soft);
-    color: var(--reg-primary);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-  }
-
-  .pro-modal-title {
-    font-size: 17px;
-    font-weight: 900;
-    color: var(--reg-text);
-    line-height: 1.3;
-  }
-
-  .pro-modal-subtitle {
-    font-size: 13px;
-    color: var(--reg-muted);
-    margin-top: 4px;
-  }
-
-  .pro-info-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
-    gap: 12px;
-  }
-
-  .pro-info-card {
-    border: 1px solid #eef2f6;
-    border-radius: 16px;
-    padding: 14px;
-    background: linear-gradient(180deg, #fff, #fcfdff);
-  }
-
-  .pro-info-card .label,
-  .pro-pay-card .label {
-    display: block;
-    font-size: 12px;
-    font-weight: 800;
-    color: var(--reg-muted);
-    text-transform: uppercase;
-    letter-spacing: .5px;
-    margin-bottom: 6px;
-  }
-
-  .pro-info-card .value,
-  .pro-pay-card .value {
-    display: block;
-    font-size: 14px;
-    font-weight: 800;
-    color: var(--reg-text);
-    line-height: 1.5;
-    word-break: break-word;
-  }
-
-  .pro-note-box {
-    margin-top: 14px;
-    padding: 14px 16px;
-    border-radius: 16px;
-    background: #fff7fb;
-    border: 1px solid #f5d6e3;
-    color: #4b5563;
-    line-height: 1.7;
-  }
-
-  .pro-note-title {
-    font-size: 13px;
-    font-weight: 900;
-    color: #9d174d;
-    margin-bottom: 8px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .pro-timeline {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-  }
-
-  .pro-timeline-item {
-    display: flex;
-    gap: 12px;
-    align-items: flex-start;
-  }
-
-  .pro-timeline-dot {
-    width: 14px;
-    height: 14px;
-    border-radius: 50%;
-    background: var(--reg-primary);
-    margin-top: 8px;
-    box-shadow: 0 0 0 5px rgba(233, 30, 99, .12);
-    flex-shrink: 0;
-  }
-
-  .pro-timeline-content {
-    flex: 1;
-    border: 1px solid #eef2f6;
-    border-radius: 16px;
-    padding: 14px;
-    background: #fff;
-  }
-
-  .pro-timeline-title {
-    font-size: 14px;
-    font-weight: 800;
-    color: var(--reg-text);
-  }
-
-  .pro-mini-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 4px 10px;
-    border-radius: 999px;
-    background: #fce7f3;
-    color: #9d174d;
-    font-size: 11px;
-    font-weight: 800;
-    margin-left: 8px;
-  }
-
-  .pro-timeline-sub {
-    font-size: 12px;
-    color: var(--reg-muted);
-    margin-top: 6px;
-  }
-
-  .pro-timeline-note {
-    margin-top: 10px;
-    color: #374151;
-    line-height: 1.7;
-  }
-
-  .pro-table-scroll {
-    overflow: auto;
-  }
-
-  .pro-mini-table {
-    width: 100%;
-    border-collapse: collapse;
-    min-width: 760px;
-  }
-
-  .pro-mini-table th,
-  .pro-mini-table td {
-    padding: 12px 12px;
-    border-bottom: 1px solid #edf1f5;
-    text-align: left;
-    font-size: 13px;
-  }
-
-  .pro-mini-table th {
-    background: #fafbfe;
-    font-weight: 900;
-    color: #374151;
-    text-transform: uppercase;
-    letter-spacing: .4px;
-    font-size: 12px;
-  }
-
-  .receipt-link {
-    display: inline-flex;
-    align-items: center;
-    gap: 7px;
-    padding: 8px 12px;
-    border-radius: 10px;
-    border: 1px solid #ddd;
-    text-decoration: none;
-    color: #333;
-    background: #fff;
-    font-weight: 800;
-    transition: .2s ease;
-  }
-
-  .receipt-link:hover {
-    background: #f7f7f7;
-  }
-
-  .pro-payment-summary {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 12px;
-  }
-
-  .pro-pay-card {
-    border: 1px solid #f1d9e4;
-    background: #fff;
-    border-radius: 16px;
-    padding: 14px;
-  }
-
-  .pro-pay-card.highlight {
-    background: linear-gradient(135deg, #fff7fb, #fff);
-    border-color: #f5cfe0;
-  }
-
-  .pro-payment-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-  }
-
-  .pro-payment-grid .full {
-    grid-column: 1 / -1;
-  }
-
-  .m-label {
-    display: block;
-    font-size: 13px;
-    font-weight: 800;
-    margin-bottom: 6px;
-    color: var(--reg-text);
-  }
-
-  .m-input {
-    width: 100%;
-    min-height: 46px;
-    padding: 10px 12px;
-    border: 1px solid #dfe5ec;
-    border-radius: 12px;
-    background: #fff;
-    outline: none;
-    transition: .2s ease;
-  }
-
-  .modal-actions {
-    display: flex;
-    justify-content: flex-end;
-    margin-top: 16px;
-  }
-
-  .empty-note {
-    color: var(--reg-muted);
-    padding: 12px 0;
-  }
-
-  .error-note {
-    color: #d32f2f;
-  }
-
-  @media (max-width: 1200px) {
-    .reg-toolbar-item.actions {
-      margin-left: 0;
-    }
-  }
-
-  @media (max-width: 900px) {
-    .pro-payment-grid {
-      grid-template-columns: 1fr;
-    }
-
-    .reg-page {
-      padding: 12px;
-      border-radius: 18px;
-    }
-
-    .pro-card-body,
-    .crm-modal-body {
-      padding: 14px;
-    }
-
-    .pro-card-head,
-    .crm-modal-header {
-      padding: 16px;
-    }
-
-    .reg-toolbar-form {
-      gap: 10px;
-    }
-
-    .reg-toolbar-item {
-      min-width: calc(50% - 8px);
-      flex: 1 1 calc(50% - 8px);
-    }
-
-    .reg-toolbar-item.search,
-    .reg-toolbar-item.actions {
-      min-width: 100%;
-      flex: 1 1 100%;
-    }
-  }
-
-  @media (max-width: 576px) {
-    .reg-page-title h2 {
-      font-size: 22px;
-    }
-
-    .reg-toolbar-item {
-      min-width: 100%;
-      flex: 1 1 100%;
-    }
-
-    .reg-toolbar-item.actions {
-      flex-direction: column;
-      align-items: stretch;
-    }
-
-    .pro-btn {
-      width: 100%;
-    }
-  }
-</style>
 
 <h2 style="display:none;">Registrations List</h2>
 
@@ -2368,65 +1262,30 @@ function payStatusBadgeList($type)
   </script>
 <?php endif; ?>
 
-<div class="reg-page">
-  <div class="reg-page-top">
-    <div class="reg-page-title">
-      <h2>Confirmed Registrations</h2>
-      <p>Manage active and completed registrations, payments, and full student history from one clean screen.</p>
-    </div>
-
-
-  </div>
-
-  <div class="summary-box">
-    <div class="summary-card">
-      <div class="summary-title">Total Active</div>
-      <div class="summary-value"><?= (int) $summary['active'] ?></div>
-      <div class="summary-icon"><i class="fas fa-user-check"></i></div>
-    </div>
-    <div class="summary-card">
-      <div class="summary-title">Total Completed</div>
-      <div class="summary-value"><?= (int) $summary['completed'] ?></div>
-      <div class="summary-icon"><i class="fas fa-flag-checkered"></i></div>
-    </div>
-    <div class="summary-card">
-      <div class="summary-title">Paid</div>
-      <div class="summary-value"><?= (int) $summary['paid'] ?></div>
-      <div class="summary-icon"><i class="fas fa-check-circle"></i></div>
-    </div>
-    <div class="summary-card">
-      <div class="summary-title">Partial</div>
-      <div class="summary-value"><?= (int) $summary['partial'] ?></div>
-      <div class="summary-icon"><i class="fas fa-adjust"></i></div>
-    </div>
-    <div class="summary-card">
-      <div class="summary-title">Unpaid</div>
-      <div class="summary-value"><?= (int) $summary['unpaid'] ?></div>
-      <div class="summary-icon"><i class="fas fa-exclamation-circle"></i></div>
+<div class="leads-dashboard">
+  <div class="dashboard-header">
+    <h2><i class="fas fa-user-graduate" style="margin-right: 12px; color: #e91e63;"></i>Registration Management</h2>
+    <div class="header-stats">
+      <span class="stat-item"><i class="fas fa-database"></i> Total: <?= (int) $totalRows ?></span>
     </div>
   </div>
 
-  <div class="pro-card">
-    <div class="pro-card-head">
-      <div class="pro-card-title">
-        <i class="fas fa-filter"></i>
-        Compact Filters
-      </div>
+  <div class="card">
+    <div class="card-header">
+      <i class="fas fa-sliders-h" style="margin-right: 8px;"></i> Filter Registrations
     </div>
+    <form method="GET" action="index.php" class="filter-form">
+      <input type="hidden" name="page" value="registrations/list">
 
-    <div class="pro-card-body">
-      <form method="GET" action="index.php" class="reg-toolbar-form">
-        <input type="hidden" name="page" value="registrations/list">
-
-        <div class="reg-toolbar-item search">
-          <label class="reg-label">Search</label>
-          <input class="reg-input" type="text" name="q" value="<?= h($q) ?>"
-            placeholder="Student / Reg No / Phone / Program / Owner">
+      <div class="filter-grid">
+        <div class="filter-item search">
+          <label><i class="fas fa-search"></i> Search</label>
+          <input type="text" name="q" value="<?= h($q) ?>" placeholder="Student / Reg No / Phone / Program / Owner">
         </div>
 
-        <div class="reg-toolbar-item">
-          <label class="reg-label">Type</label>
-          <select class="reg-select" name="reg_type">
+        <div class="filter-item">
+          <label><i class="fas fa-layer-group"></i> Type</label>
+          <select name="reg_type">
             <option value="">All</option>
             <option value="course" <?= $regType === 'course' ? 'selected' : ''; ?>>Course</option>
             <option value="internship" <?= $regType === 'internship' ? 'selected' : ''; ?>>Internship</option>
@@ -2434,18 +1293,18 @@ function payStatusBadgeList($type)
           </select>
         </div>
 
-        <div class="reg-toolbar-item">
-          <label class="reg-label">Reg Status</label>
-          <select class="reg-select" name="status">
+        <div class="filter-item">
+          <label><i class="fas fa-tag"></i> Reg Status</label>
+          <select name="status">
             <option value="">All</option>
             <option value="active" <?= $status === 'active' ? 'selected' : ''; ?>>Active</option>
             <option value="completed" <?= $status === 'completed' ? 'selected' : ''; ?>>Completed</option>
           </select>
         </div>
 
-        <div class="reg-toolbar-item">
-          <label class="reg-label">Payment</label>
-          <select class="reg-select" name="payment_status">
+        <div class="filter-item">
+          <label><i class="fas fa-wallet"></i> Payment</label>
+          <select name="payment_status">
             <option value="">All</option>
             <option value="unpaid" <?= $payStat === 'unpaid' ? 'selected' : ''; ?>>Unpaid</option>
             <option value="partial" <?= $payStat === 'partial' ? 'selected' : ''; ?>>Partial</option>
@@ -2453,39 +1312,40 @@ function payStatusBadgeList($type)
           </select>
         </div>
 
-        <div class="reg-toolbar-item date">
-          <label class="reg-label">From</label>
-          <input class="reg-input" type="date" name="from" value="<?= h($from) ?>">
+        <div class="filter-item date">
+          <label><i class="fas fa-calendar-alt"></i> From</label>
+          <input type="date" name="from" value="<?= h($from) ?>">
         </div>
 
-        <div class="reg-toolbar-item date">
-          <label class="reg-label">To</label>
-          <input class="reg-input" type="date" name="to" value="<?= h($to) ?>">
+        <div class="filter-item date">
+          <label><i class="fas fa-calendar-check"></i> To</label>
+          <input type="date" name="to" value="<?= h($to) ?>">
         </div>
 
-        <div class="reg-toolbar-item actions">
-          <button type="submit" class="pro-btn pro-btn-primary">
-            <i class="fas fa-search"></i> Apply
+        <div class="filter-actions">
+          <button type="submit" class="btn-icon-only apply" title="Apply filters">
+            <i class="fas fa-filter"></i>
           </button>
-          <a href="index.php?page=registrations/list" class="pro-btn pro-btn-light">
-            <i class="fas fa-undo"></i> Reset
+          <a href="index.php?page=registrations/list" class="btn-icon-only reset" title="Reset filters">
+            <i class="fas fa-undo-alt"></i>
           </a>
         </div>
-      </form>
-    </div>
+      </div>
+    </form>
   </div>
 
-  <div class="pro-card" style="margin-top:16px;">
-    <div class="pro-card-head">
-      <div class="pro-card-title">
-        <i class="fas fa-list-ul"></i>
-        Confirmed Registrations (<?= (int) $totalRows ?>)
+  <div class="card">
+    <div class="card-header">
+      <div class="table-header-flex">
+        <div class="table-title">
+          <i class="fas fa-list"></i> Confirmed Registrations (<?= (int) $totalRows ?>)
+        </div>
+        <div id="datatableControls"></div>
       </div>
     </div>
 
-    <div class="pro-card-body">
-      <div class="reg-table-wrap">
-        <table class="reg-table">
+    <div class="table-container">
+      <table class="leads-table" id="registrationsTable">
           <thead>
             <tr>
               <th>Registration</th>
@@ -2499,8 +1359,8 @@ function payStatusBadgeList($type)
           <tbody>
             <?php if (empty($rows)): ?>
               <tr>
-                <td colspan="6" style="text-align:center;padding:34px;color:#888;">
-                  <i class="fas fa-inbox" style="font-size:24px;display:block;margin-bottom:10px;color:#d1d5db;"></i>
+                <td colspan="6" class="no-data">
+                  <i class="fas fa-inbox"></i>
                   No active or completed registrations found.
                 </td>
               </tr>
@@ -2536,36 +1396,38 @@ function payStatusBadgeList($type)
                     <div class="secondary-text">Front Office Credit</div>
                   </td>
 
-                  <td style="text-align:center;">
-                    <div class="action-group">
-                      <button type="button" class="icon-btn btn-view" onclick="openHistoryModal(<?= (int) $r['id'] ?>)"
+                  <td>
+                    <div class="action-buttons">
+                      <button type="button" class="action-btn view" onclick="openHistoryModal(<?= (int) $r['id'] ?>)"
                         title="View History">
                         <i class="fas fa-eye"></i>
                       </button>
 
-                      <a class="icon-btn btn-edit" href="index.php?page=registrations/convert & reg_id=<?= (int) $r['id'] ?>"
+                      <a class="action-btn edit" href="index.php?page=registrations/convert & reg_id=<?= (int) $r['id'] ?>"
                         title="Edit Registration">
                         <i class="fas fa-pen"></i>
                       </a>
 
-                      <button type="button" class="icon-btn btn-payment" onclick="openPaymentModal(<?= (int) $r['id'] ?>)"
+                      <button type="button" class="action-btn payment" onclick="openPaymentModal(<?= (int) $r['id'] ?>)"
                         title="Add Payment">
                         <i class="fas fa-wallet"></i>
                       </button>
 
-                      <button type="button" class="icon-btn btn-idcard" onclick="openIdCardModal(<?= (int) $r['id'] ?>)"
+                      <button type="button" class="action-btn idcard" onclick="openIdCardModal(<?= (int) $r['id'] ?>)"
                         title="Generate ID Card">
                         <i class="fas fa-id-card"></i>
                       </button>
 
-                      <form method="POST" class="deleteRegistrationForm" style="display:inline;">
-                        <input type="hidden" name="csrf_token" value="<?= h(generateCSRF()) ?>">
-                        <input type="hidden" name="reg_id" value="<?= (int) $r['id'] ?>">
-                        <button type="submit" name="delete_registration" class="icon-btn btn-delete"
-                          title="Delete Registration">
-                          <i class="fas fa-trash-alt"></i>
-                        </button>
-                      </form>
+                      <?php if (canDeleteRegistrationRecord($r)): ?>
+                        <form method="POST" class="deleteRegistrationForm" style="display:inline;">
+                          <input type="hidden" name="csrf_token" value="<?= h(generateCSRF()) ?>">
+                          <input type="hidden" name="reg_id" value="<?= (int) $r['id'] ?>">
+                          <button type="submit" name="delete_registration" class="action-btn delete"
+                            title="Delete Registration">
+                            <i class="fas fa-trash-alt"></i>
+                          </button>
+                        </form>
+                      <?php endif; ?>
                     </div>
                   </td>
                 </tr>
@@ -2573,22 +1435,22 @@ function payStatusBadgeList($type)
             <?php endif; ?>
           </tbody>
         </table>
+    </div>
+
+    <div class="pagination-wrapper server-pagination">
+      <div class="pagination-info">
+          Page <?= (int) $page ?> of <?= (int) $totalPages ?>
       </div>
 
-      <div class="reg-footer">
-        <div style="font-size:13px;color:#777;font-weight:700;">
-          Page <?= (int) $page ?> of <?= (int) $totalPages ?>
-        </div>
-
-        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <div class="pagination">
           <?php $prev = max(1, $page - 1);
           $next = min($totalPages, $page + 1); ?>
-          <a class="page-btn" href="<?= $baseUrl ?>&p=1"><i class="fas fa-angle-double-left"></i>&nbsp; First</a>
-          <a class="page-btn" style="<?= $page <= 1 ? 'pointer-events:none;opacity:.5;' : '' ?>"
+          <a class="page-link" href="<?= $baseUrl ?>&p=1"><i class="fas fa-angle-double-left"></i> First</a>
+          <a class="page-link" style="<?= $page <= 1 ? 'pointer-events:none;opacity:.5;' : '' ?>"
             href="<?= $baseUrl ?>&p=<?= (int) $prev ?>"><i class="fas fa-angle-left"></i>&nbsp; Prev</a>
-          <a class="page-btn" style="<?= $page >= $totalPages ? 'pointer-events:none;opacity:.5;' : '' ?>"
+          <a class="page-link" style="<?= $page >= $totalPages ? 'pointer-events:none;opacity:.5;' : '' ?>"
             href="<?= $baseUrl ?>&p=<?= (int) $next ?>">Next &nbsp;<i class="fas fa-angle-right"></i></a>
-          <a class="page-btn" href="<?= $baseUrl ?>&p=<?= (int) $totalPages ?>">Last &nbsp;<i
+          <a class="page-link" href="<?= $baseUrl ?>&p=<?= (int) $totalPages ?>">Last <i
               class="fas fa-angle-double-right"></i></a>
         </div>
       </div>
@@ -2611,6 +1473,34 @@ function payStatusBadgeList($type)
 </div>
 
 <script>
+  function showSweetAlert(icon, title, text) {
+    if (typeof Swal !== 'undefined' && Swal.fire) {
+      Swal.fire({
+        icon: icon,
+        title: title,
+        text: text,
+        confirmButtonColor: '#e91e63'
+      });
+    } else {
+      alert(text);
+    }
+  }
+
+  function applyModernIconTooltips(root) {
+    const scope = root || document;
+    const selector = '.btn-icon-only[title], .action-btn[title], .icon-btn[title], .source-icon[title]';
+    const targets = scope.querySelectorAll(selector);
+
+    targets.forEach(el => {
+      const t = (el.getAttribute('title') || '').trim();
+      if (!t) return;
+      el.setAttribute('data-tooltip', t);
+      el.setAttribute('aria-label', t);
+      el.classList.add('ui-tooltip');
+      el.removeAttribute('title');
+    });
+  }
+
   function openCrmModal(title) {
     document.getElementById('crmModalTitle').innerHTML = '<i class="fas fa-layer-group"></i> ' + (title || 'Details');
     document.getElementById('crmModalBody').innerHTML = '<div class="empty-note">Loading...</div>';
@@ -2645,9 +1535,10 @@ function payStatusBadgeList($type)
 
   async function openHistoryModal(regId) {
     openCrmModal('Student History');
-    const url =`index.php?page=payments/payment_modal&ajax=1&reg_id=${regId}`;
+    const url =`index.php?page=registrations/list&ajax=1&action=view_history&reg_id=${regId}`;
     const html = await loadModalHtml(url);
     document.getElementById('crmModalBody').innerHTML = html;
+    applyModernIconTooltips(document.getElementById('crmModalBody'));
   }
 
   async function openIdCardModal(regId) {
@@ -2655,6 +1546,7 @@ function payStatusBadgeList($type)
     const url = `index.php?page=registrations/list&ajax=1&action=id_card_modal&reg_id=${regId}`;
     const html = await loadModalHtml(url);
     document.getElementById('crmModalBody').innerHTML = html;
+    applyModernIconTooltips(document.getElementById('crmModalBody'));
 
     const wrapper = document.querySelector('.wrapper');
     if (wrapper) wrapper.removeAttribute('aria-hidden');
@@ -2674,6 +1566,7 @@ const url =
 const html = await loadModalHtml(url);
 
 document.getElementById('crmModalBody').innerHTML = html;
+applyModernIconTooltips(document.getElementById('crmModalBody'));
 
 const wrapper = document.querySelector('.wrapper');
 if (wrapper) wrapper.removeAttribute('aria-hidden');
@@ -2701,6 +1594,39 @@ if (wrapper) wrapper.removeAttribute('aria-hidden');
         if (r.isConfirmed) f.submit();
       });
     });
+  });
+
+  document.addEventListener("DOMContentLoaded", function(){
+    applyModernIconTooltips(document);
+
+    if (typeof crmDataTable !== 'function') return;
+
+    try {
+      crmDataTable('#registrationsTable', {
+        pageLength: 10,
+        lengthMenu: [5, 10, 20, 50, 100],
+        ordering: true,
+        order: [[0, 'desc']],
+        searchPlaceholder: "Search registrations...",
+        dom:
+          "<'dt-top'lfB>" +
+          "rt" +
+          "<'dt-bottom'ip>"
+      });
+
+      setTimeout(() => {
+        const controls = document.querySelector('.dt-top');
+        const target = document.getElementById('datatableControls');
+        const serverPagination = document.querySelector('.server-pagination');
+
+        if (controls && target) {
+          target.appendChild(controls);
+        }
+        if (serverPagination) {
+          serverPagination.style.display = 'none';
+        }
+      }, 100);
+    } catch (e) {}
   });
 
   function initIdCardBuilder() {
@@ -2776,7 +1702,7 @@ if (wrapper) wrapper.removeAttribute('aria-hidden');
 
         const isPng = (file.type === 'image/png') || /\.png$/i.test(file.name);
         if (!isPng) {
-          alert(label + ' must be a PNG file.');
+          showSweetAlert('error', 'Invalid File', label + ' must be a PNG file.');
           input.value = '';
           previewImg.src = '';
           previewImg.style.display = 'none';
@@ -3032,7 +1958,7 @@ if (wrapper) wrapper.removeAttribute('aria-hidden');
       a.click();
       a.remove();
     } catch (err) {
-      alert('Unable to generate PNG for this card.');
+      showSweetAlert('error', 'Download Failed', 'Unable to generate PNG for this card.');
     }
   }
 
@@ -3051,7 +1977,7 @@ if (wrapper) wrapper.removeAttribute('aria-hidden');
   if (startCameraBtn) {
     startCameraBtn.addEventListener('click', async function () {
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        alert('Webcam is not supported in this browser or this page is not running in a secure context.');
+        showSweetAlert('warning', 'Webcam Not Supported', 'Webcam is not supported in this browser or this page is not running in a secure context.');
         return;
       }
 
@@ -3083,7 +2009,7 @@ if (wrapper) wrapper.removeAttribute('aria-hidden');
           message = 'Requested webcam settings are not supported on this device.';
         }
 
-        alert(message);
+        showSweetAlert('error', 'Camera Error', message);
       }
     });
   }
@@ -3091,7 +2017,7 @@ if (wrapper) wrapper.removeAttribute('aria-hidden');
     if (capturePhotoBtn) {
       capturePhotoBtn.addEventListener('click', function () {
         if (!video.srcObject) {
-          alert('Start the camera first.');
+          showSweetAlert('info', 'Camera Required', 'Start the camera first.');
           return;
         }
 
