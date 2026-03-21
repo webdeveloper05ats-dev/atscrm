@@ -199,12 +199,17 @@ if (isset($_POST['delete_registration'])) {
                 $success = "Registration deleted successfully!";
                 ?>
                 <script>
-                Swal.fire({
-                  icon:'success',
-                  title:'Success',
-                  text:'<?= addslashes($success) ?>',
-                  confirmButtonColor:'#e91e63'
-                }).then(()=> window.location.href = "index.php?page=registrations/drafts");
+                if (window.Swal && Swal.fire) {
+                  Swal.fire({
+                    icon:'success',
+                    title:'Success',
+                    text:'<?= addslashes($success) ?>',
+                    confirmButtonColor:'#e91e63'
+                  }).then(()=> window.location.href = "index.php?page=registrations/drafts");
+                } else {
+                  alert('<?= addslashes($success) ?>');
+                  window.location.href = "index.php?page=registrations/drafts";
+                }
                 </script>
                 <?php
                 return;
@@ -531,12 +536,17 @@ if (isset($_POST['save_registration'])) {
                 $success = "Registration confirmed successfully!";
                 ?>
                 <script>
-                Swal.fire({
-                  icon:'success',
-                  title:'Success',
-                  text:'<?= addslashes($success) ?>',
-                  confirmButtonColor:'#e91e63'
-                }).then(()=> window.location.href = "index.php?page=registrations/list");
+                if (window.Swal && Swal.fire) {
+                  Swal.fire({
+                    icon:'success',
+                    title:'Success',
+                    text:'<?= addslashes($success) ?>',
+                    confirmButtonColor:'#e91e63'
+                  }).then(()=> window.location.href = "index.php?page=registrations/list");
+                } else {
+                  alert('<?= addslashes($success) ?>');
+                  window.location.href = "index.php?page=registrations/list";
+                }
                 </script>
                 <?php
                 return;
@@ -544,12 +554,17 @@ if (isset($_POST['save_registration'])) {
                 $success = "Registration saved as draft successfully!";
                 ?>
                 <script>
-                Swal.fire({
-                  icon:'success',
-                  title:'Success',
-                  text:'<?= addslashes($success) ?>',
-                  confirmButtonColor:'#e91e63'
-                }).then(()=> window.location.href = "index.php?page=registrations/drafts");
+                if (window.Swal && Swal.fire) {
+                  Swal.fire({
+                    icon:'success',
+                    title:'Success',
+                    text:'<?= addslashes($success) ?>',
+                    confirmButtonColor:'#e91e63'
+                  }).then(()=> window.location.href = "index.php?page=registrations/drafts");
+                } else {
+                  alert('<?= addslashes($success) ?>');
+                  window.location.href = "index.php?page=registrations/drafts";
+                }
                 </script>
                 <?php
                 return;
@@ -1327,6 +1342,216 @@ body {
 }
 </style>
 
+<!-- UI Override: Match Enquiry/Add Wizard Look (Logic unchanged) -->
+<style>
+.reg-portal{
+  max-width: 100%;
+}
+.reg-header{
+  border: 1px solid #f1d6e3 !important;
+  border-radius: 16px !important;
+  background: #fff !important;
+  box-shadow: 0 8px 20px rgba(0,0,0,.05) !important;
+}
+.reg-header-content h1{
+  color:#be185d !important;
+  font-size:22px !important;
+  line-height:1.2 !important;
+}
+.reg-header-badge{
+  border:1px solid #f1d6e3 !important;
+  background:#fff !important;
+  color:#7c2d5a !important;
+  font-size:13px !important;
+}
+.reg-card,
+.reg-main-card,
+.reg-progress{
+  border: 1px solid #f1d6e3 !important;
+  border-radius: 16px !important;
+  background:#fff !important;
+  box-shadow: 0 8px 20px rgba(0,0,0,.05) !important;
+}
+.reg-main-header{
+  background:#fff3f8 !important;
+  border-bottom:1px solid #f1d6e3 !important;
+}
+.reg-main-header h2{
+  color:#be185d !important;
+  font-size:20px !important;
+  line-height:1.15 !important;
+  margin-bottom:6px !important;
+}
+.reg-main-header p{
+  font-size:13px !important;
+  line-height:1.4 !important;
+}
+
+/* Step pills like enquiries/add.php */
+.reg-steps-container{
+  display:grid !important;
+  grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
+  gap:10px !important;
+  flex-wrap:nowrap !important;
+}
+.reg-steps-container::before{
+  display:none !important;
+}
+.reg-step-item{
+  min-width:0 !important;
+  width:100% !important;
+  border:1px solid #f3d8e5 !important;
+  border-radius:14px !important;
+  background:#fff !important;
+  padding:10px 12px !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:flex-start !important;
+  gap:10px !important;
+  cursor:pointer;
+  transition:.2s ease;
+  text-align:left !important;
+}
+.reg-step-item:hover{
+  border-color:#f29cc4 !important;
+  background:#fff8fb !important;
+}
+.reg-step-circle{
+  width:24px !important;
+  height:24px !important;
+  min-width:24px !important;
+  flex:0 0 24px !important;
+  border-radius:999px !important;
+  background:#ffe4ef !important;
+  color:#c2185b !important;
+  border:none !important;
+  font-size:12px !important;
+  font-weight:800 !important;
+  margin:0 !important;
+}
+.reg-step-label{
+  font-size:12px !important;
+  font-weight:700 !important;
+  color:#374151 !important;
+  line-height:1.1 !important;
+  white-space:nowrap !important;
+  margin:0 !important;
+  text-align:left !important;
+}
+.reg-step-item.active{
+  border-color:#e91e63 !important;
+  background:#fff6fb !important;
+}
+.reg-step-item.active .reg-step-label{
+  color:#be185d !important;
+}
+.reg-step-item.completed .reg-step-circle{
+  background:#e91e63 !important;
+  color:#fff !important;
+}
+
+/* Field controls */
+.reg-field-input,
+.reg-field-select,
+.reg-field-textarea{
+  border:1px solid #f1d6e3 !important;
+  border-radius:10px !important;
+  min-height:40px;
+  background:#fff !important;
+}
+.reg-field-input:focus,
+.reg-field-select:focus,
+.reg-field-textarea:focus{
+  border-color:#e91e63 !important;
+  box-shadow:0 0 0 3px rgba(233,30,99,.12) !important;
+}
+.reg-field-label{
+  color:#374151 !important;
+  font-size:13px !important;
+}
+.reg-gender-group{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+}
+.reg-gender-option{
+  position:relative;
+  cursor:pointer;
+}
+.reg-gender-option input{
+  position:absolute;
+  opacity:0;
+  pointer-events:none;
+}
+.reg-gender-pill{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  border:1px solid #f1d6e3;
+  border-radius:10px;
+  padding:9px 12px;
+  background:#fff;
+  color:#4b5563;
+  font-weight:700;
+  transition:all .2s ease;
+}
+.reg-gender-option input:checked + .reg-gender-pill{
+  border-color:#e91e63;
+  background:#fff1f7;
+  color:#be185d;
+  box-shadow:0 0 0 3px rgba(233,30,99,.12);
+}
+.reg-section-title h4{
+  font-size:15px !important;
+}
+.reg-section-title p{
+  font-size:12px !important;
+}
+.reg-summary-label,
+.reg-stat-label{
+  font-size:12px !important;
+}
+.reg-summary-value,
+.reg-stat-value{
+  font-size:13px !important;
+}
+
+/* Buttons similar to enquiry wizard */
+.reg-btn{
+  border-radius:12px !important;
+  font-weight:700 !important;
+}
+.reg-btn-primary{
+  background: linear-gradient(135deg, #ff4d8d, #e91e63) !important;
+  border:1px solid transparent !important;
+  color:#fff !important;
+}
+.reg-btn-primary:hover{
+  background: linear-gradient(135deg, #ff3b82, #d81b60) !important;
+}
+.reg-btn-secondary{
+  background:#f3f4f6 !important;
+  color:#374151 !important;
+  border:1px solid #e5e7eb !important;
+}
+.reg-btn-outline{
+  background:#fff !important;
+  border:1px solid #f1d6e3 !important;
+  color:#7c2d5a !important;
+}
+
+@media (max-width: 768px){
+  .reg-steps-container{
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+}
+@media (max-width: 520px){
+  .reg-steps-container{
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+</style>
+
 <!-- Main Application - White & Pink Theme -->
 <div class="reg-portal">
     
@@ -1347,6 +1572,28 @@ body {
         </div>
     </div>
     
+    <script>
+    // SweetAlert safety shim for this page
+    (function () {
+      if (window.Swal && typeof window.Swal.fire === 'function') return;
+      window.Swal = window.Swal || {};
+      window.Swal.fire = function (opts) {
+        opts = opts || {};
+        return new Promise(function(resolve){
+          var title = opts.title || 'Notice';
+          var text = opts.text || '';
+          if (opts.showCancelButton) {
+            var ok = window.confirm(title + (text ? '\n' + text : ''));
+            resolve({ isConfirmed: ok });
+          } else {
+            window.alert(title + (text ? '\n' + text : ''));
+            resolve({ isConfirmed: true });
+          }
+        });
+      };
+    })();
+    </script>
+
     <?php if ($error): ?>
     <script>
     Swal.fire({
@@ -1423,76 +1670,46 @@ body {
                     </div>
                 </div>
             </div>
-            
-            <!-- Quick Stats Card -->
-            <div class="reg-card">
-                <div class="reg-card-header">
-                    <div class="reg-card-header-icon">
-                        <i class="fas fa-chart-pie"></i>
-                    </div>
-                    <div>
-                        <h3>Quick Overview</h3>
-                        <p>Current status</p>
-                    </div>
-                </div>
-                <div class="reg-card-content">
-                    <div class="reg-quick-stats">
-                        <div class="reg-stat-item">
-                            <div class="reg-stat-label">Mode</div>
-                            <div class="reg-stat-value"><?= $isEditMode ? 'Edit' : 'New' ?></div>
-                        </div>
-                        <div class="reg-stat-item">
-                            <div class="reg-stat-label">Status</div>
-                            <div class="reg-stat-value"><?= ucfirst($registration_status) ?></div>
-                        </div>
-                        <div class="reg-stat-item">
-                            <div class="reg-stat-label">Type</div>
-                            <div class="reg-stat-value"><?= ucfirst($reg_type) ?></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
+
         </aside>
         
         <!-- Main Form -->
         <main>
-            
-            <!-- Progress Steps -->
-            <div class="reg-progress">
-                <div class="reg-steps-container">
-                    <div class="reg-step-item active" data-step="1">
-                        <div class="reg-step-circle">1</div>
-                        <div class="reg-step-label">Basic</div>
-                    </div>
-                    <div class="reg-step-item" data-step="2">
-                        <div class="reg-step-circle">2</div>
-                        <div class="reg-step-label">Personal</div>
-                    </div>
-                    <div class="reg-step-item" data-step="3">
-                        <div class="reg-step-circle">3</div>
-                        <div class="reg-step-label">Academic</div>
-                    </div>
-                    <div class="reg-step-item" data-step="4">
-                        <div class="reg-step-circle">4</div>
-                        <div class="reg-step-label">Parent</div>
-                    </div>
-                    <div class="reg-step-item" data-step="5">
-                        <div class="reg-step-circle">5</div>
-                        <div class="reg-step-label">Fee</div>
-                    </div>
-                    <div class="reg-step-item" data-step="6">
-                        <div class="reg-step-circle">6</div>
-                        <div class="reg-step-label">Notes</div>
-                    </div>
-                </div>
-            </div>
-            
             <!-- Form Card -->
             <div class="reg-main-card">
                 <div class="reg-main-header">
                     <h2>Registration Form</h2>
                     <p>Fill in the details below to complete the registration</p>
+                </div>
+
+                <!-- Progress Steps -->
+                <div class="reg-progress">
+                    <div class="reg-steps-container">
+                        <div class="reg-step-item active" data-step="1">
+                            <div class="reg-step-circle">1</div>
+                            <div class="reg-step-label">Basic</div>
+                        </div>
+                        <div class="reg-step-item" data-step="2">
+                            <div class="reg-step-circle">2</div>
+                            <div class="reg-step-label">Personal</div>
+                        </div>
+                        <div class="reg-step-item" data-step="3">
+                            <div class="reg-step-circle">3</div>
+                            <div class="reg-step-label">Academic</div>
+                        </div>
+                        <div class="reg-step-item" data-step="4">
+                            <div class="reg-step-circle">4</div>
+                            <div class="reg-step-label">Parent</div>
+                        </div>
+                        <div class="reg-step-item" data-step="5">
+                            <div class="reg-step-circle">5</div>
+                            <div class="reg-step-label">Fee</div>
+                        </div>
+                        <div class="reg-step-item" data-step="6">
+                            <div class="reg-step-circle">6</div>
+                            <div class="reg-step-label">Notes</div>
+                        </div>
+                    </div>
                 </div>
                 
                 <div class="reg-main-body">
@@ -1568,7 +1785,7 @@ body {
                                 </div>
                                 <div class="reg-section-content">
                                     <div class="reg-form-grid">
-                                        <div class="reg-field full-width">
+                                        <div class="reg-field">
                                             <label class="reg-field-label">Full Name <span class="required">*</span></label>
                                             <input class="reg-field-input capitalize-input" type="text" name="student_name" id="student_name" value="<?= h($student_name) ?>" required placeholder="Enter student's full name" oninput="capitalizeFirstLetter(this)">
                                         </div>
@@ -1585,12 +1802,20 @@ body {
                                         
                                         <div class="reg-field">
                                             <label class="reg-field-label">Gender</label>
-                                            <select class="reg-field-select" name="gender">
-                                                <option value="">-- Select --</option>
-                                                <option value="male" <?= $gender==='male'?'selected':''; ?>>Male</option>
-                                                <option value="female" <?= $gender==='female'?'selected':''; ?>>Female</option>
-                                                <option value="other" <?= $gender==='other'?'selected':''; ?>>Other</option>
-                                            </select>
+                                            <div class="reg-gender-group">
+                                                <label class="reg-gender-option">
+                                                    <input type="radio" name="gender" value="male" <?= $gender==='male'?'checked':''; ?>>
+                                                    <span class="reg-gender-pill"><i class="fas fa-mars"></i> Male</span>
+                                                </label>
+                                                <label class="reg-gender-option">
+                                                    <input type="radio" name="gender" value="female" <?= $gender==='female'?'checked':''; ?>>
+                                                    <span class="reg-gender-pill"><i class="fas fa-venus"></i> Female</span>
+                                                </label>
+                                                <label class="reg-gender-option">
+                                                    <input type="radio" name="gender" value="other" <?= $gender==='other'?'checked':''; ?>>
+                                                    <span class="reg-gender-pill"><i class="fas fa-genderless"></i> Other</span>
+                                                </label>
+                                            </div>
                                         </div>
                                         
                                         <div class="reg-field">
@@ -1875,6 +2100,8 @@ function validateStep2() {
     const name = document.getElementById('student_name').value.trim();
     const phone = document.getElementById('phone').value.trim();
     const email = document.getElementById('email').value.trim();
+    const aadhaarInput = document.querySelector('input[name="aadhaar_no"]');
+    const aadhaar = aadhaarInput ? aadhaarInput.value.trim() : '';
     
     if (!name) {
         Swal.fire({
@@ -1926,8 +2153,56 @@ function validateStep2() {
         });
         return false;
     }
+
+    // Aadhaar is optional, but if entered it must be exactly 12 digits.
+    if (aadhaar !== '' && !/^\d{12}$/.test(aadhaar)) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Invalid Aadhaar',
+            text: 'Aadhaar number must be exactly 12 digits.',
+            confirmButtonColor: '#e91e63'
+        });
+        return false;
+    }
     
     nextStep(3);
+}
+
+function validateCoreBeforeSubmit() {
+    const assignedTo = document.getElementById('assigned_to')?.value || '';
+    const name = document.getElementById('student_name')?.value.trim() || '';
+    const phone = document.getElementById('phone')?.value.trim() || '';
+    const email = document.getElementById('email')?.value.trim() || '';
+    const aadhaarInput = document.querySelector('input[name="aadhaar_no"]');
+    const aadhaar = aadhaarInput ? aadhaarInput.value.trim() : '';
+
+    if (!assignedTo) {
+        Swal.fire({ icon:'warning', title:'Required Field', text:'Please select Front Office Owner', confirmButtonColor:'#e91e63' });
+        nextStep(1);
+        return false;
+    }
+    if (!name) {
+        Swal.fire({ icon:'warning', title:'Required Field', text:'Please enter student name', confirmButtonColor:'#e91e63' });
+        nextStep(2);
+        return false;
+    }
+    if (!phone || phone.length !== 10 || !/^\d+$/.test(phone)) {
+        Swal.fire({ icon:'warning', title:'Invalid Phone', text:'Please enter a valid 10-digit phone number', confirmButtonColor:'#e91e63' });
+        nextStep(2);
+        return false;
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email || !emailRegex.test(email)) {
+        Swal.fire({ icon:'warning', title:'Invalid Email', text:'Please enter a valid email address', confirmButtonColor:'#e91e63' });
+        nextStep(2);
+        return false;
+    }
+    if (aadhaar !== '' && !/^\d{12}$/.test(aadhaar)) {
+        Swal.fire({ icon:'warning', title:'Invalid Aadhaar', text:'Aadhaar number must be exactly 12 digits.', confirmButtonColor:'#e91e63' });
+        nextStep(2);
+        return false;
+    }
+    return true;
 }
 
 // Capitalization Functions
@@ -1999,6 +2274,7 @@ function validateEmail(input) {
 
 // Form Submission
 function submitRegistrationForm(status) {
+    if (!validateCoreBeforeSubmit()) return;
     document.getElementById('registration_status_input').value = status;
     
     const titles = {
