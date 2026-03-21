@@ -215,7 +215,8 @@ if ($isAjax) {
       $payments = $st->fetchAll(PDO::FETCH_ASSOC);
       ?>
 
-      <div class="pro-modal-wrap">
+      <div class="pro-modal-wrap payment-modal-modern">
+        <div class="pro-payment-two-col">
         <div class="pro-modal-section">
           <div class="pro-modal-head">
             <div class="pro-modal-head-icon"><i class="fas fa-user-graduate"></i></div>
@@ -370,6 +371,7 @@ if ($isAjax) {
           <?php endif; ?>
         </div>
 
+        <div class="pro-payment-two-col">
         <div class="pro-modal-section">
           <div class="pro-modal-head">
             <div class="pro-modal-head-icon"><i class="fas fa-wallet"></i></div>
@@ -406,8 +408,8 @@ if ($isAjax) {
                       <td><?= h($p['approval_status']) ?></td>
                       <td>
                         <a href="index.php?page=payments/receipt&payment_id=<?= (int) $p['id'] ?>" target="_blank"
-                          class="receipt-link">
-                          <i class="fas fa-receipt"></i> Receipt
+                          class="receipt-link mtip" title="Open Receipt">
+                          <i class="fas fa-receipt"></i> <span>Receipt</span>
                         </a>
                       </td>
                     </tr>
@@ -416,6 +418,9 @@ if ($isAjax) {
               </table>
             </div>
           <?php endif; ?>
+        </div>
+        </div>
+        </div>
         </div>
       </div>
 
@@ -478,39 +483,39 @@ if ($isAjax) {
       $balance = max(0, $finalFee - $paidAmt);
       ?>
 
-      <div class="pro-modal-wrap">
+      <div class="pro-modal-wrap payment-modal-modern payment-entry-layout">
         <div class="pro-payment-summary">
-          <div class="pro-pay-card">
-            <span class="label">Registration No</span>
+          <div class="pro-pay-card pm-reg">
+            <span class="label"><i class="fas fa-id-badge"></i> Registration No</span>
             <span class="value"><?= h($reg['registration_no'] ?: ('REG-' . $reg['id'])) ?></span>
           </div>
-          <div class="pro-pay-card">
-            <span class="label">Student</span>
+          <div class="pro-pay-card pm-student">
+            <span class="label"><i class="fas fa-user-graduate"></i> Student</span>
             <span class="value"><?= h($reg['enquiry_snapshot_name'] ?: '-') ?></span>
           </div>
-          <div class="pro-pay-card">
-            <span class="label">Program</span>
+          <div class="pro-pay-card pm-program">
+            <span class="label"><i class="fas fa-book-open"></i> Program</span>
             <span class="value"><?= h($reg['program_name'] ?: '-') ?></span>
           </div>
-          <div class="pro-pay-card">
-            <span class="label">Owner</span>
+          <div class="pro-pay-card pm-owner">
+            <span class="label"><i class="fas fa-user-tie"></i> Owner</span>
             <span class="value"><?= h($reg['owner_name'] ?: '-') ?></span>
           </div>
-          <div class="pro-pay-card">
-            <span class="label">Final Fee</span>
+          <div class="pro-pay-card pm-fee">
+            <span class="label"><i class="fas fa-coins"></i> Final Fee</span>
             <span class="value">₹ <?= h(number_format($finalFee, 2)) ?></span>
           </div>
-          <div class="pro-pay-card">
-            <span class="label">Paid</span>
+          <div class="pro-pay-card pm-paid">
+            <span class="label"><i class="fas fa-wallet"></i> Paid</span>
             <span class="value">₹ <?= h(number_format($paidAmt, 2)) ?></span>
           </div>
-          <div class="pro-pay-card highlight">
-            <span class="label">Balance</span>
+          <div class="pro-pay-card highlight pm-balance">
+            <span class="label"><i class="fas fa-hourglass-half"></i> Balance</span>
             <span class="value">₹ <?= h(number_format($balance, 2)) ?></span>
           </div>
         </div>
 
-        <div class="pro-modal-section">
+        <div class="pro-modal-section payment-entry-col">
           <div class="pro-modal-head">
             <div class="pro-modal-head-icon"><i class="fas fa-plus-circle"></i></div>
             <div>
@@ -525,15 +530,15 @@ if ($isAjax) {
 
             <div class="pro-payment-grid">
               <div>
-                <label class="m-label">Amount</label>
-                <input type="number" step="0.01" max="<?= h($balance) ?>" name="amount" class="m-input" required>
+                <label class="m-label"><i class="fas fa-rupee-sign"></i> Amount</label>
+                <input type="number" step="0.01" max="<?= h($balance) ?>" name="amount" class="m-input" placeholder="Enter payment amount" required>
               </div>
               <div>
-                <label class="m-label">Payment Date</label>
+                <label class="m-label"><i class="fas fa-calendar-day"></i> Payment Date</label>
                 <input type="date" name="payment_date" class="m-input" value="<?= h(date('Y-m-d')) ?>" required>
               </div>
               <div>
-                <label class="m-label">Payment Mode</label>
+                <label class="m-label"><i class="fas fa-credit-card"></i> Payment Mode</label>
                 <select name="payment_mode" class="m-input">
                   <option value="cash">Cash</option>
                   <option value="upi">UPI</option>
@@ -544,7 +549,7 @@ if ($isAjax) {
                 </select>
               </div>
               <div>
-                <label class="m-label">Payment Type</label>
+                <label class="m-label"><i class="fas fa-tags"></i> Payment Type</label>
                 <select name="payment_type" class="m-input">
                   <option value="advance">Advance</option>
                   <option value="partial" selected>Partial</option>
@@ -553,11 +558,11 @@ if ($isAjax) {
                 </select>
               </div>
               <div>
-                <label class="m-label">Reference No</label>
-                <input type="text" name="reference_no" class="m-input">
+                <label class="m-label"><i class="fas fa-hashtag"></i> Reference No</label>
+                <input type="text" name="reference_no" class="m-input" placeholder="Transaction / Ref number">
               </div>
               <div>
-                <label class="m-label">Approval Status</label>
+                <label class="m-label"><i class="fas fa-check-circle"></i> Approval Status</label>
                 <select name="approval_status" class="m-input">
                   <option value="approved" selected>Approved</option>
                   <option value="pending">Pending</option>
@@ -565,8 +570,8 @@ if ($isAjax) {
                 </select>
               </div>
               <div class="full">
-                <label class="m-label">Remarks</label>
-                <textarea name="remarks_payment" class="m-input" rows="3"></textarea>
+                <label class="m-label"><i class="fas fa-comment-dots"></i> Remarks</label>
+                <textarea name="remarks_payment" class="m-input" rows="3" placeholder="Add payment notes (optional)"></textarea>
               </div>
             </div>
 
@@ -578,7 +583,7 @@ if ($isAjax) {
           </form>
         </div>
 
-        <div class="pro-modal-section">
+        <div class="pro-modal-section payment-entry-col">
           <div class="pro-modal-head">
             <div class="pro-modal-head-icon"><i class="fas fa-receipt"></i></div>
             <div>
@@ -624,6 +629,7 @@ if ($isAjax) {
               </table>
             </div>
           <?php endif; ?>
+        </div>
         </div>
       </div>
 
@@ -2054,3 +2060,4 @@ if (wrapper) wrapper.removeAttribute('aria-hidden');
     window.__stopIdCardCamera = stopCamera;
   }
 </script>
+
