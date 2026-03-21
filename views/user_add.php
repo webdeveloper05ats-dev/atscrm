@@ -198,490 +198,606 @@ $users = $pdo->query("
 ")->fetchAll(PDO::FETCH_ASSOC);
 ?>
 
-<h2 style="margin-bottom:20px;">User Management</h2>
 <style>
-/* =====================================================
-ATS CRM - GLOBAL TABLE + DATATABLE STYLE
-Reusable across all CRM pages
-===================================================== */
-
-
-/* =====================================================
-CRM LAYOUT
-===================================================== */
-
-.crm-container{
-display:flex;
-gap:20px;
-flex-wrap:wrap;
-width:100%;
-max-width:100%;
+:root {
+  --user-primary: #e91e63;
+  --user-primary-dark: #c2185b;
+  --user-border: #ead1df;
+  --user-soft: #fff4fa;
+  --user-text: #374151;
+  --user-muted: #6b7280;
+  --user-shadow: 0 8px 18px rgba(0,0,0,.06);
 }
 
-.crm-left{
-flex:1;
-min-width:300px;
-max-width:100%;
+.user-page-title {
+  margin: 0;
+  color: #be185d;
+  font-weight: 800;
 }
 
-.crm-right{
-flex:2;
-min-width:450px;
-max-width:100%;
+.user-page-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
 }
 
-.crm-card{
-background:#fff;
-border-radius:14px;
-padding:20px;
-box-shadow:0 8px 20px rgba(0,0,0,.05);
-border:1px solid #f1d6e3;
-width:100%;
-max-width:100%;
-box-sizing:border-box;
+.user-total-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 12px;
+  border-radius: 999px;
+  border: 1px solid #f3d2e1;
+  background: #fff;
+  color: #be185d;
+  font-size: .82rem;
+  font-weight: 800;
+  box-shadow: var(--user-shadow);
 }
 
-.crm-card h3{
-margin-bottom:16px;
+.user-page {
+  display: grid;
+  grid-template-columns: minmax(300px, 340px) minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
 }
 
-
-/* =====================================================
-FORM ELEMENTS
-===================================================== */
-
-.crm-form-group{
-margin-bottom:14px;
+.user-card {
+  background: #fff;
+  border: 1px solid var(--user-border);
+  border-radius: 14px;
+  box-shadow: var(--user-shadow);
+  overflow: hidden;
 }
 
-.crm-form-group label{
-font-weight:600;
-font-size:13px;
-display:block;
-margin-bottom:5px;
+.user-card-head {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--user-border);
+  background: var(--user-soft);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
 }
 
-.crm-form-group input,
-.crm-form-group select{
-width:100%;
-padding:10px;
-border-radius:8px;
-border:1px solid #ddd;
-box-sizing:border-box;
+.user-card-title-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
 }
 
-.crm-form-group input::placeholder{
-font-size:12px;
-color:#aaa;
+.user-card-title {
+  margin: 0;
+  color: #be185d;
+  font-size: 1rem;
+  font-weight: 800;
 }
 
-
-/* =====================================================
-TOGGLE SWITCH
-===================================================== */
-
-.crm-switch{
-position:relative;
-display:inline-block;
-width:46px;
-height:24px;
+.user-card-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 999px;
+  border: 1px solid #f3d8e5;
+  background: #fff;
+  color: #7c2d5a;
+  padding: 5px 10px;
+  font-size: .74rem;
+  font-weight: 700;
 }
 
-.crm-switch input{
-display:none;
+.user-card-body {
+  padding: 14px;
 }
 
-.crm-slider{
-position:absolute;
-cursor:pointer;
-top:0;
-left:0;
-right:0;
-bottom:0;
-background:#ccc;
-border-radius:20px;
+.user-form-group {
+  margin-bottom: 12px;
 }
 
-.crm-slider:before{
-position:absolute;
-content:"";
-height:18px;
-width:18px;
-left:3px;
-bottom:3px;
-background:white;
-border-radius:50%;
-transition:.3s;
+.user-form-group label {
+  display: block;
+  margin-bottom: 5px;
+  font-size: .74rem;
+  font-weight: 700;
+  color: var(--user-muted);
+  text-transform: uppercase;
+  letter-spacing: .3px;
 }
 
-.crm-switch input:checked + .crm-slider{
-background:#e91e63;
+.user-form-group input,
+.user-form-group select {
+  width: 100%;
+  min-height: 40px;
+  padding: 9px 10px;
+  border-radius: 9px;
+  border: 1px solid var(--user-border);
+  font-size: .88rem;
+  background: #fff;
+  outline: none;
+  transition: border-color .2s ease, box-shadow .2s ease;
 }
 
-.crm-switch input:checked + .crm-slider:before{
-transform:translateX(22px);
+.user-form-group input:focus,
+.user-form-group select:focus {
+  border-color: var(--user-primary);
+  box-shadow: 0 0 0 3px rgba(233,30,99,.12);
 }
 
-
-/* =====================================================
-CRM TABLE
-===================================================== */
-
-.crm-table{
-width:100%;
-border-collapse:collapse;
-border:1px solid #f1d6e3;
+.user-form-group small {
+  display: block;
+  margin-top: 5px;
+  font-size: .72rem;
+  color: #8b7280;
 }
 
-.crm-table th,
-.crm-table td{
-border:1px solid #f1d6e3;
-padding:10px;
-font-size:13px;
-white-space:nowrap;
+.user-segment {
+  display: inline-flex;
+  width: 100%;
+  border: 1px solid var(--user-border);
+  border-radius: 999px;
+  overflow: hidden;
+  background: #fff;
+  box-shadow: inset 0 1px 2px rgba(233,30,99,.08);
 }
 
-.crm-table th{
-background:#fff0f5;
-font-weight:600;
-text-align:left;
+.user-segment-btn {
+  flex: 1;
+  border: 0;
+  background: transparent;
+  color: #6b7280;
+  min-height: 40px;
+  font-size: .85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all .2s ease;
 }
 
-
-/* =====================================================
-TABLE WRAPPER (SCROLL ON MOBILE)
-===================================================== */
-
-.crm-table-wrapper{
-width:100%;
-max-width:100%;
-overflow-x:auto;
+.user-segment-btn + .user-segment-btn {
+  border-left: 1px solid #f3d8e5;
 }
 
-
-/* =====================================================
-ACTION BUTTONS
-===================================================== */
-
-.crm-btn{
-display:inline-flex;
-align-items:center;
-justify-content:center;
-width:34px;
-height:34px;
-border-radius:8px;
-color:#fff;
-margin-right:5px;
+.user-segment-btn.active {
+  background: linear-gradient(135deg, var(--user-primary) 0%, #ff4f9c 100%);
+  color: #fff;
 }
 
-.crm-edit{
-background:#e91e63;
+.user-submit {
+  width: 100%;
+  min-height: 42px;
+  border: none;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #ff4d8d, #e91e63);
+  color: #fff;
+  font-size: .9rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all .2s ease;
 }
 
-.crm-delete{
-background:#dc3545;
+.user-submit:hover {
+  background: var(--user-primary-dark);
+  transform: translateY(-1px);
 }
 
-
-/* =====================================================
-DATATABLE HEADER AREA
-===================================================== */
-
-.crm-table-header{
-display:flex;
-justify-content:space-between;
-align-items:center;
-margin-bottom:15px;
-flex-wrap:wrap;
-gap:10px;
+.user-submit:disabled {
+  opacity: .58;
+  cursor: not-allowed;
+  transform: none;
 }
 
-.crm-table-footer{
-display:flex;
-justify-content:space-between;
-align-items:center;
-margin-top:15px;
-flex-wrap:wrap;
-gap:10px;
+.user-table-wrapper {
+  overflow-x: auto;
+  border: 1px solid var(--user-border);
+  border-radius: 10px;
 }
 
-
-/* =====================================================
-MOBILE RESPONSIVE
-===================================================== */
-
-@media(max-width:768px){
-
-.crm-container{
-flex-direction:column;
-width:100%;
+.user-table-controls {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  justify-content: flex-end;
 }
 
-.crm-left,
-.crm-right{
-width:100%;
-min-width:100%;
+.user-table-footer {
+  margin-top: 10px;
 }
 
-.crm-card{
-width:100%;
-max-width:100%;
+.user-table-controls .dt-top {
+  display: flex !important;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: nowrap;
+  width: 100%;
+  margin: 0 !important;
+  justify-content: flex-end !important;
 }
 
-.crm-table{
-min-width:600px;
+.user-table-footer .dt-bottom {
+  display: flex !important;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 0 !important;
 }
 
-.crm-table-wrapper{
-overflow-x:auto;
+.user-table {
+  width: 100%;
+  min-width: 760px;
+  border-collapse: collapse;
 }
 
+.user-table th,
+.user-table td {
+  padding: 10px;
+  border-bottom: 1px solid #f3e4eb;
+  font-size: .88rem;
+}
+
+.user-table th {
+  background: #fff0f7;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: .3px;
+  font-size: .72rem;
+  font-weight: 800;
+  border-bottom: 2px solid var(--user-border);
+}
+
+.user-table tbody tr:nth-child(even) { background: #fffafd; }
+.user-table tbody tr:hover { background: #fff2f8; }
+
+#usersTableArea .dataTables_length,
+#usersTableArea .dataTables_filter,
+#usersTableArea .dt-buttons {
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+}
+
+#usersTableArea .dataTables_length label,
+#usersTableArea .dataTables_filter label {
+  margin: 0;
+  font-size: .8rem;
+  color: var(--user-muted);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+#usersTableArea .dataTables_length select,
+#usersTableArea .dataTables_filter input {
+  border: 1px solid var(--user-border);
+  border-radius: 8px;
+  min-height: 32px;
+  padding: 5px 9px;
+  font-size: .8rem;
+  background: #fff;
+}
+
+#usersTableArea .dataTables_filter input {
+  min-width: 180px;
+  width: 220px;
+  max-width: 100%;
+}
+
+#usersTableArea .dataTables_info {
+  font-size: .8rem;
+  color: var(--user-muted);
+  margin: 0;
+  float: none !important;
+}
+
+#usersTableArea .dataTables_paginate {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+  float: none !important;
+}
+
+#usersTableArea .dataTables_paginate .paginate_button {
+  border: 1px solid #f2cfde !important;
+  border-radius: 8px !important;
+  padding: 5px 10px !important;
+  font-size: .8rem;
+  color: #be185d !important;
+  background: #fff !important;
+}
+
+#usersTableArea .dataTables_paginate .paginate_button.current {
+  background: var(--user-primary) !important;
+  border-color: var(--user-primary) !important;
+  color: #fff !important;
+}
+
+.user-actions {
+  display: inline-flex;
+  gap: 8px;
+}
+
+.user-btn {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  text-decoration: none;
+}
+
+.user-edit { background: var(--user-primary); }
+.user-edit:hover { background: var(--user-primary-dark); }
+.user-delete { background: #dc3545; }
+.user-delete:hover { background: #b91c1c; }
+
+@media (max-width: 768px) {
+  .user-page-head {
+    align-items: flex-start;
+  }
+  .user-page { grid-template-columns: 1fr; }
+  .user-card-head {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .user-table-controls {
+    width: 100%;
+  }
+  .user-table-controls .dt-top {
+    flex-wrap: wrap;
+  }
+  .user-table-footer .dt-bottom {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  #usersTableArea .dataTables_paginate {
+    margin-left: 0;
+  }
+  #usersTableArea .dataTables_filter input {
+    width: 100% !important;
+    min-width: 0;
+  }
 }
 </style>
-<?php if($success): ?>
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script>
 
+<?php if($success): ?>
+<script>
 Swal.fire({
 icon:"success",
 title:"Success",
-text:"<?= $success ?>",
+text:"<?= addslashes($success) ?>",
 confirmButtonColor:"#e91e63"
 });
-
 </script>
-
 <?php endif; ?>
-<div class="crm-container">
+<?php if($error): ?>
+<script>
+Swal.fire({
+icon:"error",
+title:"Error",
+text:"<?= addslashes($error) ?>",
+confirmButtonColor:"#e91e63"
+});
+</script>
+<?php endif; ?>
 
-<div class="crm-left">
+<div class="user-page-head">
+<h2 class="user-page-title">User Management</h2>
+<div class="user-total-badge">
+<i class="fas fa-users"></i>
+Total Users: <?= count($users) ?>
+</div>
+</div>
 
-<div class="crm-card">
-
-<h3><?= $editUser ? 'Edit User' : 'Add New User' ?></h3>
-
+<div class="user-page">
+<div class="user-left">
+<div class="user-card">
+<div class="user-card-head">
+<h3 class="user-card-title"><?= $editUser ? 'Edit User' : 'Add New User' ?></h3>
+<?php if ($editUser): ?>
+<span class="user-card-badge"><i class="fas fa-pen"></i> Editing #<?= (int)$editUser['id'] ?></span>
+<?php endif; ?>
+</div>
+<div class="user-card-body">
 <form method="POST" id="userForm" novalidate>
-
 <?php if ($editUser): ?>
 <input type="hidden" name="id" value="<?= (int)$editUser['id'] ?>">
 <?php endif; ?>
 
-<div class="crm-form-group">
+<div class="user-form-group">
 <label>Name</label>
 <input type="text" name="name" placeholder="Example: John Smith" required value="<?= htmlspecialchars($editUser['name'] ?? '') ?>">
 </div>
 
-<div class="crm-form-group">
+<div class="user-form-group">
 <label>Email</label>
 <input type="email" name="email" placeholder="Example: john@gmail.com" required value="<?= htmlspecialchars($editUser['email'] ?? '') ?>">
 </div>
 
-<div class="crm-form-group">
+<div class="user-form-group">
 <label>Phone</label>
 <input type="text" name="phone" placeholder="Example: 9876543210" value="<?= htmlspecialchars($editUser['phone'] ?? '') ?>">
 </div>
 
-<div class="crm-form-group">
+<div class="user-form-group">
 <label>Password <?= $editUser ? '(leave blank to keep same)' : '' ?></label>
 <input type="password" name="password" placeholder="Enter password">
 </div>
 
-<div class="crm-form-group">
+<div class="user-form-group">
 <label>Role</label>
 <select name="role_id" required>
-
 <option value="">Select Role</option>
-
 <?php foreach ($roles as $r): ?>
-
 <option value="<?= $r['id'] ?>" <?= (isset($editUser['role_id']) && $editUser['role_id']==$r['id'])?'selected':'' ?>>
-
 <?= htmlspecialchars($r['role_name']) ?>
-
 </option>
-
 <?php endforeach; ?>
-
 </select>
 </div>
 
-<div class="crm-form-group">
+<div class="user-form-group">
 <label>Branch</label>
 <select name="branch_id">
-
 <option value="">All / Not Assigned</option>
-
 <?php foreach ($branches as $b): ?>
-
 <option value="<?= $b['id'] ?>" <?= (isset($editUser['branch_id']) && $editUser['branch_id']==$b['id'])?'selected':'' ?>>
-
 <?= htmlspecialchars($b['branch_name']) ?>
-
 </option>
-
 <?php endforeach; ?>
-
 </select>
 </div>
 
-<div class="crm-form-group">
+<div class="user-form-group">
 <label>Status</label>
-
-<label class="crm-switch">
-<input type="checkbox" name="status" value="1" <?= (!isset($editUser['status']) || $editUser['status']==1)?'checked':'' ?>>
-<span class="crm-slider"></span>
-</label>
-
+<?php $userStatus = (!isset($editUser['status']) || (int)$editUser['status']===1) ? 1 : 0; ?>
+<input type="hidden" name="status" id="userStatusInput" value="<?= $userStatus ?>">
+<div class="user-segment" role="tablist" aria-label="User status">
+<button type="button" class="user-segment-btn<?= $userStatus===1 ? ' active' : '' ?>" data-status="1">Active</button>
+<button type="button" class="user-segment-btn<?= $userStatus===0 ? ' active' : '' ?>" data-status="0">Inactive</button>
+</div>
 </div>
 
-<button type="submit" name="<?= $editUser ? 'update_user':'add_user' ?>" style="width:100%;background:#e91e63;color:#fff;border:none;padding:10px;border-radius:10px;">
-
+<button type="submit" id="saveUserBtn" name="<?= $editUser ? 'update_user':'add_user' ?>" class="user-submit" disabled>
 <?= $editUser ? 'Update User':'Add User' ?>
-
 </button>
-
 </form>
-
+</div>
+</div>
 </div>
 
+<div class="user-right">
+<div class="user-card" id="usersTableArea">
+<div class="user-card-head">
+<div class="user-card-title-wrap">
+<h3 class="user-card-title">Users List</h3>
+<span class="user-card-badge"><i class="fas fa-users"></i> <?= count($users) ?></span>
 </div>
-
-<div class="crm-right">
-
-<div class="crm-card">
-
-<h3>Users List</h3>
-<div class="crm-table-wrapper">
-<table  id="usersTable" class="crm-table">
-
+<div id="userTableControls" class="user-table-controls"></div>
+</div>
+<div class="user-card-body">
+<div class="user-table-wrapper">
+<table id="usersTable" class="user-table">
 <thead>
-
 <tr>
-
 <th>#</th>
-
 <th>Name</th>
-
 <th>Email</th>
-
 <th>Role</th>
-
 <th>Branch</th>
-
 <th>Status</th>
-
 <th>Action</th>
-
 </tr>
-
 </thead>
-
 <tbody>
-
 <?php $i=1; foreach($users as $u): ?>
-
 <tr>
-
 <td><?= $i++ ?></td>
-
 <td><?= htmlspecialchars($u['name']) ?></td>
-
 <td><?= htmlspecialchars($u['email']) ?></td>
-
 <td><?= htmlspecialchars($u['role_name'] ?? '-') ?></td>
-
 <td><?= htmlspecialchars($u['branch_name'] ?? 'All') ?></td>
-
 <td>
-
 <?= ((int)$u['status']==1)
-
 ? '<i class="fas fa-check-circle" style="color:green;"></i>'
-
 : '<i class="fas fa-times-circle" style="color:red;"></i>' ?>
-
 </td>
-
 <td>
-
-<a class="crm-btn crm-edit" title="Edit User"
-
-href="index.php?page=user_add&edit=<?= $u['id'] ?>">
-
+<div class="user-actions">
+<a class="user-btn user-edit" title="Edit User" href="index.php?page=user_add&edit=<?= $u['id'] ?>">
 <i class="fas fa-pen"></i>
-
 </a>
-
 <?php if ($u['id'] != $loggedInUserId): ?>
-
-<a class="crm-btn crm-delete" title="Delete User"
-
-href="index.php?page=user_add&delete=<?= $u['id'] ?>"
-
-onclick="return confirm('Delete this user?')">
-
+<a class="user-btn user-delete" title="Delete User" href="index.php?page=user_add&delete=<?= $u['id'] ?>" onclick="return confirm('Delete this user?')">
 <i class="fas fa-trash"></i>
-
 </a>
-
 <?php endif; ?>
-
+</div>
 </td>
-
 </tr>
-
 <?php endforeach; ?>
-
 </tbody>
-
 </table>
-
 </div>
-
+<div id="userTableFooter" class="user-table-footer"></div>
 </div>
-
 </div>
-
-
+</div>
+</div>
 
 <script>
+document.addEventListener("DOMContentLoaded", function(){
+const statusInput=document.getElementById("userStatusInput");
+const statusBtns=document.querySelectorAll(".user-segment-btn");
+if(statusInput && statusBtns.length){
+statusBtns.forEach(function(btn){
+btn.addEventListener("click",function(){
+statusInput.value=this.getAttribute("data-status") || "1";
+statusBtns.forEach(function(x){ x.classList.remove("active"); });
+this.classList.add("active");
+});
+});
+}
 
-/* ==============================
-FORM VALIDATION
-==============================*/
-
+const saveBtn=document.getElementById("saveUserBtn");
+const reqInputs=[
+document.querySelector("input[name='name']"),
+document.querySelector("input[name='email']"),
+document.querySelector("select[name='role_id']")
+];
+const syncState=function(){
+if(!saveBtn) return;
+const nameOk=!!(reqInputs[0] && reqInputs[0].value.trim()!=="");
+const emailOk=!!(reqInputs[1] && reqInputs[1].value.trim()!=="");
+const roleOk=!!(reqInputs[2] && reqInputs[2].value!=="");
+saveBtn.disabled=!(nameOk && emailOk && roleOk);
+};
+reqInputs.forEach(function(inp){
+if(inp){ inp.addEventListener("input",syncState); inp.addEventListener("change",syncState); }
+});
+syncState();
+});
+</script>
+<script>
 document.getElementById("userForm").addEventListener("submit", function(e){
-
 let name  = document.querySelector("input[name='name']").value.trim();
 let email = document.querySelector("input[name='email']").value.trim();
 let role  = document.querySelector("select[name='role_id']").value;
-
 if(name === "" || email === "" || role === ""){
-
 e.preventDefault();
-
 Swal.fire({
 icon: "warning",
 title: "Missing Fields",
 text: "Name, Email and Role are required.",
 confirmButtonColor:"#e91e63"
 });
-
 }
-
 });
-
 </script>
 <script>
 document.addEventListener("DOMContentLoaded", function(){
-
 crmDataTable('#usersTable',{
 pageLength:5,
 lengthMenu:[5,10,20,50],
 ordering:true,
-order:[[1,'asc']]
+order:[[1,'asc']],
+searchPlaceholder:"Search users...",
+dom:"<'dt-top'lfB>rt<'dt-bottom'ip>"
 });
 
+setTimeout(function () {
+const wrapper=document.querySelector('#usersTable_wrapper');
+const controlsTarget=document.getElementById('userTableControls');
+const footerTarget=document.getElementById('userTableFooter');
+if(!wrapper) return;
+const top=wrapper.querySelector('.dt-top');
+const bottom=wrapper.querySelector('.dt-bottom');
+if(top && controlsTarget){ controlsTarget.appendChild(top); }
+if(bottom && footerTarget){ footerTarget.appendChild(bottom); }
+},120);
 });
-
 </script>
