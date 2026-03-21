@@ -592,21 +592,22 @@ $final_fee         = $registration['final_fee'] ?? '0.00';
   --reg-border:#f1d7e2;
   --reg-text:#212529;
   --reg-muted:#6c757d;
-  --reg-card-shadow:0 12px 32px rgba(17,17,26,.08);
-  --reg-radius:18px;
+  --reg-card-shadow:0 8px 20px rgba(0,0,0,.05);
+  --reg-radius:16px;
 }
 
 .reg-page{
   padding:6px 0 14px;
+  font-size:14px;
 }
 
 .reg-hero{
-  background:linear-gradient(135deg,#fff7fb 0%,#fff 45%,#f8f9ff 100%);
+  background:#fff;
   border:1px solid var(--reg-border);
-  border-radius:24px;
-  padding:22px 24px;
-  margin-bottom:20px;
-  box-shadow:0 12px 30px rgba(233,30,99,.08);
+  border-radius:16px;
+  padding:16px 18px;
+  margin-bottom:14px;
+  box-shadow:var(--reg-card-shadow);
 }
 
 .reg-hero-top{
@@ -619,16 +620,16 @@ $final_fee         = $registration['final_fee'] ?? '0.00';
 
 .reg-hero-title{
   margin:0;
-  font-size:1.65rem;
+  font-size:1.35rem;
   font-weight:800;
   color:var(--reg-text);
   letter-spacing:.2px;
 }
 
 .reg-hero-subtitle{
-  margin:8px 0 0;
+  margin:6px 0 0;
   color:var(--reg-muted);
-  font-size:.95rem;
+  font-size:.9rem;
   max-width:760px;
 }
 
@@ -648,18 +649,18 @@ $final_fee         = $registration['final_fee'] ?? '0.00';
   background:#fff;
   border:1px solid #f2d8e4;
   color:#444;
-  font-size:.85rem;
+  font-size:.8rem;
   font-weight:600;
-  box-shadow:0 6px 14px rgba(0,0,0,.04);
+  box-shadow:none;
 }
 
 .reg-side-stat{
   min-width:180px;
   background:#fff;
   border:1px solid #f2d8e4;
-  border-radius:18px;
-  padding:16px 18px;
-  box-shadow:0 8px 18px rgba(0,0,0,.04);
+  border-radius:14px;
+  padding:12px 14px;
+  box-shadow:none;
 }
 
 .reg-side-stat .small{
@@ -682,13 +683,13 @@ $final_fee         = $registration['final_fee'] ?? '0.00';
 .reg-layout{
   display:grid;
   grid-template-columns:330px 1fr;
-  gap:18px;
+  gap:14px;
   align-items:start;
 }
 
 .reg-card{
   background:#fff;
-  border:none;
+  border:1px solid var(--reg-border);
   border-radius:var(--reg-radius);
   margin-bottom:16px;
   box-shadow:var(--reg-card-shadow);
@@ -696,12 +697,12 @@ $final_fee         = $registration['final_fee'] ?? '0.00';
 }
 
 .reg-head{
-  padding:15px 18px;
+  padding:12px 14px;
   font-weight:800;
-  font-size:1rem;
-  color:#fff;
-  border-bottom:none;
-  background:linear-gradient(135deg,var(--reg-primary) 0%,#ff5f8f 100%);
+  font-size:.95rem;
+  color:#be185d;
+  border-bottom:1px solid var(--reg-border);
+  background:var(--reg-soft);
   display:flex;
   align-items:center;
   justify-content:space-between;
@@ -710,9 +711,96 @@ $final_fee         = $registration['final_fee'] ?? '0.00';
 }
 
 .reg-head small{
-  font-weight:500;
-  opacity:.95;
+  font-weight:600;
+  color:#9d174d;
   font-size:.82rem;
+}
+
+/* Match registrations/add.php style header + step pills */
+.reg-main-header{
+  padding:14px 16px;
+  background:var(--reg-soft);
+  border-bottom:1px solid var(--reg-border);
+}
+.reg-main-header h2{
+  margin:0;
+  color:#be185d;
+  font-weight:800;
+  font-size:22px;
+  line-height:1.15;
+}
+.reg-main-header p{
+  margin:6px 0 0;
+  color:#6b7280;
+  font-size:14px;
+}
+.reg-progress{
+  padding:12px;
+  border-bottom:1px solid var(--reg-border);
+  background:#fff;
+}
+.reg-steps-container{
+  display:grid;
+  grid-template-columns:repeat(6,minmax(0,1fr));
+  gap:10px;
+}
+.reg-step-item{
+  min-width:0;
+  width:100%;
+  border:1px solid #f3d8e5;
+  border-radius:14px;
+  background:#fff;
+  padding:10px 12px;
+  display:flex;
+  align-items:center;
+  justify-content:flex-start;
+  gap:10px;
+  text-align:left;
+}
+.reg-step-circle{
+  width:24px;
+  height:24px;
+  min-width:24px;
+  flex:0 0 24px;
+  border-radius:999px;
+  background:#ffe4ef;
+  color:#c2185b;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:12px;
+  font-weight:800;
+}
+.reg-step-label{
+  font-size:12px;
+  font-weight:700;
+  color:#374151;
+  line-height:1.1;
+  white-space:nowrap;
+}
+.reg-step-item.active{
+  border-color:#e91e63;
+  background:#fff6fb;
+}
+.reg-step-item.active .reg-step-label{
+  color:#be185d;
+}
+.reg-step-panel{
+  display:none;
+}
+.reg-step-panel.active{
+  display:block;
+}
+.reg-step-nav{
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+  margin-top:12px;
+}
+.reg-step-nav .right{
+  margin-left:auto;
+  display:flex;
+  gap:10px;
 }
 
 .reg-body{
@@ -787,7 +875,7 @@ $final_fee         = $registration['final_fee'] ?? '0.00';
 }
 
 .reg-section-title{
-  font-size:1rem;
+  font-size:.95rem;
   font-weight:800;
   color:#222;
   margin:0 0 14px;
@@ -831,7 +919,7 @@ $final_fee         = $registration['final_fee'] ?? '0.00';
 .reg-textarea{
   width:100%;
   padding:11px 13px;
-  border:1px solid #dedede;
+  border:1px solid #e5e7eb;
   border-radius:12px;
   outline:none;
   background:#fff;
@@ -862,6 +950,45 @@ $final_fee         = $registration['final_fee'] ?? '0.00';
 .reg-textarea{
   resize:vertical;
   min-height:96px;
+}
+
+.reg-gender-group{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+}
+
+.reg-gender-option{
+  position:relative;
+  margin:0;
+}
+
+.reg-gender-option input{
+  position:absolute;
+  opacity:0;
+  pointer-events:none;
+}
+
+.reg-gender-pill{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:10px 14px;
+  border-radius:999px;
+  border:1px solid #e5e7eb;
+  background:#fff;
+  color:#374151;
+  font-size:13px;
+  font-weight:700;
+  cursor:pointer;
+  transition:all .2s ease;
+}
+
+.reg-gender-option input:checked + .reg-gender-pill{
+  border-color:#e91e63;
+  background:#fff0f7;
+  color:#be185d;
+  box-shadow:0 0 0 3px rgba(233, 30, 99, .12);
 }
 
 .reg-group-card{
@@ -925,7 +1052,7 @@ $final_fee         = $registration['final_fee'] ?? '0.00';
   border-radius:12px;
   padding:11px 18px;
   font-weight:700;
-  font-size:.92rem;
+  font-size:.86rem;
   transition:all .2s ease;
   text-decoration:none !important;
   display:inline-flex;
@@ -935,9 +1062,9 @@ $final_fee         = $registration['final_fee'] ?? '0.00';
 }
 
 .btn-reg-primary{
-  background:linear-gradient(135deg,var(--reg-primary) 0%,#ff5f8f 100%);
+  background:linear-gradient(135deg,#ff4d8d 0%,var(--reg-primary) 100%);
   color:#fff;
-  box-shadow:0 10px 20px rgba(233,30,99,.18);
+  box-shadow:0 10px 20px rgba(233,30,99,.24);
 }
 
 .btn-reg-primary:hover{
@@ -946,13 +1073,15 @@ $final_fee         = $registration['final_fee'] ?? '0.00';
 }
 
 .btn-reg-warning{
-  background:linear-gradient(135deg,#ffb300 0%,#ffca28 100%);
-  color:#4a3b00;
-  box-shadow:0 10px 20px rgba(255,179,0,.18);
+  background:#f3f4f6;
+  color:#374151;
+  border:1px solid #e5e7eb;
+  box-shadow:none;
 }
 
 .btn-reg-warning:hover{
-  color:#4a3b00;
+  color:#111827;
+  background:#e5e7eb;
   transform:translateY(-1px);
 }
 
@@ -985,6 +1114,9 @@ $final_fee         = $registration['final_fee'] ?? '0.00';
   .reg-fee-strip{
     grid-template-columns:1fr;
   }
+  .reg-steps-container{
+    grid-template-columns:repeat(3,minmax(0,1fr));
+  }
 }
 
 @media (max-width: 576px){
@@ -1008,6 +1140,12 @@ $final_fee         = $registration['final_fee'] ?? '0.00';
   .btn-reg{
     width:100%;
     justify-content:center;
+  }
+  .reg-steps-container{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+  .reg-main-header h2{
+    font-size:20px;
   }
 }
 </style>
@@ -1048,6 +1186,28 @@ $final_fee         = $registration['final_fee'] ?? '0.00';
       </div>
     </div>
   </div>
+
+  <script>
+  // SweetAlert safety shim (same behavior style as registrations/add.php)
+  (function () {
+    if (window.Swal && typeof window.Swal.fire === 'function') return;
+    window.Swal = window.Swal || {};
+    window.Swal.fire = function (opts) {
+      opts = opts || {};
+      return new Promise(function(resolve){
+        var title = opts.title || 'Notice';
+        var text = opts.text || '';
+        if (opts.showCancelButton) {
+          var ok = window.confirm(title + (text ? '\n' + text : ''));
+          resolve({ isConfirmed: ok });
+        } else {
+          window.alert(title + (text ? '\n' + text : ''));
+          resolve({ isConfirmed: true });
+        }
+      });
+    };
+  })();
+  </script>
 
   <?php if ($success): ?>
   <script>
@@ -1136,9 +1296,19 @@ $final_fee         = $registration['final_fee'] ?? '0.00';
 
     <div>
       <div class="reg-card">
-        <div class="reg-head">
-          <span><i class="fas fa-edit mr-2"></i>Registration Form</span>
-          <small>Fill the required student and course details</small>
+        <div class="reg-main-header">
+          <h2>Registration Form</h2>
+          <p>Fill in the details below to complete the registration</p>
+        </div>
+        <div class="reg-progress">
+          <div class="reg-steps-container">
+            <div class="reg-step-item active" data-step="1"><div class="reg-step-circle">1</div><div class="reg-step-label">Basic</div></div>
+            <div class="reg-step-item" data-step="2"><div class="reg-step-circle">2</div><div class="reg-step-label">Personal</div></div>
+            <div class="reg-step-item" data-step="3"><div class="reg-step-circle">3</div><div class="reg-step-label">Academic</div></div>
+            <div class="reg-step-item" data-step="4"><div class="reg-step-circle">4</div><div class="reg-step-label">Parent</div></div>
+            <div class="reg-step-item" data-step="5"><div class="reg-step-circle">5</div><div class="reg-step-label">Fee</div></div>
+            <div class="reg-step-item" data-step="6"><div class="reg-step-circle">6</div><div class="reg-step-label">Notes</div></div>
+          </div>
         </div>
 
         <div class="reg-body">
@@ -1150,7 +1320,7 @@ $final_fee         = $registration['final_fee'] ?? '0.00';
             <input type="hidden" name="reg_type" value="<?= h($regType) ?>">
             <input type="hidden" name="registration_status" id="registration_status_input" value="draft">
 
-            <div class="reg-group-card">
+            <div class="reg-group-card reg-step-panel active" id="regStep1" data-step="1">
               <h4 class="reg-section-title">
                 <i class="fas fa-briefcase"></i> Registration Details
               </h4>
@@ -1193,11 +1363,17 @@ $final_fee         = $registration['final_fee'] ?? '0.00';
                   <input class="reg-input" type="text" name="batch_name" value="<?= h($batch_name) ?>" placeholder="Enter batch name">
                 </div>
               </div>
+              <div class="reg-step-nav">
+                <span></span>
+                <div class="right">
+                  <button type="button" class="btn-reg btn-reg-primary" onclick="goRegStep(2)">Next <i class="fas fa-arrow-right"></i></button>
+                </div>
+              </div>
             </div>
 
-            <div class="reg-group-card">
+            <div class="reg-group-card reg-step-panel" id="regStep2" data-step="2">
               <h4 class="reg-section-title">
-                <i class="fas fa-user"></i> Student Information
+                <i class="fas fa-user"></i> Personal Information
               </h4>
 
               <div class="convert-grid">
@@ -1218,12 +1394,20 @@ $final_fee         = $registration['final_fee'] ?? '0.00';
 
                 <div class="reg-field">
                   <label class="reg-label">Gender</label>
-                  <select class="reg-select" name="gender">
-                    <option value="">-- Select --</option>
-                    <option value="male" <?= $gender==='male'?'selected':''; ?>>Male</option>
-                    <option value="female" <?= $gender==='female'?'selected':''; ?>>Female</option>
-                    <option value="other" <?= $gender==='other'?'selected':''; ?>>Other</option>
-                  </select>
+                  <div class="reg-gender-group">
+                    <label class="reg-gender-option">
+                      <input type="radio" name="gender" value="male" <?= strtolower((string)$gender)==='male'?'checked':''; ?>>
+                      <span class="reg-gender-pill"><i class="fas fa-mars"></i> Male</span>
+                    </label>
+                    <label class="reg-gender-option">
+                      <input type="radio" name="gender" value="female" <?= strtolower((string)$gender)==='female'?'checked':''; ?>>
+                      <span class="reg-gender-pill"><i class="fas fa-venus"></i> Female</span>
+                    </label>
+                    <label class="reg-gender-option">
+                      <input type="radio" name="gender" value="other" <?= strtolower((string)$gender)==='other'?'checked':''; ?>>
+                      <span class="reg-gender-pill"><i class="fas fa-genderless"></i> Other</span>
+                    </label>
+                  </div>
                 </div>
 
                 <div class="reg-field">
@@ -1231,6 +1415,25 @@ $final_fee         = $registration['final_fee'] ?? '0.00';
                   <input class="reg-input" type="date" name="dob" value="<?= h($dob) ?>">
                 </div>
 
+                <div class="full reg-field">
+                  <label class="reg-label">Address</label>
+                  <textarea class="reg-textarea" name="address" rows="3" placeholder="Enter complete address"><?= h($address) ?></textarea>
+                </div>
+              </div>
+              <div class="reg-step-nav">
+                <button type="button" class="btn-reg btn-reg-light" onclick="goRegStep(1)"><i class="fas fa-arrow-left"></i> Back</button>
+                <div class="right">
+                  <button type="button" class="btn-reg btn-reg-primary" onclick="validateStep2AndNext()">Next <i class="fas fa-arrow-right"></i></button>
+                </div>
+              </div>
+            </div>
+
+            <div class="reg-group-card reg-step-panel" id="regStep3" data-step="3">
+              <h4 class="reg-section-title">
+                <i class="fas fa-user-graduate"></i> Academic Information
+              </h4>
+
+              <div class="convert-grid">
                 <div class="reg-field">
                   <label class="reg-label">Qualification</label>
                   <input class="reg-input" type="text" name="qualification" value="<?= h($qualification) ?>" placeholder="Enter qualification">
@@ -1245,15 +1448,16 @@ $final_fee         = $registration['final_fee'] ?? '0.00';
                   <label class="reg-label">Year of Passout</label>
                   <input class="reg-input" type="text" name="year_of_passout" value="<?= h($year_of_passout) ?>" placeholder="Enter year of passout">
                 </div>
-
-                <div class="full reg-field">
-                  <label class="reg-label">Address</label>
-                  <textarea class="reg-textarea" name="address" rows="3" placeholder="Enter complete address"><?= h($address) ?></textarea>
+              </div>
+              <div class="reg-step-nav">
+                <button type="button" class="btn-reg btn-reg-light" onclick="goRegStep(2)"><i class="fas fa-arrow-left"></i> Back</button>
+                <div class="right">
+                  <button type="button" class="btn-reg btn-reg-primary" onclick="goRegStep(4)">Next <i class="fas fa-arrow-right"></i></button>
                 </div>
               </div>
             </div>
 
-            <div class="reg-group-card">
+            <div class="reg-group-card reg-step-panel" id="regStep4" data-step="4">
               <h4 class="reg-section-title">
                 <i class="fas fa-users"></i> Parent / Emergency Information
               </h4>
@@ -1284,9 +1488,15 @@ $final_fee         = $registration['final_fee'] ?? '0.00';
                   <input class="reg-input" type="text" name="aadhaar_no" value="<?= h($aadhaar_no) ?>" placeholder="Enter Aadhaar number">
                 </div>
               </div>
+              <div class="reg-step-nav">
+                <button type="button" class="btn-reg btn-reg-light" onclick="goRegStep(3)"><i class="fas fa-arrow-left"></i> Back</button>
+                <div class="right">
+                  <button type="button" class="btn-reg btn-reg-primary" onclick="goRegStep(5)">Next <i class="fas fa-arrow-right"></i></button>
+                </div>
+              </div>
             </div>
 
-            <div class="reg-group-card">
+            <div class="reg-group-card reg-step-panel" id="regStep5" data-step="5">
               <h4 class="reg-section-title">
                 <i class="fas fa-rupee-sign"></i> Fee Information
               </h4>
@@ -1325,9 +1535,15 @@ $final_fee         = $registration['final_fee'] ?? '0.00';
                   <div class="fee-value">₹ <span id="previewFinalFee"><?= h(number_format((float)$final_fee, 2, '.', '')) ?></span></div>
                 </div>
               </div>
+              <div class="reg-step-nav">
+                <button type="button" class="btn-reg btn-reg-light" onclick="goRegStep(4)"><i class="fas fa-arrow-left"></i> Back</button>
+                <div class="right">
+                  <button type="button" class="btn-reg btn-reg-primary" onclick="goRegStep(6)">Next <i class="fas fa-arrow-right"></i></button>
+                </div>
+              </div>
             </div>
 
-            <div class="reg-group-card">
+            <div class="reg-group-card reg-step-panel" id="regStep6" data-step="6">
               <h4 class="reg-section-title">
                 <i class="fas fa-sticky-note"></i> Notes & Remarks
               </h4>
@@ -1343,20 +1559,23 @@ $final_fee         = $registration['final_fee'] ?? '0.00';
                   <textarea class="reg-textarea" name="remarks" rows="3" placeholder="Enter profile remarks"><?= h($remarks) ?></textarea>
                 </div>
               </div>
-            </div>
+              <div class="reg-actions">
+                <button type="button" class="btn-reg btn-reg-light" onclick="goRegStep(5)">
+                  <i class="fas fa-arrow-left"></i> Back
+                </button>
 
-            <div class="reg-actions">
-              <button type="button" class="btn-reg btn-reg-primary" onclick="submitRegistrationForm('active')">
-                <i class="fas fa-check-circle"></i> Confirm Registration
-              </button>
+                <button type="button" class="btn-reg btn-reg-primary" onclick="submitRegistrationForm('active')">
+                  <i class="fas fa-check-circle"></i> Confirm Registration
+                </button>
 
-              <button type="button" class="btn-reg btn-reg-warning" onclick="submitRegistrationForm('draft')">
-                <i class="fas fa-save"></i> Save for Later
-              </button>
+                <button type="button" class="btn-reg btn-reg-warning" onclick="submitRegistrationForm('draft')">
+                  <i class="fas fa-save"></i> Save for Later
+                </button>
 
-              <a href="index.php?page=enquiries/followups&ui=list&tab=today" class="btn-reg btn-reg-light">
-                <i class="fas fa-times-circle"></i> Cancel
-              </a>
+                <a href="index.php?page=enquiries/followups&ui=list&tab=today" class="btn-reg btn-reg-light">
+                  <i class="fas fa-times-circle"></i> Cancel
+                </a>
+              </div>
             </div>
 
           </form>
@@ -1369,6 +1588,69 @@ $final_fee         = $registration['final_fee'] ?? '0.00';
 
 <script>
 (function(){
+  let currentRegStep = 1;
+  const totalRegSteps = 6;
+
+  function setRegStep(step){
+    const target = Number(step);
+    if (!target || target < 1 || target > totalRegSteps) return;
+
+    currentRegStep = target;
+
+    document.querySelectorAll('.reg-step-panel').forEach(panel => {
+      panel.classList.remove('active');
+    });
+    document.querySelectorAll('.reg-step-item').forEach(item => {
+      item.classList.remove('active');
+    });
+
+    document.getElementById('regStep' + target)?.classList.add('active');
+    document.querySelector('.reg-step-item[data-step="' + target + '"]')?.classList.add('active');
+  }
+
+  window.goRegStep = function(step){
+    setRegStep(step);
+  };
+
+  document.querySelectorAll('.reg-step-item[data-step]').forEach(item => {
+    item.addEventListener('click', function(){
+      const step = Number(this.getAttribute('data-step'));
+      if (!step) return;
+      if (step <= currentRegStep) {
+        setRegStep(step);
+      } else {
+        Swal.fire({
+          icon: 'warning',
+          title: 'Cannot Skip Steps',
+          text: 'Please complete the current step first.',
+          confirmButtonColor: '#e91e63'
+        });
+      }
+    });
+  });
+
+  setRegStep(1);
+
+  // Input sanitizers similar to registrations/add.php
+  const phoneFields = [
+    document.querySelector('input[name="phone"]'),
+    document.querySelector('input[name="parent_phone"]'),
+    document.querySelector('input[name="emergency_contact"]')
+  ].filter(Boolean);
+
+  phoneFields.forEach(function(el){
+    el.addEventListener('input', function(){
+      this.value = this.value.replace(/[^0-9]/g, '').substring(0, 10);
+    });
+  });
+
+  const aadhaarField = document.querySelector('input[name="aadhaar_no"]');
+  if (aadhaarField) {
+    aadhaarField.addEventListener('input', function(){
+      this.value = this.value.replace(/[^0-9]/g, '').substring(0, 12);
+    });
+  }
+
   const total = document.querySelector('input[name="total_fee"]');
   const discount = document.querySelector('input[name="discount_amount"]');
   const finalFee = document.querySelector('input[name="final_fee"]');
@@ -1414,7 +1696,62 @@ $final_fee         = $registration['final_fee'] ?? '0.00';
   refreshPreviewOnly();
 })();
 
+function validateStep2AndNext() {
+  const name = (document.querySelector('input[name="student_name"]')?.value || '').trim();
+  const phone = (document.querySelector('input[name="phone"]')?.value || '').trim();
+  const email = (document.querySelector('input[name="email"]')?.value || '').trim();
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+  if (!name) {
+    Swal.fire({ icon:'warning', title:'Required Field', text:'Please enter student name', confirmButtonColor:'#e91e63' });
+    return false;
+  }
+  if (!phone || phone.length !== 10 || !/^\d+$/.test(phone)) {
+    Swal.fire({ icon:'warning', title:'Invalid Phone', text:'Please enter a valid 10-digit phone number', confirmButtonColor:'#e91e63' });
+    return false;
+  }
+  if (!email || !emailRegex.test(email)) {
+    Swal.fire({ icon:'warning', title:'Invalid Email', text:'Please enter a valid email address', confirmButtonColor:'#e91e63' });
+    return false;
+  }
+
+  goRegStep(3);
+  return true;
+}
+
+function validateCoreBeforeSubmit() {
+  const name = (document.querySelector('input[name="student_name"]')?.value || '').trim();
+  const phone = (document.querySelector('input[name="phone"]')?.value || '').trim();
+  const email = (document.querySelector('input[name="email"]')?.value || '').trim();
+  const aadhaar = (document.querySelector('input[name="aadhaar_no"]')?.value || '').trim();
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+  if (!name) {
+    Swal.fire({ icon:'warning', title:'Required Field', text:'Please enter student name', confirmButtonColor:'#e91e63' });
+    goRegStep(2);
+    return false;
+  }
+  if (!phone || phone.length !== 10 || !/^\d+$/.test(phone)) {
+    Swal.fire({ icon:'warning', title:'Invalid Phone', text:'Please enter a valid 10-digit phone number', confirmButtonColor:'#e91e63' });
+    goRegStep(2);
+    return false;
+  }
+  if (!email || !emailRegex.test(email)) {
+    Swal.fire({ icon:'warning', title:'Invalid Email', text:'Please enter a valid email address', confirmButtonColor:'#e91e63' });
+    goRegStep(2);
+    return false;
+  }
+  if (aadhaar !== '' && !/^\d{12}$/.test(aadhaar)) {
+    Swal.fire({ icon:'warning', title:'Invalid Aadhaar', text:'Aadhaar number must be exactly 12 digits.', confirmButtonColor:'#e91e63' });
+    goRegStep(4);
+    return false;
+  }
+
+  return true;
+}
+
 function submitRegistrationForm(status){
+  if (!validateCoreBeforeSubmit()) return;
   document.getElementById('registration_status_input').value = status;
 
   Swal.fire({
