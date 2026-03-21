@@ -151,197 +151,478 @@ exit;
 ?>
 
 <style>
-
-/* ===== Permission Table ===== */
-
-.perm-table{
-width:100%;
-border-collapse:collapse;
-background:#fff;
-font-size:14px;
+:root {
+  --perm-primary: #e91e63;
+  --perm-primary-dark: #c2185b;
+  --perm-primary-soft: #fff3f8;
+  --perm-border: #f1d6e3;
+  --perm-text: #374151;
+  --perm-muted: #6b7280;
+  --perm-bg: #fff7fb;
+  --perm-shadow: 0 8px 18px rgba(0, 0, 0, .06);
 }
 
-.perm-table th{
-background:#fce4ec;
-color:#e91e63;
-padding:12px;
-border:1px solid #f3c6d3;
+.perm-page-head {
+  margin-bottom: 12px;
 }
 
-.perm-table td{
-padding:12px;
-border:1px solid #f3c6d3;
+.perm-page-title {
+  margin: 0;
+  color: #be185d;
+  font-weight: 800;
+  letter-spacing: .2px;
 }
 
-.perm-parent-row{
-background:#fff6fa;
+.perm-layout {
+  display: grid;
+  grid-template-columns: minmax(260px, 320px) minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
 }
 
-.perm-menu-name{
-font-weight:600;
+.perm-card {
+  border: 1px solid var(--perm-border);
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: var(--perm-shadow);
+  overflow: hidden;
+  margin-bottom: 14px;
 }
 
-.perm-menu-slug{
-font-size:12px;
-color:#777;
+.perm-sidebar-card {
+  position: sticky;
+  top: 14px;
 }
 
-.perm-child{
-padding-left:30px;
+.perm-card-head {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--perm-border);
+  background: var(--perm-primary-soft);
+  color: var(--perm-primary-dark);
+  font-weight: 700;
 }
 
-.perm-center{
-text-align:center;
+.perm-main-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 
-/* ===== Toggle Switch ===== */
-
-.perm-switch{
-position:relative;
-display:inline-block;
-width:42px;
-height:22px;
+.perm-main-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 800;
 }
 
-.perm-switch input{
-opacity:0;
-width:0;
-height:0;
+.perm-main-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
-.perm-slider{
-position:absolute;
-cursor:pointer;
-top:0;
-left:0;
-right:0;
-bottom:0;
-background:#d9d9d9;
-border-radius:30px;
-transition:.25s;
+.perm-role-chip,
+.perm-count-badge,
+.perm-unsaved,
+.perm-saved {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 5px 10px;
+  font-size: .76rem;
+  font-weight: 700;
+  border: 1px solid #f3d8e5;
+  background: #fff;
+  color: #7c2d5a;
 }
 
-.perm-slider:before{
-content:"";
-position:absolute;
-height:18px;
-width:18px;
-left:2px;
-top:2px;
-background:white;
-border-radius:50%;
-transition:.25s;
-box-shadow:0 2px 5px rgba(0,0,0,.2);
+.perm-count-badge {
+  color: #be185d;
 }
 
-.perm-switch input:checked + .perm-slider{
-background:#e91e63;
+.perm-unsaved {
+  display: none;
+  color: #9a3412;
+  border-color: #fdba74;
+  background: #fff7ed;
 }
 
-.perm-switch input:checked + .perm-slider:before{
-transform:translateX(20px);
+.perm-unsaved.show {
+  display: inline-flex;
 }
 
-/* ===== Buttons ===== */
-
-.permission-actions{
-display:flex;
-gap:10px;
-flex-wrap:wrap;
-align-items:center;
-margin-bottom:15px;
+.perm-saved {
+  color: #166534;
+  border-color: #bbf7d0;
+  background: #f0fdf4;
 }
 
-.permission-actions button{
-width:auto !important;
-display:inline-block;
-padding:8px 16px;
-border:none;
-border-radius:6px;
-cursor:pointer;
-font-size:13px;
-white-space:nowrap;
+.perm-card-body {
+  padding: 14px;
 }
 
-.btn-primary{
-background:#e91e63;
-color:#fff;
+.perm-role-select {
+  width: 100%;
+  max-width: 360px;
+  min-height: 40px;
+  border: 1px solid var(--perm-border);
+  border-radius: 10px;
+  padding: 8px 10px;
+  font-size: .9rem;
+  color: var(--perm-text);
+  outline: none;
+  background: #fff;
 }
 
-.btn{
-background:#eee;
+.perm-role-select:focus {
+  border-color: var(--perm-primary);
+  box-shadow: 0 0 0 3px rgba(233, 30, 99, .12);
 }
 
-/* ===== Responsive ===== */
-
-@media(max-width:768px){
-
-.perm-table th,
-.perm-table td{
-font-size:12px;
-padding:8px;
+.perm-toolbar-wrap {
+  overflow-x: auto;
+  padding-bottom: 4px;
 }
 
-.perm-menu-slug{
-display:none;
+.perm-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: nowrap;
+  margin-bottom: 12px;
+  overflow: visible;
+  min-width: max-content;
 }
 
-}
-.permission-page button{
-    padding:10px;
-}
-
-
-/* ===============================
-   MODERN PRIMARY BUTTON
-================================ */
-
-.btn-primary{
-display:inline-flex;
-align-items:center;
-justify-content:center;
-gap:8px;
-
-background:linear-gradient(135deg,#ff4d8d,#e91e63);
-color:#fff;
-
-padding:10px 18px;
-border:none;
-border-radius:10px;
-
-font-size:14px;
-font-weight:600;
-
-cursor:pointer;
-
-transition:all .25s ease;
-box-shadow:0 6px 14px rgba(233,30,99,0.25);
+.perm-toolbar-left {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  flex: 1 1 auto;
 }
 
-/* Hover effect */
-
-.btn-primary:hover{
-background:linear-gradient(135deg,#ff3b82,#d81b60);
-transform:translateY(-2px);
-box-shadow:0 10px 20px rgba(233,30,99,0.35);
+.perm-toolbar-right {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
 }
 
-/* Click effect */
+.perm-search,
+.perm-filter {
+  min-height: 36px;
+  border: 1px solid var(--perm-border);
+  border-radius: 9px;
+  padding: 7px 10px;
+  font-size: 13px;
+  background: #fff;
+  color: var(--perm-text);
+}
 
-.btn-primary:active{
-transform:scale(.96);
-box-shadow:0 4px 10px rgba(233,30,99,0.25);
+.perm-search {
+  min-width: 210px;
+  flex: 1;
+}
+
+.perm-filter {
+  min-width: 130px;
+}
+
+.perm-toolbar-right button {
+  border: none;
+  border-radius: 10px;
+  min-height: 36px;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all .2s ease;
+}
+
+.perm-btn-primary {
+  background: linear-gradient(135deg, #ff4d8d, var(--perm-primary));
+  color: #fff;
+  box-shadow: 0 6px 14px rgba(233, 30, 99, .25);
+}
+
+.perm-btn-primary:hover {
+  background: linear-gradient(135deg, #ff3b82, #d81b60);
+  transform: translateY(-1px);
+}
+
+.perm-btn-primary:active {
+  transform: scale(.98);
+}
+
+.perm-btn {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.perm-btn:hover {
+  background: #e5e7eb;
+}
+
+.perm-table-wrap {
+  overflow: auto;
+  border: 1px solid var(--perm-border);
+  border-radius: 10px;
+  max-height: 62vh;
+}
+
+.perm-table {
+  width: 100%;
+  min-width: 720px;
+  border-collapse: collapse;
+  background: #fff;
+  font-size: 14px;
+}
+
+.perm-table th {
+  background: #fff0f7;
+  color: var(--perm-primary-dark);
+  padding: var(--perm-cell-pad, 11px);
+  border-bottom: 2px solid var(--perm-border);
+  text-transform: uppercase;
+  font-size: .73rem;
+  letter-spacing: .4px;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.perm-table td {
+  padding: var(--perm-cell-pad, 11px);
+  border-bottom: 1px solid #f7e2eb;
+}
+
+.perm-table tbody tr:nth-child(even) {
+  background: #fffafd;
+}
+
+.perm-table tbody tr:hover {
+  background: #fff2f8;
+}
+
+.perm-parent-row {
+  background: #fff4fa !important;
+}
+
+.perm-child-row {
+  background: #fff !important;
+}
+
+.perm-menu-name {
+  font-weight: 700;
+  color: var(--perm-text);
+}
+
+.perm-menu-slug {
+  font-size: 12px;
+  color: var(--perm-muted);
+}
+
+.perm-menu-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.perm-row-type {
+  display: inline-flex;
+  align-self: flex-start;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .3px;
+  text-transform: uppercase;
+  margin-bottom: 3px;
+}
+
+.perm-parent-cell .perm-row-type {
+  background: #fde4ef;
+  color: #be185d;
+  border: 1px solid #f8cfe1;
+}
+
+.perm-child-cell .perm-row-type {
+  background: #f6f7fb;
+  color: #4b5563;
+  border: 1px solid #e5e7eb;
+}
+
+.perm-child {
+  padding-left: 40px !important;
+  position: relative;
+}
+
+.perm-child::before {
+  content: "";
+  position: absolute;
+  left: 20px;
+  top: 16px;
+  bottom: 16px;
+  width: 2px;
+  background: #f4d6e4;
+  border-radius: 2px;
+}
+
+.perm-center {
+  text-align: center;
+}
+
+.perm-switch {
+  position: relative;
+  display: inline-block;
+  width: 42px;
+  height: 22px;
+}
+
+.perm-switch.disabled {
+  opacity: .45;
+}
+
+.perm-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.perm-slider {
+  position: absolute;
+  cursor: pointer;
+  inset: 0;
+  background: #d1d5db;
+  border-radius: 30px;
+  transition: .25s;
+}
+
+.perm-slider:before {
+  content: "";
+  position: absolute;
+  height: 18px;
+  width: 18px;
+  left: 2px;
+  top: 2px;
+  background: #fff;
+  border-radius: 50%;
+  transition: .25s;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, .2);
+}
+
+.perm-switch input:checked + .perm-slider {
+  background: var(--perm-primary);
+}
+
+.perm-switch input:checked + .perm-slider:before {
+  transform: translateX(20px);
+}
+
+.permission-page {
+  margin-top: 14px;
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 12px;
+  border-top: 1px solid #f2d7e4;
+  position: sticky;
+  bottom: 0;
+  background: #fff;
+  z-index: 3;
+}
+
+.permission-page button {
+  padding: 10px 16px;
+}
+
+.permission-page .perm-btn-primary {
+  min-height: 42px;
+  min-width: 170px;
+  border-radius: 12px;
+  font-weight: 700;
+  letter-spacing: .2px;
+  box-shadow: 0 8px 16px rgba(233, 30, 99, .24);
+}
+
+.perm-loading {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 18px 10px;
+  color: var(--perm-muted);
+  font-size: .9rem;
+}
+
+.perm-loading.show {
+  display: inline-flex;
+}
+
+.perm-spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid #f4cddd;
+  border-top-color: var(--perm-primary);
+  border-radius: 50%;
+  animation: perm-spin .7s linear infinite;
+}
+
+@keyframes perm-spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (max-width: 768px) {
+  .perm-layout {
+    grid-template-columns: 1fr;
+  }
+  .perm-sidebar-card {
+    position: static;
+    top: auto;
+  }
+  .perm-role-select {
+    max-width: 100%;
+  }
+  .perm-table th,
+  .perm-table td {
+    font-size: 12px;
+    padding: 8px;
+  }
+  .perm-main-head {
+    align-items: stretch;
+  }
+  .perm-main-meta {
+    width: 100%;
+  }
+  .perm-toolbar {
+    gap: 6px;
+  }
+  .perm-filter {
+    min-width: 116px;
+  }
+  .perm-search { min-width: 170px; }
+  .perm-menu-slug {
+    display: none;
+  }
 }
 </style>
 
-<h2>Permission Management</h2>
+<div class="perm-page-head">
+  <h2 class="perm-page-title">Permission Management</h2>
+</div>
 
-<div class="card">
-<div class="card-header">Select Role</div>
+<div class="perm-layout">
+<div class="perm-sidebar">
+<div class="card perm-card perm-sidebar-card">
+<div class="card-header perm-card-head">Select Role</div>
 
-<div style="padding:14px">
+<div class="perm-card-body">
 
-<select id="role_select">
+<select id="role_select" class="perm-role-select">
 
 <option value="">Select Role</option>
 
@@ -357,25 +638,56 @@ box-shadow:0 4px 10px rgba(233,30,99,0.25);
 
 </div>
 </div>
+</div>
 
-<div class="card" id="perm_card" style="display:none">
+<div class="perm-content">
+<div class="card perm-card" id="perm_card" style="display:none">
+<div class="card-header perm-card-head perm-main-head">
+<div class="perm-main-title"><i class="fas fa-shield-alt"></i> Role Permissions</div>
+<div class="perm-main-meta">
+<span class="perm-role-chip" id="perm_role_chip">No role selected</span>
+<span class="perm-count-badge" id="perm_count_badge">Enabled 0 / 0</span>
+<span class="perm-unsaved" id="perm_unsaved_badge">Unsaved changes</span>
+<span class="perm-saved" id="perm_saved_badge">Not saved yet</span>
+</div>
+</div>
 
 <form id="perm_form">
 
 <input type="hidden" name="role_id" id="role_id_hidden">
 <input type="hidden" name="ajax_save" value="1">
 
-<div class="permission-actions">
-
-<button type="button" class="btn-primary" onclick="toggleAll('view',true)">View All</button>
-<button type="button" class="btn-primary" onclick="toggleAll('add',true)">Add All</button>
-<button type="button" class="btn-primary" onclick="toggleAll('edit',true)">Edit All</button>
-<button type="button" class="btn-primary" onclick="toggleAll('delete',true)">Delete All</button>
-<button type="button" class="btn" onclick="toggleAll('view',false)">Clear All</button>
-
+<div class="perm-loading" id="perm_loading">
+<span class="perm-spinner"></span>
+Loading permissions...
 </div>
 
-<div style="overflow:auto">
+<div class="perm-toolbar-wrap">
+<div class="perm-toolbar permission-actions">
+<div class="perm-toolbar-left">
+<input type="text" id="perm_search" class="perm-search" placeholder="Search menu or slug...">
+<select id="perm_filter" class="perm-filter">
+<option value="all">All Rows</option>
+<option value="main">Main Menus</option>
+<option value="sub">Sub Menus</option>
+<option value="enabled">Only Enabled</option>
+</select>
+<select id="perm_density" class="perm-filter">
+<option value="comfortable">Comfortable</option>
+<option value="compact">Compact</option>
+</select>
+</div>
+<div class="perm-toolbar-right">
+<button type="button" class="perm-btn-primary" onclick="toggleAll('view',true)">View All</button>
+<button type="button" class="perm-btn-primary" onclick="toggleAll('add',true)">Add All</button>
+<button type="button" class="perm-btn-primary" onclick="toggleAll('edit',true)">Edit All</button>
+<button type="button" class="perm-btn-primary" onclick="toggleAll('delete',true)">Delete All</button>
+<button type="button" class="perm-btn" onclick="toggleAll('view',false)">Clear All</button>
+</div>
+</div>
+</div>
+
+<div class="perm-table-wrap">
 
 <table class="perm-table">
 
@@ -395,12 +707,15 @@ box-shadow:0 4px 10px rgba(233,30,99,0.25);
 
 <?php foreach($menuTree as $parent): ?>
 
-<tr class="perm-parent-row">
+<tr class="perm-parent-row" data-menu-id="<?= (int)$parent['id'] ?>">
 
 <td>
 
+<div class="perm-menu-cell perm-parent-cell">
+<span class="perm-row-type">Main Menu</span>
 <div class="perm-menu-name"><?= $parent['menu_name']?></div>
 <div class="perm-menu-slug"><?= $parent['menu_slug']?></div>
+</div>
 
 </td>
 
@@ -412,7 +727,10 @@ box-shadow:0 4px 10px rgba(233,30,99,0.25);
 
 <input type="checkbox"
 class="perm-<?= $p ?>"
-name="perm[<?= $parent['id']?>][<?= $p ?>]">
+name="perm[<?= $parent['id']?>][<?= $p ?>]"
+data-menu-id="<?= (int)$parent['id'] ?>"
+data-level="parent"
+data-perm="<?= $p ?>">
 
 <span class="perm-slider"></span>
 
@@ -426,12 +744,15 @@ name="perm[<?= $parent['id']?>][<?= $p ?>]">
 
 <?php foreach($parent['children'] as $child): ?>
 
-<tr>
+<tr class="perm-child-row" data-menu-id="<?= (int)$child['id'] ?>" data-parent-id="<?= (int)$parent['id'] ?>">
 
 <td class="perm-child">
 
+<div class="perm-menu-cell perm-child-cell">
+<span class="perm-row-type">Sub Menu</span>
 <div class="perm-menu-name"><?= $child['menu_name']?></div>
 <div class="perm-menu-slug"><?= $child['menu_slug']?></div>
+</div>
 
 </td>
 
@@ -443,7 +764,11 @@ name="perm[<?= $parent['id']?>][<?= $p ?>]">
 
 <input type="checkbox"
 class="perm-<?= $p ?>"
-name="perm[<?= $child['id']?>][<?= $p ?>]">
+name="perm[<?= $child['id']?>][<?= $p ?>]"
+data-menu-id="<?= (int)$child['id'] ?>"
+data-parent-id="<?= (int)$parent['id'] ?>"
+data-level="child"
+data-perm="<?= $p ?>">
 
 <span class="perm-slider"></span>
 
@@ -464,12 +789,15 @@ name="perm[<?= $child['id']?>][<?= $p ?>]">
 
 </div>
 <div class="permission-page">
-<button type="submit" class="btn-primary" style="margin-top:15px">
+<button type="submit" class="perm-btn-primary">
+<i class="fas fa-save"></i>
 Save Permissions
 </button>
 </div>
 </form>
 
+</div>
+</div>
 </div>
 
 <script>
@@ -481,18 +809,222 @@ LOAD PERMISSIONS
 const roleSelect=document.getElementById("role_select");
 const permCard=document.getElementById("perm_card");
 const roleHidden=document.getElementById("role_id_hidden");
+const permLoading=document.getElementById("perm_loading");
+const permActions=document.querySelector(".permission-actions");
+const permTableWrap=document.querySelector(".perm-table-wrap");
+const permFooter=document.querySelector(".permission-page");
+const permRoleChip=document.getElementById("perm_role_chip");
+const permCountBadge=document.getElementById("perm_count_badge");
+const permUnsavedBadge=document.getElementById("perm_unsaved_badge");
+const permSavedBadge=document.getElementById("perm_saved_badge");
+const permSearch=document.getElementById("perm_search");
+const permFilter=document.getElementById("perm_filter");
+const permDensity=document.getElementById("perm_density");
+const PERM_TYPES=["view","add","edit","delete"];
+let unsavedChanges=false;
+let lastSelectedRole=roleSelect.value || "";
 
-roleSelect.addEventListener("change",loadPerms);
+function getPermissionCheckboxes(){
+return document.querySelectorAll(".perm-view,.perm-add,.perm-edit,.perm-delete");
+}
+
+function updateRoleChip(){
+if(!permRoleChip) return;
+const selected=roleSelect.options[roleSelect.selectedIndex];
+permRoleChip.textContent=selected && selected.value ? selected.text : "No role selected";
+}
+
+function updatePermissionCount(){
+if(!permCountBadge) return;
+if(!roleSelect.value){
+permCountBadge.textContent="Enabled 0 / 0";
+return;
+}
+const all=getPermissionCheckboxes();
+let checked=0;
+all.forEach(function(cb){
+if(cb.checked) checked++;
+});
+permCountBadge.textContent=`Enabled ${checked} / ${all.length}`;
+}
+
+function setUnsaved(flag){
+unsavedChanges=!!flag;
+if(!permUnsavedBadge) return;
+permUnsavedBadge.classList.toggle("show",!!flag);
+}
+
+function markSavedNow(){
+if(!permSavedBadge) return;
+const now=new Date();
+const h=String(now.getHours()).padStart(2,"0");
+const m=String(now.getMinutes()).padStart(2,"0");
+permSavedBadge.textContent=`Saved ${h}:${m}`;
+}
+
+function applyDensityMode(){
+if(!permTableWrap || !permDensity) return;
+if(permDensity.value==="compact"){
+permTableWrap.style.setProperty("--perm-cell-pad","7px");
+permTableWrap.classList.add("compact");
+}else{
+permTableWrap.style.removeProperty("--perm-cell-pad");
+permTableWrap.classList.remove("compact");
+}
+}
+
+function applyViewDependency(menuId){
+const viewCb=document.querySelector(`input[data-menu-id="${menuId}"][data-perm="view"]`);
+if(!viewCb) return;
+["add","edit","delete"].forEach(function(type){
+const cb=document.querySelector(`input[data-menu-id="${menuId}"][data-perm="${type}"]`);
+if(!cb) return;
+if(!viewCb.checked){
+cb.checked=false;
+cb.disabled=true;
+cb.closest(".perm-switch")?.classList.add("disabled");
+}else{
+cb.disabled=false;
+cb.closest(".perm-switch")?.classList.remove("disabled");
+}
+});
+}
+
+function applyViewDependencyAll(){
+const seen={};
+document.querySelectorAll("input[data-menu-id]").forEach(function(cb){
+const id=cb.getAttribute("data-menu-id");
+if(id && !seen[id]){
+seen[id]=1;
+applyViewDependency(id);
+}
+});
+}
+
+function syncParentStates(){
+document.querySelectorAll('tr.perm-parent-row[data-menu-id]').forEach(function(row){
+const parentId=row.getAttribute("data-menu-id");
+PERM_TYPES.forEach(function(type){
+const parentCb=document.querySelector(`input[data-level="parent"][data-menu-id="${parentId}"][data-perm="${type}"]`);
+const childCbs=document.querySelectorAll(`input[data-level="child"][data-parent-id="${parentId}"][data-perm="${type}"]`);
+if(!parentCb || !childCbs.length){
+if(parentCb){ parentCb.indeterminate=false; }
+return;
+}
+let checked=0;
+childCbs.forEach(function(cb){ if(cb.checked) checked++; });
+if(checked===0){
+parentCb.checked=false;
+parentCb.indeterminate=false;
+}else if(checked===childCbs.length){
+parentCb.checked=true;
+parentCb.indeterminate=false;
+}else{
+parentCb.checked=false;
+parentCb.indeterminate=true;
+}
+});
+});
+}
+
+function rowMatchesText(row,q){
+if(!q) return true;
+const text=(row.querySelector(".perm-menu-name")?.textContent || "").toLowerCase();
+const slug=(row.querySelector(".perm-menu-slug")?.textContent || "").toLowerCase();
+return text.includes(q) || slug.includes(q);
+}
+
+function rowHasAnyEnabled(row){
+return !!row.querySelector('input[type="checkbox"]:checked');
+}
+
+function applyRowFilters(){
+const q=(permSearch?.value || "").trim().toLowerCase();
+const mode=permFilter?.value || "all";
+document.querySelectorAll('tr.perm-parent-row[data-menu-id]').forEach(function(parentRow){
+const pid=parentRow.getAttribute("data-menu-id");
+const childRows=[...document.querySelectorAll(`tr.perm-child-row[data-parent-id="${pid}"]`)];
+const parentMatchText=rowMatchesText(parentRow,q);
+const parentEnabled=rowHasAnyEnabled(parentRow);
+const childVis=childRows.map(function(cr){
+const t=rowMatchesText(cr,q);
+const en=rowHasAnyEnabled(cr);
+if(mode==="main") return false;
+if(mode==="sub") return t;
+if(mode==="enabled") return t && en;
+return t;
+});
+childRows.forEach(function(cr,idx){
+cr.style.display=childVis[idx] ? "" : "none";
+});
+let parentShow=false;
+if(mode==="main"){
+parentShow=parentMatchText;
+}else if(mode==="sub"){
+parentShow=childVis.some(Boolean);
+}else if(mode==="enabled"){
+parentShow=(parentMatchText && parentEnabled) || childVis.some(Boolean);
+}else{
+parentShow=parentMatchText || childVis.some(Boolean);
+}
+parentRow.style.display=parentShow ? "" : "none";
+});
+}
+
+async function confirmDiscardChanges(){
+if(!unsavedChanges) return true;
+if(window.Swal && Swal.fire){
+const result=await Swal.fire({
+icon:"warning",
+title:"Discard unsaved changes?",
+text:"You have unsaved permission changes for this role.",
+showCancelButton:true,
+confirmButtonText:"Discard",
+cancelButtonText:"Stay",
+confirmButtonColor:"#e91e63",
+cancelButtonColor:"#6b7280"
+});
+return !!result.isConfirmed;
+}
+return window.confirm("Discard unsaved changes?");
+}
+
+roleSelect.addEventListener("change",async function(){
+const nextRole=roleSelect.value;
+if(unsavedChanges && nextRole!==lastSelectedRole){
+const ok=await confirmDiscardChanges();
+if(!ok){
+roleSelect.value=lastSelectedRole;
+return;
+}
+}
+await loadPerms();
+lastSelectedRole=roleSelect.value || "";
+});
 
 async function loadPerms(){
 
 let role=roleSelect.value;
 
-if(!role)return;
+if(!role){
+permCard.style.display="none";
+roleHidden.value="";
+updateRoleChip();
+updatePermissionCount();
+setUnsaved(false);
+return;
+}
 
 permCard.style.display="block";
 roleHidden.value=role;
+updateRoleChip();
+roleSelect.disabled=true;
+if(permActions) permActions.style.display="none";
+if(permTableWrap) permTableWrap.style.display="none";
+if(permFooter) permFooter.style.display="none";
+if(permLoading) permLoading.classList.add("show");
 
+try{
 let res=await fetch(`index.php?page=permission_management&ajax=perms&role_id=${role}`);
 let data=await res.json();
 
@@ -514,6 +1046,25 @@ if(e)e.checked=p.edit;
 if(d)d.checked=p.delete;
 
 }
+applyViewDependencyAll();
+syncParentStates();
+applyRowFilters();
+updatePermissionCount();
+setUnsaved(false);
+}catch(err){
+Swal.fire({
+icon:'error',
+title:'Load Failed',
+text:'Unable to load permissions right now.',
+confirmButtonColor:'#e91e63'
+});
+}finally{
+if(permLoading) permLoading.classList.remove("show");
+if(permActions) permActions.style.display="flex";
+if(permTableWrap) permTableWrap.style.display="block";
+if(permFooter) permFooter.style.display="flex";
+roleSelect.disabled=false;
+}
 
 }
 
@@ -527,7 +1078,10 @@ if(!state){
 
 document.querySelectorAll(".perm-view,.perm-add,.perm-edit,.perm-delete")
 .forEach(cb=>cb.checked=false);
-
+applyViewDependencyAll();
+syncParentStates();
+updatePermissionCount();
+setUnsaved(true);
 return;
 }
 
@@ -538,6 +1092,11 @@ if(type!=="view"){
 document.querySelectorAll(".perm-view")
 .forEach(cb=>cb.checked=true);
 }
+
+applyViewDependencyAll();
+syncParentStates();
+updatePermissionCount();
+setUnsaved(true);
 
 }
 
@@ -560,10 +1119,11 @@ e.preventDefault();
 
 let fd = new FormData(this);
 let saveBtn = this.querySelector('button[type="submit"]');
+const defaultSaveHtml=saveBtn.innerHTML;
 
 /* Disable button */
 saveBtn.disabled = true;
-saveBtn.innerText = "Saving...";
+saveBtn.innerHTML = "<i class='fas fa-spinner fa-spin'></i> Saving...";
 
 /* Show loading popup */
 Swal.fire({
@@ -591,11 +1151,9 @@ icon: 'success',
 title: 'Permissions Updated',
 text: 'Permissions saved successfully!',
 confirmButtonColor: '#e91e63'
-}).then(() => {
-
-location.reload();
-
 });
+setUnsaved(false);
+markSavedNow();
 
 }else{
 
@@ -621,8 +1179,52 @@ confirmButtonColor: '#e91e63'
 
 /* Enable button again */
 saveBtn.disabled = false;
-saveBtn.innerText = "Save Permissions";
+saveBtn.innerHTML = defaultSaveHtml;
 
 });
+
+document.getElementById("perm_form").addEventListener("change",function(e){
+if(e.target && e.target.matches('input[type="checkbox"]')){
+const menuId=e.target.getAttribute("data-menu-id");
+const level=e.target.getAttribute("data-level");
+const parentId=e.target.getAttribute("data-parent-id");
+const permType=e.target.getAttribute("data-perm");
+
+if(level==="parent" && menuId && permType){
+document.querySelectorAll(`input[data-level="child"][data-parent-id="${menuId}"][data-perm="${permType}"]`).forEach(function(cb){
+cb.checked=e.target.checked;
+});
+}
+
+if(permType==="view" && menuId){
+applyViewDependency(menuId);
+if(level==="parent"){
+document.querySelectorAll(`input[data-level="child"][data-parent-id="${menuId}"][data-perm="view"]`).forEach(function(cb){
+applyViewDependency(cb.getAttribute("data-menu-id"));
+});
+}
+}
+
+if(level==="child" && parentId){
+syncParentStates();
+}
+
+if(level==="parent"){
+syncParentStates();
+}
+
+applyRowFilters();
+updatePermissionCount();
+setUnsaved(true);
+}
+});
+
+permSearch?.addEventListener("input",applyRowFilters);
+permFilter?.addEventListener("change",applyRowFilters);
+permDensity?.addEventListener("change",applyDensityMode);
+
+applyDensityMode();
+updateRoleChip();
+updatePermissionCount();
 
 </script>
