@@ -40,6 +40,11 @@ try {
 $paymentId = (int)($_GET['payment_id'] ?? 0);
 
 $payment = null;
+$orgName = defined('APP_NAME') ? APP_NAME : 'ATS CRM';
+$orgBranch = (string)($_SESSION['branch_name'] ?? 'Main Branch');
+$orgAddress = '';
+$orgPhone = '';
+$orgEmail = '';
 
 if ($paymentId <= 0) {
     $error = "Invalid payment ID.";
@@ -132,6 +137,43 @@ if ($paymentId <= 0) {
         if (!$payment) {
             throw new Exception("Receipt not found or access denied.");
         }
+
+        // Optional branding details from branches table (if columns exist)
+        try {
+            $branchForReceipt = (int)($payment['branch_id'] ?? $branchId);
+            if ($branchForReceipt > 0) {
+                $columns = [];
+                $colStmt = $pdo->query("SHOW COLUMNS FROM branches");
+                foreach ($colStmt->fetchAll(PDO::FETCH_ASSOC) as $col) {
+                    $columns[] = (string)($col['Field'] ?? '');
+                }
+
+                $nameCol = in_array('branch_name', $columns, true) ? 'branch_name' : null;
+                $addressCol = in_array('address', $columns, true) ? 'address' : (in_array('branch_address', $columns, true) ? 'branch_address' : null);
+                $phoneCol = in_array('phone', $columns, true) ? 'phone' : (in_array('contact_no', $columns, true) ? 'contact_no' : null);
+                $emailCol = in_array('email', $columns, true) ? 'email' : null;
+
+                $selectParts = ['id'];
+                if ($nameCol) $selectParts[] = $nameCol . ' AS branch_name';
+                if ($addressCol) $selectParts[] = $addressCol . ' AS branch_address';
+                if ($phoneCol) $selectParts[] = $phoneCol . ' AS branch_phone';
+                if ($emailCol) $selectParts[] = $emailCol . ' AS branch_email';
+
+                $sqlBrand = "SELECT " . implode(', ', $selectParts) . " FROM branches WHERE id=? LIMIT 1";
+                $bStmt = $pdo->prepare($sqlBrand);
+                $bStmt->execute([$branchForReceipt]);
+                $branchRow = $bStmt->fetch(PDO::FETCH_ASSOC);
+
+                if ($branchRow) {
+                    $orgBranch = (string)($branchRow['branch_name'] ?? $orgBranch);
+                    $orgAddress = trim((string)($branchRow['branch_address'] ?? ''));
+                    $orgPhone = trim((string)($branchRow['branch_phone'] ?? ''));
+                    $orgEmail = trim((string)($branchRow['branch_email'] ?? ''));
+                }
+            }
+        } catch (Exception $e) {
+            // Keep defaults if branding details are unavailable.
+        }
     } catch (Exception $e) {
         $error = $e->getMessage();
     }
@@ -140,38 +182,92 @@ if ($paymentId <= 0) {
 
 <style>
 .receipt-page{
-  max-width: 950px;
+  max-width: 1040px;
   margin: 0 auto;
+  padding: 8px 0 14px;
 }
 .receipt-toolbar{
   display:flex;
   justify-content:space-between;
   align-items:center;
-  gap:12px;
+  gap:14px;
   flex-wrap:wrap;
-  margin-bottom:16px;
+  margin-bottom:18px;
+  background:#fff;
+  border:1px solid #f2d8e5;
+  border-radius:16px;
+  padding:12px 14px;
+  box-shadow:0 8px 22px rgba(0,0,0,.05);
 }
 .receipt-card{
-  background:#fff;
-  border:1px solid rgba(0,0,0,.08);
-  border-radius:18px;
-  box-shadow:0 12px 28px rgba(0,0,0,.05);
+  background:linear-gradient(180deg,#fff 0%,#fffbfd 100%);
+  border:1px solid #efd7e4;
+  border-radius:20px;
+  box-shadow:0 14px 30px rgba(233,30,99,.08);
   overflow:hidden;
 }
 .receipt-head{
-  padding:20px 22px;
-  border-bottom:1px solid #f1f1f1;
-  background:linear-gradient(135deg, rgba(233,30,99,.06), rgba(3,169,244,.04));
+  padding:18px 20px;
+  border-bottom:1px solid #f3d9e6;
+  background:linear-gradient(135deg,#fff4fa 0%,#fff 70%);
+}
+.receipt-brand{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:14px;
+  flex-wrap:wrap;
+  margin-bottom:12px;
+  padding-bottom:12px;
+  border-bottom:1px solid #f3d9e6;
+}
+.receipt-brand-left{
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+.receipt-brand-logo{
+  width:58px;
+  height:58px;
+  object-fit:contain;
+  border-radius:10px;
+  background:#fff;
+  border:1px solid #f3d9e6;
+  padding:6px;
+}
+.receipt-brand-title{
+  margin:0;
+  font-size:20px;
+  font-weight:900;
+  color:#be185d;
+  line-height:1.1;
+}
+.receipt-brand-sub{
+  margin-top:3px;
+  font-size:12px;
+  color:#6b7280;
+  font-weight:700;
+}
+.receipt-brand-contact{
+  text-align:right;
+  font-size:12px;
+  color:#6b7280;
+  font-weight:700;
+  line-height:1.45;
 }
 .receipt-title{
-  font-size:24px;
-  font-weight:900;
-  color:#111;
-  margin-bottom:6px;
+  font-size:22px;
+  font-weight:800;
+  color:#be185d;
+  margin-bottom:7px;
+  display:flex;
+  align-items:center;
+  gap:10px;
 }
 .receipt-sub{
-  color:#666;
+  color:#6b7280;
   font-size:13px;
+  font-weight:600;
 }
 .receipt-body{
   padding:22px;
@@ -179,53 +275,64 @@ if ($paymentId <= 0) {
 .receipt-grid{
   display:grid;
   grid-template-columns:1fr 1fr;
-  gap:16px;
+  gap:14px;
 }
 .receipt-box{
-  border:1px solid #ececec;
-  border-radius:14px;
+  border:1px solid #f0dbe5;
+  border-radius:16px;
   padding:14px;
   background:#fff;
+  transition:all .2s ease;
+}
+.print-essential{}
+.print-hide-box{}
+.receipt-box:hover{
+  transform:translateY(-1px);
+  box-shadow:0 8px 16px rgba(233,30,99,.07);
 }
 .receipt-box.full{
   grid-column:1 / -1;
 }
 .receipt-box-title{
-  font-size:14px;
-  font-weight:900;
+  font-size:13px;
+  font-weight:800;
   margin-bottom:10px;
-  color:#111;
+  color:#be185d;
+  text-transform:uppercase;
+  letter-spacing:.4px;
+  border-bottom:1px solid #f5e4ec;
+  padding-bottom:8px;
 }
 .receipt-row{
   display:flex;
   justify-content:space-between;
   gap:16px;
-  padding:7px 0;
-  border-bottom:1px dashed #f1f1f1;
+  padding:8px 0;
+  border-bottom:1px dashed #f3dfe9;
 }
 .receipt-row:last-child{
   border-bottom:none;
 }
 .receipt-label{
-  font-size:13px;
-  color:#666;
+  font-size:12px;
+  color:#6b7280;
   font-weight:700;
 }
 .receipt-value{
   font-size:13px;
-  color:#111;
+  color:#1f2937;
   font-weight:800;
   text-align:right;
 }
 .money-big{
-  font-size:28px;
+  font-size:30px;
   font-weight:900;
-  color:#111;
+  color:#be185d;
 }
 .money-sub{
   margin-top:6px;
   font-size:13px;
-  color:#666;
+  color:#6b7280;
 }
 .receipt-footer{
   margin-top:20px;
@@ -233,8 +340,17 @@ if ($paymentId <= 0) {
   grid-template-columns:1fr 1fr;
   gap:16px;
 }
+.receipt-print-footnote{
+  margin-top:14px;
+  border-top:1px dashed #efc8da;
+  padding-top:10px;
+  text-align:center;
+  font-size:11px;
+  color:#7a5a69;
+  line-height:1.5;
+}
 .sign-box{
-  border:1px dashed #ddd;
+  border:1px dashed #efc8da;
   border-radius:14px;
   min-height:90px;
   padding:14px;
@@ -244,9 +360,48 @@ if ($paymentId <= 0) {
   background:#fff;
 }
 .sign-label{
-  font-size:13px;
-  color:#777;
+  font-size:12px;
+  color:#7a5a69;
   font-weight:700;
+}
+.receipt-tool-title{
+  margin:0;
+  font-size:18px;
+  font-weight:800;
+  color:#be185d;
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.receipt-btn{
+  border:none;
+  border-radius:11px;
+  padding:9px 13px;
+  font-size:13px;
+  font-weight:700;
+  text-decoration:none !important;
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  transition:all .2s ease;
+}
+.receipt-btn-primary{
+  background:linear-gradient(135deg,#ff4d8d 0%,#e91e63 100%);
+  color:#fff !important;
+  box-shadow:0 8px 14px rgba(233,30,99,.22);
+}
+.receipt-btn-primary:hover{
+  transform:translateY(-1px);
+  color:#fff !important;
+}
+.receipt-btn-light{
+  background:#fff;
+  border:1px solid #e7cddb;
+  color:#4b5563 !important;
+}
+.receipt-btn-light:hover{
+  background:#fff6fa;
+  color:#374151 !important;
 }
 .print-hide{
   display:block;
@@ -256,33 +411,131 @@ if ($paymentId <= 0) {
     grid-template-columns:1fr;
   }
 }
+@media (max-width: 640px){
+  .receipt-toolbar{
+    padding:10px 12px;
+  }
+  .receipt-body{
+    padding:14px;
+  }
+  .receipt-title{
+    font-size:18px;
+  }
+}
 @media print{
+  @page{
+    size: A4;
+    margin: 10mm;
+  }
+  html, body{
+    width:100% !important;
+    margin:0 !important;
+    padding:0 !important;
+    background:#fff !important;
+  }
   body{
     background:#fff !important;
+  }
+  .sidebar,
+  .topbar,
+  .toggle-btn,
+  .menu-toggle,
+  .dashboard-header,
+  .header,
+  .navbar{
+    display:none !important;
+  }
+  .wrapper,
+  .content,
+  .content.expanded,
+  .main-content{
+    display:block !important;
+    width:100% !important;
+    max-width:100% !important;
+    margin:0 !important;
+    padding:0 !important;
+    transform:none !important;
   }
   .print-hide{
     display:none !important;
   }
   .receipt-page{
-    max-width:100%;
-    margin:0;
+    width:100% !important;
+    max-width:190mm !important;
+    margin:0 auto !important;
+    padding:0 !important;
   }
   .receipt-card{
     box-shadow:none;
     border:1px solid #ccc;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  .receipt-head{
+    padding:12px 14px !important;
+  }
+  .receipt-title{
+    font-size:18px !important;
+    margin-bottom:4px !important;
+  }
+  .receipt-sub{
+    font-size:11px !important;
+  }
+  .receipt-body{
+    padding:12px 14px !important;
+  }
+  .receipt-grid{
+    grid-template-columns:1fr !important;
+    gap:10px !important;
+  }
+  .receipt-box{
+    border:1px solid #d9d9d9 !important;
+    border-radius:10px !important;
+    padding:10px !important;
+  }
+  .receipt-box-title{
+    font-size:11px !important;
+    padding-bottom:6px !important;
+    margin-bottom:6px !important;
+  }
+  .receipt-row{
+    padding:5px 0 !important;
+  }
+  .receipt-label,
+  .receipt-value{
+    font-size:11px !important;
+  }
+  .receipt-footer{
+    margin-top:10px !important;
+    gap:10px !important;
+  }
+  .sign-box{
+    min-height:64px !important;
+    padding:10px !important;
+  }
+  .print-hide-box{
+    display:none !important;
+  }
+  .receipt-brand-logo{
+    border:1px solid #ddd;
+  }
+  .receipt-print-footnote{
+    margin-top:8px !important;
+    padding-top:8px !important;
+    font-size:10px !important;
   }
 }
 </style>
 
 <div class="receipt-page">
   <div class="receipt-toolbar print-hide">
-    <h2 style="margin:0;">Payment Receipt</h2>
+    <h2 class="receipt-tool-title"><i class="fas fa-receipt"></i> Payment Receipt</h2>
     <div style="display:flex;gap:10px;flex-wrap:wrap;">
-      <button type="button" class="btn btn-primary" onclick="window.print()">
+      <button type="button" class="receipt-btn receipt-btn-primary" onclick="window.print()">
         <i class="fas fa-print"></i> Print Receipt
       </button>
-      <a href="index.php?page=registrations/list" class="btn btn-light">
-        Back to Registrations
+      <a href="index.php?page=registrations/list" class="receipt-btn receipt-btn-light">
+        <i class="fas fa-arrow-left"></i> Back to Registrations
       </a>
     </div>
   </div>
@@ -308,7 +561,22 @@ if ($paymentId <= 0) {
 
     <div class="receipt-card">
       <div class="receipt-head">
-        <div class="receipt-title">Student Payment Receipt</div>
+        <div class="receipt-brand">
+          <div class="receipt-brand-left">
+            <img src="<?= h(BASE_URL) ?>assets/images/logo.png" alt="ATS Logo" class="receipt-brand-logo">
+            <div>
+              <h3 class="receipt-brand-title"><?= h($orgName) ?></h3>
+              <div class="receipt-brand-sub"><?= h($orgBranch) ?></div>
+            </div>
+          </div>
+          <div class="receipt-brand-contact">
+            <?php if ($orgPhone !== ''): ?>Phone: <?= h($orgPhone) ?><br><?php endif; ?>
+            <?php if ($orgEmail !== ''): ?>Email: <?= h($orgEmail) ?><br><?php endif; ?>
+            <?php if ($orgAddress !== ''): ?><?= h($orgAddress) ?><?php endif; ?>
+          </div>
+        </div>
+
+        <div class="receipt-title"><i class="fas fa-file-invoice-dollar"></i> Student Payment Receipt</div>
         <div class="receipt-sub">
           Receipt No: <b><?= h($receiptNo) ?></b> &nbsp;|&nbsp;
           Payment Date: <b><?= h($payment['payment_date'] ?? '-') ?></b>
@@ -317,7 +585,7 @@ if ($paymentId <= 0) {
 
       <div class="receipt-body">
         <div class="receipt-grid">
-          <div class="receipt-box">
+          <div class="receipt-box print-essential">
             <div class="receipt-box-title">Student Details</div>
             <div class="receipt-row">
               <div class="receipt-label">Student Name</div>
@@ -341,7 +609,7 @@ if ($paymentId <= 0) {
             </div>
           </div>
 
-          <div class="receipt-box">
+          <div class="receipt-box print-hide-box">
             <div class="receipt-box-title">Course / Registration Details</div>
             <div class="receipt-row">
               <div class="receipt-label">Type</div>
@@ -365,7 +633,7 @@ if ($paymentId <= 0) {
             </div>
           </div>
 
-          <div class="receipt-box">
+          <div class="receipt-box print-essential">
             <div class="receipt-box-title">Payment Details</div>
             <div class="receipt-row">
               <div class="receipt-label">Amount Received</div>
@@ -387,9 +655,13 @@ if ($paymentId <= 0) {
               <div class="receipt-label">Approval Status</div>
               <div class="receipt-value"><?= h(ucfirst($payment['approval_status'] ?: '-')) ?></div>
             </div>
+            <div class="receipt-row">
+              <div class="receipt-label">Balance Amount</div>
+              <div class="receipt-value">₹ <?= h(number_format($balanceAmount, 2)) ?></div>
+            </div>
           </div>
 
-          <div class="receipt-box">
+          <div class="receipt-box print-hide-box">
             <div class="receipt-box-title">Fee Summary</div>
             <div class="receipt-row">
               <div class="receipt-label">Total Fee</div>
@@ -413,12 +685,12 @@ if ($paymentId <= 0) {
             </div>
           </div>
 
-          <div class="receipt-box full" style="text-align:center;background:#fff7fb;">
+          <div class="receipt-box full print-hide-box" style="text-align:center;background:#fff7fb;">
             <div class="money-big">₹ <?= h(number_format($paymentAmount, 2)) ?></div>
             <div class="money-sub">Received from the student toward the above registration.</div>
           </div>
 
-          <div class="receipt-box full">
+          <div class="receipt-box full print-essential">
             <div class="receipt-box-title">Collection Information</div>
             <div class="receipt-row">
               <div class="receipt-label">Front Office Owner</div>
@@ -448,6 +720,11 @@ if ($paymentId <= 0) {
           <div class="sign-box">
             <div class="sign-label">Student Signature</div>
           </div>
+        </div>
+
+        <div class="receipt-print-footnote">
+          This is a computer-generated receipt from <?= h($orgName) ?>.
+          <?php if ($orgAddress !== ''): ?><br><?= h($orgAddress) ?><?php endif; ?>
         </div>
       </div>
     </div>
