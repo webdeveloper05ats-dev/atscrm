@@ -224,14 +224,26 @@ if (isset($_POST['save_enquiry']) && empty($error)) {
 
         if (empty($error)) {
             $cand = uploadSignature($_FILES['candidate_signature'] ?? null, 'enquiries');
-            if ($cand && !str_starts_with($cand, '__ERROR__')) {
+            if ($cand === '__ERROR__SIZE__') {
+                $error = "Candidate signature must be under 2 MB.";
+            } elseif ($cand === '__ERROR__TYPE__') {
+                $error = "Candidate signature must be JPG or PNG.";
+            } elseif ($cand === '__ERROR__UPLOAD__') {
+                $error = "Failed to upload candidate signature.";
+            } elseif ($cand && !str_starts_with($cand, '__ERROR__')) {
                 $candidate_signature_path = $cand;
             }
         }
 
         if (empty($error)) {
             $coun = uploadSignature($_FILES['counselor_signature'] ?? null, 'enquiries');
-            if ($coun && !str_starts_with($coun, '__ERROR__')) {
+            if ($coun === '__ERROR__SIZE__') {
+                $error = "Counselor signature must be under 2 MB.";
+            } elseif ($coun === '__ERROR__TYPE__') {
+                $error = "Counselor signature must be JPG or PNG.";
+            } elseif ($coun === '__ERROR__UPLOAD__') {
+                $error = "Failed to upload counselor signature.";
+            } elseif ($coun && !str_starts_with($coun, '__ERROR__')) {
                 $counselor_signature_path = $coun;
             }
         }
@@ -366,22 +378,42 @@ if ($leadRow && empty($_POST)) {
     $kaSelected = ['Other'];
 }
 ?>
+<link rel="stylesheet" href="<?= BASE_URL ?>assets/css/lead.css">
 
 <style>
+.enq-page-head{ margin-bottom:12px; }
+.enq-page-title{ margin:0; color:#be185d; font-weight:800; }
+
+.card{
+  border:1px solid #f1d6e3;
+  border-radius:14px;
+  overflow:hidden;
+  box-shadow:0 8px 18px rgba(0,0,0,.06);
+}
+.card-header{
+  padding:12px 14px;
+  border-bottom:1px solid #f1d6e3;
+  background:#fff4fa;
+  color:#be185d;
+  font-weight:800;
+}
+
 .wizard { display:flex; gap:10px; margin-bottom:14px; flex-wrap:wrap; }
 .wstep {
   flex:1; min-width:180px;
   padding:12px 14px;
-  border:1px solid #eee;
+  border:1px solid #f1d6e3;
   border-radius:14px;
   background:#fff;
   cursor:pointer;
   display:flex; align-items:center; justify-content:space-between;
+  transition:all .2s ease;
 }
 .wstep b { font-size:14px; }
 .wstep small { color: var(--text-light); }
 .wstep.active {
-  border-color: rgba(233,30,99,.35);
+  border-color: rgba(233,30,99,.55);
+  background:#fff9fc;
   box-shadow: 0 8px 24px rgba(233,30,99,.08);
 }
 .wstep .num {
@@ -393,6 +425,39 @@ if ($leadRow && empty($_POST)) {
 }
 .wpanel { display:none; }
 .wpanel.active { display:block; }
+
+.enq-gender-group{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+}
+.enq-gender-option{
+  position:relative;
+  cursor:pointer;
+}
+.enq-gender-option input{
+  position:absolute;
+  opacity:0;
+  pointer-events:none;
+}
+.enq-gender-pill{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  border:1px solid #f1d6e3;
+  border-radius:10px;
+  padding:9px 12px;
+  background:#fff;
+  color:#4b5563;
+  font-weight:700;
+  transition:all .2s ease;
+}
+.enq-gender-option input:checked + .enq-gender-pill{
+  border-color:#e91e63;
+  background:#fff1f7;
+  color:#be185d;
+  box-shadow:0 0 0 3px rgba(233,30,99,.12);
+}
 
 .form-group label { font-weight:700; margin-bottom:6px; display:block; }
 input[type="text"], input[type="email"], input[type="date"], input[type="number"], textarea, select {
@@ -431,6 +496,135 @@ select[multiple]:focus{
   box-shadow: 0 0 0 4px rgba(233,30,99,.12);
 }
 
+.multi-block{
+  border:1px solid #f1d6e3;
+  border-radius:14px;
+  background:#fff;
+  padding:12px;
+}
+.multi-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  margin-bottom:8px;
+}
+.multi-title{
+  font-size:13px;
+  font-weight:800;
+  color:#be185d;
+}
+.multi-tip{
+  font-size:11px;
+  color:#6b7280;
+}
+.multi-count{
+  font-size:11px;
+  font-weight:800;
+  color:#be185d;
+  background:#fff1f7;
+  border:1px solid #f7c8dc;
+  border-radius:999px;
+  padding:3px 8px;
+}
+.multi-actions{
+  display:flex;
+  gap:8px;
+  margin-bottom:8px;
+}
+.multi-link{
+  border:1px solid #f1d6e3;
+  background:#fff;
+  color:#9d174d;
+  font-size:12px;
+  font-weight:700;
+  border-radius:8px;
+  padding:5px 8px;
+  cursor:pointer;
+}
+.multi-link:hover{
+  background:#fff1f7;
+  border-color:#e91e63;
+}
+.multi-grid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:8px;
+}
+.multi-option{
+  position:relative;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  border:1px solid #f1d6e3;
+  border-radius:10px;
+  padding:8px 10px;
+  background:#fff8fc;
+  cursor:pointer;
+  transition:all .18s ease;
+}
+.multi-option input{
+  position:absolute;
+  opacity:0;
+  pointer-events:none;
+}
+.multi-box{
+  display:inline-block;
+  width:18px;
+  height:18px;
+  border-radius:6px;
+  border:2px solid #f1a7c5;
+  background:#fff;
+  flex:0 0 18px;
+  position:relative;
+  box-sizing:border-box;
+  transition:all .2s ease;
+}
+.multi-box::after{
+  content:"";
+  position:absolute;
+  left:4px;
+  top:1px;
+  width:5px;
+  height:10px;
+  border:2px solid #fff;
+  border-top:0;
+  border-left:0;
+  transform:rotate(45deg);
+  opacity:0;
+}
+.multi-text{
+  font-size:13px;
+  color:#374151;
+  font-weight:700;
+}
+.multi-option:hover{
+  border-color:#e91e63;
+  background:#fff1f7;
+}
+.multi-option:has(input:checked){
+  border-color:#e91e63;
+  background:#ffeaf4;
+  box-shadow:0 0 0 3px rgba(233,30,99,.09);
+}
+.multi-option input:checked + .multi-box{
+  background:linear-gradient(135deg,#ff4d8d,#e91e63);
+  border-color:#e91e63;
+}
+.multi-option input:checked + .multi-box::after{
+  opacity:1;
+}
+.step3-note{
+  margin-bottom:12px;
+  border:1px solid #f1d6e3;
+  background:#fff7fb;
+  border-radius:12px;
+  padding:10px 12px;
+  font-size:12px;
+  color:#6b7280;
+}
+.step3-note b{ color:#be185d; }
+
 .toggle { display:flex; align-items:center; gap:10px; user-select:none; }
 .toggle input { display:none; }
 .toggle span {
@@ -449,7 +643,7 @@ select[multiple]:focus{
 
 .wbtns { display:flex; gap:10px; justify-content:flex-end; margin-top:14px; flex-wrap:wrap; }
 .wbtn { padding:10px 14px; border-radius:12px; border:1px solid #e5e7eb; background:#fff; cursor:pointer; }
-.wbtn.primary { background: var(--primary); color:#fff; border-color: transparent; }
+.wbtn.primary { background: linear-gradient(135deg,#ff4d8d,#e91e63); color:#fff; border-color: transparent; }
 .wbtn.primary:hover { background: var(--primary-dark); }
 .wbtn:hover { box-shadow: 0 8px 22px rgba(0,0,0,.06); }
 
@@ -525,9 +719,15 @@ select[multiple]:focus{
   color:var(--text-light);
   margin-top:3px;
 }
+@media(max-width:768px){
+  .wbtns .wbtn{ width:100%; }
+  .multi-grid{ grid-template-columns:1fr; }
+}
 </style>
 
-<h2 style="margin-bottom:16px;">Add Enquiry</h2>
+<div class="enq-page-head">
+  <h2 class="enq-page-title">Add Enquiry</h2>
+</div>
 
 <?php if (!empty($error) && $error === "Access denied for this role."): ?>
   <div class="alert alert-danger" style="border-radius:12px;">
@@ -537,38 +737,42 @@ select[multiple]:focus{
 <?php endif; ?>
 
 <?php if ($success): ?>
-<?php if ($success): ?>
 <script>
-Swal.fire({
-  icon: 'success',
-  title: 'Success',
-  text: '<?= addslashes($success) ?>',
-  confirmButtonColor: '#e91e63'
-}).then(()=> {
-
+if (window.Swal && Swal.fire) {
+  Swal.fire({
+    icon: 'success',
+    title: 'Success',
+    text: '<?= addslashes($success) ?>',
+    confirmButtonColor: '#e91e63'
+  }).then(()=> {
+    const enquiryId = <?= (int)$newEnquiryId ?>;
+    window.location.href = "index.php?page=enquiries/followups&ui=add&enquiry_id=" + enquiryId;
+  });
+} else {
+  alert('<?= addslashes($success) ?>');
   const enquiryId = <?= (int)$newEnquiryId ?>;
-
-  window.location.href =
-    "index.php?page=enquiries/followups&ui=add&enquiry_id=" + enquiryId;
-
-});
+  window.location.href = "index.php?page=enquiries/followups&ui=add&enquiry_id=" + enquiryId;
+}
 </script>
-<?php endif; ?>
 <?php endif; ?>
 
 <?php if ($error && $error !== "Access denied for this role."): ?>
 <script>
-Swal.fire({
-  icon: 'error',
-  title: 'Error',
-  text: '<?= addslashes($error) ?>',
-  confirmButtonColor: '#e91e63'
-});
+if (window.Swal && Swal.fire) {
+  Swal.fire({
+    icon: 'error',
+    title: 'Error',
+    text: '<?= addslashes($error) ?>',
+    confirmButtonColor: '#e91e63'
+  });
+} else {
+  alert('<?= addslashes($error) ?>');
+}
 </script>
 <?php endif; ?>
 
 <div class="card">
-  <div class="card-header">Enquiry Wizard</div>
+  <div class="card-header"><i class="fas fa-layer-group"></i> Enquiry Wizard</div>
 
   <form method="POST" enctype="multipart/form-data" style="padding:14px;">
     <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(generateCSRF()) ?>">
@@ -578,14 +782,14 @@ Swal.fire({
 
     <?php if ($leadRow): ?>
       <div class="prefill-banner">
-        <div class="ico">↗</div>
+        <div class="ico"><i class="fas fa-link"></i></div>
         <div>
           <div class="ttl">Lead conversion mode</div>
           <div class="txt">
             This enquiry is being created from lead:
             <b><?= htmlspecialchars($leadRow['name'] ?? '') ?></b>
-            <?php if (!empty($leadRow['source'])): ?> • Source: <?= htmlspecialchars($leadRow['source']) ?><?php endif; ?>
-            <?php if (!empty($leadRow['assigned_to'])): ?> • Assigned staff will be used as enquiry owner<?php endif; ?>
+            <?php if (!empty($leadRow['source'])): ?> &bull; Source: <?= htmlspecialchars($leadRow['source']) ?><?php endif; ?>
+            <?php if (!empty($leadRow['assigned_to'])): ?> &bull; Assigned staff will be used as enquiry owner<?php endif; ?>
           </div>
         </div>
       </div>
@@ -616,11 +820,11 @@ Swal.fire({
 
         <div class="form-group">
           <label>Enquiry No</label>
-          <input type="text" name="enquiry_no" value="<?= htmlspecialchars($_POST['enquiry_no'] ?? $defaultEnqNo) ?>">
-          <span class="hint">Auto generated, you can edit.</span>
+          <input type="text" name="enquiry_no" readonly value="<?= htmlspecialchars($_POST['enquiry_no'] ?? $defaultEnqNo) ?>">
+          <span class="hint">Auto generated and locked for consistency.</span>
         </div>
 
-        <div class="form-group full">
+        <div class="form-group">
           <label>Handled By (Front Office)</label>
           <select name="handled_by">
             <option value="">-- Auto Assign --</option>
@@ -643,7 +847,7 @@ Swal.fire({
         <div class="form-group">
           <label>Phone<span style="color:red;">*</span></label>
           <input type="text" name="phone" required value="<?= htmlspecialchars($_POST['phone'] ?? $prefill['phone']) ?>" placeholder="+919876543210">
-          <span class="hint">Digits only — example: +91XXXXXXXXXX</span>
+          <span class="hint">Digits only - example: +91XXXXXXXXXX</span>
         </div>
 
         <div class="form-group">
@@ -658,22 +862,31 @@ Swal.fire({
 
         <div class="form-group">
           <label>Gender</label>
-          <select name="gender">
-            <option value="">-- Select --</option>
-            <option value="male" <?= (($_POST['gender'] ?? '')==='male')?'selected':''; ?>>Male</option>
-            <option value="female" <?= (($_POST['gender'] ?? '')==='female')?'selected':''; ?>>Female</option>
-            <option value="other" <?= (($_POST['gender'] ?? '')==='other')?'selected':''; ?>>Other</option>
-          </select>
+          <?php $selectedGender = (string)($_POST['gender'] ?? ''); ?>
+          <div class="enq-gender-group">
+            <label class="enq-gender-option">
+              <input type="radio" name="gender" value="male" <?= $selectedGender==='male'?'checked':''; ?>>
+              <span class="enq-gender-pill"><i class="fas fa-mars"></i> Male</span>
+            </label>
+            <label class="enq-gender-option">
+              <input type="radio" name="gender" value="female" <?= $selectedGender==='female'?'checked':''; ?>>
+              <span class="enq-gender-pill"><i class="fas fa-venus"></i> Female</span>
+            </label>
+            <label class="enq-gender-option">
+              <input type="radio" name="gender" value="other" <?= $selectedGender==='other'?'checked':''; ?>>
+              <span class="enq-gender-pill"><i class="fas fa-user"></i> Other</span>
+            </label>
+          </div>
         </div>
 
-        <div class="form-group full">
+        <div class="form-group">
           <label>Profession</label>
           <input type="text" name="profession" value="<?= htmlspecialchars($_POST['profession'] ?? '') ?>">
         </div>
 
-        <div class="form-group full">
+        <div class="form-group">
           <label>Address</label>
-          <textarea name="address" rows="3"><?= htmlspecialchars($_POST['address'] ?? '') ?></textarea>
+          <textarea name="address" rows="2"><?= htmlspecialchars($_POST['address'] ?? '') ?></textarea>
         </div>
 
         <div class="form-group">
@@ -710,12 +923,12 @@ Swal.fire({
           <input type="text" name="percentage_marks" value="<?= htmlspecialchars($_POST['percentage_marks'] ?? '') ?>">
         </div>
 
-        <div class="form-group full">
+        <div class="form-group">
           <label>College</label>
           <input type="text" name="college" value="<?= htmlspecialchars($_POST['college'] ?? '') ?>">
         </div>
 
-        <div class="form-group full">
+        <div class="form-group">
           <label class="toggle">
             <input type="checkbox" name="placements_required" value="1" <?= isset($_POST['placements_required'])?'checked':''; ?>>
             <span></span>
@@ -723,9 +936,9 @@ Swal.fire({
           </label>
         </div>
 
-        <div class="form-group full">
+        <div class="form-group">
           <label>Software Languages Known</label>
-          <textarea name="software_languages_known" rows="3"><?= htmlspecialchars($_POST['software_languages_known'] ?? '') ?></textarea>
+          <textarea name="software_languages_known" rows="2"><?= htmlspecialchars($_POST['software_languages_known'] ?? '') ?></textarea>
         </div>
 
         <div class="form-group">
@@ -742,59 +955,102 @@ Swal.fire({
           <label>Father Contact No</label>
           <input type="text" name="father_contact_no" value="<?= htmlspecialchars($_POST['father_contact_no'] ?? '') ?>">
         </div>
+
+        <div class="form-group">
+          <label>&nbsp;</label>
+          <div></div>
+        </div>
       </div>
 
       <div class="wbtns">
-        <button type="button" class="wbtn primary" data-next="1">← Back</button>
-        <button type="button" class="wbtn primary" data-next="3">Next →</button>
+        <button type="button" class="wbtn primary" data-next="1"><i class="fas fa-arrow-left"></i> Back</button>
+        <button type="button" class="wbtn primary" data-next="3">Next <i class="fas fa-arrow-right"></i></button>
       </div>
     </div>
 
     <!-- Step 3 -->
     <div class="wpanel" data-panel="3">
+      <div class="step3-note">
+        <b>Multi-select Tip:</b> You can pick multiple options. Use quick actions to select all or clear instantly.
+      </div>
       <div class="form-grid">
 
         <div class="form-group">
           <label>Technologies (multi)</label>
-          <select name="technologies[]" multiple>
-            <?php
-            $techOptions = ['Artificial Intelligence','Data Science','Full Stack Web Development','Web Designing','Python','Java','PHP & MySQL','Tally','MS Office','Digital Marketing'];
-            foreach ($techOptions as $op):
-            ?>
-              <option value="<?= htmlspecialchars($op) ?>" <?= in_array($op, $techSelected, true) ? 'selected' : '' ?>>
-                <?= htmlspecialchars($op) ?>
-              </option>
-            <?php endforeach; ?>
-          </select>
-          <span class="hint">Hold Ctrl/Cmd for multi select</span>
+          <div class="multi-block">
+            <div class="multi-head">
+              <span class="multi-title">Select One or More</span>
+              <span class="multi-count" data-count-for="technologies">0 selected</span>
+            </div>
+            <div class="multi-actions">
+              <button type="button" class="multi-link" data-multi-action="all" data-multi-name="technologies">Select all</button>
+              <button type="button" class="multi-link" data-multi-action="none" data-multi-name="technologies">Clear</button>
+            </div>
+            <div class="multi-grid">
+              <?php
+              $techOptions = ['Artificial Intelligence','Data Science','Full Stack Web Development','Web Designing','Python','Java','PHP & MySQL','Tally','MS Office','Digital Marketing'];
+              foreach ($techOptions as $op):
+              ?>
+                <label class="multi-option">
+                  <input type="checkbox" name="technologies[]" value="<?= htmlspecialchars($op) ?>" <?= in_array($op, $techSelected, true) ? 'checked' : '' ?>>
+                  <span class="multi-box"></span>
+                  <span class="multi-text"><?= htmlspecialchars($op) ?></span>
+                </label>
+              <?php endforeach; ?>
+            </div>
+          </div>
         </div>
 
         <div class="form-group">
           <label>Interested In (multi)</label>
-          <select name="interested_in[]" multiple>
-            <?php
-            $intOptions = ['Technology Training','Internship','Placement Assistance','Project Development'];
-            foreach ($intOptions as $op):
-            ?>
-              <option value="<?= htmlspecialchars($op) ?>" <?= in_array($op, $intSelected, true) ? 'selected' : '' ?>>
-                <?= htmlspecialchars($op) ?>
-              </option>
-            <?php endforeach; ?>
-          </select>
+          <div class="multi-block">
+            <div class="multi-head">
+              <span class="multi-title">Select One or More</span>
+              <span class="multi-count" data-count-for="interested_in">0 selected</span>
+            </div>
+            <div class="multi-actions">
+              <button type="button" class="multi-link" data-multi-action="all" data-multi-name="interested_in">Select all</button>
+              <button type="button" class="multi-link" data-multi-action="none" data-multi-name="interested_in">Clear</button>
+            </div>
+            <div class="multi-grid">
+              <?php
+              $intOptions = ['Technology Training','Internship','Placement Assistance','Project Development'];
+              foreach ($intOptions as $op):
+              ?>
+                <label class="multi-option">
+                  <input type="checkbox" name="interested_in[]" value="<?= htmlspecialchars($op) ?>" <?= in_array($op, $intSelected, true) ? 'checked' : '' ?>>
+                  <span class="multi-box"></span>
+                  <span class="multi-text"><?= htmlspecialchars($op) ?></span>
+                </label>
+              <?php endforeach; ?>
+            </div>
+          </div>
         </div>
 
         <div class="form-group full">
           <label>How did you know about ATS? (multi)</label>
-          <select name="know_about[]" multiple>
-            <?php
-            $kaOptions = ['Website','Google Search','Instagram','Facebook','Friends/Reference','Walk-in','Other'];
-            foreach ($kaOptions as $op):
-            ?>
-              <option value="<?= htmlspecialchars($op) ?>" <?= in_array($op, $kaSelected, true) ? 'selected' : '' ?>>
-                <?= htmlspecialchars($op) ?>
-              </option>
-            <?php endforeach; ?>
-          </select>
+          <div class="multi-block">
+            <div class="multi-head">
+              <span class="multi-title">Select One or More</span>
+              <span class="multi-count" data-count-for="know_about">0 selected</span>
+            </div>
+            <div class="multi-actions">
+              <button type="button" class="multi-link" data-multi-action="all" data-multi-name="know_about">Select all</button>
+              <button type="button" class="multi-link" data-multi-action="none" data-multi-name="know_about">Clear</button>
+            </div>
+            <div class="multi-grid">
+              <?php
+              $kaOptions = ['Website','Google Search','Instagram','Facebook','Friends/Reference','Walk-in','Other'];
+              foreach ($kaOptions as $op):
+              ?>
+                <label class="multi-option">
+                  <input type="checkbox" name="know_about[]" value="<?= htmlspecialchars($op) ?>" <?= in_array($op, $kaSelected, true) ? 'checked' : '' ?>>
+                  <span class="multi-box"></span>
+                  <span class="multi-text"><?= htmlspecialchars($op) ?></span>
+                </label>
+              <?php endforeach; ?>
+            </div>
+          </div>
         </div>
 
         <div class="form-group full">
@@ -806,10 +1062,10 @@ Swal.fire({
           <label>Candidate Signature (optional)</label>
 
           <label class="upload-box">
-            <div class="upload-ico">↑</div>
+            <div class="upload-ico"><i class="fas fa-upload"></i></div>
             <div class="upload-text">
               <b>Upload Candidate Signature</b>
-              <small>JPG/PNG only • Max 2MB</small>
+              <small>JPG/PNG only &bull; Max 2MB</small>
             </div>
             <input class="upload-file" type="file" name="candidate_signature" accept=".jpg,.jpeg,.png"
                    onchange="document.getElementById('candFileName').innerText=this.files[0]?this.files[0].name:'No file selected';">
@@ -821,10 +1077,10 @@ Swal.fire({
           <label>Counselor Signature (optional)</label>
 
           <label class="upload-box">
-            <div class="upload-ico">↑</div>
+            <div class="upload-ico"><i class="fas fa-upload"></i></div>
             <div class="upload-text">
               <b>Upload Counselor Signature</b>
-              <small>JPG/PNG only • Max 2MB</small>
+              <small>JPG/PNG only &bull; Max 2MB</small>
             </div>
             <input class="upload-file" type="file" name="counselor_signature" accept=".jpg,.jpeg,.png"
                    onchange="document.getElementById('counFileName').innerText=this.files[0]?this.files[0].name:'No file selected';">
@@ -840,7 +1096,7 @@ Swal.fire({
       </div>
 
       <div class="wbtns">
-        <button type="button" class="wbtn primary" data-next="1">← Back</button>
+        <button type="button" class="wbtn primary" data-next="1"><i class="fas fa-arrow-left"></i> Back</button>
         <button type="submit" name="save_enquiry" class="wbtn primary">Save Enquiry</button>
       </div>
     </div>
@@ -850,6 +1106,24 @@ Swal.fire({
 
 <script>
 document.addEventListener("DOMContentLoaded", function(){
+
+  function showSwal(type, title, htmlText){
+    if (window.Swal && Swal.fire){
+      return Swal.fire({
+        icon: type,
+        title: title,
+        html: htmlText,
+        confirmButtonColor: '#e91e63'
+      });
+    }
+    const plain = (htmlText || '').replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]*>/g, '');
+    alert((title ? title + "\n" : "") + plain);
+    return Promise.resolve();
+  }
+
+  function showErrors(errors){
+    return showSwal('error', 'Please fix these', '<div style="text-align:left;">&bull; ' + errors.join('<br>&bull; ') + '</div>');
+  }
 
   function clean(v){ return (v || '').toString().trim(); }
 
@@ -868,14 +1142,23 @@ document.addEventListener("DOMContentLoaded", function(){
   }
 
   function getMulti(name){
-    const el = document.querySelector(`[name="${name}[]"]`);
-    if (!el) return [];
-    return Array.from(el.selectedOptions).map(o => o.value).filter(Boolean);
+    const selectEl = document.querySelector(`select[name="${name}[]"]`);
+    if (selectEl) {
+      return Array.from(selectEl.selectedOptions).map(o => o.value).filter(Boolean);
+    }
+    const checks = document.querySelectorAll(`input[name="${name}[]"]:checked`);
+    return Array.from(checks).map(c => c.value).filter(Boolean);
   }
 
   function getFile(name){
     const el = document.querySelector(`[name="${name}"]`);
     return el && el.files && el.files[0] ? el.files[0] : null;
+  }
+
+  function updateMultiCount(name){
+    const checks = document.querySelectorAll(`input[name="${name}[]"]:checked`);
+    const badge = document.querySelector(`[data-count-for="${name}"]`);
+    if (badge) badge.textContent = `${checks.length} selected`;
   }
 
   const rules = {
@@ -892,51 +1175,70 @@ document.addEventListener("DOMContentLoaded", function(){
     signature_allowed: ['jpg','jpeg','png']
   };
 
-  function validateAll(){
+  ['technologies','interested_in','know_about'].forEach(function(name){
+    updateMultiCount(name);
+    document.querySelectorAll(`input[name="${name}[]"]`).forEach(function(cb){
+      cb.addEventListener('change', function(){ updateMultiCount(name); });
+    });
+  });
+
+  document.querySelectorAll('[data-multi-action]').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      const action = this.getAttribute('data-multi-action');
+      const name = this.getAttribute('data-multi-name');
+      document.querySelectorAll(`input[name="${name}[]"]`).forEach(function(cb){
+        cb.checked = action === 'all';
+      });
+      updateMultiCount(name);
+    });
+  });
+
+  function collectErrors(scope){
     const errors = [];
 
     const name  = getVal('name');
     const phone = getVal('phone');
     const email = getVal('email');
 
-    if (rules.name_required && !name) errors.push("Name is required.");
-    if (rules.phone_required && !phone) errors.push("Phone is required.");
-    if (rules.email_required && !email) errors.push("Email is required.");
-
-    if (phone && !isValidPhone(phone)) errors.push("Phone format invalid (example: +919876543210).");
-    if (email && !isValidEmail(email)) errors.push("Email format invalid (example: name@company.com).");
+    if (scope === 'all' || scope === '1'){
+      if (rules.name_required && !name) errors.push("Name is required.");
+      if (rules.phone_required && !phone) errors.push("Phone is required.");
+      if (rules.email_required && !email) errors.push("Email is required.");
+      if (phone && !isValidPhone(phone)) errors.push("Phone format invalid (example: +919876543210).");
+      if (email && !isValidEmail(email)) errors.push("Email format invalid (example: name@company.com).");
+    }
 
     const qualification = getVal('qualification');
     const year = getVal('year_of_passout');
     const marks = getVal('percentage_marks');
     const fatherPhone = getVal('father_contact_no');
 
-    if (rules.qualification_required && !qualification) errors.push("Qualification is required.");
-
-    if (rules.year_required && !year) errors.push("Year of passout is required.");
-    if (year){
-      const y = parseInt(year,10);
-      if (isNaN(y) || y < 1990 || y > 2100) errors.push("Year of passout must be between 1990 and 2100.");
+    if (scope === 'all' || scope === '2'){
+      if (rules.qualification_required && !qualification) errors.push("Qualification is required.");
+      if (rules.year_required && !year) errors.push("Year of passout is required.");
+      if (year){
+        const y = parseInt(year,10);
+        if (isNaN(y) || y < 1990 || y > 2100) errors.push("Year of passout must be between 1990 and 2100.");
+      }
+      if (rules.marks_required && !marks) errors.push("% Marks is required.");
+      if (marks){
+        const m = parseFloat(marks);
+        if (isNaN(m) || m < 0 || m > 100) errors.push("Percentage marks must be between 0 and 100.");
+      }
+      if (fatherPhone && !isValidPhone(fatherPhone)) errors.push("Father contact number format invalid.");
     }
-
-    if (rules.marks_required && !marks) errors.push("% Marks is required.");
-    if (marks){
-      const m = parseFloat(marks);
-      if (isNaN(m) || m < 0 || m > 100) errors.push("Percentage marks must be between 0 and 100.");
-    }
-
-    if (fatherPhone && !isValidPhone(fatherPhone)) errors.push("Father contact number format invalid.");
 
     const technologies = getMulti('technologies');
     const interestedIn = getMulti('interested_in');
     const knowAbout = getMulti('know_about');
     const knowOther = getVal('know_about_other');
 
-    if (rules.technologies_required && technologies.length === 0) errors.push("Please select at least one Technology.");
-    if (rules.interested_in_required && interestedIn.length === 0) errors.push("Please select at least one Interested In option.");
-    if (rules.know_about_required && knowAbout.length === 0) errors.push("Please select how you came to know about ATS.");
-
-    if (knowAbout.includes('Other') && !knowOther) errors.push("Please type 'Other Source' because you selected Other.");
+    if (scope === 'all' || scope === '3'){
+      if (rules.technologies_required && technologies.length === 0) errors.push("Please select at least one Technology.");
+      if (rules.interested_in_required && interestedIn.length === 0) errors.push("Please select at least one Interested In option.");
+      if (rules.know_about_required && knowAbout.length === 0) errors.push("Please select how you came to know about ATS.");
+      if (knowAbout.includes('Other') && !knowOther) errors.push("Please type 'Other Source' because you selected Other.");
+    }
 
     function validateSignature(file, label){
       if (!file) return;
@@ -946,11 +1248,16 @@ document.addEventListener("DOMContentLoaded", function(){
       if (sizeMb > rules.signature_max_mb) errors.push(`${label} must be under ${rules.signature_max_mb} MB.`);
     }
 
-    validateSignature(getFile('candidate_signature'), 'Candidate signature');
-    validateSignature(getFile('counselor_signature'), 'Counselor signature');
+    if (scope === 'all' || scope === '3'){
+      validateSignature(getFile('candidate_signature'), 'Candidate signature');
+      validateSignature(getFile('counselor_signature'), 'Counselor signature');
+    }
 
     return errors;
   }
+
+  function validateAll(){ return collectErrors('all'); }
+  function validateStep(stepNo){ return collectErrors(String(stepNo)); }
 
   function goStep(n){
     document.querySelectorAll('.wstep').forEach(s=>s.classList.remove('active'));
@@ -973,14 +1280,9 @@ document.addEventListener("DOMContentLoaded", function(){
       const next = parseInt(target,10);
 
       if (next > current){
-        const errors = validateAll();
+        const errors = validateStep(current);
         if (errors.length){
-          Swal.fire({
-            icon: 'error',
-            title: 'Please fix these',
-            html: '<div style="text-align:left;">• ' + errors.join('<br>• ') + '</div>',
-            confirmButtonColor: '#e91e63'
-          });
+          showErrors(errors);
           return;
         }
       }
@@ -997,14 +1299,9 @@ document.addEventListener("DOMContentLoaded", function(){
       const next = parseInt(target,10);
 
       if (next > current){
-        const errors = validateAll();
+        const errors = validateStep(current);
         if (errors.length){
-          Swal.fire({
-            icon: 'error',
-            title: 'Please fix these',
-            html: '<div style="text-align:left;">• ' + errors.join('<br>• ') + '</div>',
-            confirmButtonColor: '#e91e63'
-          });
+          showErrors(errors);
           return;
         }
       }
@@ -1019,15 +1316,19 @@ document.addEventListener("DOMContentLoaded", function(){
       const errors = validateAll();
       if (errors.length){
         e.preventDefault();
-        Swal.fire({
-          icon: 'error',
-          title: 'Please fix these',
-          html: '<div style="text-align:left;">• ' + errors.join('<br>• ') + '</div>',
-          confirmButtonColor: '#e91e63'
-        });
+        showErrors(errors);
+        return;
+      }
+
+      const saveBtn = form.querySelector('button[type="submit"][name="save_enquiry"]');
+      if (saveBtn){
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = "<i class='fas fa-spinner fa-spin'></i> Saving...";
       }
     });
   }
 
 });
 </script>
+
+
