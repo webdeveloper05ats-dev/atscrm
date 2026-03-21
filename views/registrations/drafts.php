@@ -1,3 +1,4 @@
+<link rel="stylesheet" href="<?= BASE_URL ?>assets/css/lead.css">
 <?php
 // =====================================
 // Registrations - Draft Conversions
@@ -202,6 +203,34 @@ $rows=$stmt->fetchAll(PDO::FETCH_ASSOC);
         flex-wrap: wrap;
     }
 
+    .table-header-flex {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+
+    .table-title {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-weight: 700;
+    }
+
+    #datatableControls {
+        margin-left: auto;
+    }
+
+    #datatableControls .dt-top {
+        display: inline-flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
     .draft-card .card-header small {
         font-weight: 400;
         opacity: 0.95;
@@ -248,6 +277,71 @@ $rows=$stmt->fetchAll(PDO::FETCH_ASSOC);
     .draft-table tbody tr:hover td {
         background: #fffafd;
         transition: 0.2s ease;
+    }
+
+    #draftsTableArea .dataTables_length,
+    #draftsTableArea .dataTables_filter,
+    #draftsTableArea .dt-buttons {
+        margin: 0;
+        display: inline-flex;
+        align-items: center;
+    }
+
+    #draftsTableArea .dataTables_length label,
+    #draftsTableArea .dataTables_filter label {
+        margin: 0;
+        font-size: .82rem;
+        color: #6b7280;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    #draftsTableArea .dataTables_length select,
+    #draftsTableArea .dataTables_filter input {
+        border: 1px solid #f1d7e6;
+        border-radius: 10px;
+        min-height: 34px;
+        padding: 6px 10px;
+        font-size: .82rem;
+        background: #fff;
+        outline: none;
+    }
+
+    #draftsTableArea .dataTables_filter input {
+        min-width: 190px;
+        width: 240px;
+        max-width: 100%;
+    }
+
+    #draftsTableArea .dataTables_info {
+        font-size: .82rem;
+        color: #6b7280;
+        margin: 0;
+        float: none !important;
+    }
+
+    #draftsTableArea .dataTables_paginate {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        margin-left: auto;
+        float: none !important;
+    }
+
+    #draftsTableArea .dataTables_paginate .paginate_button {
+        border: 1px solid #f3cadd !important;
+        border-radius: 9px !important;
+        padding: 5px 10px !important;
+        font-size: .82rem;
+        color: #be185d !important;
+        background: #fff !important;
+    }
+
+    #draftsTableArea .dataTables_paginate .paginate_button.current {
+        background: #e91e63 !important;
+        border-color: #e91e63 !important;
+        color: #fff !important;
     }
 
     .draft-reg-no {
@@ -324,6 +418,82 @@ $rows=$stmt->fetchAll(PDO::FETCH_ASSOC);
         align-items: center;
         gap: 8px;
         flex-wrap: wrap;
+    }
+
+    .draft-icon-btn {
+        width: 34px;
+        height: 34px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 10px;
+        text-decoration: none !important;
+        border: 1px solid transparent;
+        cursor: pointer;
+        transition: all .2s ease;
+        position: relative;
+    }
+
+    .draft-icon-btn i {
+        font-size: 13px;
+    }
+
+    .draft-icon-primary {
+        color: #fff !important;
+        background: linear-gradient(135deg, #e91e63 0%, #ff5f8f 100%);
+        box-shadow: 0 8px 16px rgba(233, 30, 99, .20);
+    }
+
+    .draft-icon-danger {
+        color: #d6336c;
+        background: #fff;
+        border-color: #f1c8d6;
+    }
+
+    .draft-icon-btn:hover {
+        transform: translateY(-1px);
+    }
+
+    .draft-tip {
+        position: relative;
+    }
+
+    .draft-tip::after,
+    .draft-tip::before {
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+        transition: .18s ease;
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%) translateY(4px);
+        z-index: 80;
+    }
+
+    .draft-tip::after {
+        content: attr(data-tip);
+        bottom: calc(100% + 8px);
+        background: #1f2937;
+        color: #fff;
+        padding: 6px 9px;
+        border-radius: 7px;
+        font-size: 11px;
+        white-space: nowrap;
+    }
+
+    .draft-tip::before {
+        content: "";
+        bottom: calc(100% + 2px);
+        border-left: 5px solid transparent;
+        border-right: 5px solid transparent;
+        border-top: 6px solid #1f2937;
+    }
+
+    .draft-tip:hover::after,
+    .draft-tip:hover::before {
+        opacity: 1;
+        visibility: visible;
+        transform: translateX(-50%) translateY(0);
     }
 
     .btn-continue-draft {
@@ -420,21 +590,12 @@ $rows=$stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 </style>
 
-<div class="draft-page">
+<div class="leads-dashboard draft-page">
 
-    <div class="draft-hero">
-        <div class="draft-hero-top">
-            <div class="draft-title-wrap">
-                <h2><i class="fas fa-file-alt mr-2"></i>Draft Registrations</h2>
-                <p class="draft-subtitle">
-                    Review incomplete registration conversions, continue where you left off, or remove unwanted drafts.
-                </p>
-            </div>
-
-            <div class="draft-stat">
-                <span class="count"><?= count($rows) ?></span>
-                <span class="label">Total Drafts</span>
-            </div>
+    <div class="dashboard-header">
+        <h2><i class="fas fa-file-alt" style="margin-right: 12px; color: #e91e63;"></i>Draft Registrations</h2>
+        <div class="header-stats">
+            <span class="stat-item"><i class="fas fa-database"></i> Total: <?= count($rows) ?></span>
         </div>
     </div>
 
@@ -460,13 +621,17 @@ $rows=$stmt->fetchAll(PDO::FETCH_ASSOC);
 
     <div class="card draft-card">
         <div class="card-header">
-            <span><i class="fas fa-layer-group mr-2"></i>Draft Registration Queue</span>
-            <small>Manage all saved draft conversions from one place</small>
+            <div class="table-header-flex">
+                <div class="table-title">
+                    <i class="fas fa-layer-group"></i> Draft Registration Queue
+                </div>
+                <div id="datatableControls"></div>
+            </div>
         </div>
 
         <div class="card-body">
-            <div class="draft-table-wrap">
-                <table class="table draft-table">
+            <div class="draft-table-wrap" id="draftsTableArea">
+                <table class="table leads-table draft-table" id="draftsTable">
                     <thead>
                         <tr>
                             <th>Registration No</th>
@@ -542,9 +707,11 @@ $rows=$stmt->fetchAll(PDO::FETCH_ASSOC);
                                 <div class="draft-actions">
                                     <a
 href="index.php?page=registrations/convert & reg_id=<?= $r['id'] ?>&type=<?= h($r['reg_type']) ?>"
-class="btn-continue-draft"
+class="draft-icon-btn draft-icon-primary draft-tip"
+data-tip="Continue Draft"
+title="Continue Draft"
 >
-<i class="fas fa-arrow-right mr-1"></i> Continue
+<i class="fas fa-arrow-right"></i>
 </a>
                                     <form method="POST" style="display:inline;">
                                         <input type="hidden" name="csrf_token" value="<?= generateCSRF() ?>">
@@ -553,9 +720,11 @@ class="btn-continue-draft"
                                         <button
                                             type="submit"
                                             name="delete_draft"
-                                            class="btn-delete-draft deleteDraftBtn"
+                                            class="draft-icon-btn draft-icon-danger deleteDraftBtn draft-tip"
+                                            data-tip="Delete Draft"
+                                            title="Delete Draft"
                                         >
-                                            <i class="fas fa-trash-alt mr-1"></i> Delete
+                                            <i class="fas fa-trash-alt"></i>
                                         </button>
                                     </form>
                                 </div>
@@ -572,28 +741,62 @@ class="btn-continue-draft"
 </div>
 
 <script>
-document.querySelectorAll(".deleteDraftBtn").forEach(btn=>{
-
-    btn.addEventListener("click",function(e){
-
-        e.preventDefault();
-
-        let form=this.closest("form");
-
-        Swal.fire({
-            title:"Delete Draft?",
-            text:"This draft will be permanently deleted.",
-            icon:"warning",
-            showCancelButton:true,
-            confirmButtonText:"Delete",
-            confirmButtonColor:"#e91e63"
-        }).then((r)=>{
-            if(r.isConfirmed){
-                form.submit();
-            }
+document.addEventListener("DOMContentLoaded", function(){
+    if (typeof crmDataTable === "function") {
+        crmDataTable('#draftsTable', {
+            pageLength: 10,
+            lengthMenu: [5, 10, 20, 50, 100],
+            ordering: true,
+            order: [[4, 'desc']],
+            searchPlaceholder: "Search drafts...",
+            dom:
+                "<'dt-top'lfB>" +
+                "rt" +
+                "<'dt-bottom'ip>"
         });
+    }
 
+    setTimeout(() => {
+        const controls = document.querySelector('#draftsTableArea .dt-top');
+        const target = document.getElementById('datatableControls');
+        if (controls && target) {
+            target.appendChild(controls);
+        }
+    }, 100);
+
+    document.querySelectorAll("[title]").forEach(function(el){
+        const t = (el.getAttribute("title") || "").trim();
+        if (!t) return;
+        if (!el.classList.contains("draft-tip")) {
+            el.classList.add("draft-tip");
+        }
+        if (!el.getAttribute("data-tip")) {
+            el.setAttribute("data-tip", t);
+        }
+        el.removeAttribute("title");
     });
+});
 
+document.addEventListener("click", function(e){
+    const btn = e.target.closest(".deleteDraftBtn");
+    if(!btn) return;
+
+    e.preventDefault();
+
+    const form = btn.closest("form");
+    if(!form) return;
+
+    Swal.fire({
+        title:"Delete Draft?",
+        text:"This draft will be permanently deleted.",
+        icon:"warning",
+        showCancelButton:true,
+        confirmButtonText:"Delete",
+        confirmButtonColor:"#e91e63"
+    }).then((r)=>{
+        if(r.isConfirmed){
+            form.submit();
+        }
+    });
 });
 </script>
