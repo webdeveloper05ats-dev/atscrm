@@ -167,12 +167,13 @@ if(isset($_POST['save_lead']) && empty($error)){
 }
 ?>
 
-<h2 style="margin-bottom:16px;">
-<?= $isEdit ? "Edit Lead" : "Add New Lead" ?>
-</h2>
+<div class="lead-page-head">
+<h2><?= $isEdit ? "Edit Lead" : "Add New Lead" ?></h2>
+</div>
 
 <?php if($success): ?>
 <script>
+if (window.Swal && Swal.fire) {
 Swal.fire({
 icon:'success',
 title:'Success',
@@ -181,26 +182,38 @@ confirmButtonColor:'#e91e63'
 }).then(()=>{
 window.location.href="index.php?page=leads/list";
 });
+} else {
+alert('<?= addslashes($success) ?>');
+window.location.href="index.php?page=leads/list";
+}
 </script>
 <?php endif; ?>
 
 <?php if($error): ?>
 <script>
+if (window.Swal && Swal.fire) {
 Swal.fire({
 icon:'error',
 title:'Error',
 text:'<?= addslashes($error) ?>',
 confirmButtonColor:'#e91e63'
 });
+} else {
+alert('<?= addslashes($error) ?>');
+}
 </script>
 <?php endif; ?>
 
-<div class="card">
-<div class="card-header">
-Lead Information
+<div class="lead-card">
+<div class="lead-card-head">
+<div class="lead-card-title">
+<i class="fas fa-<?= $isEdit ? 'pen' : 'plus-circle' ?>" style="margin-right:8px;"></i>
+<?= $isEdit ? "Edit Lead Information" : "Add Lead Information" ?>
+</div>
 </div>
 
-<form method="POST" style="padding:16px;" novalidate>
+<div class="lead-card-body">
+<form method="POST" id="leadForm" novalidate>
 
 <input type="hidden" name="csrf_token" value="<?= h(generateCSRF()) ?>">
 
@@ -209,49 +222,56 @@ Lead Information
 <div class="form-group">
 <label>Name *</label>
 <input type="text" name="name" required
+placeholder="Example: John Smith"
 value="<?= h($_POST['name'] ?? $lead['name'] ?? '') ?>">
 </div>
 
 <div class="form-group">
 <label>Phone *</label>
-<input type="number" name="phone" 
+<input type="number" name="phone" required
+placeholder="Example: 9876543210"
 value="<?= h($_POST['phone'] ?? $lead['phone'] ?? '') ?>">
 </div>
 
 <div class="form-group">
 <label>Email *</label>
-<input type="email" name="email"
+<input type="email" name="email" required
+placeholder="Example: john@gmail.com"
 value="<?= h($_POST['email'] ?? $lead['email'] ?? '') ?>">
 </div>
 
 <div class="form-group">
 <label>Lead Source</label>
+<?php $selectedSource = (string)($_POST['source'] ?? $lead['source'] ?? ''); ?>
 <select name="source">
 <option value="">Select</option>
-<option value="Website">Website</option>
-<option value="Facebook">Facebook</option>
-<option value="Instagram">Instagram</option>
-<option value="Google Ads">Google Ads</option>
-<option value="Walk-in">Walk-in</option>
-<option value="Reference">Reference</option>
+<option value="Website" <?= $selectedSource==='Website'?'selected':'' ?>>Website</option>
+<option value="Facebook" <?= $selectedSource==='Facebook'?'selected':'' ?>>Facebook</option>
+<option value="Instagram" <?= $selectedSource==='Instagram'?'selected':'' ?>>Instagram</option>
+<option value="Google Ads" <?= $selectedSource==='Google Ads'?'selected':'' ?>>Google Ads</option>
+<option value="Walk-in" <?= $selectedSource==='Walk-in'?'selected':'' ?>>Walk-in</option>
+<option value="Reference" <?= $selectedSource==='Reference'?'selected':'' ?>>Reference</option>
 </select>
 </div>
 
 <div class="form-group">
 <label>Interest</label>
 <input type="text" name="course_interest"
+placeholder="Example: Data Science"
 value="<?= h($_POST['course_interest'] ?? $lead['course_interest'] ?? '') ?>">
 </div>
 
 <div class="form-group">
 <label>Company / College Name</label>
 <input type="text" name="company_college_name"
+placeholder="Example: XYZ College"
 value="<?= h($_POST['company_college_name'] ?? $lead['company_college_name'] ?? '') ?>">
 </div>
 
 <div class="form-group">
 <label>Department</label>
 <input type="text" name="department"
+placeholder="Example: Computer Science"
 value="<?= h($_POST['department'] ?? $lead['department'] ?? '') ?>">
 </div>
 
@@ -283,25 +303,71 @@ value="<?= h($_POST['lead_year'] ?? $lead['lead_year'] ?? '') ?>">
 
 <div class="form-group full">
 <label>Remarks</label>
-<textarea name="remarks" rows="4"><?= h($_POST['remarks'] ?? $lead['remarks'] ?? '') ?></textarea>
+<textarea name="remarks" rows="4" placeholder="Write short notes about this lead..."><?= h($_POST['remarks'] ?? $lead['remarks'] ?? '') ?></textarea>
 </div>
 
 </div>
 
 <div class="form-actions">
-<button type="submit" name="save_lead" class="btn btn-primary">
+<button type="submit" name="save_lead" id="saveLeadBtn" class="lead-btn-primary" disabled>
 <?= $isEdit ? "Update Lead" : "Save Lead" ?>
 </button>
 
-<a href="index.php?page=leads/list" class="btn-light">
+<a href="index.php?page=leads/list" class="lead-btn-light">
 Cancel
 </a>
 </div>
 
 </form>
 </div>
+</div>
 
 <style>
+:root{
+--lead-primary:#e91e63;
+--lead-primary-dark:#c2185b;
+--lead-border:#ead1df;
+--lead-soft:#fff4fa;
+--lead-muted:#6b7280;
+--lead-shadow:0 8px 18px rgba(0,0,0,.06);
+}
+
+.lead-page-head{
+margin-bottom:12px;
+}
+
+.lead-page-head h2{
+margin:0;
+color:#be185d;
+font-weight:800;
+}
+
+.lead-card{
+background:#fff;
+border:1px solid var(--lead-border);
+border-radius:14px;
+box-shadow:var(--lead-shadow);
+overflow:hidden;
+}
+
+.lead-card-head{
+padding:12px 14px;
+border-bottom:1px solid var(--lead-border);
+background:var(--lead-soft);
+}
+
+.lead-card-title{
+margin:0;
+font-size:1rem;
+font-weight:800;
+color:#be185d;
+display:inline-flex;
+align-items:center;
+}
+
+.lead-card-body{
+padding:14px;
+}
 
 .form-grid{
 display:grid;
@@ -314,20 +380,29 @@ grid-column:1/-1;
 }
 
 .form-group label{
+font-size:.74rem;
 font-weight:700;
+text-transform:uppercase;
+letter-spacing:.3px;
+color:var(--lead-muted);
 margin-bottom:6px;
 display:block;
 }
 
 input,select,textarea{
 width:100%;
-padding:10px 12px;
-border-radius:10px;
-border:1px solid #e5e7eb;
+min-height:40px;
+padding:9px 10px;
+border-radius:9px;
+border:1px solid var(--lead-border);
+font-size:.88rem;
+outline:none;
+background:#fff;
+transition:border-color .2s ease, box-shadow .2s ease;
 }
 
 input:focus,select:focus,textarea:focus{
-border-color:#e91e63;
+border-color:var(--lead-primary);
 box-shadow:0 0 0 3px rgba(233,30,99,.15);
 }
 
@@ -335,23 +410,55 @@ box-shadow:0 0 0 3px rgba(233,30,99,.15);
 margin-top:16px;
 display:flex;
 gap:10px;
+flex-wrap:wrap;
 }
 
-.btn-primary{
-background:#e91e63;
+.lead-btn-primary{
+background:linear-gradient(135deg,#ff4d8d,#e91e63);
 color:#fff;
 padding:10px 16px;
 border-radius:10px;
 border:none;
 cursor:pointer;
+font-weight:700;
+min-height:40px;
+display:inline-flex;
+align-items:center;
+justify-content:center;
+text-decoration:none;
+transition:all .2s ease;
 }
 
-.btn-light{
+.lead-btn-primary:hover{
+background:var(--lead-primary-dark);
+transform:translateY(-1px);
+}
+
+.lead-btn-primary:disabled{
+opacity:.58;
+cursor:not-allowed;
+transform:none;
+box-shadow:none;
+}
+
+.lead-btn-light{
 background:#fff;
-border:1px solid #ddd;
+border:1px solid var(--lead-border);
 padding:10px 16px;
 border-radius:10px;
 text-decoration:none;
+color:#374151;
+font-weight:700;
+min-height:40px;
+display:inline-flex;
+align-items:center;
+justify-content:center;
+}
+
+@media(max-width:900px){
+.form-grid{ grid-template-columns:1fr; }
+.form-actions{ flex-direction:column; }
+.lead-btn-primary,.lead-btn-light{ width:100%; }
 }
 
 </style>
@@ -359,7 +466,40 @@ text-decoration:none;
 <script>
 document.addEventListener("DOMContentLoaded", function(){
 
-    const form = document.querySelector("form");
+    const form = document.getElementById("leadForm");
+    if(!form) return;
+    const saveBtn = document.getElementById("saveLeadBtn");
+    const reqName = form.querySelector('[name="name"]');
+    const reqPhone = form.querySelector('[name="phone"]');
+    const reqEmail = form.querySelector('[name="email"]');
+    const showWarn = function(title, text){
+        if(window.Swal && Swal.fire){
+            Swal.fire({
+                icon:'warning',
+                title:title,
+                text:text,
+                confirmButtonColor:'#e91e63'
+            });
+        }else{
+            alert(text);
+        }
+    };
+
+    const syncSaveState = function(){
+        if(!saveBtn) return;
+        const nameOk = !!(reqName && reqName.value.trim()!=="");
+        const phoneOk = !!(reqPhone && reqPhone.value.trim()!=="");
+        const emailOk = !!(reqEmail && reqEmail.value.trim()!=="");
+        saveBtn.disabled = !(nameOk && phoneOk && emailOk);
+    };
+
+    [reqName, reqPhone, reqEmail].forEach(function(inp){
+        if(inp){
+            inp.addEventListener("input", syncSaveState);
+            inp.addEventListener("change", syncSaveState);
+        }
+    });
+    syncSaveState();
 
     form.addEventListener("submit", function(e){
 
@@ -370,48 +510,28 @@ document.addEventListener("DOMContentLoaded", function(){
         // Name check
         if(name === ""){
             e.preventDefault();
-            Swal.fire({
-                icon:'warning',
-                title:'Validation Error',
-                text:'Name is required',
-                confirmButtonColor:'#e91e63'
-            });
+            showWarn('Validation Error','Name is required');
             return;
         }
 
         // Phone check
         if(phone === ""){
             e.preventDefault();
-            Swal.fire({
-                icon:'warning',
-                title:'Validation Error',
-                text:'Phone number is required',
-                confirmButtonColor:'#e91e63'
-            });
+            showWarn('Validation Error','Phone number is required');
             return;
         }
 
         // Phone format (10 digits basic)
         if(!/^[0-9]{10}$/.test(phone)){
             e.preventDefault();
-            Swal.fire({
-                icon:'warning',
-                title:'Invalid Phone',
-                text:'Enter valid 10 digit phone number',
-                confirmButtonColor:'#e91e63'
-            });
+            showWarn('Invalid Phone','Enter valid 10 digit phone number');
             return;
         }
 
         // Email check
         if(email === ""){
             e.preventDefault();
-            Swal.fire({
-                icon:'warning',
-                title:'Validation Error',
-                text:'Email is required',
-                confirmButtonColor:'#e91e63'
-            });
+            showWarn('Validation Error','Email is required');
             return;
         }
 
@@ -420,12 +540,7 @@ document.addEventListener("DOMContentLoaded", function(){
 
         if(!emailPattern.test(email)){
             e.preventDefault();
-            Swal.fire({
-                icon:'warning',
-                title:'Invalid Email',
-                text:'Enter valid email address',
-                confirmButtonColor:'#e91e63'
-            });
+            showWarn('Invalid Email','Enter valid email address');
             return;
         }
 
