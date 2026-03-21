@@ -60,11 +60,11 @@ if(isset($_POST['add_role'])){
 $role_name=trim($_POST['role_name'] ?? '');
 $default_slug=trim($_POST['default_dashboard_slug'] ?? '');
 
-$can_all=isset($_POST['can_access_all_branches'])?1:0;
-$status=isset($_POST['status'])?1:0;
+$can_all=(int)($_POST['can_access_all_branches'] ?? 0);
+$status=(int)($_POST['status'] ?? 1);
 
-if($role_name==''){
-$error="Role name required";
+if($role_name=='' || $default_slug==''){
+$error="Role Name and Default Dashboard are required.";
 }else{
 
 $chk=$pdo->prepare("SELECT COUNT(*) FROM roles WHERE role_name=?");
@@ -107,8 +107,12 @@ $id=(int)$_POST['id'];
 $role_name=trim($_POST['role_name']);
 $default_slug=trim($_POST['default_dashboard_slug']);
 
-$can_all=isset($_POST['can_access_all_branches'])?1:0;
-$status=isset($_POST['status'])?1:0;
+$can_all=(int)($_POST['can_access_all_branches'] ?? 0);
+$status=(int)($_POST['status'] ?? 1);
+
+if($role_name=='' || $default_slug==''){
+$error="Role Name and Default Dashboard are required.";
+}else{
 
 if($protectedRoleId && $id==$protectedRoleId){
 
@@ -135,6 +139,7 @@ $id
 
 header("Location:index.php?page=role_management");
 exit;
+}
 
 }
 
@@ -166,14 +171,100 @@ exit;
 }
 
 }
+
+$canAllValue=isset($_POST['can_access_all_branches'])
+?(int)$_POST['can_access_all_branches']
+:(isset($editRole['can_access_all_branches'])?(int)$editRole['can_access_all_branches']:0);
+
+$statusValue=isset($_POST['status'])
+?(int)$_POST['status']
+:(isset($editRole['status'])?(int)$editRole['status']:1);
 ?>
 
-
+<style>
+.role-form-group { margin-bottom: 12px; }
+.role-form-group label {
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: #6c757d;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  display: block;
+  margin-bottom: 5px;
+}
+.role-form-group input {
+  width: 100%;
+  min-height: 38px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid #ead1df;
+  font-size: 0.88rem;
+  outline: none;
+  background: #fff;
+  transition: border-color .2s ease, box-shadow .2s ease;
+}
+.role-form-group input::placeholder { color: #a3929d; }
+.role-form-group input:focus {
+  border-color: #e91e63;
+  box-shadow: 0 0 0 3px rgba(233,30,99,.12);
+}
+.role-form-group input[name="role_name"]:not(:placeholder-shown):valid,
+.role-form-group input[name="default_dashboard_slug"]:not(:placeholder-shown):valid {
+  border-color: #9ee2b8;
+  box-shadow: 0 0 0 3px rgba(34, 197, 94, .12);
+}
+.role-form-group small {
+  display: block;
+  margin-top: 5px;
+  font-size: 0.72rem;
+  color: #9b8a94;
+  line-height: 1.35;
+}
+.role-segment {
+  display: inline-flex;
+  width: 100%;
+  border: 1px solid #ead1df;
+  border-radius: 999px;
+  overflow: hidden;
+  background: #fff;
+  box-shadow: inset 0 1px 2px rgba(233, 30, 99, 0.08);
+}
+.role-segment-btn {
+  flex: 1;
+  border: 0;
+  background: transparent;
+  color: #6b7280;
+  min-height: 40px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all .2s ease;
+}
+.role-segment-btn + .role-segment-btn { border-left: 1px solid #f3d8e5; }
+.role-segment-btn.active {
+  background: linear-gradient(135deg, #e91e63 0%, #ff4f9c 100%);
+  color: #fff;
+}
+.atsrm-role-ui-btn:disabled {
+  opacity: .58;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+</style>
 
 <h2 class="page-title">Role Management</h2>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <?php if($error): ?>
-<div class="alert alert-danger"><?= htmlspecialchars($error) ?></div>
+<script>
+Swal.fire({
+icon:'error',
+title:'Error',
+text:'<?=addslashes($error)?>',
+confirmButtonColor:'#e91e63'
+});
+</script>
 <?php endif; ?>
 
 <div class="atsrm-role-wrapper">
@@ -194,47 +285,48 @@ exit;
 
             <div class="atsrm-role-ui-form">
               <!-- Role Name -->
-              <div class="atsrm-role-ui-field" data-tooltip="Enter unique role name">
+              <div class="atsrm-role-ui-field role-form-group" data-tooltip="Enter unique role name">
                 <label>Role Name</label>
                 <input type="text" name="role_name" 
                        value="<?= htmlspecialchars($editRole['role_name'] ?? '') ?>" 
-                       placeholder="e.g. Manager" required>
-                       <div class="atsrm-role-ui-hint">Example: Manager</div>
+                       placeholder="e.g. HR Manager" required>
+                <small>Example: HR Manager</small>
               </div>
 
               <!-- Default Dashboard -->
-              <div class="atsrm-role-ui-field" data-tooltip="Dashboard slug (e.g. dashboard/hr)">
+              <div class="atsrm-role-ui-field role-form-group" data-tooltip="Dashboard slug (e.g. dashboard/hr)">
                 <label>Default Dashboard</label>
                 <input type="text" name="default_dashboard_slug"
                        value="<?= htmlspecialchars($editRole['default_dashboard_slug'] ?? '') ?>"
-                       placeholder="dashboard/hr">
-                <div class="atsrm-role-ui-hint">Example: dashboard/test</div>
+                       placeholder="e.g. dashboard/hr" required>
+                <small>Example: dashboard/hr</small>
               </div>
 
-              <!-- All Branch Toggle -->
-            <div class="atsrm-role-ui-field" data-tooltip="Access to all branches?">
-<label>All Branch</label>
-<label class="atsrm-role-ui-switch">
-<input type="checkbox" name="can_access_all_branches" value="1"
-<?= (isset($editRole['can_access_all_branches']) && $editRole['can_access_all_branches']==1) ? 'checked' : '' ?>>
-<span class="atsrm-role-ui-slider"></span>
-</label>
-</div>
+              <!-- All Branch -->
+              <div class="atsrm-role-ui-field role-form-group" data-tooltip="Access to all branches?">
+                <label>All Branch Access</label>
+                <input type="hidden" name="can_access_all_branches" id="branchAccessInput" value="<?= $canAllValue ?>">
+                <div class="role-segment" role="tablist" aria-label="Branch access">
+                  <button type="button" class="role-segment-btn<?= $canAllValue===1?' active':'' ?>" data-target-input="branchAccessInput" data-value="1">All Branches</button>
+                  <button type="button" class="role-segment-btn<?= $canAllValue===0?' active':'' ?>" data-target-input="branchAccessInput" data-value="0">Restricted</button>
+                </div>
+                <small>Choose whether this role can access all branches.</small>
+              </div>
 
               <!-- Status Toggle -->
-              <div class="atsrm-role-ui-field" data-tooltip="Enable or disable role">
-<label>Status</label>
-<label class="atsrm-role-ui-switch">
-<input type="checkbox" name="status" value="1"
-<?= (isset($editRole['status']) && $editRole['status']==1) ? 'checked' : 'checked' ?>>
-<!-- Note: The default is checked, but you might want to use the actual value -->
-<span class="atsrm-role-ui-slider"></span>
-</label>
-</div>
+              <div class="atsrm-role-ui-field role-form-group" data-tooltip="Enable or disable role">
+                <label>Status</label>
+                <input type="hidden" name="status" id="roleStatusInput" value="<?= $statusValue ?>">
+                <div class="role-segment" role="tablist" aria-label="Role status">
+                  <button type="button" class="role-segment-btn<?= $statusValue===1?' active':'' ?>" data-target-input="roleStatusInput" data-value="1">Active</button>
+                  <button type="button" class="role-segment-btn<?= $statusValue===0?' active':'' ?>" data-target-input="roleStatusInput" data-value="0">Inactive</button>
+                </div>
+                <small>Active roles can be assigned and used in the system.</small>
+              </div>
 
               <!-- Submit Button -->
-              <div class="atsrm-role-ui-field">
-                <button class="atsrm-role-ui-btn" name="<?= $editRole?'update_role':'add_role' ?>">
+              <div class="atsrm-role-ui-field role-form-group">
+                <button class="atsrm-role-ui-btn" id="saveRoleBtn" name="<?= $editRole?'update_role':'add_role' ?>" disabled>
                   <i class="fas fa-save"></i>
                   <?= $editRole?'Update Role':'Add Role' ?>
                 </button>
@@ -332,31 +424,66 @@ exit;
 </div>
 
 <!-- SweetAlert2 & Delete Confirmation (unchanged) -->
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
 const roleForm = document.getElementById('roleForm');
 if (roleForm) {
   roleForm.addEventListener('submit', function (e) {
     const roleName = this.querySelector('input[name="role_name"]');
+    const dashboardSlug = this.querySelector('input[name="default_dashboard_slug"]');
     const roleValue = (roleName?.value || '').trim();
+    const dashboardValue = (dashboardSlug?.value || '').trim();
 
-    if (!roleValue) {
+    if (!roleValue || !dashboardValue) {
       e.preventDefault();
       if (window.Swal && Swal.fire) {
         Swal.fire({
           icon: 'warning',
-          title: 'Role Name Required',
-          text: 'Please enter role name before saving.',
+          title: 'Missing Information',
+          text: 'Role Name and Default Dashboard are required.',
           confirmButtonColor: '#e91e63'
         });
       } else {
-        alert('Please enter role name before saving.');
+        alert('Role Name and Default Dashboard are required.');
       }
-      if (roleName) roleName.focus();
+      if (!roleValue && roleName) roleName.focus();
+      if (roleValue && !dashboardValue && dashboardSlug) dashboardSlug.focus();
       return;
     }
   });
 }
+
+document.querySelectorAll('.role-segment-btn').forEach(function (btn) {
+  btn.addEventListener('click', function () {
+    const inputId = this.getAttribute('data-target-input');
+    const value = this.getAttribute('data-value') || '0';
+    const hiddenInput = document.getElementById(inputId);
+    if (!hiddenInput) return;
+    hiddenInput.value = value;
+
+    const group = this.closest('.role-segment');
+    if (group) {
+      group.querySelectorAll('.role-segment-btn').forEach(function (x) {
+        x.classList.remove('active');
+      });
+    }
+    this.classList.add('active');
+  });
+});
+
+const saveRoleBtn=document.getElementById('saveRoleBtn');
+const roleReqInputs=[
+document.querySelector('[name="role_name"]'),
+document.querySelector('[name="default_dashboard_slug"]')
+];
+const syncSaveRoleState=function(){
+if(!saveRoleBtn) return;
+const ok=roleReqInputs.every(function(inp){ return inp && inp.value.trim()!==''; });
+saveRoleBtn.disabled=!ok;
+};
+roleReqInputs.forEach(function(inp){
+if(inp){ inp.addEventListener('input',syncSaveRoleState); }
+});
+syncSaveRoleState();
 
 document.querySelectorAll('.delete-role').forEach(btn=>{
   btn.addEventListener('click',function(e){
@@ -441,6 +568,4 @@ setTimeout(function () {
 });
 
 </script>
-
-
 
