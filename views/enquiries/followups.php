@@ -1652,18 +1652,20 @@ text-align:center;
 
 .crm-followup-layout{
 display:grid;
-grid-template-columns:2fr 1fr;
+grid-template-columns:1fr 2fr;
 gap:20px;
 align-items:start;
 }
 
 .crm-followup-left{
 min-width:0;
+order:2;
 }
 
 .crm-followup-right{
 position:sticky;
 top:20px;
+order:1;
 }
 
 @media(max-width:1100px){
@@ -2070,9 +2072,431 @@ padding:4px 8px;
 border-radius:20px;
 padding:6px 12px;
 }
+
+.fu-page-head{
+display:flex;
+align-items:center;
+justify-content:space-between;
+gap:12px;
+flex-wrap:wrap;
+margin-bottom:12px;
+}
+.fu-page-title{
+margin:0;
+color:#be185d;
+font-weight:900;
+display:flex;
+align-items:center;
+gap:10px;
+}
+.fu-quick-nav{
+display:flex;
+gap:8px;
+flex-wrap:wrap;
+}
+.fu-nav-btn{
+display:inline-flex;
+align-items:center;
+gap:7px;
+padding:8px 12px;
+border-radius:10px;
+border:1px solid #f1d6e3;
+background:#fff;
+color:#9d174d;
+font-weight:800;
+font-size:13px;
+text-decoration:none;
+transition:.2s ease;
+}
+.fu-nav-btn:hover{
+background:#fff1f7;
+border-color:#e91e63;
+}
+.fu-sec-title{
+display:flex;
+align-items:center;
+gap:8px;
+font-weight:900;
+}
+.fu-sec-sub{
+font-size:12px;
+color:#6b7280;
+margin-top:2px;
+}
+.fu-table-title{
+margin:0 0 12px;
+font-size:15px;
+font-weight:900;
+color:#374151;
+}
+.followup-tabs-wrap{
+padding:14px 14px 0;
+}
+.followup-filters-wrap{
+padding:14px;
+padding-top:10px;
+}
+.followup-filters-wrap .followup-filter-row{
+padding:12px;
+border:1px solid #f1d6e3;
+border-radius:12px;
+background:#fff8fc;
+}
+.followup-records-head{
+display:flex;
+align-items:center;
+justify-content:space-between;
+gap:10px;
+flex-wrap:nowrap;
+margin-bottom:12px;
+}
+.followup-records-left{
+display:flex;
+align-items:center;
+gap:10px;
+flex-wrap:nowrap;
+}
+.followup-table-controls,
+.followup-table-footer{
+width:auto;
+}
+.followup-table-controls .dt-top,
+.followup-table-footer .dt-bottom{
+display:flex;
+align-items:center;
+justify-content:flex-end;
+gap:12px;
+flex-wrap:nowrap;
+}
+.followup-table-footer{
+width:100%;
+}
+.followup-table-footer .dt-bottom{
+justify-content:space-between;
+flex-wrap:wrap;
+}
+.followup-table-controls .dt-top > *{
+margin:0 !important;
+}
+.followup-table-controls .dataTables_length,
+.followup-table-controls .dataTables_filter,
+.followup-table-controls .dt-buttons{
+display:flex;
+align-items:center;
+gap:8px;
+margin:0;
+line-height:1;
+}
+.followup-table-controls .dt-buttons{
+display:none !important;
+}
+.followup-table-controls .dataTables_length label{
+display:inline-flex;
+align-items:center;
+gap:8px;
+white-space:nowrap;
+margin:0;
+}
+.followup-table-controls .dataTables_filter label{
+display:inline-flex;
+align-items:center;
+gap:8px;
+white-space:nowrap;
+margin:0;
+}
+.followup-table-controls .dataTables_filter input{
+min-width:220px;
+border:1px solid #f1b7c8;
+border-radius:999px;
+padding:8px 12px;
+margin:0 !important;
+}
+@media(max-width:1100px){
+  .followup-records-head{
+    flex-wrap:wrap;
+  }
+  .followup-records-left{
+    flex-wrap:wrap;
+  }
+  .followup-table-controls{
+    width:100%;
+  }
+  .followup-table-controls .dt-top{
+    justify-content:space-between;
+    flex-wrap:wrap;
+  }
+}
+.followup-table-controls .dataTables_length select{
+border:1px solid #f1b7c8;
+border-radius:10px;
+padding:6px 10px;
+}
+.followup-table-controls .dt-buttons .buttons-csv,
+.followup-table-controls .dt-buttons button{
+background:#e91e63 !important;
+border:1px solid #e91e63 !important;
+color:#fff !important;
+border-radius:10px !important;
+padding:8px 14px !important;
+font-weight:800 !important;
+}
+.followup-table-footer .dataTables_info{
+font-weight:600;
+color:#6b7280;
+}
+.followup-table-footer .dataTables_paginate{
+display:flex;
+align-items:center;
+gap:6px;
+}
+.followup-table-footer .dataTables_paginate .paginate_button{
+display:inline-flex !important;
+align-items:center;
+justify-content:center;
+min-width:34px;
+height:34px;
+padding:0 10px !important;
+margin:0 !important;
+border:1px solid #f1d6e3 !important;
+border-radius:8px !important;
+background:#fff !important;
+color:#374151 !important;
+font-weight:700 !important;
+}
+.followup-table-footer .dataTables_paginate .paginate_button.current{
+background:#e91e63 !important;
+border-color:#e91e63 !important;
+color:#fff !important;
+}
+.followup-table-footer .dataTables_paginate .paginate_button:hover{
+background:#fff1f7 !important;
+border-color:#e91e63 !important;
+color:#9d174d !important;
+}
+.followup-records-meta{
+display:inline-flex;
+align-items:center;
+gap:8px;
+padding:5px 10px;
+border-radius:999px;
+border:1px solid #f1d6e3;
+background:#fff;
+font-size:12px;
+font-weight:800;
+color:#9d174d;
+}
+.crm-table tbody tr:hover{
+background:#fff5fa;
+}
+.crm-table-wrapper{
+position:relative;
+}
+.followup-table-loading{
+position:absolute;
+inset:0;
+background:rgba(255,255,255,.8);
+display:flex;
+align-items:center;
+justify-content:center;
+gap:10px;
+z-index:5;
+font-weight:800;
+color:#9d174d;
+}
+.followup-loader-dot{
+width:18px;
+height:18px;
+border:2px solid #f3c0d6;
+border-top-color:#e91e63;
+border-radius:50%;
+animation:fuSpin .8s linear infinite;
+}
+@keyframes fuSpin { to { transform: rotate(360deg); } }
+
+#addFollowupSection .section-card{
+border:1px solid #f1d6e3;
+box-shadow:0 12px 28px rgba(0,0,0,.06);
+}
+#addFollowupSection .card-header{
+background:linear-gradient(135deg,#fff4fa,#fff);
+}
+.add-fu-form{
+padding:16px;
+}
+.add-fu-grid{
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:14px;
+}
+.add-fu-grid .fu-full{
+grid-column:1 / -1;
+}
+.add-fu-triple{
+display:grid;
+grid-template-columns:repeat(2,minmax(0,1fr));
+gap:14px;
+}
+.add-fu-triple > div:last-child{
+grid-column:1 / -1;
+}
+.add-fu-form input,
+.add-fu-form select,
+.add-fu-form textarea{
+width:100%;
+padding:10px 12px;
+border:1px solid #e5e7eb;
+border-radius:12px;
+background:#fff;
+outline:none;
+transition:.18s ease;
+}
+.add-fu-form input:focus,
+.add-fu-form select:focus,
+.add-fu-form textarea:focus{
+border-color:rgba(233,30,99,.55);
+box-shadow:0 0 0 4px rgba(233,30,99,.12);
+}
+.add-fu-actions{
+margin-top:14px;
+display:flex;
+justify-content:flex-end;
+gap:10px;
+flex-wrap:wrap;
+}
+.add-fu-save{
+min-width:180px;
+}
+.add-fu-save:disabled{
+opacity:.55;
+cursor:not-allowed;
+box-shadow:none;
+transform:none;
+}
+.add-fu-form select.js-enhanced{
+display:none;
+}
+.fu-smart-select{
+position:relative;
+}
+.fu-smart-toggle{
+width:100%;
+min-height:44px;
+border:1px solid #e5e7eb;
+border-radius:14px;
+background:#fff;
+padding:10px 12px;
+display:flex;
+align-items:center;
+justify-content:space-between;
+gap:10px;
+cursor:pointer;
+font-weight:600;
+color:#374151;
+}
+.fu-smart-toggle:focus{
+outline:none;
+border-color:rgba(233,30,99,.55);
+box-shadow:0 0 0 4px rgba(233,30,99,.12);
+}
+.fu-smart-toggle i{
+color:#9ca3af;
+}
+.fu-smart-panel{
+position:absolute;
+left:0;
+right:0;
+top:calc(100% + 8px);
+background:#fff;
+border:1px solid #f3d8e5;
+border-radius:14px;
+box-shadow:0 14px 28px rgba(0,0,0,.12);
+padding:10px;
+z-index:40;
+display:none;
+}
+.fu-smart-select.open .fu-smart-panel{
+display:block;
+}
+.fu-smart-search{
+width:100%;
+border:1px solid #f1d6e3;
+border-radius:10px;
+min-height:38px;
+padding:8px 10px;
+font-size:13px;
+margin-bottom:8px;
+}
+.fu-smart-search:focus{
+outline:none;
+border-color:#e91e63;
+box-shadow:0 0 0 3px rgba(233,30,99,.12);
+}
+.fu-smart-list{
+max-height:220px;
+overflow:auto;
+display:flex;
+flex-direction:column;
+gap:6px;
+padding-right:2px;
+}
+.fu-smart-item{
+border:1px solid #f5dce8;
+border-radius:10px;
+background:#fff;
+padding:8px 10px;
+font-size:13px;
+text-align:left;
+cursor:pointer;
+transition:.15s ease;
+}
+.fu-smart-item:hover{
+background:#fff1f7;
+border-color:#ef9cc0;
+}
+.fu-smart-item.active{
+background:#ffe6f1;
+border-color:#e91e63;
+color:#9d174d;
+font-weight:700;
+}
+.fu-smart-empty{
+padding:10px;
+font-size:12px;
+color:#6b7280;
+text-align:center;
+border:1px dashed #f1d6e3;
+border-radius:10px;
+}
+.add-fu-list{
+display:inline-flex;
+align-items:center;
+justify-content:center;
+text-decoration:none;
+padding:10px 14px;
+border-radius:10px;
+font-weight:700;
+border:1px solid #f1d6e3;
+background:#fff;
+color:#9d174d;
+transition:.2s ease;
+}
+.add-fu-list:hover{
+background:#fff1f7;
+border-color:#e91e63;
+}
+@media(max-width:1100px){
+  .add-fu-grid{ grid-template-columns:1fr; }
+  .add-fu-triple{ grid-template-columns:1fr; }
+}
 </style>
 
-<h2 style="margin-bottom:12px;">Enquiry Follow-ups</h2>
+<div class="fu-page-head">
+  <h2 class="fu-page-title"><i class="fas fa-calendar-check"></i> Enquiry Follow-ups</h2>
+  <div class="fu-quick-nav">
+    <a class="fu-nav-btn" href="#followupsSection"><i class="fas fa-list"></i> Follow-up List</a>
+    <a class="fu-nav-btn" href="#addFollowupSection"><i class="fas fa-plus"></i> Add Follow-up</a>
+  </div>
+</div>
 
 
 <div class="followup-alerts">
@@ -2108,15 +2532,18 @@ padding:6px 12px;
 
 <!-- ================= LEFT SIDE : FOLLOWUPS ================= -->
 
-<div class="crm-followup-left">
+<div class="crm-followup-left" id="followupsSection">
 
 <div class="card section-card">
 
 <div class="card-header">
-<div>Follow-ups</div>
+  <div>
+    <div class="fu-sec-title"><i class="fas fa-list"></i> Follow-ups</div>
+    <div class="fu-sec-sub">Track today, pending, missed and completed follow-ups in one place.</div>
+  </div>
 </div>
 
-<div style="padding:14px; padding-bottom:0;">
+<div class="followup-tabs-wrap">
 
 <div class="top-tabs" style="margin:0;">
 <a class="followupTab <?= $tab==='today'?'active':''; ?>" data-tab="today">Today</a>
@@ -2128,7 +2555,7 @@ padding:6px 12px;
 
 </div>
 
-<form method="GET" action="index.php" style="padding:14px;">
+<form method="GET" action="index.php" class="followup-filters-wrap">
 
 <input type="hidden" name="page" value="enquiries/followups">
 <input type="hidden" name="tab" value="<?= h($tab) ?>">
@@ -2179,8 +2606,17 @@ title="Reset Filter">
 <div class="crm-card">
 
 <div class="crm-table-wrapper">
-    
-<h3>Follow Ups</h3>
+
+<div class="followup-records-head">
+  <div class="followup-records-left">
+    <h3 class="fu-table-title">Follow-up Records</h3>
+    <span class="followup-records-meta">
+      <i class="fas fa-database"></i>
+      <?= (int)count($followups) ?> in <?= h(ucfirst($tab)) ?>
+    </span>
+  </div>
+  <div id="followupTableControls" class="followup-table-controls"></div>
+</div>
 <table  id="usersTable" class="crm-table">
 <thead>
 
@@ -2294,7 +2730,12 @@ class="icon-btn btn-done">
 </tbody>
 
 </table>
+<div class="followup-table-loading" id="followupTableLoading" style="display:none;">
+  <span class="followup-loader-dot"></span>
+  <span>Loading follow-ups...</span>
 </div>
+</div>
+<div id="followupTableFooter" class="followup-table-footer"></div>
 
 </div>
 
@@ -2306,19 +2747,22 @@ class="icon-btn btn-done">
 
 <!-- ================= RIGHT SIDE : ADD FOLLOWUP ================= -->
 
-<div class="crm-followup-right">
+<div class="crm-followup-right" id="addFollowupSection">
 
 <div class="card section-card">
 
 <div class="card-header">
-<div>Add Follow-up</div>
+  <div>
+    <div class="fu-sec-title"><i class="fas fa-plus-circle"></i> Add Follow-up</div>
+    <div class="fu-sec-sub">Create the next interaction note and schedule reminders quickly.</div>
+  </div>
 </div>
 
-    <form method="POST" enctype="multipart/form-data" id="addFollowupForm" style="padding:14px;">
+    <form method="POST" enctype="multipart/form-data" id="addFollowupForm" class="add-fu-form" novalidate>
         <input type="hidden" name="csrf_token" value="<?= h(generateCSRF()) ?>">
 
-        <div class="filter-grid">
-            <div style="grid-column:1 / -1;">
+        <div class="add-fu-grid">
+            <div class="fu-full">
                 <label class="lbl">Select Enquiry</label>
                 <select name="enquiry_id" required>
                     <option value="">-- Select --</option>
@@ -2332,15 +2776,19 @@ class="icon-btn btn-done">
 
             <div>
                 <label class="lbl">Follow-up Date</label>
-                <input type="date" name="followup_date" value="<?= h(date('Y-m-d')) ?>" required>
+                <div class="modern-input-wrap">
+                    <input type="date" name="followup_date" value="<?= h(date('Y-m-d')) ?>" required>
+                </div>
             </div>
 
             <div>
                 <label class="lbl">Follow-up Time</label>
-                <input type="time" name="followup_time">
+                <div class="modern-input-wrap">
+                    <input type="time" name="followup_time">
+                </div>
             </div>
 
-            <div id="scheduleBanner" class="schedule-banner" style="display:none; grid-column:1 / -1;">
+            <div id="scheduleBanner" class="schedule-banner fu-full" style="display:none;">
                 <div class="sb-left">
                     <div class="sb-ico"><i class="fas fa-bell"></i></div>
                     <div>
@@ -2353,28 +2801,34 @@ class="icon-btn btn-done">
                 </button>
             </div>
 
-            <div>
-                <label class="lbl">Type</label>
-                <select name="followup_type">
-                    <option value="call">Call</option>
-                    <option value="whatsapp">WhatsApp</option>
-                    <option value="sms">SMS</option>
-                    <option value="email">Email</option>
-                    <option value="walkin">Walk-in</option>
-                </select>
+            <div class="fu-full add-fu-triple">
+                <div>
+                    <label class="lbl">Type</label>
+                    <select name="followup_type">
+                        <option value="call">Call</option>
+                        <option value="whatsapp">WhatsApp</option>
+                        <option value="sms">SMS</option>
+                        <option value="email">Email</option>
+                        <option value="walkin">Walk-in</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="lbl">Next Follow-up Date</label>
+                    <div class="modern-input-wrap">
+                        <input type="date" name="next_followup_date">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="lbl">Next Follow-up Time</label>
+                    <div class="modern-input-wrap">
+                        <input type="time" name="next_followup_time">
+                    </div>
+                </div>
             </div>
 
-            <div>
-                <label class="lbl">Next Follow-up Date</label>
-                <input type="date" name="next_followup_date">
-            </div>
-
-            <div>
-                <label class="lbl">Next Follow-up Time</label>
-                <input type="time" name="next_followup_time">
-            </div>
-
-            <div style="grid-column:1 / -1;">
+            <div class="fu-full">
                 <label class="lbl">Attachments (multiple)</label>
 
                 <label class="upload-box">
@@ -2388,15 +2842,15 @@ class="icon-btn btn-done">
                 </label>
             </div>
 
-            <div style="grid-column:1 / -1;">
+            <div class="fu-full">
                 <label class="lbl">Notes</label>
                 <textarea name="notes" rows="4" placeholder="Add follow-up notes..."></textarea>
             </div>
         </div>
 
-        <div class="row-right" style="margin-top:12px;">
-            <button class="btn btn-primary" type="submit" name="add_followup" style="width:200px;">Save Follow-up</button>
-            <a class="btn-danger" style="text-decoration:none;padding:10px 14px;border-radius:10px;" href="index.php?page=enquiries/followups&ui=list&tab=today">Go to List</a>
+        <div class="add-fu-actions">
+            <button class="btn btn-primary add-fu-save" id="addFollowupSubmit" type="submit" name="add_followup" disabled>Save Follow-up</button>
+            <a class="add-fu-list" href="index.php?page=enquiries/followups&ui=list&tab=today">Go to List</a>
         </div>
     </form>
 
@@ -2410,6 +2864,69 @@ class="icon-btn btn-done">
 
 
 
+
+<script>
+// SweetAlert safety shim: if Swal is missing, use browser dialogs without breaking page logic.
+(function () {
+    if (window.Swal && typeof window.Swal.fire === 'function') return;
+
+    window.Swal = window.Swal || {};
+    window.Swal.showValidationMessage = function (msg) { window.alert(msg || 'Validation failed'); };
+    window.Swal.showLoading = function () {};
+
+    window.Swal.fire = function (opts) {
+        opts = opts || {};
+
+        return new Promise(function (resolve) {
+            const title = opts.title || 'Notice';
+            const text = opts.text || '';
+
+            // Fallback for the "Select Student Type" dialog used in mark-done flow.
+            if (typeof opts.html === 'string' && opts.html.indexOf('regTypeSelect') !== -1) {
+                let selected = '';
+                while (!selected) {
+                    const val = (window.prompt(title + '\nEnter type: course / internship', '') || '').trim().toLowerCase();
+                    if (!val) {
+                        resolve({ isConfirmed: false, isDenied: false, isDismissed: true, value: null });
+                        return;
+                    }
+                    if (val === 'course' || val === 'internship') {
+                        selected = val;
+                    } else {
+                        window.alert('Please type "course" or "internship".');
+                    }
+                }
+                resolve({ isConfirmed: true, isDenied: false, isDismissed: false, value: selected });
+                return;
+            }
+
+            if (opts.showDenyButton) {
+                const choice = (window.prompt(
+                    title + (text ? '\n' + text : '') + '\nType: 1 = Convert, 2 = Save Draft, 0 = Cancel',
+                    '1'
+                ) || '').trim();
+                if (choice === '1') {
+                    resolve({ isConfirmed: true, isDenied: false, isDismissed: false });
+                } else if (choice === '2') {
+                    resolve({ isConfirmed: false, isDenied: true, isDismissed: false });
+                } else {
+                    resolve({ isConfirmed: false, isDenied: false, isDismissed: true });
+                }
+                return;
+            }
+
+            if (opts.showCancelButton) {
+                const ok = window.confirm(title + (text ? '\n' + text : ''));
+                resolve({ isConfirmed: ok, isDenied: false, isDismissed: !ok });
+                return;
+            }
+
+            window.alert(title + (text ? '\n' + text : ''));
+            resolve({ isConfirmed: true, isDenied: false, isDismissed: false });
+        });
+    };
+})();
+</script>
 
 <?php if ($success): ?>
 <script>
@@ -2712,6 +3229,7 @@ return;
 (function () {
     const addForm = document.getElementById('addFollowupForm');
     if (!addForm) return;
+    addForm.noValidate = true;
 
     const enquirySel = addForm.querySelector('select[name="enquiry_id"]');
     const fDate = addForm.querySelector('input[name="followup_date"]');
@@ -2720,6 +3238,7 @@ return;
     const nextDate = addForm.querySelector('input[name="next_followup_date"]');
     const nextTime = addForm.querySelector('input[name="next_followup_time"]');
     const notes = addForm.querySelector('textarea[name="notes"]');
+    const submitBtn = addForm.querySelector('#addFollowupSubmit');
 
     const filesInp = addForm.querySelector('#addAttachments');
     const preview = document.getElementById('addFilePreview');
@@ -2777,6 +3296,98 @@ return;
         return 'fa-paperclip';
     }
 
+    function initModernEnquirySelect(nativeSelect) {
+        if (!nativeSelect || nativeSelect.dataset.enhanced === '1') return;
+        nativeSelect.dataset.enhanced = '1';
+
+        const holder = document.createElement('div');
+        holder.className = 'fu-smart-select';
+        holder.innerHTML = `
+            <button type="button" class="fu-smart-toggle" aria-haspopup="listbox" aria-expanded="false">
+                <span class="fu-smart-label">-- Select --</span>
+                <i class="fas fa-chevron-down"></i>
+            </button>
+            <div class="fu-smart-panel">
+                <input type="text" class="fu-smart-search" placeholder="Search enquiry...">
+                <div class="fu-smart-list" role="listbox"></div>
+            </div>
+        `;
+
+        nativeSelect.classList.add('js-enhanced');
+        nativeSelect.insertAdjacentElement('afterend', holder);
+
+        const toggle = holder.querySelector('.fu-smart-toggle');
+        const label = holder.querySelector('.fu-smart-label');
+        const panel = holder.querySelector('.fu-smart-panel');
+        const search = holder.querySelector('.fu-smart-search');
+        const list = holder.querySelector('.fu-smart-list');
+
+        const getAllOptions = () => Array.from(nativeSelect.options).filter(opt => String(opt.value || '').trim() !== '');
+
+        function syncLabel() {
+            const selectedText = nativeSelect.options[nativeSelect.selectedIndex]?.text || '-- Select --';
+            label.textContent = selectedText;
+        }
+
+        function renderOptions(query) {
+            const q = (query || '').trim().toLowerCase();
+            const options = getAllOptions().filter(opt => !q || opt.text.toLowerCase().includes(q));
+            list.innerHTML = '';
+
+            if (!options.length) {
+                list.innerHTML = '<div class="fu-smart-empty">No enquiry found</div>';
+                return;
+            }
+
+            options.forEach(function (opt) {
+                const item = document.createElement('button');
+                item.type = 'button';
+                item.className = 'fu-smart-item' + (String(nativeSelect.value) === String(opt.value) ? ' active' : '');
+                item.textContent = opt.text;
+                item.addEventListener('click', function () {
+                    nativeSelect.value = opt.value;
+                    nativeSelect.dispatchEvent(new Event('change', { bubbles: true }));
+                    closePanel();
+                });
+                list.appendChild(item);
+            });
+        }
+
+        function openPanel() {
+            holder.classList.add('open');
+            toggle.setAttribute('aria-expanded', 'true');
+            renderOptions(search.value);
+            setTimeout(() => search.focus(), 0);
+        }
+
+        function closePanel() {
+            holder.classList.remove('open');
+            toggle.setAttribute('aria-expanded', 'false');
+        }
+
+        toggle.addEventListener('click', function () {
+            if (holder.classList.contains('open')) closePanel();
+            else openPanel();
+        });
+
+        search.addEventListener('input', function () {
+            renderOptions(this.value);
+        });
+
+        nativeSelect.addEventListener('change', function () {
+            syncLabel();
+            renderOptions(search.value);
+        });
+
+        document.addEventListener('click', function (e) {
+            if (!holder.contains(e.target)) closePanel();
+        });
+
+        syncLabel();
+        renderOptions('');
+    }
+
+
     if (filesInp && preview) {
         filesInp.addEventListener('change', function () {
             preview.innerHTML = '';
@@ -2813,6 +3424,7 @@ return;
     });
 
     fTime && fTime.addEventListener('change', updateBannerByDate);
+    initModernEnquirySelect(enquirySel);
 
     function validateAddFollowup() {
         const enq = (enquirySel?.value || '').trim();
@@ -2860,6 +3472,21 @@ return;
         return true;
     }
 
+    function updateAddFollowupSubmitState() {
+        if (!submitBtn) return;
+        const enq = (enquirySel?.value || '').trim();
+        const fd = (fDate?.value || '').trim();
+        const nd = (nextDate?.value || '').trim();
+        const ntt = (nextTime?.value || '').trim();
+        const nt = (notes?.value || '').trim();
+
+        let canSubmit = !!enq && !!fd && nt.length >= 3;
+        if (canSubmit && nd && nd < fd) canSubmit = false;
+        if (canSubmit && !nd && ntt) canSubmit = false;
+
+        submitBtn.disabled = !canSubmit;
+    }
+
     addForm.addEventListener('submit', function (e) {
         if (!validateAddFollowup()) {
             e.preventDefault();
@@ -2890,32 +3517,93 @@ return;
         });
     });
 
+    [enquirySel, fDate, nextDate, nextTime, notes, fType].forEach(function (el) {
+        if (!el) return;
+        el.addEventListener('input', updateAddFollowupSubmitState);
+        el.addEventListener('change', updateAddFollowupSubmitState);
+    });
+
     updateBannerByDate();
+    updateAddFollowupSubmitState();
 })();
 </script>
 
-<!-- Make sure these are included BEFORE your custom scripts -->
-<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-<script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
-<link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
-
-<!-- Your tab switching + DataTables logic -->
 <script>
 document.addEventListener("DOMContentLoaded", function () {
-    // === Initial table initialization on page load ===
-    initFollowupTable();
+    const tableLoader = document.getElementById('followupTableLoading');
+    const controlsTarget = document.getElementById('followupTableControls');
+    const footerTarget = document.getElementById('followupTableFooter');
+    const showTableLoader = () => { if (tableLoader) tableLoader.style.display = 'flex'; };
+    const hideTableLoader = () => { if (tableLoader) tableLoader.style.display = 'none'; };
 
-    // === Tab switching logic ===
+    function relocateFollowupTableControls() {
+        var wrapper = document.getElementById('usersTable_wrapper');
+        if (!wrapper || !controlsTarget || !footerTarget) return false;
+
+        var top = wrapper.querySelector('.dt-top') || controlsTarget.querySelector('.dt-top');
+        var bottom = wrapper.querySelector('.dt-bottom') || footerTarget.querySelector('.dt-bottom');
+
+        if (!top) {
+            var length = wrapper.querySelector('.dataTables_length');
+            var filter = wrapper.querySelector('.dataTables_filter');
+            var buttons = wrapper.querySelector('.dt-buttons');
+            if (length || filter || buttons) {
+                top = document.createElement('div');
+                top.className = 'dt-top';
+                if (length) top.appendChild(length);
+                if (filter) top.appendChild(filter);
+                if (buttons) top.appendChild(buttons);
+            }
+        }
+
+        if (!bottom) {
+            var info = wrapper.querySelector('.dataTables_info');
+            var paginate = wrapper.querySelector('.dataTables_paginate');
+            if (info || paginate) {
+                bottom = document.createElement('div');
+                bottom.className = 'dt-bottom';
+                if (info) bottom.appendChild(info);
+                if (paginate) bottom.appendChild(paginate);
+            }
+        }
+
+        controlsTarget.innerHTML = '';
+        footerTarget.innerHTML = '';
+
+        if (top) {
+            controlsTarget.appendChild(top);
+        }
+        if (bottom) {
+            footerTarget.appendChild(bottom);
+        }
+
+        // Remove any leftover native nodes in wrapper to prevent duplicate UI.
+        wrapper.querySelectorAll('.dataTables_length, .dataTables_filter, .dt-buttons, .dataTables_info, .dataTables_paginate').forEach(function(node){
+            if (!node.closest('.dt-top') && !node.closest('.dt-bottom')) {
+                node.remove();
+            }
+        });
+
+        return !!(top && bottom);
+    }
+
+    initFollowupTable();
+    setTimeout(relocateFollowupTableControls, 60);
+    setTimeout(relocateFollowupTableControls, 220);
+
+    if (window.jQuery) {
+        window.jQuery('#usersTable').on('draw.dt', relocateFollowupTableControls);
+    }
+
     document.querySelectorAll('.followupTab').forEach(tab => {
         tab.addEventListener('click', function (e) {
-            e.preventDefault(); // prevent default <a> behavior if it's a link
+            e.preventDefault();
 
-            // Remove active class from all tabs
             document.querySelectorAll('.followupTab').forEach(t => t.classList.remove('active'));
-            // Add active to clicked tab
             this.classList.add('active');
 
             const tabName = this.dataset.tab;
+            showTableLoader();
 
             fetch(`index.php?page=enquiries/followups&ajax=1&tab=${tabName}`)
                 .then(res => {
@@ -2923,49 +3611,65 @@ document.addEventListener("DOMContentLoaded", function () {
                     return res.text();
                 })
                 .then(html => {
-                    // 1. Destroy existing DataTable instance safely
-                    if ($.fn.DataTable.isDataTable('#usersTable')) {
-                        $('#usersTable').DataTable().clear().destroy();
+                    if (window.jQuery && jQuery.fn && jQuery.fn.DataTable && jQuery.fn.DataTable.isDataTable('#usersTable')) {
+                        jQuery('#usersTable').DataTable().clear().destroy();
                     }
 
-                    // 2. Replace tbody content
                     document.querySelector("#usersTable tbody").innerHTML = html;
 
-                    // 3. Re-initialize DataTable
                     initFollowupTable();
+                    setTimeout(relocateFollowupTableControls, 80);
+                    setTimeout(relocateFollowupTableControls, 260);
                 })
                 .catch(error => {
                     console.error('Error loading tab data:', error);
-                    // Optional: show user-friendly message
-                    document.querySelector("#usersTable tbody").innerHTML = 
+                    document.querySelector("#usersTable tbody").innerHTML =
                         '<tr><td colspan="7" style="text-align:center; padding:20px; color:#d32f2f;">Failed to load data. Please try again.</td></tr>';
+                })
+                .finally(() => {
+                    hideTableLoader();
                 });
         });
     });
 });
 
-// Helper function – keeps configuration in one place
 function initFollowupTable() {
-    $('#usersTable').DataTable({
-        pageLength: 5,
-        lengthMenu: [5, 10, 20, 50],
-        ordering: true,
-        order: [[0, 'desc']],           // 0 = first column (Follow-up date) – newest first
-        language: {
-            emptyTable:     "No follow-ups found in this category.",
-            infoEmpty:      "Showing 0 to 0 of 0 entries",
-            zeroRecords:    "No matching follow-ups found",
-            lengthMenu:     "Show _MENU_ follow-ups",
-            search:         "Search:",
-            paginate: {
-                first:      "« First",
-                last:       "Last »",
-                next:       "Next →",
-                previous:   "← Prev"
-            }
-        },
-        // Optional: make table responsive on small screens
-        responsive: true
-    });
+    const controlsTarget = document.getElementById('followupTableControls');
+    const footerTarget = document.getElementById('followupTableFooter');
+
+    // Idempotent init: destroy existing instance before creating a new one.
+    if (window.jQuery && jQuery.fn && jQuery.fn.DataTable && jQuery.fn.DataTable.isDataTable('#usersTable')) {
+        jQuery('#usersTable').DataTable().clear().destroy();
+    }
+
+    var oldWrapper = document.getElementById('usersTable_wrapper');
+    if (oldWrapper) {
+        oldWrapper.querySelectorAll('.dataTables_length, .dataTables_filter, .dt-buttons, .dataTables_info, .dataTables_paginate').forEach(function(node){
+            node.remove();
+        });
+    }
+
+    if (controlsTarget) controlsTarget.innerHTML = '';
+    if (footerTarget) footerTarget.innerHTML = '';
+
+    if (typeof crmDataTable === 'function') {
+        crmDataTable('#usersTable', {
+            pageLength: 5,
+            lengthMenu: [5, 10, 20, 50],
+            ordering: true,
+            order: [[0, 'desc']],
+            searchPlaceholder: "Search follow-ups..."
+        });
+        return;
+    }
+
+    if (window.jQuery && jQuery.fn && jQuery.fn.DataTable) {
+        jQuery('#usersTable').DataTable({
+            pageLength: 5,
+            lengthMenu: [5, 10, 20, 50],
+            ordering: true,
+            order: [[0, 'desc']]
+        });
+    }
 }
 </script>
