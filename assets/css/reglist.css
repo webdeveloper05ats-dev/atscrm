@@ -863,14 +863,17 @@
     border-color: #e91e63;
   }
 
-  .payment-modal-modern .receipt-link {
+  .payment-modal-modern .receipt-link,
+  .history-modal-modern .receipt-link {
     position: relative;
     border-radius: 10px;
     padding: 7px 10px;
   }
 
   .payment-modal-modern .receipt-link.mtip::after,
-  .payment-modal-modern .receipt-link.mtip::before {
+  .payment-modal-modern .receipt-link.mtip::before,
+  .history-modal-modern .receipt-link.mtip::after,
+  .history-modal-modern .receipt-link.mtip::before {
     opacity: 0;
     visibility: hidden;
     pointer-events: none;
@@ -881,7 +884,8 @@
     z-index: 80;
   }
 
-  .payment-modal-modern .receipt-link.mtip::after {
+  .payment-modal-modern .receipt-link.mtip::after,
+  .history-modal-modern .receipt-link.mtip::after {
     content: attr(title);
     bottom: calc(100% + 8px);
     background: #1f2937;
@@ -892,7 +896,8 @@
     white-space: nowrap;
   }
 
-  .payment-modal-modern .receipt-link.mtip::before {
+  .payment-modal-modern .receipt-link.mtip::before,
+  .history-modal-modern .receipt-link.mtip::before {
     content: "";
     bottom: calc(100% + 2px);
     border-left: 5px solid transparent;
@@ -901,10 +906,118 @@
   }
 
   .payment-modal-modern .receipt-link.mtip:hover::after,
-  .payment-modal-modern .receipt-link.mtip:hover::before {
+  .payment-modal-modern .receipt-link.mtip:hover::before,
+  .history-modal-modern .receipt-link.mtip:hover::after,
+  .history-modal-modern .receipt-link.mtip:hover::before {
     opacity: 1;
     visibility: visible;
     transform: translateX(-50%) translateY(0);
+  }
+
+  .history-modal-modern .history-modal-grid,
+  .history-modal-modern .history-payment-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 14px;
+    align-items: start;
+  }
+
+  .history-modal-modern .history-modal-section {
+    margin: 0;
+    min-width: 0;
+  }
+
+  .history-modal-modern .history-payments-section {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+
+  .history-modal-modern .history-table-scroll {
+    overflow: auto;
+  }
+
+  .history-modal-modern .history-mini-table {
+    min-width: 610px;
+  }
+
+  .history-modal-modern .history-pay-meta-cell {
+    min-width: 132px;
+    white-space: normal;
+  }
+
+  .history-modal-modern .history-pay-date {
+    font-weight: 700;
+    color: #1f2937;
+    line-height: 1.25;
+  }
+
+  .history-modal-modern .history-pay-receipt {
+    margin-top: 3px;
+    font-size: 11px;
+    color: #9d174d;
+    word-break: break-word;
+    line-height: 1.25;
+  }
+
+  .history-modal-modern .history-pay-status-cell,
+  .history-modal-modern .history-pay-action-cell {
+    width: 1%;
+    text-align: center;
+  }
+
+  .history-modal-modern .history-pay-status-icon,
+  .history-modal-modern .history-receipt-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 11px;
+    border: 1px solid #ead3de;
+    background: linear-gradient(180deg, #fff, #fff6fa);
+    color: #64748b;
+    box-shadow: 0 6px 14px rgba(15, 23, 42, 0.06);
+  }
+
+  .history-modal-modern .history-pay-status-icon {
+    font-size: 14px;
+  }
+
+  .history-modal-modern .history-pay-status-icon.status-approved {
+    color: #16a34a;
+    border-color: #bbf7d0;
+    background: linear-gradient(180deg, #f0fdf4, #dcfce7);
+  }
+
+  .history-modal-modern .history-pay-status-icon.status-pending {
+    color: #d97706;
+    border-color: #fed7aa;
+    background: linear-gradient(180deg, #fff7ed, #ffedd5);
+  }
+
+  .history-modal-modern .history-pay-status-icon.status-rejected {
+    color: #dc2626;
+    border-color: #fecaca;
+    background: linear-gradient(180deg, #fef2f2, #fee2e2);
+  }
+
+  .history-modal-modern .history-receipt-link {
+    padding: 0 !important;
+    min-width: 34px;
+    text-decoration: none;
+  }
+
+  .history-modal-modern .history-receipt-link:hover {
+    background: linear-gradient(180deg, #ec4899, #db2777);
+    border-color: #db2777;
+    color: #fff;
+  }
+
+  @media (max-width: 980px) {
+    .history-modal-modern .history-modal-grid,
+    .history-modal-modern .history-payment-grid {
+      grid-template-columns: 1fr;
+    }
   }
 
   .pro-payment-summary {
@@ -1496,16 +1609,17 @@
           }
 
           .payment-modal-modern .pro-payment-grid {
-            gap: 16px !important;
+            gap: 12px !important;
           }
 
           .payment-modal-modern .m-input {
-            min-height: 46px !important;
-            border-radius: 12px !important;
+            min-height: 40px !important;
+            padding: 8px 10px !important;
+            border-radius: 10px !important;
             border: 1px solid #e7d5df !important;
             background: #fff !important;
             box-shadow: 0 2px 8px rgba(31, 41, 55, 0.03) inset !important;
-            font-size: 13px !important;
+            font-size: 12px !important;
             color: #1f2937 !important;
           }
 
@@ -1519,7 +1633,87 @@
           }
 
           .payment-modal-modern textarea.m-input {
-            min-height: 96px !important;
+            min-height: 76px !important;
+          }
+
+          .payment-modal-modern .approval-radio-group {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 8px;
+          }
+
+          .payment-modal-modern .modern-radio-pill {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 40px;
+            padding: 8px 10px;
+            border: 1px solid #ead3de;
+            border-radius: 10px;
+            background: linear-gradient(180deg, #fff, #fff6fa);
+            color: #475569;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: .2s ease;
+            text-align: center;
+          }
+
+          .payment-modal-modern .modern-radio-pill:hover {
+            border-color: #e6abc6;
+            transform: translateY(-1px);
+          }
+
+          .payment-modal-modern .modern-radio-pill input {
+            position: absolute;
+            opacity: 0;
+            pointer-events: none;
+          }
+
+          .payment-modal-modern .modern-radio-pill span {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            width: 100%;
+          }
+
+          .payment-modal-modern .modern-radio-pill span::before {
+            content: '';
+            width: 9px;
+            height: 9px;
+            border-radius: 999px;
+            border: 2px solid currentColor;
+            opacity: .45;
+            transition: .2s ease;
+          }
+
+          .payment-modal-modern .modern-radio-pill input:checked + span::before {
+            background: currentColor;
+            opacity: 1;
+          }
+
+          .payment-modal-modern .modern-radio-pill:has(input:checked) {
+            box-shadow: 0 0 0 3px rgba(233, 30, 99, .10);
+          }
+
+          .payment-modal-modern .modern-radio-pill.is-approved:has(input:checked) {
+            color: #166534;
+            border-color: #86efac;
+            background: linear-gradient(180deg, #f0fdf4, #dcfce7);
+          }
+
+          .payment-modal-modern .modern-radio-pill.is-pending:has(input:checked) {
+            color: #9a3412;
+            border-color: #fdba74;
+            background: linear-gradient(180deg, #fff7ed, #ffedd5);
+          }
+
+          .payment-modal-modern .modern-radio-pill.is-rejected:has(input:checked) {
+            color: #b91c1c;
+            border-color: #fca5a5;
+            background: linear-gradient(180deg, #fef2f2, #fee2e2);
           }
 
           .payment-modal-modern .modal-actions {
@@ -1546,7 +1740,7 @@
 
           .payment-entry-layout {
             display: grid !important;
-            grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+            grid-template-columns: minmax(340px, 0.9fr) minmax(460px, 1.1fr);
             gap: 14px;
             align-items: start;
           }
@@ -1560,6 +1754,104 @@
             min-width: 0 !important;
             width: 100%;
             margin: 0;
+          }
+
+          .payment-entry-layout .payment-entry-col:first-of-type {
+            max-width: 460px;
+            justify-self: start;
+          }
+
+          .payment-entry-layout .payment-entry-col:last-of-type {
+            width: 100%;
+          }
+
+          .payment-entry-layout .pro-table-scroll {
+            overflow-x: auto;
+            overflow-y: hidden;
+          }
+
+          .payment-entry-layout .pro-mini-table {
+            min-width: 560px;
+          }
+
+          .payment-entry-layout .pro-mini-table th,
+          .payment-entry-layout .pro-mini-table td {
+            padding: 8px 8px;
+            font-size: 11px !important;
+            white-space: nowrap;
+          }
+
+          .payment-entry-layout .pay-history-meta-cell {
+            min-width: 118px;
+            white-space: normal;
+          }
+
+          .payment-entry-layout .pay-history-date {
+            font-weight: 700;
+            color: #1f2937;
+            line-height: 1.25;
+          }
+
+          .payment-entry-layout .pay-history-receipt {
+            margin-top: 2px;
+            font-size: 10px;
+            color: #9d174d;
+            word-break: break-word;
+            line-height: 1.25;
+          }
+
+          .payment-entry-layout .pay-history-status-cell,
+          .payment-entry-layout .pay-history-action-cell {
+            width: 1%;
+            text-align: center;
+          }
+
+          .payment-entry-layout .pay-status-icon,
+          .payment-entry-layout .receipt-link-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 30px;
+            height: 30px;
+            border-radius: 10px;
+            border: 1px solid #ead3de;
+            background: linear-gradient(180deg, #fff, #fff6fa);
+            color: #64748b;
+            box-shadow: 0 6px 14px rgba(15, 23, 42, 0.06);
+          }
+
+          .payment-entry-layout .pay-status-icon {
+            font-size: 12px;
+          }
+
+          .payment-entry-layout .pay-status-icon.status-approved {
+            color: #16a34a;
+            border-color: #bbf7d0;
+            background: linear-gradient(180deg, #f0fdf4, #dcfce7);
+          }
+
+          .payment-entry-layout .pay-status-icon.status-pending {
+            color: #d97706;
+            border-color: #fed7aa;
+            background: linear-gradient(180deg, #fff7ed, #ffedd5);
+          }
+
+          .payment-entry-layout .pay-status-icon.status-rejected {
+            color: #dc2626;
+            border-color: #fecaca;
+            background: linear-gradient(180deg, #fef2f2, #fee2e2);
+          }
+
+          .payment-entry-layout .receipt-link-icon {
+            padding: 0 !important;
+            min-width: 30px;
+            text-decoration: none;
+          }
+
+          .payment-entry-layout .receipt-link-icon:hover {
+            background: linear-gradient(180deg, #ec4899, #db2777);
+            border-color: #db2777;
+            color: #fff;
           }
 
           .payment-modal-modern .pro-payment-two-col {
