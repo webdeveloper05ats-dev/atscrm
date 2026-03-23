@@ -3,6 +3,8 @@ if (!defined('APP_NAME')) {
     die("Unauthorized access.");
 }
 
+require_once __DIR__ . '/_student_report_helpers.php';
+
 $id = (int)($_GET['id'] ?? 0);
 $isPrintMode = (int)($_GET['print'] ?? 0) === 1;
 
@@ -30,6 +32,16 @@ if (!$student) {
     return;
 }
 
+$isCourseStudent = (($student['reg_type'] ?? '') === 'course');
+$isInternshipStudent = (($student['reg_type'] ?? '') === 'internship');
+
+if ($isCourseStudent) {
+    $courseStudent = studentReportFetchBaseStudent($pdo, $id, 0, 0, true, '');
+    if ($courseStudent) {
+        $student = array_merge($student, $courseStudent);
+    }
+}
+
 /* =========================
    PAYMENT HISTORY
 ========================= */
@@ -48,6 +60,62 @@ ORDER BY p.payment_date DESC
 
 $payments->execute([$id]);
 $payments = $payments->fetchAll(PDO::FETCH_ASSOC);
+
+$attendanceRows = [];
+$attendanceSummary = null;
+$academicData = [
+    'assessment' => null,
+    'mock' => null,
+    'hr' => null,
+    'placement_history' => [],
+];
+
+if ($isCourseStudent) {
+    $attendanceRows = studentReportFetchAttendanceRows($pdo, $id);
+    $attendanceSummary = studentReportBuildAttendanceSummary($student, $attendanceRows);
+    $academicData = studentReportFetchAcademicAndHrData($pdo, $id);
+}
+
+$assessment = $academicData['assessment'] ?? [];
+$mock = $academicData['mock'] ?? [];
+$hr = $academicData['hr'] ?? [];
+$placementHistory = $academicData['placement_history'] ?? [];
+
+function studentProfileReportDate($value): string
+{
+    $value = trim((string)$value);
+    if ($value === '' || $value === '0000-00-00' || $value === '0000-00-00 00:00:00') {
+        return '-';
+    }
+
+    $time = strtotime($value);
+    return $time ? date('Y-m-d', $time) : $value;
+}
+
+function studentProfileReportStatus($value): string
+{
+    $value = trim((string)$value);
+    if ($value === '') {
+        return '-';
+    }
+
+    return ucwords(str_replace('_', ' ', $value));
+}
+
+function studentProfileReportPillClass($value): string
+{
+    $value = strtolower(trim((string)$value));
+    if (in_array($value, ['completed', 'given', 'provided', 'paid', 'present', 'done', 'selected', 'yes'], true)) {
+        return 'success';
+    }
+    if (in_array($value, ['partial', 'pending', 'scheduled', 'late', 'on_hold'], true)) {
+        return 'warning';
+    }
+    if (in_array($value, ['unpaid', 'rejected', 'absent', 'no'], true)) {
+        return 'danger';
+    }
+    return 'neutral';
+}
 ?>
 
 <style>
@@ -324,6 +392,12 @@ font-weight:800;
 color:#1f2940;
 }
 
+.section-stack{
+display:flex;
+flex-direction:column;
+gap:16px;
+}
+
 .profile-grid{
 display:grid;
 grid-template-columns:repeat(3, minmax(0, 1fr));
@@ -395,7 +469,7 @@ color:#64748b;
 overflow-x:auto;
 }
 
-.payment-table{
+.report-table{
 width:100%;
 border-collapse:separate;
 border-spacing:0;
@@ -405,8 +479,8 @@ border-radius:14px;
 overflow:hidden;
 }
 
-.payment-table th,
-.payment-table td{
+.report-table th,
+.report-table td{
 border-right:1px solid #f0dce5;
 border-bottom:1px solid #f0dce5;
 padding:12px 14px;
@@ -414,16 +488,16 @@ font-size:13px;
 text-align:left;
 }
 
-.payment-table th:last-child,
-.payment-table td:last-child{
+.report-table th:last-child,
+.report-table td:last-child{
 border-right:none;
 }
 
-.payment-table tr:last-child td{
+.report-table tr:last-child td{
 border-bottom:none;
 }
 
-.payment-table th{
+.report-table th{
 background:#fff0f5;
 color:#8d1246;
 font-size:12px;
@@ -432,13 +506,49 @@ letter-spacing:.04em;
 text-transform:uppercase;
 }
 
-.payment-table td{
+.report-table td{
 color:#445066;
 background:#fff;
 }
 
-.payment-table tbody tr:nth-child(even) td{
+.report-table tbody tr:nth-child(even) td{
 background:#fffafc;
+}
+
+.report-table tbody tr.attendance-absent td{
+background:#fff6f6;
+}
+
+.report-table tbody tr.attendance-late td{
+background:#fffaf0;
+}
+
+.mini-summary-grid{
+display:grid;
+grid-template-columns:repeat(4, minmax(0, 1fr));
+gap:12px;
+}
+
+.mini-summary-card{
+border:1px solid #f2dde7;
+border-radius:14px;
+padding:14px;
+background:linear-gradient(180deg, #ffffff 0%, #fff9fc 100%);
+}
+
+.mini-summary-label{
+font-size:12px;
+font-weight:800;
+letter-spacing:.04em;
+text-transform:uppercase;
+color:#8b94a7;
+}
+
+.mini-summary-value{
+margin-top:8px;
+font-size:22px;
+font-weight:800;
+color:#1f2940;
 }
 
 .empty-state{
@@ -454,6 +564,7 @@ color:#94a3b8;
 grid-template-columns:repeat(2, minmax(0, 1fr));
 }
 
+.mini-summary-grid,
 .profile-grid{
 grid-template-columns:repeat(2, minmax(0, 1fr));
 }
@@ -469,6 +580,7 @@ font-size:24px;
 }
 
 .summary-grid,
+.mini-summary-grid,
 .profile-grid{
 grid-template-columns:1fr;
 }
@@ -528,11 +640,17 @@ padding:0;
 
 .student-header,
 .summary-card,
-.tab-panel,
 .profile-item{
 box-shadow:none;
 page-break-inside:avoid;
 break-inside:avoid;
+}
+
+.tab-panel,
+.payment-table-wrap,
+.section-stack{
+page-break-inside:auto !important;
+break-inside:auto !important;
 }
 
 .tab-content{
@@ -541,7 +659,7 @@ margin-bottom:16px;
 }
 
 .payment-table-wrap,
-.payment-table{
+.report-table{
 overflow:visible !important;
 height:auto !important;
 max-height:none !important;
@@ -586,16 +704,16 @@ document.body.classList.add('print-report-mode');
 
 <div class="student-header-top">
 <div class="student-info">
-<h2><?= htmlspecialchars($student['enquiry_snapshot_name']) ?></h2>
+<h2><?= htmlspecialchars((string)($student['enquiry_snapshot_name'] ?? '-')) ?></h2>
 <div class="student-subline">Student progress summary and payment overview</div>
 <div class="student-meta">
-<span class="meta-chip"><i class="fas fa-graduation-cap"></i> <?= htmlspecialchars($student['program_name']) ?></span>
-<span class="meta-chip"><i class="fas fa-id-badge"></i> <?= htmlspecialchars($student['registration_no']) ?></span>
-<span class="meta-chip"><i class="fas fa-calendar-alt"></i> Joined <?= htmlspecialchars($student['joined_on']) ?></span>
+<span class="meta-chip"><i class="fas fa-graduation-cap"></i> <?= htmlspecialchars((string)($student['program_name'] ?? '-')) ?></span>
+<span class="meta-chip"><i class="fas fa-id-badge"></i> <?= htmlspecialchars((string)($student['registration_no'] ?? '-')) ?></span>
+<span class="meta-chip"><i class="fas fa-calendar-alt"></i> Joined <?= htmlspecialchars((string)($student['joined_on'] ?? '-')) ?></span>
 </div>
 </div>
-<span class="status-badge status-<?= htmlspecialchars($student['payment_status']) ?>">
-<?= ucfirst($student['payment_status']) ?>
+<span class="status-badge status-<?= htmlspecialchars((string)($student['payment_status'] ?? 'unpaid')) ?>">
+<?= ucfirst((string)($student['payment_status'] ?? 'unpaid')) ?>
 </span>
 </div>
 
@@ -609,7 +727,7 @@ document.body.classList.add('print-report-mode');
 <div class="summary-card">
 <div class="summary-title">Total Fee</div>
 <div class="summary-value">Rs <?= number_format((float)$student['total_fee'],2) ?></div>
-<div class="summary-note">Overall internship fee</div>
+<div class="summary-note"><?= $isCourseStudent ? 'Overall course fee' : 'Overall internship fee' ?></div>
 </div>
 
 <div class="summary-card">
@@ -624,11 +742,19 @@ document.body.classList.add('print-report-mode');
 <div class="summary-note">Pending collection amount</div>
 </div>
 
+<?php if ($isCourseStudent): ?>
+<div class="summary-card">
+<div class="summary-title">Attendance %</div>
+<div class="summary-value"><?= number_format((float)($attendanceSummary['attendance_percent'] ?? 0), 2) ?>%</div>
+<div class="summary-note">Based on recorded attendance</div>
+</div>
+<?php else: ?>
 <div class="summary-card">
 <div class="summary-title">Internship Days</div>
 <div class="summary-value"><?= htmlspecialchars($student['internship_days'] ?? '-') ?></div>
 <div class="summary-note">Configured internship duration</div>
 </div>
+<?php endif; ?>
 
 </div>
 
@@ -639,7 +765,13 @@ document.body.classList.add('print-report-mode');
 
 <button class="tab-btn active" data-tab="profile">Profile</button>
 <button class="tab-btn" data-tab="payments">Payments</button>
+<?php if ($isCourseStudent): ?>
+<button class="tab-btn" data-tab="progress">Course Progress</button>
+<button class="tab-btn" data-tab="attendance">Attendance</button>
+<button class="tab-btn" data-tab="placement">Placement</button>
+<?php else: ?>
 <button class="tab-btn" data-tab="internship">Internship</button>
+<?php endif; ?>
 
 </div>
 
@@ -654,7 +786,7 @@ document.body.classList.add('print-report-mode');
 
 <div class="profile-item">
 <div class="profile-label">Phone</div>
-<div class="profile-value"><?= htmlspecialchars($student['enquiry_snapshot_phone']) ?></div>
+<div class="profile-value"><?= htmlspecialchars((string)($student['enquiry_snapshot_phone'] ?? '-')) ?></div>
 </div>
 
 <div class="profile-item">
@@ -664,23 +796,55 @@ document.body.classList.add('print-report-mode');
 
 <div class="profile-item">
 <div class="profile-label">Batch</div>
-<div class="profile-value"><?= htmlspecialchars($student['batch_name']) ?></div>
+<div class="profile-value"><?= htmlspecialchars((string)($student['batch_name'] ?? '-')) ?></div>
 </div>
 
 <div class="profile-item">
 <div class="profile-label">Joined On</div>
-<div class="profile-value"><?= htmlspecialchars($student['joined_on']) ?></div>
+<div class="profile-value"><?= htmlspecialchars((string)($student['joined_on'] ?? '-')) ?></div>
 </div>
 
 <div class="profile-item">
 <div class="profile-label">Program</div>
-<div class="profile-value"><?= htmlspecialchars($student['program_name']) ?></div>
+<div class="profile-value"><?= htmlspecialchars((string)($student['program_name'] ?? '-')) ?></div>
 </div>
 
 <div class="profile-item">
 <div class="profile-label">Registration No</div>
-<div class="profile-value"><?= htmlspecialchars($student['registration_no']) ?></div>
+<div class="profile-value"><?= htmlspecialchars((string)($student['registration_no'] ?? '-')) ?></div>
 </div>
+
+<?php if ($isCourseStudent): ?>
+<div class="profile-item">
+<div class="profile-label">Assigned Staff</div>
+<div class="profile-value"><?= htmlspecialchars($student['assigned_staff_name'] ?? '-') ?></div>
+</div>
+
+<div class="profile-item">
+<div class="profile-label">Qualification</div>
+<div class="profile-value"><?= htmlspecialchars($student['qualification'] ?? '-') ?></div>
+</div>
+
+<div class="profile-item">
+<div class="profile-label">College</div>
+<div class="profile-value"><?= htmlspecialchars($student['college_name'] ?? '-') ?></div>
+</div>
+
+<div class="profile-item">
+<div class="profile-label">Parent</div>
+<div class="profile-value"><?= htmlspecialchars($student['parent_name'] ?? '-') ?></div>
+</div>
+
+<div class="profile-item">
+<div class="profile-label">Parent Phone</div>
+<div class="profile-value"><?= htmlspecialchars($student['parent_phone'] ?? '-') ?></div>
+</div>
+
+<div class="profile-item">
+<div class="profile-label">Address</div>
+<div class="profile-value"><?= htmlspecialchars($student['address'] ?? '-') ?></div>
+</div>
+<?php endif; ?>
 
 </div>
 
@@ -696,7 +860,7 @@ document.body.classList.add('print-report-mode');
 <div class="tab-panel">
 <h3 class="panel-title">Payment History</h3>
 <div class="payment-table-wrap">
-<table class="payment-table">
+<table class="report-table">
 
 <thead>
 <tr>
@@ -743,8 +907,210 @@ document.body.classList.add('print-report-mode');
 </div>
 
 
+<?php if ($isCourseStudent): ?>
+<div class="tab-content" id="progress">
+
+<div class="tab-panel">
+<h3 class="panel-title">Course Progress Overview</h3>
+<div class="section-stack">
+
+<div class="mini-summary-grid">
+<div class="mini-summary-card">
+<div class="mini-summary-label">Assessment Avg</div>
+<div class="mini-summary-value"><?= isset($assessment['average_marks']) ? number_format((float)$assessment['average_marks'], 2) : '-' ?></div>
+</div>
+<div class="mini-summary-card">
+<div class="mini-summary-label">Mock Avg</div>
+<div class="mini-summary-value"><?= isset($mock['mock_average']) ? number_format((float)$mock['mock_average'], 2) : '-' ?></div>
+</div>
+<div class="mini-summary-card">
+<div class="mini-summary-label">Present Days</div>
+<div class="mini-summary-value"><?= (int)($attendanceSummary['present_days'] ?? 0) ?></div>
+</div>
+<div class="mini-summary-card">
+<div class="mini-summary-label">Absent Days</div>
+<div class="mini-summary-value"><?= (int)($attendanceSummary['absent_days'] ?? 0) ?></div>
+</div>
+</div>
+
+<div class="profile-grid">
+<div class="profile-item">
+<div class="profile-label">Assessment 1</div>
+<div class="profile-value"><?= htmlspecialchars((string)($assessment['assessment_1'] ?? '-')) ?></div>
+</div>
+
+<div class="profile-item">
+<div class="profile-label">Assessment 2</div>
+<div class="profile-value"><?= htmlspecialchars((string)($assessment['assessment_2'] ?? '-')) ?></div>
+</div>
+
+<div class="profile-item">
+<div class="profile-label">Assessment 3</div>
+<div class="profile-value"><?= htmlspecialchars((string)($assessment['assessment_3'] ?? '-')) ?></div>
+</div>
+
+<div class="profile-item">
+<div class="profile-label">Mock Theory Marks</div>
+<div class="profile-value"><?= htmlspecialchars((string)($mock['theoretical_marks'] ?? '-')) ?></div>
+</div>
+
+<div class="profile-item">
+<div class="profile-label">Mock Machine Task Marks</div>
+<div class="profile-value"><?= htmlspecialchars((string)($mock['machine_task_marks'] ?? '-')) ?></div>
+</div>
+
+<div class="profile-item">
+<div class="profile-label">Mock Workflow</div>
+<div class="profile-value">
+<span class="value-pill <?= studentProfileReportPillClass($mock['workflow_status'] ?? '') ?>"><?= studentProfileReportStatus($mock['workflow_status'] ?? '-') ?></span>
+<div class="value-subnote">
+<?= !empty($mock['completed_at']) ? 'Completed on ' . htmlspecialchars(studentProfileReportDate($mock['completed_at'])) : 'Date not available' ?>
+</div>
+</div>
+</div>
+
+<div class="profile-item">
+<div class="profile-label">HR Status</div>
+<div class="profile-value">
+<span class="value-pill <?= studentProfileReportPillClass($hr['interview_status'] ?? '') ?>"><?= studentProfileReportStatus($hr['interview_status'] ?? 'pending') ?></span>
+<div class="value-subnote">
+<?= !empty($hr['sent_to_hr_at']) ? 'Sent to HR on ' . htmlspecialchars(studentProfileReportDate($hr['sent_to_hr_at'])) : 'Not yet sent to HR' ?>
+</div>
+</div>
+</div>
+
+<div class="profile-item">
+<div class="profile-label">Last Company</div>
+<div class="profile-value"><?= htmlspecialchars($hr['company_name'] ?? '-') ?></div>
+</div>
+
+<div class="profile-item">
+<div class="profile-label">Interview Date</div>
+<div class="profile-value"><?= htmlspecialchars(studentProfileReportDate($hr['interview_date'] ?? '')) ?></div>
+</div>
+
+<div class="profile-item">
+<div class="profile-label">HR Remarks</div>
+<div class="profile-value"><?= htmlspecialchars($hr['rejection_reason'] ?? '-') ?></div>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+
+<div class="tab-content" id="attendance">
+
+<div class="tab-panel">
+<h3 class="panel-title">Attendance & Topics Covered</h3>
+<div class="section-stack">
+
+<div class="mini-summary-grid">
+<div class="mini-summary-card">
+<div class="mini-summary-label">Attendance %</div>
+<div class="mini-summary-value"><?= number_format((float)($attendanceSummary['attendance_percent'] ?? 0), 2) ?>%</div>
+</div>
+<div class="mini-summary-card">
+<div class="mini-summary-label">Present Days</div>
+<div class="mini-summary-value"><?= (int)($attendanceSummary['present_days'] ?? 0) ?></div>
+</div>
+<div class="mini-summary-card">
+<div class="mini-summary-label">Absent Days</div>
+<div class="mini-summary-value"><?= (int)($attendanceSummary['absent_days'] ?? 0) ?></div>
+</div>
+<div class="mini-summary-card">
+<div class="mini-summary-label">Tracking Start</div>
+<div class="mini-summary-value"><?= htmlspecialchars(studentProfileReportDate($attendanceSummary['start_date'] ?? '')) ?></div>
+</div>
+</div>
+
+<div class="payment-table-wrap">
+<table class="report-table">
+<thead>
+<tr>
+<th>Date</th>
+<th>Status</th>
+<th>Topics Taught</th>
+<th>Task Given</th>
+<th>Informed</th>
+<th>Reason</th>
+<th>Informed By</th>
+</tr>
+</thead>
+<tbody>
+<?php if(!$attendanceRows): ?>
+<tr>
+<td colspan="7" class="empty-state">No attendance records available for this student.</td>
+</tr>
+<?php else: ?>
+<?php foreach($attendanceRows as $row): ?>
+<?php $rowStatus = strtolower((string)($row['status'] ?? '')); ?>
+<tr class="<?= $rowStatus === 'absent' ? 'attendance-absent' : ($rowStatus === 'late' ? 'attendance-late' : '') ?>">
+<td><?= htmlspecialchars(studentProfileReportDate($row['attendance_date'] ?? '')) ?></td>
+<td>
+<span class="value-pill <?= studentProfileReportPillClass($row['status'] ?? '') ?>"><?= htmlspecialchars((string)($row['status'] ?? '-')) ?></span>
+</td>
+<td><?= nl2br(htmlspecialchars((string)($row['topics_taught'] ?? '-'))) ?></td>
+<td><?= nl2br(htmlspecialchars((string)($row['task_given'] ?? '-'))) ?></td>
+<td><?= studentProfileReportStatus($row['absent_informed'] ?? '-') ?></td>
+<td><?= nl2br(htmlspecialchars((string)($row['absent_reason'] ?? '-'))) ?></td>
+<td><?= htmlspecialchars((string)($row['absent_informed_by'] ?? '-')) ?></td>
+</tr>
+<?php endforeach; ?>
+<?php endif; ?>
+</tbody>
+</table>
+</div>
+
+</div>
+</div>
+
+</div>
+
+<div class="tab-content" id="placement">
+
+<div class="tab-panel">
+<h3 class="panel-title">Placement Interview History</h3>
+<div class="payment-table-wrap">
+<table class="report-table">
+<thead>
+<tr>
+<th>Company</th>
+<th>Date</th>
+<th>Mode</th>
+<th>Status</th>
+<th>Remarks</th>
+</tr>
+</thead>
+<tbody>
+<?php if(!$placementHistory): ?>
+<tr>
+<td colspan="5" class="empty-state">No placement interviews recorded yet.</td>
+</tr>
+<?php else: ?>
+<?php foreach($placementHistory as $row): ?>
+<tr>
+<td><?= htmlspecialchars((string)($row['company_name'] ?? '-')) ?></td>
+<td><?= htmlspecialchars(trim(studentProfileReportDate($row['interview_date'] ?? '') . ' ' . (string)($row['interview_time'] ?? ''))) ?></td>
+<td><?= htmlspecialchars((string)($row['interview_mode'] ?? '-')) ?></td>
+<td><span class="value-pill <?= studentProfileReportPillClass($row['status'] ?? '') ?>"><?= studentProfileReportStatus($row['status'] ?? '-') ?></span></td>
+<td><?= nl2br(htmlspecialchars((string)($row['remarks'] ?? '-'))) ?></td>
+</tr>
+<?php endforeach; ?>
+<?php endif; ?>
+</tbody>
+</table>
+</div>
+</div>
+
+</div>
+<?php endif; ?>
+
+
 <!-- INTERNSHIP TAB -->
 
+<?php if ($isInternshipStudent): ?>
 <div class="tab-content" id="internship">
 
 <div class="tab-panel">
@@ -801,6 +1167,7 @@ document.body.classList.add('print-report-mode');
 </div>
 
 </div>
+<?php endif; ?>
 
 </div>
 
