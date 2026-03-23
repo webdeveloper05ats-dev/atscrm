@@ -12,54 +12,604 @@ $pageTitle = "Payments";
 $userId   = (int)($_SESSION['user_id'] ?? 0);
 $roleName = $_SESSION['role_name'] ?? '';
 
-/* ===============================
-FETCH DATA
-=============================== */
+// =========================================================
+// NEW MODIFICATION DONE ON 2026-03-23
+// Payments filters, row permissions, and Excel export support
+// =========================================================
+$q = trim((string)($_GET['q'] ?? ''));
+$statusFilter = trim((string)($_GET['payment_status'] ?? ''));
+$staffFilter = (int)($_GET['staff_id'] ?? 0);
+$exportAction = trim((string)($_GET['export'] ?? ''));
+$isPrivilegedRole = in_array($roleName, ['Super Admin', 'HR'], true);
+$canDownloadAll = $isPrivilegedRole || $roleName === 'Front Office';
 
-if ($roleName === "Front Office") {
-
-$stmt = $pdo->prepare("
-SELECT 
-r.id,
-r.registration_no,
-r.enquiry_snapshot_name,
-r.final_fee,
-r.balance_amount,
-r.payment_status,
-IFNULL(SUM(p.amount),0) total_paid,
-MAX(p.payment_date) last_payment_date
-FROM registrations r
-LEFT JOIN registration_payments p 
-ON p.registration_id = r.id
-WHERE r.assigned_to = ?
-GROUP BY r.id
-ORDER BY last_payment_date DESC
-");
-
-$stmt->execute([$userId]);
-
-} else {
-
-$stmt = $pdo->query("
-SELECT 
-r.id,
-r.registration_no,
-r.enquiry_snapshot_name,
-r.final_fee,
-r.balance_amount,
-r.payment_status,
-IFNULL(SUM(p.amount),0) total_paid,
-MAX(p.payment_date) last_payment_date
-FROM registrations r
-LEFT JOIN registration_payments p 
-ON p.registration_id = r.id
-GROUP BY r.id
-ORDER BY last_payment_date DESC
-");
-
+if (!function_exists('paymentsH')) {
+    function paymentsH($value): string
+    {
+        return htmlspecialchars((string)($value ?? ''), ENT_QUOTES, 'UTF-8');
+    }
 }
 
+if (!function_exists('paymentsBuildFilters')) {
+    function paymentsBuildFilters(string $roleName, int $userId, string $q, string $statusFilter, int $staffFilter): array
+    {
+        $where = [];
+        $params = [];
+
+        if ($roleName === 'Front Office') {
+            $where[] = 'COALESCE(lp.staff_id, r.assigned_to) = ?';
+            $params[] = $userId;
+        } elseif (in_array($roleName, ['Super Admin', 'HR'], true) && $staffFilter > 0) {
+            $where[] = 'COALESCE(lp.staff_id, r.assigned_to) = ?';
+            $params[] = $staffFilter;
+        }
+
+        if ($statusFilter !== '' && in_array($statusFilter, ['paid', 'partial', 'unpaid'], true)) {
+            $where[] = 'r.payment_status = ?';
+            $params[] = $statusFilter;
+        }
+
+        if ($q !== '') {
+            $like = '%' . $q . '%';
+            $where[] = '(
+                r.registration_no LIKE ?
+                OR r.enquiry_snapshot_name LIKE ?
+                OR COALESCE(owner_u.name, fallback_u.name, \'\') LIKE ?
+            )';
+            $params[] = $like;
+            $params[] = $like;
+            $params[] = $like;
+        }
+
+        return [
+            'where_sql' => $where ? ('WHERE ' . implode(' AND ', $where)) : '',
+            'params' => $params,
+        ];
+    }
+}
+
+if (!function_exists('paymentsCanDownloadRegistration')) {
+    function paymentsCanDownloadRegistration(string $roleName, int $userId, int $ownerId): bool
+    {
+        return in_array($roleName, ['Super Admin', 'HR'], true) || $ownerId === $userId;
+    }
+}
+
+if (!function_exists('paymentsRequireSpreadsheet')) {
+    function paymentsRequireSpreadsheet(): void
+    {
+        if (!class_exists(\PhpOffice\PhpSpreadsheet\Spreadsheet::class)) {
+            require_once dirname(__DIR__, 2) . DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR . 'autoload.php';
+        }
+    }
+}
+
+if (!function_exists('paymentsApplyExportHeaderStyle')) {
+    function paymentsApplyExportHeaderStyle(\PhpOffice\PhpSpreadsheet\Worksheet\Worksheet $sheet, string $range): void
+    {
+        $sheet->getStyle($range)->applyFromArray([
+            'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
+            'fill' => [
+                'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                'startColor' => ['rgb' => 'E91E63'],
+            ],
+            'alignment' => ['vertical' => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER],
+        ]);
+    }
+}
+
+if (!function_exists('paymentsAutosizeColumns')) {
+    function paymentsAutosizeColumns(\PhpOffice\PhpSpreadsheet\Worksheet\Worksheet $sheet, array $columns): void
+    {
+        foreach ($columns as $column) {
+            $sheet->getColumnDimension($column)->setAutoSize(true);
+        }
+    }
+}
+
+if (!function_exists('paymentsStreamSpreadsheet')) {
+    function paymentsStreamSpreadsheet(\PhpOffice\PhpSpreadsheet\Spreadsheet $spreadsheet, string $fileName): void
+    {
+        while (ob_get_level() > 0) {
+            ob_end_clean();
+        }
+
+        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        header('Content-Disposition: attachment; filename="' . $fileName . '"');
+        header('Cache-Control: max-age=0');
+
+        $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+        $writer->save('php://output');
+        exit;
+    }
+}
+
+$filterParts = paymentsBuildFilters($roleName, $userId, $q, $statusFilter, $staffFilter);
+$whereSql = $filterParts['where_sql'];
+$params = $filterParts['params'];
+
+$staffOptions = [];
+if ($isPrivilegedRole) {
+    try {
+        $staffStmt = $pdo->query("
+            -- =========================================================
+            -- NEW MODIFICATION DONE ON 2026-03-23
+            -- Show only target-role staff in the payments filter dropdown
+            -- =========================================================
+            SELECT u.id, u.name, COALESCE(r.role_name, '-') AS role_name
+            FROM users u
+            LEFT JOIN roles r ON r.id = u.role_id
+            WHERE u.status = 1
+              AND LOWER(COALESCE(r.role_name, '')) IN ('front office', 'hr', 'marketing', 'corporate')
+            ORDER BY r.role_name ASC, u.name ASC
+        ");
+        $staffOptions = $staffStmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (Exception $e) {
+        $staffOptions = [];
+    }
+}
+
+/* ===============================
+NEW MODIFICATION DONE ON 2026-03-23
+Excel Exports
+=============================== */
+if ($exportAction === 'all_transactions' && $canDownloadAll) {
+    paymentsRequireSpreadsheet();
+
+    // =========================================================
+    // NEW MODIFICATION DONE ON 2026-03-23
+    // Build export filters separately so staff exports use payment target-credit rows
+    // =========================================================
+    $targetOwnerId = 0;
+    if ($roleName === 'Front Office') {
+        $targetOwnerId = $userId;
+    } elseif ($isPrivilegedRole && $staffFilter > 0) {
+        $targetOwnerId = $staffFilter;
+    }
+
+    $exportWhere = [];
+    $exportParams = [];
+
+    if ($targetOwnerId > 0) {
+        $exportWhere[] = 'p.staff_id = ?';
+        $exportParams[] = $targetOwnerId;
+    }
+
+    if ($statusFilter !== '' && in_array($statusFilter, ['paid', 'partial', 'unpaid'], true)) {
+        $exportWhere[] = 'r.payment_status = ?';
+        $exportParams[] = $statusFilter;
+    }
+
+    if ($q !== '') {
+        $like = '%' . $q . '%';
+        $exportWhere[] = '(
+            r.registration_no LIKE ?
+            OR r.enquiry_snapshot_name LIKE ?
+            OR COALESCE(owner_u.name, fallback_u.name, \'\') LIKE ?
+        )';
+        $exportParams[] = $like;
+        $exportParams[] = $like;
+        $exportParams[] = $like;
+    }
+
+    $exportWhereSql = $exportWhere ? ('WHERE ' . implode(' AND ', $exportWhere)) : '';
+
+    $exportStmt = $pdo->prepare("
+        SELECT
+            r.id AS registration_id,
+            r.registration_no,
+            r.reg_type,
+            r.enquiry_snapshot_name,
+            r.final_fee,
+            r.paid_amount,
+            r.balance_amount,
+            r.payment_status,
+            p.staff_id,
+            COALESCE(owner_u.name, fallback_u.name, '-') AS owner_name,
+            p.payment_date,
+            p.receipt_no,
+            p.payment_mode,
+            p.payment_type,
+            p.approval_status,
+            p.amount,
+            p.reference_no,
+            p.remarks
+        FROM registrations r
+        INNER JOIN registration_payments p ON p.registration_id = r.id
+        LEFT JOIN (
+            SELECT rp1.registration_id, rp1.staff_id
+            FROM registration_payments rp1
+            INNER JOIN (
+                SELECT registration_id, MAX(id) AS max_id
+                FROM registration_payments
+                GROUP BY registration_id
+            ) rp2 ON rp2.registration_id = rp1.registration_id AND rp2.max_id = rp1.id
+        ) lp ON lp.registration_id = r.id
+        LEFT JOIN users owner_u ON owner_u.id = p.staff_id
+        LEFT JOIN users fallback_u ON fallback_u.id = r.assigned_to
+        $exportWhereSql
+        ORDER BY p.payment_date DESC, p.id DESC
+    ");
+    $exportStmt->execute($exportParams);
+    $rows = $exportStmt->fetchAll(PDO::FETCH_ASSOC);
+
+    $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+
+    $grandTotal = 0.0;
+    foreach ($rows as $row) {
+        $grandTotal += (float)($row['amount'] ?? 0);
+    }
+
+    if ($targetOwnerId > 0) {
+        // =========================================================
+        // NEW MODIFICATION DONE ON 2026-03-23
+        // Staff-selected Download All now exports Summary + Detailed Transactions sheets
+        // =========================================================
+        $targetStmt = $pdo->prepare("
+            SELECT COALESCE(SUM(target_amount), 0) AS target_amount
+            FROM monthly_targets
+            WHERE user_id = ?
+              AND target_year = ?
+              AND target_month = ?
+              AND status = 'active'
+        ");
+        $targetStmt->execute([$targetOwnerId, (int)date('Y'), (int)date('n')]);
+        $monthlyTarget = (float)($targetStmt->fetchColumn() ?: 0);
+        $balanceTarget = $monthlyTarget - $grandTotal;
+
+        $summaryRows = [];
+        foreach ($rows as $row) {
+            $registrationKey = (int)($row['registration_id'] ?? 0);
+            if (!isset($summaryRows[$registrationKey])) {
+                $summaryRows[$registrationKey] = [
+                    'student_name' => (string)($row['enquiry_snapshot_name'] ?? '-'),
+                    'registration_no' => (string)($row['registration_no'] ?? '-'),
+                    'reg_type' => (string)($row['reg_type'] ?? '-'),
+                    'final_fee' => (float)($row['final_fee'] ?? 0),
+                    'paid_amount' => (float)($row['paid_amount'] ?? 0),
+                    'total_collection' => 0.0,
+                ];
+            }
+            $summaryRows[$registrationKey]['total_collection'] += (float)($row['amount'] ?? 0);
+        }
+
+        $summarySheet = $spreadsheet->getActiveSheet();
+        $summarySheet->setTitle('Summary');
+        $summaryHeaders = [
+            'A1' => 'Student Name',
+            'B1' => 'Registration No',
+            'C1' => 'Registration Type',
+            'D1' => 'Final Fee',
+            'E1' => 'Paid Amount',
+            'F1' => 'Total Collection',
+        ];
+        foreach ($summaryHeaders as $cell => $label) {
+            $summarySheet->setCellValue($cell, $label);
+        }
+        paymentsApplyExportHeaderStyle($summarySheet, 'A1:F1');
+
+        $summaryRowIndex = 2;
+        foreach ($summaryRows as $summaryRow) {
+            $summarySheet->setCellValue("A{$summaryRowIndex}", $summaryRow['student_name']);
+            $summarySheet->setCellValue("B{$summaryRowIndex}", $summaryRow['registration_no']);
+            $summarySheet->setCellValue("C{$summaryRowIndex}", ucfirst(str_replace('_', ' ', (string)$summaryRow['reg_type'])));
+            $summarySheet->setCellValue("D{$summaryRowIndex}", $summaryRow['final_fee']);
+            $summarySheet->setCellValue("E{$summaryRowIndex}", $summaryRow['paid_amount']);
+            $summarySheet->setCellValue("F{$summaryRowIndex}", $summaryRow['total_collection']);
+            $summaryRowIndex++;
+        }
+
+        // =========================================================
+        // NEW MODIFICATION DONE ON 2026-03-23
+        // Show monthly target and balance target once in the summary footer block
+        // =========================================================
+        $summarySheet->setCellValue("E{$summaryRowIndex}", 'Grand Total');
+        $summarySheet->setCellValue("F{$summaryRowIndex}", $grandTotal);
+        $summarySheet->getStyle("E{$summaryRowIndex}:F{$summaryRowIndex}")->getFont()->setBold(true);
+
+        $summaryRowIndex += 2;
+        $summarySheet->setCellValue("E{$summaryRowIndex}", 'Monthly Target');
+        $summarySheet->setCellValue("F{$summaryRowIndex}", $monthlyTarget);
+        $summarySheet->setCellValue("E" . ($summaryRowIndex + 1), 'Balance Target');
+        $summarySheet->setCellValue("F" . ($summaryRowIndex + 1), $balanceTarget);
+        $summarySheet->getStyle("E{$summaryRowIndex}:F" . ($summaryRowIndex + 1))->getFont()->setBold(true);
+        $summarySheet->freezePane('A2');
+        paymentsAutosizeColumns($summarySheet, range('A', 'F'));
+
+        $detailSheet = $spreadsheet->createSheet();
+        $detailSheet->setTitle('Detailed Transactions');
+        $detailHeaders = [
+            'A1' => 'Student Name',
+            'B1' => 'Registration No',
+            'C1' => 'Registration Type',
+            'D1' => 'Staff Owner',
+            'E1' => 'Collection Date',
+            'F1' => 'Receipt No',
+            'G1' => 'Payment Mode',
+            'H1' => 'Payment Type',
+            'I1' => 'Approval Status',
+            'J1' => 'Collected Amount',
+            'K1' => 'Final Fee',
+            'L1' => 'Total Paid',
+            'M1' => 'Balance',
+            'N1' => 'Reference No',
+            'O1' => 'Remarks',
+        ];
+        foreach ($detailHeaders as $cell => $label) {
+            $detailSheet->setCellValue($cell, $label);
+        }
+        paymentsApplyExportHeaderStyle($detailSheet, 'A1:O1');
+
+        $detailRowIndex = 2;
+        foreach ($rows as $row) {
+            $detailSheet->setCellValue("A{$detailRowIndex}", (string)($row['enquiry_snapshot_name'] ?? '-'));
+            $detailSheet->setCellValue("B{$detailRowIndex}", (string)($row['registration_no'] ?? '-'));
+            $detailSheet->setCellValue("C{$detailRowIndex}", ucfirst(str_replace('_', ' ', (string)($row['reg_type'] ?? '-'))));
+            $detailSheet->setCellValue("D{$detailRowIndex}", (string)($row['owner_name'] ?? '-'));
+            $detailSheet->setCellValue("E{$detailRowIndex}", (string)($row['payment_date'] ?? '-'));
+            $detailSheet->setCellValue("F{$detailRowIndex}", (string)($row['receipt_no'] ?? '-'));
+            $detailSheet->setCellValue("G{$detailRowIndex}", ucfirst((string)($row['payment_mode'] ?? '-')));
+            $detailSheet->setCellValue("H{$detailRowIndex}", ucfirst((string)($row['payment_type'] ?? '-')));
+            $detailSheet->setCellValue("I{$detailRowIndex}", ucfirst((string)($row['approval_status'] ?? '-')));
+            $detailSheet->setCellValue("J{$detailRowIndex}", (float)($row['amount'] ?? 0));
+            $detailSheet->setCellValue("K{$detailRowIndex}", (float)($row['final_fee'] ?? 0));
+            $detailSheet->setCellValue("L{$detailRowIndex}", (float)($row['paid_amount'] ?? 0));
+            $detailSheet->setCellValue("M{$detailRowIndex}", (float)($row['balance_amount'] ?? 0));
+            $detailSheet->setCellValue("N{$detailRowIndex}", (string)($row['reference_no'] ?? '-'));
+            $detailSheet->setCellValue("O{$detailRowIndex}", (string)($row['remarks'] ?? '-'));
+            $detailRowIndex++;
+        }
+        $detailSheet->setCellValue("I{$detailRowIndex}", 'Grand Total');
+        $detailSheet->setCellValue("J{$detailRowIndex}", $grandTotal);
+        $detailSheet->getStyle("I{$detailRowIndex}:J{$detailRowIndex}")->getFont()->setBold(true);
+        $detailSheet->freezePane('A2');
+        paymentsAutosizeColumns($detailSheet, range('A', 'O'));
+    } else {
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('All Payments');
+
+        $headers = [
+            'A1' => 'Student Name',
+            'B1' => 'Registration No',
+            'C1' => 'Registration Type',
+            'D1' => 'Staff Owner',
+            'E1' => 'Collection Date',
+            'F1' => 'Receipt No',
+            'G1' => 'Payment Mode',
+            'H1' => 'Payment Type',
+            'I1' => 'Approval Status',
+            'J1' => 'Collected Amount',
+            'K1' => 'Final Fee',
+            'L1' => 'Total Paid',
+            'M1' => 'Balance',
+            'N1' => 'Reference No',
+            'O1' => 'Remarks',
+        ];
+
+        foreach ($headers as $cell => $label) {
+            $sheet->setCellValue($cell, $label);
+        }
+        paymentsApplyExportHeaderStyle($sheet, 'A1:O1');
+
+        $rowIndex = 2;
+        foreach ($rows as $row) {
+            $sheet->setCellValue("A{$rowIndex}", (string)($row['enquiry_snapshot_name'] ?? '-'));
+            $sheet->setCellValue("B{$rowIndex}", (string)($row['registration_no'] ?? '-'));
+            $sheet->setCellValue("C{$rowIndex}", ucfirst(str_replace('_', ' ', (string)($row['reg_type'] ?? '-'))));
+            $sheet->setCellValue("D{$rowIndex}", (string)($row['owner_name'] ?? '-'));
+            $sheet->setCellValue("E{$rowIndex}", (string)($row['payment_date'] ?? '-'));
+            $sheet->setCellValue("F{$rowIndex}", (string)($row['receipt_no'] ?? '-'));
+            $sheet->setCellValue("G{$rowIndex}", ucfirst((string)($row['payment_mode'] ?? '-')));
+            $sheet->setCellValue("H{$rowIndex}", ucfirst((string)($row['payment_type'] ?? '-')));
+            $sheet->setCellValue("I{$rowIndex}", ucfirst((string)($row['approval_status'] ?? '-')));
+            $sheet->setCellValue("J{$rowIndex}", (float)($row['amount'] ?? 0));
+            $sheet->setCellValue("K{$rowIndex}", (float)($row['final_fee'] ?? 0));
+            $sheet->setCellValue("L{$rowIndex}", (float)($row['paid_amount'] ?? 0));
+            $sheet->setCellValue("M{$rowIndex}", (float)($row['balance_amount'] ?? 0));
+            $sheet->setCellValue("N{$rowIndex}", (string)($row['reference_no'] ?? '-'));
+            $sheet->setCellValue("O{$rowIndex}", (string)($row['remarks'] ?? '-'));
+            $rowIndex++;
+        }
+
+        $sheet->setCellValue("I{$rowIndex}", 'Grand Total');
+        $sheet->setCellValue("J{$rowIndex}", $grandTotal);
+        $sheet->getStyle("I{$rowIndex}:J{$rowIndex}")->getFont()->setBold(true);
+        $sheet->freezePane('A2');
+        paymentsAutosizeColumns($sheet, range('A', 'O'));
+    }
+
+    paymentsStreamSpreadsheet($spreadsheet, 'payments-all-' . date('Ymd-His') . '.xlsx');
+}
+
+if ($exportAction === 'student_details') {
+    $registrationId = (int)($_GET['reg_id'] ?? 0);
+    if ($registrationId > 0) {
+        $studentStmt = $pdo->prepare("
+            SELECT
+                r.id,
+                r.registration_no,
+                r.enquiry_snapshot_name,
+                r.final_fee,
+                r.paid_amount,
+                r.balance_amount,
+                r.payment_status,
+                COALESCE(lp.staff_id, r.assigned_to) AS credit_owner_id,
+                COALESCE(owner_u.name, fallback_u.name, '-') AS target_owner_name,
+                COALESCE(fallback_u.name, '-') AS assigned_owner_name
+            FROM registrations r
+            LEFT JOIN (
+                SELECT rp1.registration_id, rp1.staff_id
+                FROM registration_payments rp1
+                INNER JOIN (
+                    SELECT registration_id, MAX(id) AS max_id
+                    FROM registration_payments
+                    GROUP BY registration_id
+                ) rp2 ON rp2.registration_id = rp1.registration_id AND rp2.max_id = rp1.id
+            ) lp ON lp.registration_id = r.id
+            LEFT JOIN users owner_u ON owner_u.id = lp.staff_id
+            LEFT JOIN users fallback_u ON fallback_u.id = r.assigned_to
+            WHERE r.id = ?
+            LIMIT 1
+        ");
+        $studentStmt->execute([$registrationId]);
+        $student = $studentStmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($student && paymentsCanDownloadRegistration($roleName, $userId, (int)($student['credit_owner_id'] ?? 0))) {
+            paymentsRequireSpreadsheet();
+
+            $historyStmt = $pdo->prepare("
+                SELECT
+                    payment_date,
+                    receipt_no,
+                    COALESCE(u.name, '-') AS staff_owner_name,
+                    payment_mode,
+                    payment_type,
+                    approval_status,
+                    amount,
+                    reference_no,
+                    remarks
+                FROM registration_payments
+                LEFT JOIN users u ON u.id = registration_payments.staff_id
+                WHERE registration_id = ?
+                -- =========================================================
+                -- NEW MODIFICATION DONE ON 2026-03-23
+                -- Qualify payment id in export history sorting to avoid SQL ambiguity
+                -- =========================================================
+                ORDER BY payment_date DESC, registration_payments.id DESC
+            ");
+            $historyStmt->execute([$registrationId]);
+            $historyRows = $historyStmt->fetchAll(PDO::FETCH_ASSOC);
+
+            $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+
+            $summarySheet = $spreadsheet->getActiveSheet();
+            $summarySheet->setTitle('Student Summary');
+            $summarySheet->fromArray(
+                [
+                    ['Field', 'Value'],
+                    ['Student Name', (string)($student['enquiry_snapshot_name'] ?? '-')],
+                    ['Registration No', (string)($student['registration_no'] ?? '-')],
+                    // =========================================================
+                    // NEW MODIFICATION DONE ON 2026-03-23
+                    // Show both target-credit staff and assigned staff in student export
+                    // =========================================================
+                    ['Converted / Target Staff', (string)($student['target_owner_name'] ?? '-')],
+                    ['Assigned Staff', (string)($student['assigned_owner_name'] ?? '-')],
+                    ['Payment Status', ucfirst((string)($student['payment_status'] ?? '-'))],
+                    ['Final Fee', (float)($student['final_fee'] ?? 0)],
+                    ['Total Paid', (float)($student['paid_amount'] ?? 0)],
+                    ['Balance', (float)($student['balance_amount'] ?? 0)],
+                    ['Payments Count', count($historyRows)],
+                ],
+                null,
+                'A1'
+            );
+            paymentsApplyExportHeaderStyle($summarySheet, 'A1:B1');
+            $summarySheet->freezePane('A2');
+            paymentsAutosizeColumns($summarySheet, ['A', 'B']);
+
+            $historySheet = $spreadsheet->createSheet();
+            $historySheet->setTitle('Payment History');
+            $historySheet->fromArray(
+                [[
+                    'Payment Date',
+                    'Receipt No',
+                    'Staff Owner',
+                    'Amount',
+                    'Payment Mode',
+                    'Payment Type',
+                    'Approval Status',
+                    'Reference No',
+                    'Remarks'
+                ]],
+                null,
+                'A1'
+            );
+            paymentsApplyExportHeaderStyle($historySheet, 'A1:I1');
+
+            $rowIndex = 2;
+            foreach ($historyRows as $historyRow) {
+                $historySheet->setCellValue("A{$rowIndex}", (string)($historyRow['payment_date'] ?? '-'));
+                $historySheet->setCellValue("B{$rowIndex}", (string)($historyRow['receipt_no'] ?? '-'));
+                $historySheet->setCellValue("C{$rowIndex}", (string)($historyRow['staff_owner_name'] ?? '-'));
+                $historySheet->setCellValue("D{$rowIndex}", (float)($historyRow['amount'] ?? 0));
+                $historySheet->setCellValue("E{$rowIndex}", ucfirst((string)($historyRow['payment_mode'] ?? '-')));
+                $historySheet->setCellValue("F{$rowIndex}", ucfirst((string)($historyRow['payment_type'] ?? '-')));
+                $historySheet->setCellValue("G{$rowIndex}", ucfirst((string)($historyRow['approval_status'] ?? '-')));
+                $historySheet->setCellValue("H{$rowIndex}", (string)($historyRow['reference_no'] ?? '-'));
+                $historySheet->setCellValue("I{$rowIndex}", (string)($historyRow['remarks'] ?? '-'));
+                $rowIndex++;
+            }
+
+            $historySheet->setCellValue("C{$rowIndex}", 'Grand Total');
+            $historySheet->setCellValue("D{$rowIndex}", (float)($student['paid_amount'] ?? 0));
+            $historySheet->getStyle("C{$rowIndex}:D{$rowIndex}")->getFont()->setBold(true);
+            $historySheet->freezePane('A2');
+            paymentsAutosizeColumns($historySheet, range('A', 'I'));
+
+            paymentsStreamSpreadsheet(
+                $spreadsheet,
+                'student-payment-' . preg_replace('/[^A-Za-z0-9_-]+/', '-', (string)($student['registration_no'] ?? $registrationId)) . '.xlsx'
+            );
+        }
+    }
+}
+
+/* ===============================
+NEW MODIFICATION DONE ON 2026-03-23
+Fetch Data
+=============================== */
+$stmt = $pdo->prepare("
+    SELECT
+        r.id,
+        r.registration_no,
+        r.enquiry_snapshot_name,
+        r.final_fee,
+        r.balance_amount,
+        r.paid_amount,
+        r.payment_status,
+        COALESCE(lp.staff_id, r.assigned_to) AS credit_owner_id,
+        COALESCE(owner_u.name, fallback_u.name, '-') AS owner_name,
+        IFNULL(SUM(p.amount),0) AS total_paid,
+        MAX(p.payment_date) AS last_payment_date
+    FROM registrations r
+    LEFT JOIN registration_payments p ON p.registration_id = r.id
+    LEFT JOIN (
+        SELECT rp1.registration_id, rp1.staff_id
+        FROM registration_payments rp1
+        INNER JOIN (
+            SELECT registration_id, MAX(id) AS max_id
+            FROM registration_payments
+            GROUP BY registration_id
+        ) rp2 ON rp2.registration_id = rp1.registration_id AND rp2.max_id = rp1.id
+    ) lp ON lp.registration_id = r.id
+    LEFT JOIN users owner_u ON owner_u.id = lp.staff_id
+    LEFT JOIN users fallback_u ON fallback_u.id = r.assigned_to
+    $whereSql
+    GROUP BY
+        r.id,
+        r.registration_no,
+        r.enquiry_snapshot_name,
+        r.final_fee,
+        r.balance_amount,
+        r.paid_amount,
+        r.payment_status,
+        COALESCE(lp.staff_id, r.assigned_to),
+        COALESCE(owner_u.name, fallback_u.name, '-')
+    ORDER BY last_payment_date DESC, r.id DESC
+");
+$stmt->execute($params);
 $payments = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+$basePageUrl = 'index.php?page=payments/index'
+    . '&q=' . urlencode($q)
+    . '&payment_status=' . urlencode($statusFilter)
+    . '&staff_id=' . (int)$staffFilter;
+
+$exportBaseUrl = 'index.php?page=payments/index&ajax=1'
+    . '&q=' . urlencode($q)
+    . '&payment_status=' . urlencode($statusFilter)
+    . '&staff_id=' . (int)$staffFilter;
 ?>
 
 
@@ -138,6 +688,252 @@ $payments = $stmt->fetchAll(PDO::FETCH_ASSOC);
 .payments-page-title {
   margin: 0 0 10px;
   line-height: 1.2;
+}
+
+.payments-dashboard {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+.dashboard-header h2 {
+  margin: 0;
+  font-size: 1.18rem;
+  font-weight: 600;
+  color: var(--gray-800);
+}
+
+.header-stats {
+  background: #fff;
+  padding: 7px 12px;
+  border-radius: 40px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.1);
+  font-weight: 500;
+  font-size: 0.86rem;
+}
+
+.stat-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--gray-700);
+}
+
+.card {
+  background: #fff;
+  border: 1px solid #e9ecef;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.1);
+  overflow: visible;
+  margin-bottom: 14px;
+}
+
+.card-header {
+  padding: 9px 12px;
+  border-bottom: 1px solid #e9ecef;
+  background: #f8f9fa;
+  color: var(--gray-800);
+  font-weight: 600;
+  font-size: 0.92rem;
+}
+
+.table-header-flex {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.table-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.filter-form {
+  padding: 10px 12px;
+}
+
+.filter-grid {
+  display: flex;
+  gap: 10px;
+  align-items: end;
+  flex-wrap: wrap;
+}
+
+.filter-item {
+  flex: 1 1 170px;
+  min-width: 150px;
+}
+
+.filter-item label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  color: #6c757d;
+}
+
+.filter-item input,
+.filter-item select {
+  width: 100%;
+  min-height: 0;
+  padding: 7px 10px;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  background: #fff;
+  color: var(--gray-800);
+  outline: none;
+  transition: var(--transition);
+  font-size: 0.84rem;
+}
+
+.filter-item input:focus,
+.filter-item select:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(233, 30, 99, 0.12);
+}
+
+.filter-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.btn-icon-only {
+  width: 40px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  text-decoration: none;
+  border: 1px solid transparent;
+  transition: var(--transition);
+  cursor: pointer;
+}
+
+.btn-icon-only.apply {
+  background: var(--primary);
+  color: #fff;
+}
+
+.btn-icon-only.apply:hover {
+  background: var(--primary-dark);
+  transform: translateY(-1px);
+}
+
+.btn-icon-only.reset {
+  background: #fff7fb;
+  color: var(--primary-dark);
+  border-color: #f3cede;
+}
+
+.btn-icon-only.reset:hover {
+  background: #fff0f6;
+}
+
+#datatableControls {
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+#datatableControls .dt-top {
+  display: flex !important;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+#datatableControls .dataTables_length,
+#datatableControls .dataTables_filter,
+#datatableControls .dt-buttons {
+  display: flex;
+  align-items: center;
+  margin: 0;
+}
+
+#datatableControls .dataTables_length {
+  flex: 0 0 auto;
+}
+
+#datatableControls .dataTables_length label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  white-space: nowrap;
+}
+
+#datatableControls .dataTables_length select {
+  min-width: 64px;
+  padding: 4px 8px;
+}
+
+#datatableControls .dataTables_filter {
+  flex: 0 0 auto;
+  justify-content: flex-start;
+}
+
+#datatableControls .dataTables_filter label {
+  width: auto;
+  min-width: 170px;
+  margin: 0;
+}
+
+#datatableControls .dataTables_filter input {
+  min-width: 170px;
+}
+
+.dt-bottom {
+  display: flex !important;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 10px;
+  flex-wrap: wrap;
+  gap: 10px;
+  width: 100%;
+}
+
+.dt-bottom .dataTables_info {
+  margin: 0;
+  float: none !important;
+  flex: 1 1 auto;
+}
+
+.dt-bottom .dataTables_paginate {
+  margin: 0 0 0 auto !important;
+  float: none !important;
+  text-align: right;
+  flex: 0 0 auto;
+}
+
+.table-container {
+  padding: 8px 10px;
+  overflow-x: auto;
 }
 
 .payments-wrapper {
@@ -321,6 +1117,34 @@ $payments = $stmt->fetchAll(PDO::FETCH_ASSOC);
   background: #d9edf9;
 }
 
+.btn-download {
+  background: #eaf7ee;
+  color: #2e7d32;
+}
+
+.btn-download:hover {
+  background: #dff2e6;
+}
+
+.btn-download-all {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  text-decoration: none;
+  background: #2e7d32;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  border: none;
+  transition: var(--transition);
+}
+
+.btn-download-all:hover {
+  background: #256628;
+}
+
 .dataTables_wrapper .dataTables_length,
 .dataTables_wrapper .dataTables_filter {
   margin-bottom: 8px;
@@ -367,7 +1191,7 @@ $payments = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 .dataTables_wrapper {
   width: 100%;
-  overflow-x: hidden;
+  overflow-x: auto;
   /*overflow-y: hidden;*/
 }
 
@@ -380,7 +1204,7 @@ $payments = $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
 .dataTables_wrapper .dataTables_scrollBody {
-  overflow-x: hidden !important;
+  overflow-x: auto !important;
 }
 
 .dataTables_wrapper .dataTables_length {
@@ -818,6 +1642,14 @@ $payments = $stmt->fetchAll(PDO::FETCH_ASSOC);
   }
 
   @media (max-width: 900px) {
+    .filter-grid {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .filter-actions {
+      justify-content: flex-start;
+    }
+
     .pro-payment-grid {
       grid-template-columns: 1fr;
     }
@@ -854,6 +1686,36 @@ $payments = $stmt->fetchAll(PDO::FETCH_ASSOC);
   }
 
   @media (max-width: 576px) {
+    .dashboard-header h2 {
+      font-size: 24px;
+    }
+
+    .table-header-flex {
+      align-items: stretch;
+    }
+
+    #datatableControls {
+      justify-content: flex-start;
+    }
+
+    #datatableControls .dt-top,
+    .dt-bottom {
+      justify-content: flex-start;
+    }
+
+    .dt-bottom .dataTables_paginate {
+      margin-left: 0 !important;
+      text-align: left;
+    }
+
+    .filter-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .filter-actions {
+      width: 100%;
+    }
+
     .reg-page-title h2 {
       font-size: 22px;
     }
@@ -953,13 +1815,79 @@ $payments = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 </style>
 
-<h2 class="page-title payments-page-title">Payments</h2>
+<div class="payments-dashboard">
+<div class="dashboard-header">
+<h2><i class="fas fa-wallet" style="margin-right: 12px; color: #e91e63;"></i>Payments Management</h2>
+<div class="header-stats">
+<span class="stat-item"><i class="fas fa-database"></i> Total: <?= count($payments) ?></span>
+</div>
+</div>
 
-<div class="payments-wrapper">
-<div class="crm-right">
-<div class="crm-card">
+<div class="card">
+<div class="card-header">
+<i class="fas fa-sliders-h" style="margin-right: 8px;"></i> Filter Payments
+</div>
 
-<h3><i class="fas fa-list"></i> Payments List</h3>
+<form method="GET" action="index.php" class="filter-form">
+<input type="hidden" name="page" value="payments/index">
+
+<div class="filter-grid">
+<div class="filter-item">
+<label><i class="fas fa-search"></i> Search</label>
+<input type="text" name="q" value="<?= htmlspecialchars($q, ENT_QUOTES, 'UTF-8') ?>" placeholder="Student or registration...">
+</div>
+
+<div class="filter-item">
+<label><i class="fas fa-wallet"></i> Payment Status</label>
+<select name="payment_status">
+<option value="">All Status</option>
+<option value="paid" <?= $statusFilter === 'paid' ? 'selected' : '' ?>>Paid</option>
+<option value="partial" <?= $statusFilter === 'partial' ? 'selected' : '' ?>>Partial</option>
+<option value="unpaid" <?= $statusFilter === 'unpaid' ? 'selected' : '' ?>>Unpaid</option>
+</select>
+</div>
+
+<?php if ($isPrivilegedRole): ?>
+<div class="filter-item">
+<label><i class="fas fa-user-tie"></i> Staff</label>
+<select name="staff_id">
+<option value="">All Staff</option>
+<?php foreach ($staffOptions as $staff): ?>
+<option value="<?= (int)$staff['id'] ?>" <?= $staffFilter === (int)$staff['id'] ? 'selected' : '' ?>>
+<?= paymentsH($staff['name']) ?> (<?= paymentsH($staff['role_name'] ?? '-') ?>)
+</option>
+<?php endforeach; ?>
+</select>
+</div>
+<?php endif; ?>
+
+<div class="filter-actions">
+<?php if ($canDownloadAll): ?>
+<a href="<?= paymentsH($exportBaseUrl . '&export=all_transactions') ?>" class="btn-download-all" title="Download all filtered payments">
+<i class="fas fa-file-excel"></i> <span>Download All</span>
+</a>
+<?php endif; ?>
+<button type="submit" class="btn-icon-only apply" title="Apply filters">
+<i class="fas fa-filter"></i>
+</button>
+<a href="index.php?page=payments/index" class="btn-icon-only reset" title="Reset filters">
+<i class="fas fa-undo-alt"></i>
+</a>
+</div>
+</div>
+</form>
+</div>
+
+<div class="card">
+<div class="card-header">
+<div class="table-header-flex">
+<div class="table-title">
+<i class="fas fa-list"></i> Payments List
+</div>
+<div id="datatableControls"></div>
+</div>
+</div>
+<div class="table-container">
 <div class="crm-table-wrapper">
 
 <table id="userTable" class="crm-table display" style="width:100%">
@@ -1026,6 +1954,26 @@ onclick="openPaymentModal(<?= (int)$p['id'] ?>)">
 </button>
 <?php endif; ?>
 
+<?php
+// =========================================================
+// NEW MODIFICATION DONE ON 2026-03-23
+// Use payment credit owner for row-level download permission
+// =========================================================
+?>
+<?php if (paymentsCanDownloadRegistration($roleName, $userId, (int)($p['credit_owner_id'] ?? 0))): ?>
+<a
+class="btn-icon btn-download"
+href="<?= paymentsH($exportBaseUrl . '&export=student_details&reg_id=' . (int)$p['id']) ?>"
+target="_blank"
+rel="noopener"
+title="Download Excel"
+data-tooltip="Download Excel">
+
+<i class="fas fa-file-excel"></i>
+
+</a>
+<?php endif; ?>
+
 <a
 class="btn-icon btn-view"
 href="index.php?page=students/profile&id=<?= $p['id'] ?>"
@@ -1083,25 +2031,32 @@ Loading...
 <script>
 
 document.addEventListener("DOMContentLoaded", function(){
-if (window.jQuery && $.fn.DataTable) {
-$('#userTable').DataTable({
-pageLength:10,
-lengthMenu:[5,10,20,50],
-autoWidth:false,
-responsive:true,
-order:[[6,'desc']],
-dom:'<"crm-table-header"lfB>rt<"crm-table-footer"ip>',
-buttons:[{
-extend:'csvHtml5',
-text:'Export CSV',
-className:'crm-export-btn'
-}],
-language:{
-search:"",
-searchPlaceholder:"Search..."
-}
+if (typeof crmDataTable !== 'function') return;
+
+try {
+crmDataTable('#userTable', {
+pageLength: 10,
+lengthMenu: [5, 10, 20, 50, 100],
+ordering: true,
+scrollX: false,
+responsive: false,
+order: [[6, 'desc']],
+searchPlaceholder: "Search payments...",
+dom:
+"<'dt-top'lfB>" +
+"rt" +
+"<'dt-bottom'ip>"
 });
+
+setTimeout(() => {
+const controls = document.querySelector('.dt-top');
+const target = document.getElementById('datatableControls');
+
+if (controls && target) {
+target.appendChild(controls);
 }
+}, 100);
+} catch (e) {}
 });
 
 /* ===============================
