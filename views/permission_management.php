@@ -59,17 +59,6 @@ echo json_encode(['ok'=>false]);
 exit;
 }
 
-if($roleId===1){
-
-$perms=[];
-foreach($allMenus as $m){
-$perms[$m['id']]=['view'=>1,'add'=>1,'edit'=>1,'delete'=>1];
-}
-
-echo json_encode(['ok'=>true,'superadmin'=>true,'perms'=>$perms]);
-exit;
-}
-
 $stmt=$pdo->prepare("
 SELECT menu_id,can_view,can_add,can_edit,can_delete
 FROM role_permissions
@@ -91,7 +80,14 @@ $perms[$p['menu_id']]=[
 
 }
 
-echo json_encode(['ok'=>true,'superadmin'=>false,'perms'=>$perms]);
+if($roleId===1 && empty($perms)){
+$perms=[];
+foreach($allMenus as $m){
+$perms[$m['id']]=['view'=>1,'add'=>1,'edit'=>1,'delete'=>1];
+}
+}
+
+echo json_encode(['ok'=>true,'superadmin'=>$roleId===1,'perms'=>$perms]);
 exit;
 }
 
@@ -110,12 +106,9 @@ echo json_encode(['ok'=>false]);
 exit;
 }
 
-if($role_id===1){
-echo json_encode(['ok'=>false]);
-exit;
-}
-
 $perm=$_POST['perm'] ?? [];
+
+try{
 
 $pdo->beginTransaction();
 
@@ -147,6 +140,14 @@ $pdo->commit();
 
 echo json_encode(['ok'=>true]);
 exit;
+
+}catch(Throwable $e){
+if($pdo->inTransaction()){
+$pdo->rollBack();
+}
+echo json_encode(['ok'=>false,'message'=>'Failed to save permissions. Please try again.']);
+exit;
+}
 }
 ?>
 
@@ -659,7 +660,7 @@ exit;
 
 <div class="perm-loading" id="perm_loading">
 <span class="perm-spinner"></span>
-Loading permissions...
+<span class="perm-loading-text">Loading permissions...</span>
 </div>
 
 <div class="perm-toolbar-wrap">
@@ -862,6 +863,19 @@ const m=String(now.getMinutes()).padStart(2,"0");
 permSavedBadge.textContent=`Saved ${h}:${m}`;
 }
 
+function setPermissionBusyState(isBusy,message){
+if(permLoading){
+const textNode=permLoading.querySelector(".perm-loading-text");
+if(textNode && message){
+textNode.textContent=message;
+}
+permLoading.classList.toggle("show",!!isBusy);
+}
+if(permActions) permActions.style.display=isBusy ? "none" : "flex";
+if(permTableWrap) permTableWrap.style.display=isBusy ? "none" : "block";
+if(permFooter) permFooter.style.display=isBusy ? "none" : "flex";
+}
+
 function applyDensityMode(){
 if(!permTableWrap || !permDensity) return;
 if(permDensity.value==="compact"){
@@ -916,12 +930,13 @@ childCbs.forEach(function(cb){ if(cb.checked) checked++; });
 if(checked===0){
 parentCb.checked=false;
 parentCb.indeterminate=false;
-}else if(checked===childCbs.length){
-parentCb.checked=true;
-parentCb.indeterminate=false;
 }else{
 parentCb.checked=false;
-parentCb.indeterminate=true;
+ parentCb.indeterminate=false;
+}
+if(checked>0){
+ parentCb.checked=true;
+ parentCb.indeterminate=false;
 }
 });
 });
@@ -1019,10 +1034,7 @@ permCard.style.display="block";
 roleHidden.value=role;
 updateRoleChip();
 roleSelect.disabled=true;
-if(permActions) permActions.style.display="none";
-if(permTableWrap) permTableWrap.style.display="none";
-if(permFooter) permFooter.style.display="none";
-if(permLoading) permLoading.classList.add("show");
+setPermissionBusyState(true,"Loading permissions...");
 
 try{
 let res=await fetch(`index.php?page=permission_management&ajax=perms&role_id=${role}`);
@@ -1059,10 +1071,7 @@ text:'Unable to load permissions right now.',
 confirmButtonColor:'#e91e63'
 });
 }finally{
-if(permLoading) permLoading.classList.remove("show");
-if(permActions) permActions.style.display="flex";
-if(permTableWrap) permTableWrap.style.display="block";
-if(permFooter) permFooter.style.display="flex";
+setPermissionBusyState(false,"Loading permissions...");
 roleSelect.disabled=false;
 }
 
@@ -1124,16 +1133,8 @@ const defaultSaveHtml=saveBtn.innerHTML;
 /* Disable button */
 saveBtn.disabled = true;
 saveBtn.innerHTML = "<i class='fas fa-spinner fa-spin'></i> Saving...";
-
-/* Show loading popup */
-Swal.fire({
-title: 'Saving Permissions...',
-text: 'Please wait',
-allowOutsideClick: false,
-didOpen: () => {
-Swal.showLoading();
-}
-});
+roleSelect.disabled = true;
+setPermissionBusyState(true,"Saving permissions...");
 
 try{
 
@@ -1160,7 +1161,7 @@ markSavedNow();
 Swal.fire({
 icon: 'error',
 title: 'Error',
-text: 'Failed to save permissions',
+text: data.message || 'Failed to save permissions',
 confirmButtonColor: '#e91e63'
 });
 
@@ -1178,6 +1179,8 @@ confirmButtonColor: '#e91e63'
 }
 
 /* Enable button again */
+setPermissionBusyState(false,"Loading permissions...");
+roleSelect.disabled = false;
 saveBtn.disabled = false;
 saveBtn.innerHTML = defaultSaveHtml;
 
