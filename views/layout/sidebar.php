@@ -28,13 +28,12 @@ $stmt = $pdo->prepare("
     FROM menus m
     LEFT JOIN role_permissions rp 
         ON rp.menu_id = m.id AND rp.role_id = :role_id
-    WHERE (rp.can_view = 1 OR :is_admin = 1)
+    WHERE rp.can_view = 1
     AND m.status = 1
     ORDER BY m.parent_id ASC, m.sort_order ASC
 ");
 $stmt->execute([
-    'role_id' => $role_id,
-    'is_admin' => ($role_id == 1 ? 1 : 0)
+    'role_id' => $role_id
 ]);
 $menus = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
