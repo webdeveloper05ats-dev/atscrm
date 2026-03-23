@@ -76,204 +76,203 @@ $payments = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 <style>
 .student-page {
-    background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
-    padding: 40px;
-    border-radius: 20px;
-    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.08), 0 8px 20px rgba(0, 0, 0, 0.04);
-    max-width: 1100px;
+    background:
+        radial-gradient(circle at top right, rgba(255, 204, 224, 0.45), transparent 28%),
+        linear-gradient(180deg, #fff8fb 0%, #ffffff 100%);
+    padding: 32px;
+    border-radius: 24px;
+    border: 1px solid #f6d5e2;
+    box-shadow: 0 24px 52px rgba(236, 72, 153, 0.08);
+    max-width: 1180px;
     margin: 30px auto;
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
-    color: #1e293b;
+    font-family: 'Poppins', 'Segoe UI', sans-serif;
+    color: #342431;
     line-height: 1.6;
 }
 
 h2 {
-    font-size: 32px;
+    font-size: 28px;
     font-weight: 800;
-    color: #0f172a;
-    margin: 0 0 32px;
+    color: #9f1249;
+    margin: 0 0 26px;
     letter-spacing: -0.5px;
 }
 
 .profile-card {
     display: flex;
     gap: 32px;
-    background: rgba(255, 255, 255, 0.75);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(226, 232, 240, 0.6);
-    border-radius: 16px;
+    align-items: center;
+    background: linear-gradient(180deg, #ffffff 0%, #fff7fb 100%);
+    border: 1px solid #f6d5e2;
+    border-radius: 22px;
     padding: 28px;
-    margin-bottom: 40px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.06);
-    transition: transform 0.25s ease, box-shadow 0.25s ease;
-}
-
-.profile-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.1);
+    margin-bottom: 26px;
+    box-shadow: 0 18px 40px rgba(236, 72, 153, 0.08);
 }
 
 .profile-left img,
 .profile-photo {
     width: 160px;
     height: 160px;
-    border-radius: 16px;
+    border-radius: 20px;
     object-fit: cover;
-    border: 4px solid white;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
-    transition: transform 0.3s ease;
-}
-
-.profile-left img:hover,
-.profile-photo:hover {
-    transform: scale(1.06) rotate(2deg);
+    background: #fff;
+    border: 5px solid #fff0f6;
+    box-shadow: 0 16px 34px rgba(236, 72, 153, 0.14);
 }
 
 .profile-right h3 {
     margin: 0 0 16px;
-    font-size: 28px;
+    font-size: 30px;
     font-weight: 800;
-    color: #0f172a;
+    color: #7e1842;
 }
 
 .profile-right p {
-    margin: 10px 0;
-    font-size: 15.5px;
-    color: #475569;
+    margin: 12px 0;
+    font-size: 14px;
+    color: #6a5565;
 }
 
 .profile-right p strong {
-    color: #1e293b;
+    color: #a01453;
     font-weight: 700;
+}
+
+.details-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 22px;
+    align-items: start;
+    grid-auto-rows: min-content;
+}
+
+.student-profile-card-block {
+    background: linear-gradient(180deg, #ffffff 0%, #fff8fb 100%);
+    border: 1px solid #f7d7e4;
+    border-radius: 20px;
+    padding: 22px;
+    box-shadow: 0 14px 30px rgba(236, 72, 153, 0.07);
+    align-self: start;
+    height: auto !important;
+    min-height: 0 !important;
 }
 
 .section-title {
-    font-size: 22px;
+    font-size: 17px;
     font-weight: 700;
-    color: #0f172a;
-    margin: 48px 0 20px;
-    position: relative;
-    display: inline-block;
+    color: #8d1246;
+    margin: 0 0 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
 
-.section-title::after {
+.section-title::before {
     content: '';
-    position: absolute;
-    bottom: -8px;
-    left: 0;
-    width: 70px;
-    height: 4px;
-    background: linear-gradient(90deg, #6366f1, #8b5cf6);
-    border-radius: 4px;
+    width: 12px;
+    height: 12px;
+    flex: 0 0 12px;
+    border-radius: 50%;
+    background: linear-gradient(180deg, #ff4f91 0%, #ff8fb8 100%);
+    box-shadow: 0 0 0 6px #fff0f6;
 }
 
-.table {
+.student-profile-table {
     width: 100%;
     border-collapse: separate;
     border-spacing: 0;
-    background: white;
+    background: transparent;
     border-radius: 14px;
     overflow: hidden;
-    border: 1px solid #e2e8f0;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
-    font-size: 15px;
+    border: 1px solid #f9dce8;
+    font-size: 13px;
 }
 
-.table th,
-.table td {
-    padding: 16px 20px;
+.student-profile-table th,
+.student-profile-table td {
+    padding: 14px 16px;
     text-align: left;
 }
 
-.table th {
-    background: #f1f5f9;
+.student-profile-table th {
+    background: #fff0f6;
     font-weight: 700;
-    color: #334155;
+    color: #a01453;
     text-transform: uppercase;
-    font-size: 13px;
-    letter-spacing: 0.6px;
-    border-bottom: 2px solid #e2e8f0;
+    font-size: 11px;
+    letter-spacing: 0.7px;
+    border-bottom: 1px solid #f5cddd;
 }
 
-.table td {
-    color: #475569;
-    border-bottom: 1px solid #f1f5f9;
+.student-profile-table td {
+    color: #5f4d5b;
+    border-bottom: 1px solid #fbe5ee;
+    background: rgba(255, 255, 255, 0.92);
 }
 
-.table tr:last-child td {
+.student-profile-table tbody tr:nth-child(even) td {
+    background: #fffafc;
+}
+
+.student-profile-table tr:last-child td {
     border-bottom: none;
 }
 
-.table tr:hover td {
-    background: #f8fafc;
-}
-
-/* Fee emphasis - premium look */
-.table tr td:first-child {
+.student-profile-table tr td:first-child {
     font-weight: 600;
-    color: #1e293b;
+    color: #7d103f;
 }
 
-.table tr:has(td:contains("Final Fee")) td {
-    background: #ecfdf5;
-    font-weight: 700;
-}
-
-.table tr:has(td:contains("Paid")) td {
-    color: #059669;
-    font-weight: 700;
-}
-
-.table tr:has(td:contains("Balance")) td {
-    color: #dc2626;
-    font-weight: 700;
-    background: #fef2f2;
-}
-
-/* Payment history */
-.table thead th {
-    background: #e0f2fe;
-    color: #0369a1;
-}
-
-.table td a {
-    color: #6366f1;
+.student-profile-table td a {
+    color: #e91e63;
     font-weight: 600;
     text-decoration: none;
-    transition: color 0.2s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 7px 12px;
+    border-radius: 999px;
+    background: #fff0f6;
 }
 
-.table td a:hover {
-    color: #4f46e5;
-    text-decoration: underline;
+.student-profile-table td a:hover {
+    background: #ffe0ec;
 }
 
-/* Responsive - important for product */
 @media (max-width: 992px) {
     .profile-card {
         flex-direction: column;
         align-items: center;
         text-align: center;
     }
+
+    .details-grid {
+        grid-template-columns: 1fr;
+    }
+
     .profile-left img,
     .profile-photo {
         width: 140px;
         height: 140px;
     }
+
     .student-page {
         padding: 28px;
     }
 }
 
 @media (max-width: 640px) {
-    .table th,
-    .table td {
+    .student-profile-table th,
+    .student-profile-table td {
         padding: 12px 14px;
         font-size: 14px;
     }
-    h2 { font-size: 26px; }
-    .section-title { font-size: 20px; }
+
+    h2 { font-size: 24px; }
+    .section-title { font-size: 18px; }
+    .profile-right h3 { font-size: 25px; }
+    .student-page { padding: 18px; }
 }
 </style>
 
@@ -317,6 +316,10 @@ PROFILE CARD
 
 </div>
 
+<div class="details-grid">
+
+<div class="student-profile-card-block">
+
 
 <!-- ===============================
 PERSONAL INFORMATION
@@ -324,7 +327,7 @@ PERSONAL INFORMATION
 
 <h3 class="section-title">Personal Information</h3>
 
-<table class="table">
+<table class="student-profile-table">
 
 <tr>
 <td>Gender</td>
@@ -368,6 +371,10 @@ PERSONAL INFORMATION
 
 </table>
 
+</div>
+
+<div class="student-profile-card-block">
+
 
 <!-- ===============================
 COURSE / INTERNSHIP
@@ -375,7 +382,7 @@ COURSE / INTERNSHIP
 
 <h3 class="section-title">Course / Internship Information</h3>
 
-<table class="table">
+<table class="student-profile-table">
 
 <tr>
 <td>Course Type</td>
@@ -399,6 +406,10 @@ COURSE / INTERNSHIP
 
 </table>
 
+</div>
+
+<div class="student-profile-card-block">
+
 
 <!-- ===============================
 FEE SUMMARY
@@ -406,7 +417,7 @@ FEE SUMMARY
 
 <h3 class="section-title">Fee Summary</h3>
 
-<table class="table">
+<table class="student-profile-table">
 
 <tr>
 <td>Total Fee</td>
@@ -436,13 +447,17 @@ FEE SUMMARY
 </table>
 
 
+</div>
+
+<div class="student-profile-card-block">
+
 <!-- ===============================
 PAYMENT HISTORY
 =============================== -->
 
 <h3 class="section-title">Payment History</h3>
 
-<table class="table">
+<table class="student-profile-table">
 
 <thead>
 
@@ -499,5 +514,7 @@ Print
 </tbody>
 
 </table>
+
+</div>
 
 </div>
