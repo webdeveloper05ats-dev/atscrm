@@ -57,6 +57,12 @@ if (!empty($_POST['payment_status'])) {
     $params[] = $_POST['payment_status'];
 }
 
+/* Staff Filter - Super Admin / HR only */
+if (in_array($roleId, [1, 3], true) && !empty($_POST['staff_id'])) {
+    $where .= " AND r.assigned_to = ?";
+    $params[] = (int)$_POST['staff_id'];
+}
+
 /* ===============================
    QUERY
 =============================== */
@@ -120,11 +126,20 @@ foreach ($rows as $r) {
     ";
 
     $action = '
-    <a href="index.php?page=reports/student_profile&id=' . $r['id'] . '" 
-    class="action-btn" 
-    title="View Student Profile">
-        <i class="fa fa-eye"></i>
-    </a>';
+    <div class="action-group">
+        <a href="index.php?page=reports/student_profile&id=' . $r['id'] . '" 
+        class="action-btn" 
+        title="View Student Profile">
+            <i class="fa fa-eye"></i>
+        </a>
+        <a href="index.php?page=reports/student_profile&id=' . $r['id'] . '&print=1" 
+        class="action-btn download-report" 
+        title="Download Report"
+        target="_blank"
+        rel="noopener">
+            <i class="fa fa-download"></i>
+        </a>
+    </div>';
 
     $data[] = [
         $sn++,
