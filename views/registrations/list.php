@@ -215,9 +215,9 @@ if ($isAjax) {
       $payments = $st->fetchAll(PDO::FETCH_ASSOC);
       ?>
 
-      <div class="pro-modal-wrap payment-modal-modern">
-        <div class="pro-payment-two-col">
-        <div class="pro-modal-section">
+      <div class="pro-modal-wrap history-modal-modern" id="registrationHistoryModalView">
+        <div class="pro-payment-two-col history-modal-grid">
+        <div class="pro-modal-section history-modal-section history-student-section">
           <div class="pro-modal-head">
             <div class="pro-modal-head-icon"><i class="fas fa-user-graduate"></i></div>
             <div>
@@ -226,7 +226,7 @@ if ($isAjax) {
             </div>
           </div>
 
-          <div class="pro-info-grid">
+          <div class="pro-info-grid history-info-grid">
             <div class="pro-info-card">
               <span class="label">Registration No</span>
               <span class="value"><?= h($reg['registration_no'] ?: ('REG-' . $reg['id'])) ?></span>
@@ -278,7 +278,7 @@ if ($isAjax) {
           </div>
 
           <?php if (!empty($reg['notes'])): ?>
-            <div class="pro-note-box">
+            <div class="pro-note-box history-note-box">
               <div class="pro-note-title"><i class="fas fa-sticky-note"></i> Notes</div>
               <div><?= nl2br(h($reg['notes'])) ?></div>
             </div>
@@ -286,7 +286,7 @@ if ($isAjax) {
         </div>
 
         <?php if ($profile): ?>
-          <div class="pro-modal-section">
+          <div class="pro-modal-section history-modal-section history-profile-section">
             <div class="pro-modal-head">
               <div class="pro-modal-head-icon"><i class="fas fa-id-card"></i></div>
               <div>
@@ -295,7 +295,7 @@ if ($isAjax) {
               </div>
             </div>
 
-            <div class="pro-info-grid">
+            <div class="pro-info-grid history-info-grid">
               <div class="pro-info-card">
                 <span class="label">Gender</span>
                 <span class="value"><?= h($profile['gender'] ?? '-') ?></span>
@@ -330,14 +330,14 @@ if ($isAjax) {
               </div>
             </div>
 
-            <div class="pro-note-box">
+            <div class="pro-note-box history-note-box">
               <div class="pro-note-title"><i class="fas fa-map-marker-alt"></i> Address</div>
               <div><?= nl2br(h($profile['address'] ?? '-')) ?></div>
             </div>
           </div>
         <?php endif; ?>
 
-        <div class="pro-modal-section">
+        <div class="pro-modal-section history-modal-section history-followup-section">
           <div class="pro-modal-head">
             <div class="pro-modal-head-icon"><i class="fas fa-history"></i></div>
             <div>
@@ -349,14 +349,14 @@ if ($isAjax) {
           <?php if (empty($followups)): ?>
             <div class="empty-note">No follow-ups found.</div>
           <?php else: ?>
-            <div class="pro-timeline">
+            <div class="pro-timeline history-timeline">
               <?php foreach ($followups as $f): ?>
-                <div class="pro-timeline-item">
+                <div class="pro-timeline-item history-timeline-item">
                   <div class="pro-timeline-dot"></div>
                   <div class="pro-timeline-content">
                     <div class="pro-timeline-title">
                       <?= h($f['followup_date']) ?>           <?= h($f['followup_time'] ?? '') ?>
-                      <span class="pro-mini-badge"><?= h(ucfirst($f['followup_type'] ?? '-')) ?></span>
+                      <span class="pro-mini-badge history-mini-badge"><?= h(ucfirst($f['followup_type'] ?? '-')) ?></span>
                     </div>
                     <div class="pro-timeline-sub">
                       Status: <?= h(ucfirst($f['status'] ?? 'pending')) ?> • By: <?= h($f['created_by_name'] ?? '-') ?>
@@ -371,8 +371,8 @@ if ($isAjax) {
           <?php endif; ?>
         </div>
 
-        <div class="pro-payment-two-col">
-        <div class="pro-modal-section">
+        <div class="pro-payment-two-col history-payment-grid">
+        <div class="pro-modal-section history-modal-section history-payments-section">
           <div class="pro-modal-head">
             <div class="pro-modal-head-icon"><i class="fas fa-wallet"></i></div>
             <div>
@@ -384,12 +384,11 @@ if ($isAjax) {
           <?php if (empty($payments)): ?>
             <div class="empty-note">No payments added yet.</div>
           <?php else: ?>
-            <div class="pro-table-scroll">
-              <table class="pro-mini-table">
+            <div class="pro-table-scroll history-table-scroll">
+              <table class="pro-mini-table history-mini-table">
                 <thead>
                   <tr>
-                    <th>Date</th>
-                    <th>Receipt No</th>
+                    <th>Date / Receipt</th>
                     <th>Amount</th>
                     <th>Mode</th>
                     <th>Type</th>
@@ -400,16 +399,33 @@ if ($isAjax) {
                 <tbody>
                   <?php foreach ($payments as $p): ?>
                     <tr>
-                      <td><?= h($p['payment_date']) ?></td>
-                      <td><?= h($p['receipt_no'] ?: '-') ?></td>
+                      <td class="history-pay-meta-cell">
+                        <div class="history-pay-date"><?= h($p['payment_date']) ?></div>
+                        <div class="history-pay-receipt"><?= h($p['receipt_no'] ?: '-') ?></div>
+                      </td>
                       <td>₹ <?= h(number_format((float) $p['amount'], 2)) ?></td>
                       <td><?= h($p['payment_mode']) ?></td>
                       <td><?= h($p['payment_type']) ?></td>
-                      <td><?= h($p['approval_status']) ?></td>
-                      <td>
+                      <td class="history-pay-status-cell">
+                        <?php $historyApprovalState = strtolower(trim((string) ($p['approval_status'] ?? 'pending'))); ?>
+                        <span class="history-pay-status-icon status-<?= h($historyApprovalState) ?> ui-tooltip"
+                          data-tooltip="<?= h(ucfirst($historyApprovalState)) ?>"
+                          aria-label="<?= h(ucfirst($historyApprovalState)) ?>">
+                          <?php if ($historyApprovalState === 'approved'): ?>
+                            <i class="fas fa-circle-check"></i>
+                          <?php elseif ($historyApprovalState === 'rejected'): ?>
+                            <i class="fas fa-circle-xmark"></i>
+                          <?php else: ?>
+                            <i class="fas fa-clock"></i>
+                          <?php endif; ?>
+                        </span>
+                      </td>
+                      <td class="history-pay-action-cell">
                         <a href="index.php?page=payments/receipt&payment_id=<?= (int) $p['id'] ?>" target="_blank"
-                          class="receipt-link mtip" title="Open Receipt">
-                          <i class="fas fa-receipt"></i> <span>Receipt</span>
+                          class="receipt-link history-receipt-link ui-tooltip"
+                          data-tooltip="Open Receipt"
+                          aria-label="Open Receipt">
+                          <i class="fas fa-receipt"></i>
                         </a>
                       </td>
                     </tr>
@@ -524,7 +540,7 @@ if ($isAjax) {
             </div>
           </div>
 
-          <form method="POST" id="paymentEntryForm">
+          <form method="POST" id="paymentEntryForm" novalidate>
             <input type="hidden" name="csrf_token" value="<?= h(generateCSRF()) ?>">
             <input type="hidden" name="reg_id" value="<?= (int) $reg['id'] ?>">
 
@@ -563,11 +579,20 @@ if ($isAjax) {
               </div>
               <div>
                 <label class="m-label"><i class="fas fa-check-circle"></i> Approval Status</label>
-                <select name="approval_status" class="m-input">
-                  <option value="approved" selected>Approved</option>
-                  <option value="pending">Pending</option>
-                  <option value="rejected">Rejected</option>
-                </select>
+                <div class="modern-radio-group approval-radio-group">
+                  <label class="modern-radio-pill is-approved">
+                    <input type="radio" name="approval_status" value="approved" checked>
+                    <span>Approved</span>
+                  </label>
+                  <label class="modern-radio-pill is-pending">
+                    <input type="radio" name="approval_status" value="pending">
+                    <span>Pending</span>
+                  </label>
+                  <label class="modern-radio-pill is-rejected">
+                    <input type="radio" name="approval_status" value="rejected">
+                    <span>Rejected</span>
+                  </label>
+                </div>
               </div>
               <div class="full">
                 <label class="m-label"><i class="fas fa-comment-dots"></i> Remarks</label>
@@ -599,8 +624,7 @@ if ($isAjax) {
               <table class="pro-mini-table">
                 <thead>
                   <tr>
-                    <th>Date</th>
-                    <th>Receipt No</th>
+                    <th>Date / Receipt</th>
                     <th>Amount</th>
                     <th>Mode</th>
                     <th>Type</th>
@@ -611,16 +635,33 @@ if ($isAjax) {
                 <tbody>
                   <?php foreach ($payments as $p): ?>
                     <tr>
-                      <td><?= h($p['payment_date']) ?></td>
-                      <td><?= h($p['receipt_no'] ?: '-') ?></td>
+                      <td class="pay-history-meta-cell">
+                        <div class="pay-history-date"><?= h($p['payment_date']) ?></div>
+                        <div class="pay-history-receipt"><?= h($p['receipt_no'] ?: '-') ?></div>
+                      </td>
                       <td>₹ <?= h(number_format((float) $p['amount'], 2)) ?></td>
                       <td><?= h($p['payment_mode']) ?></td>
                       <td><?= h($p['payment_type']) ?></td>
-                      <td><?= h($p['approval_status']) ?></td>
-                      <td>
+                      <td class="pay-history-status-cell">
+                        <?php $approvalState = strtolower(trim((string) ($p['approval_status'] ?? 'pending'))); ?>
+                        <span class="pay-status-icon status-<?= h($approvalState) ?> ui-tooltip"
+                          data-tooltip="<?= h(ucfirst($approvalState)) ?>"
+                          aria-label="<?= h(ucfirst($approvalState)) ?>">
+                          <?php if ($approvalState === 'approved'): ?>
+                            <i class="fas fa-circle-check"></i>
+                          <?php elseif ($approvalState === 'rejected'): ?>
+                            <i class="fas fa-circle-xmark"></i>
+                          <?php else: ?>
+                            <i class="fas fa-clock"></i>
+                          <?php endif; ?>
+                        </span>
+                      </td>
+                      <td class="pay-history-action-cell">
                         <a href="index.php?page=payments/receipt&payment_id=<?= (int) $p['id'] ?>" target="_blank"
-                          class="receipt-link">
-                          <i class="fas fa-receipt"></i> Receipt
+                          class="receipt-link receipt-link-icon ui-tooltip"
+                          data-tooltip="Open Receipt"
+                          aria-label="Open Receipt">
+                          <i class="fas fa-receipt"></i>
                         </a>
                       </td>
                     </tr>
@@ -1464,8 +1505,8 @@ function payStatusBadgeList($type)
   </div>
 </div>
 
-<div class="crm-modal-backdrop" id="crmModalBackdrop">
-  <div class="crm-modal">
+<div class="crm-modal-backdrop" id="crmModalBackdrop" aria-hidden="true">
+  <div class="crm-modal" role="dialog" aria-modal="true" aria-labelledby="crmModalTitle" tabindex="-1">
     <div class="crm-modal-header">
       <div class="crm-modal-title" id="crmModalTitle">
         <i class="fas fa-layer-group"></i> Details
@@ -1479,13 +1520,20 @@ function payStatusBadgeList($type)
 </div>
 
 <script>
+  let crmLastFocusedElement = null;
+
   function showSweetAlert(icon, title, text) {
     if (typeof Swal !== 'undefined' && Swal.fire) {
-      Swal.fire({
+      const openModal = document.querySelector('#crmModalBackdrop[aria-hidden="false"] .crm-modal');
+
+      return Swal.fire({
         icon: icon,
         title: title,
         text: text,
-        confirmButtonColor: '#e91e63'
+        confirmButtonColor: '#e91e63',
+        target: openModal || document.body,
+        heightAuto: false,
+        scrollbarPadding: false
       });
     } else {
       alert(text);
@@ -1507,14 +1555,38 @@ function payStatusBadgeList($type)
     });
   }
 
+  function setCrmModalState(isOpen) {
+    const backdrop = document.getElementById('crmModalBackdrop');
+    const modal = backdrop ? backdrop.querySelector('.crm-modal') : null;
+
+    if (!backdrop || !modal) return;
+
+    if (isOpen) {
+      crmLastFocusedElement = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+
+      if (document.activeElement instanceof HTMLElement) {
+        document.activeElement.blur();
+      }
+
+      backdrop.style.display = 'flex';
+      backdrop.setAttribute('aria-hidden', 'false');
+      modal.focus();
+      return;
+    }
+
+    backdrop.style.display = 'none';
+    backdrop.setAttribute('aria-hidden', 'true');
+
+    if (crmLastFocusedElement && typeof crmLastFocusedElement.focus === 'function') {
+      crmLastFocusedElement.focus();
+    }
+    crmLastFocusedElement = null;
+  }
+
   function openCrmModal(title) {
     document.getElementById('crmModalTitle').innerHTML = '<i class="fas fa-layer-group"></i> ' + (title || 'Details');
     document.getElementById('crmModalBody').innerHTML = '<div class="empty-note">Loading...</div>';
-
-    const wrapper = document.querySelector('.wrapper');
-    if (wrapper) wrapper.removeAttribute('aria-hidden');
-
-    document.getElementById('crmModalBackdrop').style.display = 'flex';
+    setCrmModalState(true);
   }
 
   function closeCrmModal() {
@@ -1523,11 +1595,8 @@ function payStatusBadgeList($type)
       window.__stopIdCardCamera = null;
     }
 
-    document.getElementById('crmModalBackdrop').style.display = 'none';
     document.getElementById('crmModalBody').innerHTML = '';
-
-    const wrapper = document.querySelector('.wrapper');
-    if (wrapper) wrapper.removeAttribute('aria-hidden');
+    setCrmModalState(false);
   }
 
   document.getElementById('crmModalBackdrop').addEventListener('click', function (e) {
@@ -1554,9 +1623,6 @@ function payStatusBadgeList($type)
     document.getElementById('crmModalBody').innerHTML = html;
     applyModernIconTooltips(document.getElementById('crmModalBody'));
 
-    const wrapper = document.querySelector('.wrapper');
-    if (wrapper) wrapper.removeAttribute('aria-hidden');
-
     initIdCardBuilder();
   }
 
@@ -1574,14 +1640,76 @@ const html = await loadModalHtml(url);
 document.getElementById('crmModalBody').innerHTML = html;
 applyModernIconTooltips(document.getElementById('crmModalBody'));
 
-const wrapper = document.querySelector('.wrapper');
-if (wrapper) wrapper.removeAttribute('aria-hidden');
-
 }
+
+  function validatePaymentEntryForm(form) {
+    const amountInput = form.querySelector('[name="amount"]');
+    const paymentDateInput = form.querySelector('[name="payment_date"]');
+    const paymentModeInput = form.querySelector('[name="payment_mode"]');
+    const paymentTypeInput = form.querySelector('[name="payment_type"]');
+    const approvalStatusInput = form.querySelector('[name="approval_status"]:checked');
+
+    const amount = parseFloat((amountInput?.value || '').trim());
+    const maxAmount = parseFloat(amountInput?.getAttribute('max') || '0');
+    const paymentDate = (paymentDateInput?.value || '').trim();
+    const paymentMode = (paymentModeInput?.value || '').trim();
+    const paymentType = (paymentTypeInput?.value || '').trim();
+
+    if (!Number.isFinite(amount) || amount <= 0) {
+      showSweetAlert('warning', 'Invalid Amount', 'Enter a payment amount greater than zero.');
+      amountInput?.focus();
+      return false;
+    }
+
+    if (Number.isFinite(maxAmount) && maxAmount > 0 && paymentType !== 'refund' && amount > maxAmount) {
+      showSweetAlert('warning', 'Amount Too High', 'Payment amount cannot be greater than the current balance.');
+      amountInput?.focus();
+      return false;
+    }
+
+    if (!paymentDate) {
+      showSweetAlert('warning', 'Missing Payment Date', 'Select the payment date before saving.');
+      paymentDateInput?.focus();
+      return false;
+    }
+
+    if (!paymentMode) {
+      showSweetAlert('warning', 'Missing Payment Mode', 'Choose a payment mode before saving.');
+      paymentModeInput?.focus();
+      return false;
+    }
+
+    if (!paymentType) {
+      showSweetAlert('warning', 'Missing Payment Type', 'Choose a payment type before saving.');
+      paymentTypeInput?.focus();
+      return false;
+    }
+
+    if (!approvalStatusInput) {
+      showSweetAlert('warning', 'Missing Approval Status', 'Select an approval status before saving.');
+      return false;
+    }
+
+    return true;
+  }
+
   document.addEventListener('submit', function (e) {
     if (e.target && e.target.id === 'paymentEntryForm') {
-      const wrapper = document.querySelector('.wrapper');
-      if (wrapper) wrapper.removeAttribute('aria-hidden');
+      const form = e.target;
+
+      if (form.dataset.swalValidated === '1') {
+        delete form.dataset.swalValidated;
+        return;
+      }
+
+      e.preventDefault();
+
+      if (!validatePaymentEntryForm(form)) {
+        return;
+      }
+
+      form.dataset.swalValidated = '1';
+      form.submit();
     }
   });
 
