@@ -106,6 +106,7 @@ if (!$error) {
               AND u.status = 1
               AND r.status = 1
               AND r.is_target_applicable = 1
+              AND LOWER(COALESCE(r.role_name, '')) IN ('front office', 'hr', 'marketing', 'corporate')
             ORDER BY u.name ASC
         ";
         $stmtEligible = $pdo->prepare($sqlEligible);
@@ -191,8 +192,8 @@ if (!$error && $_SERVER['REQUEST_METHOD'] === 'POST') {
         $error = 'Please enter a valid year.';
     } elseif ($postedTargetMonth < 1 || $postedTargetMonth > 12) {
         $error = 'Please select a valid month.';
-    } elseif ($postedTargetAmount < 0) {
-        $error = 'Target amount cannot be negative.';
+    } elseif ($postedTargetAmount <= 0) {
+        $error = 'Target amount must be greater than 0.';
     } elseif ($postedIncentivePct < 0 || $postedIncentivePct > 100) {
         $error = 'Incentive % must be between 0 and 100.';
     } elseif (!in_array($postedStatus, ['active', 'inactive'], true)) {
@@ -309,7 +310,22 @@ if (!$error && $_SERVER['REQUEST_METHOD'] === 'POST') {
                 if (function_exists('setFlash')) {
                     setFlash('success', 'Monthly target updated successfully.');
                 }
-                echo '<script>window.location.href="index.php?page=targets/list";</script>';
+                echo '<script>
+                document.addEventListener("DOMContentLoaded", function () {
+                    if (window.Swal && Swal.fire) {
+                        Swal.fire({
+                            icon: "success",
+                            title: "Updated Successfully",
+                            text: "Monthly target updated successfully.",
+                            confirmButtonColor: "#e91e63"
+                        }).then(function () {
+                            window.location.href = "index.php?page=targets/list";
+                        });
+                    } else {
+                        window.location.href = "index.php?page=targets/list";
+                    }
+                });
+                </script>';
                 exit;
             } else {
                 $sqlInsert = "
@@ -358,7 +374,22 @@ if (!$error && $_SERVER['REQUEST_METHOD'] === 'POST') {
                 if (function_exists('setFlash')) {
                     setFlash('success', 'Monthly target created successfully.');
                 }
-                echo '<script>window.location.href="index.php?page=targets/list";</script>';
+                echo '<script>
+                document.addEventListener("DOMContentLoaded", function () {
+                    if (window.Swal && Swal.fire) {
+                        Swal.fire({
+                            icon: "success",
+                            title: "Saved Successfully",
+                            text: "Monthly target created successfully.",
+                            confirmButtonColor: "#e91e63"
+                        }).then(function () {
+                            window.location.href = "index.php?page=targets/list";
+                        });
+                    } else {
+                        window.location.href = "index.php?page=targets/list";
+                    }
+                });
+                </script>';
                 exit;
             }
         } catch (Throwable $e) {
@@ -381,29 +412,47 @@ if (!empty($form['user_id'])) {
 <style>
 
 .targets-setup-wrap{
-background:#fcf8fb;
-border-radius:22px;
-padding:20px;
+background:
+radial-gradient(circle at top left, rgba(255,236,244,.9), rgba(255,248,252,0) 38%),
+linear-gradient(180deg,#fffafd 0%,#fff6fa 100%);
+border:1px solid #f6dce8;
+border-radius:24px;
+padding:18px;
+box-shadow:0 12px 30px rgba(233,30,99,.06);
 }
 
 .targets-topbar{
 background:linear-gradient(135deg,#ffffff 0%,#fff6fb 100%);
 border:1px solid #f0d9e5;
-border-radius:20px;
-padding:18px 20px;
-box-shadow:0 8px 24px rgba(233,30,99,.06);
+border-radius:18px;
+padding:14px 18px;
+box-shadow:0 8px 20px rgba(233,30,99,.06);
 display:flex;
 align-items:center;
 justify-content:space-between;
 gap:16px;
 flex-wrap:wrap;
-margin-bottom:18px;
+margin-bottom:16px;
 }
 
 .targets-topbar-title{
-font-size:1.45rem;
-font-weight:700;
-color:#202020;
+font-size:1.05rem;
+font-weight:800;
+color:#1f2940;
+}
+
+.targets-topbar-sub{
+margin-top:4px;
+font-size:.74rem;
+font-weight:600;
+color:#8b6b7d;
+}
+
+.targets-topbar-sub{
+margin-top:4px;
+font-size:.74rem;
+font-weight:600;
+color:#8b6b7d;
 }
 
 .targets-summary-row{
@@ -423,25 +472,61 @@ padding:16px 18px;
 .targets-main-card{
 background:#fff;
 border:1px solid #f0d9e5;
-border-radius:22px;
+border-radius:18px;
 overflow:hidden;
+box-shadow:0 14px 34px rgba(15,23,42,.05);
 }
 
 .targets-main-head{
 background:linear-gradient(135deg,#ec1670 0%,#c8135b 100%);
 color:#fff;
-padding:16px 20px;
-font-weight:700;
+padding:12px 18px;
+font-weight:800;
+letter-spacing:.02em;
+font-size:.88rem;
 }
 
 .targets-main-body{
-padding:22px;
+padding:16px 18px 18px;
+}
+
+.targets-section-tag{
+display:inline-flex;
+align-items:center;
+gap:8px;
+padding:7px 12px;
+border-radius:999px;
+border:1px solid #f2d9e5;
+background:#fff7fb;
+color:#a23f6d;
+font-size:.72rem;
+font-weight:800;
+letter-spacing:.03em;
+text-transform:uppercase;
+margin-bottom:14px;
+}
+
+.targets-section-tag{
+display:inline-flex;
+align-items:center;
+gap:8px;
+padding:7px 12px;
+border-radius:999px;
+border:1px solid #f2d9e5;
+background:#fff7fb;
+color:#a23f6d;
+font-size:.72rem;
+font-weight:800;
+letter-spacing:.03em;
+text-transform:uppercase;
+margin-bottom:14px;
 }
 
 .targets-form-grid{
 display:grid;
-grid-template-columns:1fr 1fr;
-gap:18px;
+grid-template-columns:repeat(2,minmax(240px,1fr));
+gap:14px 16px;
+max-width:920px;
 }
 
 .targets-field-full{
@@ -449,9 +534,18 @@ grid-column:1/-1;
 }
 
 .targets-label{
-font-weight:600;
+font-weight:700;
+font-size:.76rem;
+letter-spacing:.03em;
+text-transform:uppercase;
+color:#8f4f6d;
 margin-bottom:8px;
 display:block;
+}
+
+.targets-label .required-mark{
+color:#e91e63;
+margin-left:4px;
 }
 
 .targets-help{
@@ -460,64 +554,145 @@ color:#777;
 margin-top:6px;
 }
 
-/* modern toggle */
+.targets-form-grid .form-control,
+.targets-form-grid .form-select{
+width:100%;
+min-height:38px;
+border:1px solid #efcada;
+border-radius:10px;
+background:#fff;
+box-shadow:none;
+padding:8px 10px;
+font-size:.84rem;
+font-weight:600;
+color:#27364c;
+transition:border-color .18s ease, box-shadow .18s ease;
+}
 
-.status-toggle{
+.targets-form-grid .form-control:focus,
+.targets-form-grid .form-select:focus{
+border-color:#e91e63;
+box-shadow:0 0 0 4px rgba(233,30,99,.12);
+outline:none;
+}
+
+.targets-form-grid textarea.form-control{
+min-height:92px;
+resize:vertical;
+}
+
+.targets-input-shell{
+position:relative;
+}
+
+.targets-input-icon{
+position:absolute;
+left:11px;
+top:50%;
+transform:translateY(-50%);
+color:#e91e63;
+font-size:.84rem;
+pointer-events:none;
+}
+
+.targets-input-shell .form-control,
+.targets-input-shell .form-select{
+padding-left:30px;
+}
+
+.targets-readonly{
+background:linear-gradient(180deg,#fff7fb 0%,#fff2f8 100%) !important;
+border-color:#f1d8e4 !important;
+color:#6f4b60 !important;
+cursor:not-allowed;
+}
+
+.targets-readonly:focus{
+box-shadow:none !important;
+}
+
+.targets-input-shell.textarea-shell .targets-input-icon{
+top:14px;
+transform:none;
+}
+
+.targets-inline-note{
+margin-top:5px;
+font-size:.68rem;
+font-weight:600;
+color:#9b6a82;
+line-height:1.35;
+}
+
+.targets-inline-note.is-muted{
+opacity:.82;
+}
+
+.targets-inline-note.is-muted{
+opacity:.82;
+}
+
+.status-pills{
 display:flex;
 align-items:center;
-gap:12px;
-margin-top:10px;
+gap:0;
+margin-top:0;
+border:1px solid #efcada;
+border-radius:10px;
+background:#fff;
+overflow:hidden;
 }
 
-.switch{
-position:relative;
-display:inline-block;
-width:52px;
-height:28px;
-}
-
-.switch input{
-opacity:0;
-width:0;
-height:0;
-}
-
-.slider{
-position:absolute;
+.status-pill{
+flex:1;
+border:0;
+background:transparent;
+color:#6b7280;
+padding:10px 14px;
+font-size:.8rem;
+font-weight:700;
+line-height:1;
 cursor:pointer;
-top:0;
-left:0;
-right:0;
-bottom:0;
-background:#ccc;
-transition:.3s;
-border-radius:34px;
+transition:all .18s ease;
 }
 
-.slider:before{
-position:absolute;
-content:"";
-height:22px;
-width:22px;
-left:3px;
-bottom:3px;
-background:white;
-transition:.3s;
-border-radius:50%;
+.status-pill.is-active{
+box-shadow:none;
 }
 
-.switch input:checked + .slider{
-background:#e91e63;
+.status-pill[data-status="active"].is-active{
+background:linear-gradient(135deg, #e91e63 0%, #ff4f9c 100%);
+color:#fff;
 }
 
-.switch input:checked + .slider:before{
-transform:translateX(24px);
+.status-pill[data-status="inactive"].is-active{
+background:linear-gradient(135deg, #e91e63 0%, #ff4f9c 100%);
+color:#fff;
+}
+
+.status-pill + .status-pill{
+border-left:1px solid #f3d8e5;
 }
 
 /* amount slider */
 
 .amount-slider{
 margin-top:10px;
+padding:8px 10px;
+border:1px solid #f1d8e4;
+border-radius:10px;
+background:#fff9fc;
+}
+
+.amount-combo{
+padding:10px;
+border:1px solid #f1d8e4;
+border-radius:12px;
+background:linear-gradient(180deg,#fffdfd 0%,#fff8fb 100%);
+}
+
+.amount-combo .targets-input-shell{
+margin-bottom:8px;
 }
 
 .amount-slider input[type=range]{
@@ -538,18 +713,28 @@ cursor:pointer;
 }
 
 .amount-display{
-margin-top:6px;
-font-weight:600;
+margin-top:8px;
+font-weight:700;
+color:#8d1246;
+font-size:.78rem;
 }
 
 .targets-btn{
-border-radius:12px;
+border-radius:10px;
 padding:9px 16px;
-font-weight:600;
+font-weight:700;
 text-decoration:none;
 display:inline-flex;
 align-items:center;
 gap:8px;
+font-size:.84rem;
+}
+
+.targets-btn:disabled{
+opacity:.58;
+cursor:not-allowed;
+transform:none;
+box-shadow:none;
 }
 
 .targets-btn-primary{
@@ -561,25 +746,56 @@ border:none;
 .targets-btn-outline{
 border:1px solid #e4cfd9;
 background:#fff;
+color:#6e4b60;
 }
 
 .targets-form-actions{
-margin-top:25px;
+margin-top:16px;
 display:flex;
 gap:10px;
+flex-wrap:wrap;
+padding-top:14px;
+border-top:1px solid #f4dfe8;
+}
+
+@media(max-width:900px){
+.targets-form-grid{
+grid-template-columns:1fr;
+max-width:none;
+}
 }
 
 </style>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 
 <div class="container-fluid py-3">
 <div class="targets-setup-wrap">
 
+<?php if ($error): ?>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    if (window.Swal && Swal.fire) {
+        Swal.fire({
+            icon: "error",
+            title: "Error",
+            text: <?= json_encode($error, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>,
+            confirmButtonColor: "#e91e63"
+        });
+    }
+});
+</script>
+<?php endif; ?>
+
 <div class="targets-topbar">
 
+<div>
 <div class="targets-topbar-title">
 <i class="fas fa-bullseye text-danger me-2"></i>
 <?= $isEdit ? 'Edit Monthly Target' : 'Setup Monthly Target' ?>
+</div>
+<div class="targets-topbar-sub">Set monthly target, incentive, and status for the selected staff member.</div>
 </div>
 
 </div>
@@ -593,7 +809,12 @@ gap:10px;
 
 <div class="targets-main-body">
 
-<form method="post">
+<div class="targets-section-tag">
+<i class="fas fa-sliders-h"></i>
+Target Configuration
+</div>
+
+<form method="post" id="targetsSetupForm" novalidate>
 
 <?php if (function_exists('csrfField')): ?>
 <?= csrfField(); ?>
@@ -606,17 +827,23 @@ gap:10px;
 
 <div>
 <label class="targets-label">Target Year</label>
-
+<div class="targets-input-shell">
+<i class="fas fa-lock targets-input-icon"></i>
 <input type="number"
 name="target_year"
-class="form-control"
+class="form-control targets-readonly"
+placeholder="Enter target year"
+readonly
 value="<?= h($form['target_year']) ?>">
+</div>
+<div class="targets-inline-note is-muted">Auto-filled year. It will still be saved with this target.</div>
 </div>
 
 
 <div>
 <label class="targets-label">Target Month</label>
-
+<div class="targets-input-shell">
+<i class="fas fa-calendar-day targets-input-icon"></i>
 <select name="target_month" class="form-select">
 
 <?php foreach ($monthNames as $num => $name): ?>
@@ -632,19 +859,25 @@ value="<?= h($form['target_year']) ?>">
 
 </select>
 </div>
+<div class="targets-inline-note is-muted">Choose the month for which this target should apply.</div>
+</div>
 
 
 <div>
-<label class="targets-label">Staff / User</label>
+<label class="targets-label">Staff / User <span class="required-mark">*</span></label>
+<div class="targets-input-shell">
+<i class="fas fa-user targets-input-icon"></i>
+<select name="user_id" id="user_id" class="form-select" required>
 
-<select name="user_id" id="user_id" class="form-select">
+<option value="">Select staff / user</option>
 
 <?php foreach ($eligibleUsers as $user): ?>
 
 <option
 value="<?= $user['id'] ?>"
 data-role-id="<?= $user['role_id'] ?>"
-data-role-name="<?= h($user['role_name']) ?>">
+data-role-name="<?= h($user['role_name']) ?>"
+<?= ((int)$form['user_id'] === (int)$user['id']) ? 'selected' : '' ?>>
 
 <?= h($user['name']) ?> | <?= h($user['role_name']) ?>
 
@@ -653,32 +886,42 @@ data-role-name="<?= h($user['role_name']) ?>">
 <?php endforeach; ?>
 
 </select>
-
+</div>
+<div class="targets-inline-note">Only active target-applicable staff are shown here.</div>
 </div>
 
 
 <div>
 <label class="targets-label">Role</label>
-
+<div class="targets-input-shell">
+<i class="fas fa-lock targets-input-icon"></i>
 <input type="text"
 id="role_name_display"
-class="form-control"
+class="form-control targets-readonly"
 readonly
 value="<?= h($selectedRoleName) ?>">
-
+</div>
+<div class="targets-inline-note is-muted">Auto-filled from staff selection. Role ID still goes to the database.</div>
 </div>
 
 
 
 <div>
-<label class="targets-label">Target Amount</label>
-
+<label class="targets-label">Target Amount <span class="required-mark">*</span></label>
+<div class="amount-combo">
+<div class="targets-input-shell">
+<i class="fas fa-rupee-sign targets-input-icon"></i>
 <input
 type="number"
 id="target_amount"
 name="target_amount"
 class="form-control"
+placeholder="Enter target amount"
+min="0"
+step="0.01"
+required
 value="<?= h($form['target_amount']) ?>">
+</div>
 
 <div class="amount-slider">
 
@@ -698,19 +941,22 @@ value="<?= $form['target_amount'] ?: 0 ?>">
 </div>
 
 </div>
+</div>
 
 </div>
 
 
 <div>
 <label class="targets-label">Incentive %</label>
-
+<div class="targets-input-shell">
+<i class="fas fa-percent targets-input-icon"></i>
 <input
 type="number"
 name="incentive_percent"
 class="form-control"
 value="<?= h($form['incentive_percent']) ?>">
-
+</div>
+<div class="targets-inline-note is-muted">Set the incentive percentage linked to achievement.</div>
 </div>
 
 
@@ -719,23 +965,19 @@ value="<?= h($form['incentive_percent']) ?>">
 
 <label class="targets-label">Target Status</label>
 
-<div class="status-toggle">
-
-<label class="switch">
-
-<input type="checkbox"
-id="status_switch"
-<?= ($form['status'] === 'active') ? 'checked' : '' ?>>
-
-<span class="slider"></span>
-
-</label>
-
-<span id="status_label">
-<?= ($form['status'] === 'active') ? 'Active' : 'Inactive' ?>
-</span>
-
+<div class="status-pills">
+<button type="button"
+class="status-pill <?= ($form['status'] === 'active') ? 'is-active' : '' ?>"
+data-status="active">
+Active
+</button>
+<button type="button"
+class="status-pill <?= ($form['status'] === 'inactive') ? 'is-active' : '' ?>"
+data-status="inactive">
+Inactive
+</button>
 </div>
+<div class="targets-inline-note is-muted">Use inactive to keep the target record without applying it currently.</div>
 
 <input type="hidden"
 name="status"
@@ -745,10 +987,11 @@ value="<?= h($form['status']) ?>">
 </div>
 
 
-<div class="targets-field-full">
+<div>
 
 <label class="targets-label">Remarks</label>
-
+<div class="targets-input-shell textarea-shell">
+<i class="fas fa-note-sticky targets-input-icon"></i>
 <textarea
 name="remarks"
 class="form-control">
@@ -756,7 +999,8 @@ class="form-control">
 <?= h($form['remarks']) ?>
 
 </textarea>
-
+</div>
+<div class="targets-inline-note is-muted">Add any internal note about the monthly target or incentive plan.</div>
 </div>
 
 
@@ -767,7 +1011,9 @@ class="form-control">
 
 <button
 type="submit"
-class="btn targets-btn targets-btn-primary">
+id="saveTargetBtn"
+class="btn targets-btn targets-btn-primary"
+disabled>
 
 <i class="fas fa-save"></i>
 <?= $isEdit ? 'Update Target' : 'Save Target' ?>
@@ -799,6 +1045,7 @@ View Target List
 
 const userSelect=document.getElementById("user_id");
 const roleInput=document.getElementById("role_name_display");
+const saveTargetBtn=document.getElementById("saveTargetBtn");
 
 if(userSelect){
 
@@ -806,34 +1053,41 @@ userSelect.addEventListener("change",function(){
 
 let opt=this.options[this.selectedIndex];
 
-roleInput.value=opt.getAttribute("data-role-name");
+roleInput.value=opt ? (opt.getAttribute("data-role-name") || "") : "";
 
 });
 
 }
 
+const syncSaveTargetState=function(){
+if(!saveTargetBtn) return;
+const selectedUser=(userSelect?.value || "").trim();
+const targetAmount=(amountInput?.value || "").trim();
+saveTargetBtn.disabled = (selectedUser === "" || targetAmount === "");
+};
 
-/* STATUS SWITCH */
 
-const statusSwitch=document.getElementById("status_switch");
+/* STATUS PILLS */
+
 const statusHidden=document.getElementById("status_hidden");
-const statusLabel=document.getElementById("status_label");
+const statusPills=document.querySelectorAll(".status-pill");
 
-if(statusSwitch){
+if(statusPills.length && statusHidden){
 
-statusSwitch.addEventListener("change",function(){
+statusPills.forEach(function(pill){
 
-if(this.checked){
+pill.addEventListener("click",function(){
 
-statusHidden.value="active";
-statusLabel.textContent="Active";
+const selectedStatus=this.getAttribute("data-status") || "active";
+statusHidden.value=selectedStatus;
 
-}else{
+statusPills.forEach(function(btn){
+btn.classList.remove("is-active");
+});
 
-statusHidden.value="inactive";
-statusLabel.textContent="Inactive";
+this.classList.add("is-active");
 
-}
+});
 
 });
 
@@ -864,8 +1118,73 @@ amountInput.addEventListener("input",function(){
 range.value=this.value;
 amountValue.textContent=this.value;
 
+syncSaveTargetState();
+
 });
 
 }
+
+
+/* REQUIRED FIELD VALIDATION */
+
+const targetsSetupForm=document.getElementById("targetsSetupForm");
+
+if(targetsSetupForm){
+
+targetsSetupForm.addEventListener("submit",function(e){
+
+const selectedUser=(userSelect?.value || "").trim();
+const targetAmount=(amountInput?.value || "").trim();
+
+if(selectedUser === "" || targetAmount === ""){
+e.preventDefault();
+
+if(window.Swal && Swal.fire){
+Swal.fire({
+icon:'warning',
+title:'Missing Information',
+text:'Staff / User and Target Amount are required.',
+confirmButtonColor:'#e91e63'
+});
+}else{
+alert('Staff / User and Target Amount are required.');
+}
+
+if(selectedUser === "" && userSelect){
+userSelect.focus();
+}else if(targetAmount === "" && amountInput){
+amountInput.focus();
+}
+
+return;
+}
+
+if(Number(targetAmount) <= 0){
+e.preventDefault();
+
+if(window.Swal && Swal.fire){
+Swal.fire({
+icon:'warning',
+title:'Invalid Amount',
+text:'Target Amount must be greater than 0.',
+confirmButtonColor:'#e91e63'
+});
+}else{
+alert('Target Amount must be greater than 0.');
+}
+
+amountInput?.focus();
+
+}
+
+});
+
+}
+
+if(userSelect){
+userSelect.addEventListener("change",syncSaveTargetState);
+}
+
+syncSaveTargetState();
 
 </script>
