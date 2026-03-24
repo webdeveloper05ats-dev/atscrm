@@ -96,6 +96,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <!-- Font Awesome -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 
+<link rel="icon" type="image/png" href="<?= BASE_URL ?>assets/images/logo.png">
+<link rel="shortcut icon" type="image/png" href="<?= BASE_URL ?>assets/images/logo.png">
+
 <!-- Google Poppins -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -130,90 +133,229 @@ div{
 
         *{ box-sizing:border-box; }
         :root{
-            --ats-pink:#e91e63;
-            --ats-bg:#fff5f9;
-            --ats-text:#111827;
-            --ats-muted:#6b7280;
-            --radius:18px;
+            --ats-pink:#ec3d8f;
+            --ats-pink-dark:#cf2f78;
+            --ats-pink-soft:#fff2f8;
+            --ats-ink:#172033;
+            --ats-text:#24324a;
+            --ats-muted:#6d7788;
+            --ats-line:#f2dbe6;
+            --ats-bg:#fff8fb;
+            --radius:28px;
         }
         html, body{
             height:100%;
             margin:0;
             background: var(--ats-bg);
-          
+        }
+        body{
+            color:var(--ats-text);
         }
         .auth-wrap{
             min-height:100%;
             display:flex;
             justify-content:center;
             align-items:center;
-            padding:16px;
+            padding:28px;
+            position:relative;
+            overflow:hidden;
             background:
-                radial-gradient(900px 500px at 10% 10%, #ffe0ec 0%, transparent 55%),
-                radial-gradient(900px 500px at 90% 20%, #ffd1e2 0%, transparent 55%),
-                linear-gradient(180deg, var(--ats-bg) 0%, #ffffff 70%);
+                radial-gradient(820px 420px at 12% 14%, rgba(255,196,222,.72) 0%, transparent 58%),
+                radial-gradient(760px 420px at 88% 10%, rgba(255,210,229,.8) 0%, transparent 55%),
+                radial-gradient(720px 420px at 50% 100%, rgba(255,231,240,.88) 0%, transparent 58%),
+                linear-gradient(180deg, #fff7fb 0%, #fffefe 60%, #fff5f9 100%);
+        }
+        .auth-wrap::before,
+        .auth-wrap::after{
+            content:"";
+            position:absolute;
+            border-radius:999px;
+            pointer-events:none;
+        }
+        .auth-wrap::before{
+            width:340px;
+            height:340px;
+            top:-90px;
+            right:-90px;
+            background:linear-gradient(135deg, rgba(236,61,143,.18), rgba(255,173,208,.04));
+        }
+        .auth-wrap::after{
+            width:260px;
+            height:260px;
+            left:-70px;
+            bottom:-60px;
+            background:linear-gradient(135deg, rgba(255,194,220,.28), rgba(236,61,143,.06));
         }
         .auth-card{
             width:100%;
-            max-width:420px;
+            max-width:1020px;
+            min-height:620px;
             border-radius: var(--radius);
-            box-shadow: 0 18px 55px rgba(31,41,55,0.14);
+            box-shadow: 0 34px 90px rgba(44, 26, 39, 0.14);
             overflow:hidden;
-            background:#fff;
+            background:rgba(255,255,255,.84);
+            border:1px solid rgba(255,255,255,.72);
+            backdrop-filter: blur(16px);
+            display:grid;
+            grid-template-columns: 1.05fr .95fr;
+            position:relative;
+            z-index:1;
         }
         .auth-header{
+            position:relative;
             display:flex;
-            align-items:center;
-            gap:12px;
-            padding: 18px 22px;
-            background: linear-gradient(135deg, var(--ats-pink) 0%, #ff5aa5 55%, #ff8fc2 100%);
+            flex-direction:column;
+            justify-content:space-between;
+            gap:24px;
+            padding:34px 32px;
+            background:
+                radial-gradient(220px 180px at 10% 20%, rgba(255,255,255,.18) 0%, transparent 80%),
+                radial-gradient(260px 220px at 90% 10%, rgba(255,255,255,.15) 0%, transparent 78%),
+                linear-gradient(155deg, #ff67ab 0%, var(--ats-pink) 42%, var(--ats-pink-dark) 100%);
             color:#fff;
         }
-        .auth-logo{
-            width:48px;height:48px;
-            border-radius:12px;
-            background:#fff;
-            padding:6px;
-            object-fit:contain;
-            box-shadow: 0 10px 18px rgba(0,0,0,0.18);
+        .auth-brand{
+            display:flex;
+            align-items:flex-start;
+            gap:14px;
         }
-        .auth-header h4{ margin:0; font-weight:800; font-size:18px; }
-        .auth-header p{ margin:2px 0 0; font-size:13px; opacity:.95; }
-        .auth-body{ padding:22px; }
-        .auth-title{ font-weight:800; color:var(--ats-text); margin-bottom:2px; }
-        .auth-sub{ color:var(--ats-muted); font-size:13px; margin-bottom:14px; }
-        .form-group{ margin-bottom:14px; }
+        .auth-logo{
+            width:58px;
+            height:58px;
+            border-radius:16px;
+            background:#fff;
+            padding:8px;
+            object-fit:contain;
+            box-shadow: 0 16px 30px rgba(79, 15, 46, 0.26);
+            flex:0 0 58px;
+        }
+        .auth-header h4{
+            margin:4px 0 6px;
+            font-weight:800;
+            font-size:28px;
+            line-height:1.08;
+            letter-spacing:-.02em;
+        }
+        .auth-header p{
+            margin:0;
+            font-size:14px;
+            line-height:1.6;
+            color:rgba(255,255,255,.92);
+            max-width:380px;
+        }
+        .auth-kicker{
+            display:inline-flex;
+            align-items:center;
+            gap:8px;
+            width:max-content;
+            padding:9px 14px;
+            border-radius:999px;
+            background:rgba(255,255,255,.16);
+            border:1px solid rgba(255,255,255,.18);
+            font-size:11px;
+            font-weight:800;
+            letter-spacing:.12em;
+            text-transform:uppercase;
+            backdrop-filter: blur(8px);
+        }
+        .auth-side-copy{
+            display:grid;
+            gap:18px;
+        }
+        .auth-points{
+            display:grid;
+            gap:12px;
+        }
+        .auth-point{
+            display:flex;
+            align-items:flex-start;
+            gap:10px;
+            padding:14px 16px;
+            border-radius:18px;
+            background:rgba(255,255,255,.12);
+            border:1px solid rgba(255,255,255,.12);
+        }
+        .auth-point-icon{
+            width:36px;
+            height:36px;
+            border-radius:12px;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            background:rgba(255,255,255,.18);
+            color:#fff;
+            flex:0 0 36px;
+        }
+        .auth-point strong{
+            display:block;
+            font-size:13px;
+            font-weight:700;
+            color:#fff;
+            margin-bottom:2px;
+        }
+        .auth-point span{
+            display:block;
+            font-size:12px;
+            line-height:1.5;
+            color:rgba(255,255,255,.86);
+        }
+        .auth-body{
+            padding:36px 34px 24px;
+            display:flex;
+            flex-direction:column;
+            justify-content:center;
+            background:linear-gradient(180deg, rgba(255,255,255,.74) 0%, #ffffff 100%);
+        }
+        .auth-title{
+            font-weight:800;
+            color:var(--ats-ink);
+            margin-bottom:6px;
+            font-size:34px;
+            letter-spacing:-.03em;
+        }
+        .auth-sub{
+            color:var(--ats-muted);
+            font-size:14px;
+            margin-bottom:24px;
+            line-height:1.6;
+        }
+        .form-group{ margin-bottom:16px; }
         .auth-field{
             width:100%;
             display:flex;
             align-items:center;
-            gap:10px;
-            padding:12px 14px;
-            border:1px solid #f1c2d4;
-            border-radius:14px;
+            gap:12px;
+            padding:13px 15px;
+            border:1px solid var(--ats-line);
+            border-radius:18px;
             background:#fff;
-            transition:.2s ease;
+            transition:.22s ease;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,.85);
+        }
+        .auth-field:hover{
+            border-color:#f1a9c7;
         }
         .auth-field:focus-within{
             border-color:#ff77ad;
-            box-shadow:0 0 0 4px rgba(233,30,99,.12);
+            box-shadow:0 0 0 4px rgba(233,30,99,.10), 0 10px 24px rgba(236,61,143,.08);
         }
         .auth-icon{
-            width:34px;height:34px;
-            border-radius:10px;
+            width:40px;
+            height:40px;
+            border-radius:14px;
             display:flex;align-items:center;justify-content:center;
-            background:#fff0f6;
+            background:linear-gradient(180deg,#fff2f8 0%,#ffe7f2 100%);
             color:var(--ats-pink);
-            flex:0 0 34px;
+            flex:0 0 40px;
         }
         .auth-input{
             flex:1; min-width:0;
             border:0; outline:none;
-            font-size:14px;
+            font-size:15px;
             color:var(--ats-text);
             background:transparent;
         }
-        .auth-input::placeholder{ color:#9ca3af; }
+        .auth-input::placeholder{ color:#99a1b2; }
         
         /* Password toggle styles */
         .password-toggle {
@@ -221,9 +363,9 @@ div{
             border: none;
             color: var(--ats-pink);
             cursor: pointer;
-            padding: 0 8px;
+            padding: 0 6px;
             font-size: 16px;
-            opacity: 0.7;
+            opacity: 0.72;
             transition: opacity 0.2s ease;
         }
         .password-toggle:hover {
@@ -237,33 +379,35 @@ div{
             display:flex;
             justify-content:space-between;
             align-items:center;
-            margin: 12px 0 16px;
+            margin: 14px 0 20px;
             font-size:13px;
         }
-        .auth-links a{ color:var(--ats-pink); text-decoration:none; font-weight:700; }
+        .auth-links a{ color:var(--ats-ink); text-decoration:none; font-weight:700; }
         .auth-links a:hover{ text-decoration:underline; cursor:pointer; }
         .auth-btn{
             width:100%;
-            height:46px;
+            height:52px;
             border:0;
-            border-radius:14px;
-            background: linear-gradient(135deg, var(--ats-pink) 0%, #ff5aa5 60%, #ff8fc2 100%);
+            border-radius:18px;
+            background: linear-gradient(135deg, var(--ats-pink-dark) 0%, var(--ats-pink) 45%, #ff79b7 100%);
             color:#fff;
             font-weight:800;
+            font-size:16px;
             cursor:pointer;
-            box-shadow: 0 12px 26px rgba(233,30,99,.22);
+            box-shadow: 0 18px 34px rgba(233,30,99,.24);
             transition:.2s ease;
         }
         .auth-btn:hover{
-            transform: translateY(-1px);
-            box-shadow: 0 16px 30px rgba(233,30,99,.28);
+            transform: translateY(-2px);
+            box-shadow: 0 22px 38px rgba(233,30,99,.30);
         }
         .auth-footer{
-            padding:12px 18px;
-            text-align:center;
+            padding:18px 0 0;
+            text-align:left;
             font-size:12px;
             color:var(--ats-muted);
             border-top:1px solid #f3f4f6;
+            margin-top:22px;
         }
 
         /* Modal */
@@ -282,8 +426,50 @@ div{
         .ats-btn-pink{ border:0; background: var(--ats-pink); color:#fff; border-radius:12px; padding:10px 14px; cursor:pointer; font-weight:800; }
         .ats-btn-pink:disabled{ opacity:.65; cursor:not-allowed; }
 
-        @media (max-height: 650px){
-            .auth-wrap{ align-items:flex-start; padding-top:22px; }
+        @media (max-width: 991.98px){
+            .auth-card{
+                max-width:520px;
+                min-height:auto;
+                grid-template-columns:1fr;
+            }
+            .auth-header{
+                padding:28px 24px;
+            }
+            .auth-header h4{
+                font-size:24px;
+            }
+            .auth-body{
+                padding:28px 24px 22px;
+            }
+            .auth-title{
+                font-size:30px;
+            }
+        }
+        @media (max-width: 575.98px){
+            .auth-wrap{
+                padding:16px;
+            }
+            .auth-card{
+                border-radius:22px;
+            }
+            .auth-header{
+                padding:22px 18px;
+            }
+            .auth-body{
+                padding:22px 18px 18px;
+            }
+            .auth-title{
+                font-size:28px;
+            }
+            .auth-links{
+                gap:10px;
+                align-items:flex-start;
+                flex-direction:column;
+            }
+        }
+        @media (max-height: 720px){
+            .auth-wrap{ align-items:flex-start; padding-top:22px; padding-bottom:22px; }
+            .auth-card{ min-height:auto; }
         }
     </style>
 </head>
@@ -293,16 +479,40 @@ div{
     <div class="auth-card">
 
         <div class="auth-header">
-            <img class="auth-logo" src="<?= BASE_URL ?>assets/images/logo.png" alt="ATS Logo">
-            <div>
-                <h4>Welcome to <?= htmlspecialchars(APP_NAME) ?></h4>
-                <p>Please login to continue</p>
+            <div class="auth-side-copy">
+                <div class="auth-kicker">
+                    <i class="fas fa-shield-alt"></i>
+                    ATS CRM Workspace
+                </div>
+                <div class="auth-brand">
+                    <img class="auth-logo" src="<?= BASE_URL ?>assets/images/logo.png" alt="ATS Logo">
+                    <div>
+                        <h4>Welcome to <?= htmlspecialchars(APP_NAME) ?></h4>
+                        <p>Centralize admissions, collections, team activity, and branch operations in one focused workspace.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="auth-points">
+                <div class="auth-point">
+                    <div class="auth-point-icon"><i class="fas fa-chart-line"></i></div>
+                    <div>
+                        <strong>Daily performance visibility</strong>
+                        <span>Track targets, collections, and branch activity from a single product dashboard.</span>
+                    </div>
+                </div>
+                <div class="auth-point">
+                    <div class="auth-point-icon"><i class="fas fa-user-shield"></i></div>
+                    <div>
+                        <strong>Role-based secure access</strong>
+                        <span>Each team signs in to the same CRM with the right permissions for their work.</span>
+                    </div>
+                </div>
             </div>
         </div>
 
         <div class="auth-body">
             <h5 class="auth-title">Sign in</h5>
-            <div class="auth-sub">Enter your credentials to continue</div>
+            <div class="auth-sub">Use your registered credentials to continue to your CRM workspace.</div>
 
             <?php if ($error = getFlash('error')): ?>
                 <div class="alert alert-danger" style="border-radius:12px;">
@@ -355,7 +565,7 @@ div{
         </div>
 
         <div class="auth-footer">
-            © <?= date('Y') ?> <?= htmlspecialchars(APP_NAME) ?>. All rights reserved.
+            &copy; <?= date('Y') ?> <?= htmlspecialchars(APP_NAME) ?>. All rights reserved.
         </div>
 
     </div>
@@ -463,11 +673,11 @@ document.addEventListener('DOMContentLoaded', function() {
         body: new URLSearchParams({ email })
       });
 
-      const raw = await res.text();   // ✅ read raw text first
+      const raw = await res.text();   // âœ… read raw text first
       let data = null;
 
       try {
-        data = JSON.parse(raw);       // ✅ parse JSON safely
+        data = JSON.parse(raw);       // âœ… parse JSON safely
       } catch (e) {
         showMsg(false, 'Server output (not JSON):\n' + raw.substring(0, 400));
         submitBtn.disabled = false;
