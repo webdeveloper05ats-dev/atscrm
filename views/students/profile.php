@@ -496,7 +496,7 @@ PAYMENT HISTORY
 <td>
 
 <a
-href="index.php?page=payments/receipt&id=<?= $p['id'] ?>"
+href="index.php?page=payments/receipt&payment_id=<?= (int)$p['id'] ?>"
 target="_blank">
 
 Print
