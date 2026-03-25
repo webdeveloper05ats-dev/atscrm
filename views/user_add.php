@@ -36,13 +36,18 @@ if ($editId > 0) {
 
 if (isset($_POST['add_user'])) {
 
+    $branchAutoAssigned = false;
     $name      = trim($_POST['name'] ?? '');
     $email     = trim($_POST['email'] ?? '');
     $phone     = trim($_POST['phone'] ?? '');
     $password  = $_POST['password'] ?? '';
     $role_id   = (int)($_POST['role_id'] ?? 0);
-    $branch_id = ($_POST['branch_id'] ?? '') !== '' ? (int)$_POST['branch_id'] : null;
+    $branch_id = ($_POST['branch_id'] ?? '') !== '' ? (int)$_POST['branch_id'] : 1;
     $status    = (int)($_POST['status'] ?? 1);
+
+    if (($_POST['branch_id'] ?? '') === '') {
+        $branchAutoAssigned = true;
+    }
 
     if ($name === '' || $email === '' || $password === '' || $role_id <= 0) {
         $error = "Name, Email, Password, Role are required.";
@@ -78,7 +83,9 @@ if (isset($_POST['add_user'])) {
                 ':ua'         => $_SERVER['HTTP_USER_AGENT'] ?? null,
             ]);
 
-            $success = "User created successfully!";
+            $success = $branchAutoAssigned
+                ? "User created successfully! Branch was not selected, so we set this user to Main Branch. You can update it later."
+                : "User created successfully!";
         }
     }
 }
@@ -87,14 +94,19 @@ if (isset($_POST['add_user'])) {
 
 if (isset($_POST['update_user'])) {
 
+    $branchAutoAssigned = false;
     $id        = (int)($_POST['id'] ?? 0);
     $name      = trim($_POST['name'] ?? '');
     $email     = trim($_POST['email'] ?? '');
     $phone     = trim($_POST['phone'] ?? '');
     $password  = $_POST['password'] ?? '';
     $role_id   = (int)($_POST['role_id'] ?? 0);
-    $branch_id = ($_POST['branch_id'] ?? '') !== '' ? (int)$_POST['branch_id'] : null;
+    $branch_id = ($_POST['branch_id'] ?? '') !== '' ? (int)$_POST['branch_id'] : 1;
     $status    = (int)($_POST['status'] ?? 1);
+
+    if (($_POST['branch_id'] ?? '') === '') {
+        $branchAutoAssigned = true;
+    }
 
     if ($id <= 0 || $name === '' || $email === '' || $role_id <= 0) {
         $error = "Name, Email, Role are required.";
@@ -167,7 +179,9 @@ if (isset($_POST['update_user'])) {
 
             $upd->execute($params);
 
-            $success = "User updated successfully!";
+            $success = $branchAutoAssigned
+                ? "User updated successfully! Branch was not selected, so we set this user to Main Branch. You can update it later."
+                : "User updated successfully!";
         }
     }
 }
