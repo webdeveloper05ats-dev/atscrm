@@ -1,4 +1,3 @@
-<link rel="stylesheet" href="<?= BASE_URL ?>assets/css/lead.css">
 <?php
 // =====================================
 // Leads - Excel Upload + Bulk Assign
@@ -17,8 +16,6 @@ if (function_exists('requireView')) {
 require_once __DIR__ . '/../../vendor/autoload.php';
 
 use PhpOffice\PhpSpreadsheet\IOFactory;
-use PhpOffice\PhpSpreadsheet\Spreadsheet;
-use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 if (!function_exists('h')) {
     function h($v)
@@ -91,11 +88,8 @@ try {
     $staff = [];
 }
 
-/* Download sample Excel template */
+/* Download sample CSV template */
 if (isset($_GET['download']) && $_GET['download'] === 'template') {
-    $spreadsheet = new Spreadsheet();
-    $sheet = $spreadsheet->getActiveSheet();
-
     $headers = [
         'name',
         'phone',
@@ -120,20 +114,22 @@ if (isset($_GET['download']) && $_GET['download'] === 'template') {
         'Interested in weekend batch'
     ];
 
-    $sheet->fromArray($headers, null, 'A1');
-    $sheet->fromArray($sample, null, 'A2');
-
-    foreach (range('A', 'I') as $col) {
-        $sheet->getColumnDimension($col)->setAutoSize(true);
-    }
-
-    $fileName = 'lead_import_template.xlsx';
-    header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    $fileName = 'lead_import_template.csv';
+    header('Content-Type: text/csv; charset=UTF-8');
     header('Content-Disposition: attachment; filename="' . $fileName . '"');
     header('Cache-Control: max-age=0');
+    header('Pragma: public');
 
-    $writer = new Xlsx($spreadsheet);
-    $writer->save('php://output');
+    $output = fopen('php://output', 'w');
+    if ($output === false) {
+        exit;
+    }
+
+    // Add UTF-8 BOM so Excel opens the CSV cleanly on more systems.
+    fwrite($output, "\xEF\xBB\xBF");
+    fputcsv($output, $headers);
+    fputcsv($output, $sample);
+    fclose($output);
     exit;
 }
 
@@ -521,6 +517,8 @@ if ($batchId > 0) {
 }
 ?>
 
+<link rel="stylesheet" href="<?= BASE_URL ?>assets/css/lead.css">
+
 <div class="leads-dashboard lead-import-page">
     <div class="dashboard-header">
         <h2><i class="fas fa-file-excel" style="margin-right: 12px; color: #e91e63;"></i>Lead Excel Upload</h2>
@@ -560,14 +558,14 @@ if ($batchId > 0) {
 <?php endif; ?>
 
 <div class="card">
-    <div class="card-header"><i class="fas fa-upload" style="margin-right:8px;"></i>Upload Excel File</div>
+    <div class="card-header"><i class="fas fa-upload" style="margin-right:8px;"></i>Upload Import File</div>
     <form method="POST" enctype="multipart/form-data" class="filter-form" id="uploadLeadsForm" novalidate>
         <input type="hidden" name="csrf_token" value="<?= h(generateCSRF()) ?>">
         <input type="hidden" name="upload_leads" value="1">
 
         <div class="filter-grid import-grid">
             <div class="filter-item">
-                <label><i class="fas fa-file-excel"></i> Excel File</label>
+                <label><i class="fas fa-file-excel"></i> Import File</label>
                 <input type="file" id="lead_file_input" class="import-file-input" name="lead_file" accept=".xlsx,.xls,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv,application/csv" required>
                 <label for="lead_file_input" class="import-file-box" id="import_file_box">
                     <span class="import-file-icon"><i class="fas fa-file-upload"></i></span>
@@ -597,7 +595,7 @@ if ($batchId > 0) {
                 </button>
 
                 <a href="index.php?page=leads/import&download=template" class="btn-reset">
-                    <i class="fas fa-download"></i> Download Template
+                    <i class="fas fa-download"></i> Download CSV Template
                 </a>
             </div>
         </div>
