@@ -1,4 +1,4 @@
- <link rel="stylesheet" href="<?= BASE_URL ?>assets/css/reglist.css">
+<link rel="stylesheet" href="<?= BASE_URL ?>assets/css/reglist.css">
 <?php
 // =====================================
 // Registrations - List
@@ -682,7 +682,7 @@ if ($isAjax) {
   }
 
   // ---------------------------------
-  // 2) ID Card Modal
+  // 3) ID Card Modal
   // ---------------------------------
   if ($action === 'id_card_modal') {
     $regId = (int) ($_GET['reg_id'] ?? 0);
@@ -1166,6 +1166,32 @@ if ($page > $totalPages)
   $page = $totalPages;
 
 /* =========================================================
+   Fetch Rows
+========================================================= */
+$rows = [];
+try {
+  $sql = "
+        SELECT
+            r.*,
+            e.enquiry_no,
+            e.name AS enquiry_name,
+            e.phone AS enquiry_phone,
+            u.name AS owner_name
+        FROM registrations r
+        LEFT JOIN enquiries e ON e.id = r.enquiry_id
+        LEFT JOIN users u ON u.id = r.assigned_to
+        $whereSql
+        ORDER BY r.id DESC
+        LIMIT $offset, $perPage
+    ";
+  $st = $pdo->prepare($sql);
+  $st->execute($params);
+  $rows = $st->fetchAll(PDO::FETCH_ASSOC);
+} catch (Exception $e) {
+  $rows = [];
+}
+
+/* =========================================================
    Summary
 ========================================================= */
 $summary = ['active' => 0, 'completed' => 0, 'paid' => 0, 'partial' => 0, 'unpaid' => 0];
@@ -1174,11 +1200,10 @@ try {
   $sumWhere = ["r.registration_status IN ('active','completed')"];
   $sumParams = [];
 
-  // Restrict summary for front office
-if (in_array($roleName, ['front office', 'corporate executive', 'corporte excutive'], true)) {
+  if (in_array($roleName, ['front office', 'corporate executive', 'corporte excutive'], true)) {
     $sumWhere[] = "r.assigned_to = ?";
     $sumParams[] = $userId;
-}
+  }
 
   if ($canAllBranches !== 1 && $branchId > 0) {
     $sumWhere[] = "r.branch_id = ?";
@@ -1208,34 +1233,6 @@ if (in_array($roleName, ['front office', 'corporate executive', 'corporte excuti
     $summary['unpaid'] = (int) ($x['unpaid_count'] ?? 0);
   }
 } catch (Exception $e) {
-}
-
-/* =========================================================
-   Fetch Rows (all rows for client-side table)
-========================================================= */
-$rows = [];
-try {
-  $sql = "
-        SELECT
-            r.*,
-            e.enquiry_no,
-            e.name AS enquiry_name,
-            e.phone AS enquiry_phone,
-            u.name AS owner_name
-        FROM registrations r
-        LEFT JOIN enquiries e ON e.id = r.enquiry_id
-        LEFT JOIN users u ON u.id = r.assigned_to
-        $whereSql
-        ORDER BY r.id DESC
-    ";
-  $st = $pdo->prepare($sql);
-  $st->execute($params);
-  $rows = $st->fetchAll(PDO::FETCH_ASSOC);
-  $totalRows = count($rows);
-  $totalPages = 1;
-  $page = 1;
-} catch (Exception $e) {
-  $rows = [];
 }
 
 $baseUrl = "index.php?page=registrations/list"
@@ -1282,8 +1279,6 @@ function payStatusBadgeList($type)
   return '<span class="badge-pill-custom" style="color:' . $c . ';background:' . $bg . ';border-color:' . $bg . ';">' . $t . '</span>';
 }
 ?>
-
-
 
 <h2 style="display:none;">Registrations List</h2>
 
@@ -1387,7 +1382,6 @@ function payStatusBadgeList($type)
         <div class="table-title">
           <i class="fas fa-list"></i> Confirmed Registrations (<?= (int) $totalRows ?>)
         </div>
-        <div id="datatableControls"></div>
       </div>
     </div>
 
@@ -1450,7 +1444,7 @@ function payStatusBadgeList($type)
                         <i class="fas fa-eye"></i>
                       </button>
 
-                      <a class="action-btn edit" href="index.php?page=registrations/convert & reg_id=<?= (int) $r['id'] ?>"
+                      <a class="action-btn edit" href="index.php?page=registrations/convert&reg_id=<?= (int) $r['id'] ?>"
                         title="Edit Registration">
                         <i class="fas fa-pen"></i>
                       </a>
@@ -1627,20 +1621,12 @@ function payStatusBadgeList($type)
   }
 
   async function openPaymentModal(regId) {
-
-console.log("Registration ID:", regId);   // DEBUG
-
-openCrmModal('Payment Entry');
-
-const url =
-`index.php?page=registrations/list&ajax=1&action=payment_modal&reg_id=${regId}`;
-
-const html = await loadModalHtml(url);
-
-document.getElementById('crmModalBody').innerHTML = html;
-applyModernIconTooltips(document.getElementById('crmModalBody'));
-
-}
+    openCrmModal('Payment Entry');
+    const url = `index.php?page=registrations/list&ajax=1&action=payment_modal&reg_id=${regId}`;
+    const html = await loadModalHtml(url);
+    document.getElementById('crmModalBody').innerHTML = html;
+    applyModernIconTooltips(document.getElementById('crmModalBody'));
+  }
 
   function validatePaymentEntryForm(form) {
     const amountInput = form.querySelector('[name="amount"]');
@@ -1732,35 +1718,17 @@ applyModernIconTooltips(document.getElementById('crmModalBody'));
 
   document.addEventListener("DOMContentLoaded", function(){
     applyModernIconTooltips(document);
-
-    if (typeof crmDataTable !== 'function') return;
-
-    try {
-      crmDataTable('#registrationsTable', {
-        pageLength: 10,
-        lengthMenu: [5, 10, 20, 50, 100],
-        ordering: true,
-        order: [[0, 'desc']],
-        searchPlaceholder: "Search registrations...",
-        dom:
-          "<'dt-top'lfB>" +
-          "rt" +
-          "<'dt-bottom'ip>"
-      });
-
-      setTimeout(() => {
-        const controls = document.querySelector('.dt-top');
-        const target = document.getElementById('datatableControls');
-        const serverPagination = document.querySelector('.server-pagination');
-
-        if (controls && target) {
-          target.appendChild(controls);
+    
+    // Tooltips only - DataTables removed to fix column count error
+    const actionButtons = document.querySelectorAll('.action-btn');
+    actionButtons.forEach(btn => {
+        const title = btn.getAttribute('title');
+        if (title) {
+            btn.setAttribute('data-tooltip', title);
+            btn.classList.add('ui-tooltip');
+            btn.removeAttribute('title');
         }
-        if (serverPagination) {
-          serverPagination.style.display = 'none';
-        }
-      }, 100);
-    } catch (e) {}
+    });
   });
 
   function initIdCardBuilder() {
@@ -2188,4 +2156,3 @@ applyModernIconTooltips(document.getElementById('crmModalBody'));
     window.__stopIdCardCamera = stopCamera;
   }
 </script>
-
