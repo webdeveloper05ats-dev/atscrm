@@ -623,27 +623,27 @@ Total Users: <?= count($users) ?>
 <?php endif; ?>
 
 <div class="user-form-group">
-<label>Name</label>
+<label>Name <span style="color:red;">*</span></label>
 <input type="text" name="name" placeholder="Example: John Smith" required value="<?= htmlspecialchars($editUser['name'] ?? '') ?>">
 </div>
 
 <div class="user-form-group">
-<label>Email</label>
+<label>Email <span style="color:red;">*</span></label>
 <input type="email" name="email" placeholder="Example: john@gmail.com" required value="<?= htmlspecialchars($editUser['email'] ?? '') ?>">
 </div>
 
 <div class="user-form-group">
 <label>Phone</label>
-<input type="text" name="phone" placeholder="Example: 9876543210" value="<?= htmlspecialchars($editUser['phone'] ?? '') ?>">
+<input type="tel" name="phone" placeholder="Example: 9876543210" maxlength="10" inputmode="numeric" pattern="[0-9]{10}" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,10)" value="<?= htmlspecialchars($editUser['phone'] ?? '') ?>">
 </div>
 
 <div class="user-form-group">
-<label>Password <?= $editUser ? '(leave blank to keep same)' : '' ?></label>
+<label>Password<?= $editUser ? ' <span style="color:#6b7280;font-weight:600;">(leave blank to keep same)</span>' : ' <span style="color:red;">*</span>' ?></label>
 <input type="password" name="password" placeholder="Enter password">
 </div>
 
 <div class="user-form-group">
-<label>Role</label>
+<label>Role <span style="color:red;">*</span></label>
 <select name="role_id" required>
 <option value="">Select Role</option>
 <?php foreach ($roles as $r): ?>
