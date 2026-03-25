@@ -184,7 +184,7 @@ $rows=$stmt->fetchAll(PDO::FETCH_ASSOC);
     .draft-card {
         border: none;
         border-radius: 20px;
-        overflow: hidden;
+        overflow: visible;
         box-shadow: 0 12px 30px rgba(17, 17, 26, 0.08);
         background: #fff;
     }
@@ -242,6 +242,7 @@ $rows=$stmt->fetchAll(PDO::FETCH_ASSOC);
 
     .draft-table-wrap {
         overflow-x: auto;
+        overflow-y: visible;
         border-radius: 16px;
         border: 1px solid #f1f1f1;
     }
@@ -251,6 +252,7 @@ $rows=$stmt->fetchAll(PDO::FETCH_ASSOC);
         min-width: 900px;
         border-collapse: separate;
         border-spacing: 0;
+        table-layout: fixed;
     }
 
     .draft-table thead th {
@@ -272,6 +274,37 @@ $rows=$stmt->fetchAll(PDO::FETCH_ASSOC);
         padding: 14px 12px;
         border-top: 1px solid #f5f5f5;
         background: #fff;
+    }
+
+    .draft-table th:nth-child(1),
+    .draft-table td:nth-child(1) {
+        width: 18%;
+    }
+
+    .draft-table th:nth-child(2),
+    .draft-table td:nth-child(2) {
+        width: 24%;
+    }
+
+    .draft-table th:nth-child(3),
+    .draft-table td:nth-child(3) {
+        width: 15%;
+    }
+
+    .draft-table th:nth-child(4),
+    .draft-table td:nth-child(4) {
+        width: 26%;
+    }
+
+    .draft-table th:nth-child(5),
+    .draft-table td:nth-child(5) {
+        width: 14%;
+    }
+
+    .draft-table th:nth-child(6),
+    .draft-table td:nth-child(6) {
+        width: 130px;
+        min-width: 130px;
     }
 
     .draft-table tbody tr:hover td {
@@ -416,8 +449,9 @@ $rows=$stmt->fetchAll(PDO::FETCH_ASSOC);
     .draft-actions {
         display: flex;
         align-items: center;
+        justify-content: center;
         gap: 8px;
-        flex-wrap: wrap;
+        flex-wrap: nowrap;
     }
 
     .draft-icon-btn {
@@ -467,12 +501,12 @@ $rows=$stmt->fetchAll(PDO::FETCH_ASSOC);
         position: absolute;
         left: 50%;
         transform: translateX(-50%) translateY(4px);
-        z-index: 80;
+        z-index: 9999;
     }
 
     .draft-tip::after {
         content: attr(data-tip);
-        bottom: calc(100% + 8px);
+        top: calc(100% + 8px);
         background: #1f2937;
         color: #fff;
         padding: 6px 9px;
@@ -483,10 +517,10 @@ $rows=$stmt->fetchAll(PDO::FETCH_ASSOC);
 
     .draft-tip::before {
         content: "";
-        bottom: calc(100% + 2px);
+        top: calc(100% + 2px);
         border-left: 5px solid transparent;
         border-right: 5px solid transparent;
-        border-top: 6px solid #1f2937;
+        border-bottom: 6px solid #1f2937;
     }
 
     .draft-tip:hover::after,
@@ -578,8 +612,10 @@ $rows=$stmt->fetchAll(PDO::FETCH_ASSOC);
         }
 
         .draft-actions {
-            flex-direction: column;
-            align-items: stretch;
+            flex-direction: row;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: nowrap;
         }
 
         .btn-continue-draft,
@@ -708,8 +744,8 @@ $rows=$stmt->fetchAll(PDO::FETCH_ASSOC);
                                     <a
 href="index.php?page=registrations/convert & reg_id=<?= $r['id'] ?>&type=<?= h($r['reg_type']) ?>"
 class="draft-icon-btn draft-icon-primary draft-tip"
-data-tip="Continue Draft"
-title="Continue Draft"
+data-tip="Convert Registration"
+title="Convert Registration"
 >
 <i class="fas fa-arrow-right"></i>
 </a>
@@ -746,6 +782,7 @@ document.addEventListener("DOMContentLoaded", function(){
         crmDataTable('#draftsTable', {
             pageLength: 10,
             lengthMenu: [5, 10, 20, 50, 100],
+            autoWidth: false,
             ordering: true,
             order: [[4, 'desc']],
             searchPlaceholder: "Search drafts...",
