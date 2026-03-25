@@ -122,7 +122,7 @@ $branchId = (int) ($_SESSION['branch_id'] ?? 0);
 $roleName = '';
 
 try {
-    $r = $pdo->prepare("SELECT name FROM roles WHERE id=? LIMIT 1");
+    $r = $pdo->prepare("SELECT role_name FROM roles WHERE id=? LIMIT 1");
     $r->execute([$roleId]);
     $roleName = strtolower(trim((string)$r->fetchColumn()));
 } catch (Exception $e) {
@@ -542,6 +542,7 @@ if ($isAjax) {
 
           <form method="POST" id="paymentEntryForm" novalidate>
             <input type="hidden" name="csrf_token" value="<?= h(generateCSRF()) ?>">
+            <input type="hidden" name="add_payment" value="1">
             <input type="hidden" name="reg_id" value="<?= (int) $reg['id'] ?>">
 
             <div class="pro-payment-grid">
@@ -601,7 +602,7 @@ if ($isAjax) {
             </div>
 
             <div class="modal-actions">
-              <button type="submit" name="add_payment" class="pro-btn pro-btn-primary">
+              <button type="submit" class="pro-btn pro-btn-primary">
                 <i class="fas fa-save"></i> Save Payment
               </button>
             </div>
@@ -1089,7 +1090,7 @@ $offset = ($page - 1) * $perPage;
 $where = ["r.registration_status IN ('active','completed')"];
 $params = [];
 
-if (in_array($roleName, ['front office', 'corporate executive', 'corporte excutive'], true)) {
+if (!in_array($roleName, ['super admin', 'hr'], true)) {
     $where[] = "r.assigned_to = ?";
     $params[] = $userId;
 }
@@ -1182,7 +1183,6 @@ try {
         LEFT JOIN users u ON u.id = r.assigned_to
         $whereSql
         ORDER BY r.id DESC
-        LIMIT $offset, $perPage
     ";
   $st = $pdo->prepare($sql);
   $st->execute($params);
@@ -1200,7 +1200,7 @@ try {
   $sumWhere = ["r.registration_status IN ('active','completed')"];
   $sumParams = [];
 
-  if (in_array($roleName, ['front office', 'corporate executive', 'corporte excutive'], true)) {
+  if (!in_array($roleName, ['super admin', 'hr'], true)) {
     $sumWhere[] = "r.assigned_to = ?";
     $sumParams[] = $userId;
   }
@@ -1279,6 +1279,101 @@ function payStatusBadgeList($type)
   return '<span class="badge-pill-custom" style="color:' . $c . ';background:' . $bg . ';border-color:' . $bg . ';">' . $t . '</span>';
 }
 ?>
+
+<style>
+.table-header-flex{
+  width:100%;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  flex-wrap:wrap;
+}
+
+#datatableControls,
+#datatableFooter{
+  display:flex;
+  align-items:center;
+}
+
+#datatableControls{
+  justify-content:flex-end;
+  margin-left:auto;
+  padding-left:8px;
+  flex:0 0 auto;
+  min-width:0;
+}
+
+#datatableFooter{
+  margin-top:12px;
+  padding:0 4px;
+  width:100%;
+}
+
+#datatableControls .dt-top,
+#datatableFooter .dt-bottom{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  width:100%;
+  flex-wrap:wrap;
+}
+
+#datatableControls .dataTables_length,
+#datatableControls .dataTables_filter,
+#datatableFooter .dataTables_info,
+#datatableFooter .dataTables_paginate{
+  margin:0 !important;
+}
+
+#datatableControls .dataTables_filter{
+  margin-left:auto !important;
+}
+
+#datatableControls .dataTables_filter label,
+#datatableControls .dataTables_length label{
+  margin:0;
+}
+
+#datatableFooter .dataTables_paginate{
+  margin-left:auto !important;
+}
+
+@media (max-width: 768px){
+  .table-container{
+    overflow-x:auto;
+    -webkit-overflow-scrolling:touch;
+  }
+
+  .action-buttons{
+    flex-wrap:wrap;
+  }
+
+  #datatableControls,
+  #datatableFooter{
+    justify-content:flex-start;
+    margin-left:0;
+    padding-left:0;
+    padding-right:0;
+  }
+
+  #datatableControls{
+    width:100%;
+    flex:1 1 100%;
+  }
+
+  #datatableControls .dt-top,
+  #datatableFooter .dt-bottom{
+    justify-content:flex-start;
+  }
+
+  #datatableControls .dataTables_filter,
+  #datatableFooter .dataTables_paginate{
+    margin-left:0 !important;
+  }
+}
+</style>
 
 <h2 style="display:none;">Registrations List</h2>
 
@@ -1382,6 +1477,7 @@ function payStatusBadgeList($type)
         <div class="table-title">
           <i class="fas fa-list"></i> Confirmed Registrations (<?= (int) $totalRows ?>)
         </div>
+        <div id="datatableControls"></div>
       </div>
     </div>
 
@@ -1398,14 +1494,6 @@ function payStatusBadgeList($type)
             </tr>
           </thead>
           <tbody>
-            <?php if (empty($rows)): ?>
-              <tr>
-                <td colspan="6" class="no-data">
-                  <i class="fas fa-inbox"></i>
-                  No active or completed registrations found.
-                </td>
-              </tr>
-            <?php else: ?>
               <?php foreach ($rows as $r): ?>
                 <tr>
                   <td>
@@ -1473,28 +1561,10 @@ function payStatusBadgeList($type)
                   </td>
                 </tr>
               <?php endforeach; ?>
-            <?php endif; ?>
           </tbody>
         </table>
     </div>
-
-    <div class="pagination-wrapper server-pagination">
-      <div class="pagination-info">
-          Page <?= (int) $page ?> of <?= (int) $totalPages ?>
-      </div>
-
-        <div class="pagination">
-          <?php $prev = max(1, $page - 1);
-          $next = min($totalPages, $page + 1); ?>
-          <a class="page-link" href="<?= $baseUrl ?>&p=1"><i class="fas fa-angle-double-left"></i> First</a>
-          <a class="page-link" style="<?= $page <= 1 ? 'pointer-events:none;opacity:.5;' : '' ?>"
-            href="<?= $baseUrl ?>&p=<?= (int) $prev ?>"><i class="fas fa-angle-left"></i>&nbsp; Prev</a>
-          <a class="page-link" style="<?= $page >= $totalPages ? 'pointer-events:none;opacity:.5;' : '' ?>"
-            href="<?= $baseUrl ?>&p=<?= (int) $next ?>">Next &nbsp;<i class="fas fa-angle-right"></i></a>
-          <a class="page-link" href="<?= $baseUrl ?>&p=<?= (int) $totalPages ?>">Last <i
-              class="fas fa-angle-double-right"></i></a>
-        </div>
-      </div>
+    <div id="datatableFooter"></div>
     </div>
   </div>
 </div>
@@ -1718,17 +1788,36 @@ function payStatusBadgeList($type)
 
   document.addEventListener("DOMContentLoaded", function(){
     applyModernIconTooltips(document);
-    
-    // Tooltips only - DataTables removed to fix column count error
-    const actionButtons = document.querySelectorAll('.action-btn');
-    actionButtons.forEach(btn => {
-        const title = btn.getAttribute('title');
-        if (title) {
-            btn.setAttribute('data-tooltip', title);
-            btn.classList.add('ui-tooltip');
-            btn.removeAttribute('title');
+
+    if (typeof crmDataTable === 'function' && document.querySelector('#registrationsTable')) {
+      crmDataTable('#registrationsTable', {
+        pageLength: 10,
+        lengthMenu: [5, 10, 20, 50, 100],
+        ordering: false,
+        searchPlaceholder: "Search registrations...",
+        language: {
+          emptyTable: "No active or completed registrations found."
+        },
+        dom: "<'dt-top'lf>rt<'dt-bottom'ip>"
+      });
+
+      setTimeout(() => {
+        const wrapper = document.querySelector('#registrationsTable_wrapper');
+        const controlsTarget = document.getElementById('datatableControls');
+        const footerTarget = document.getElementById('datatableFooter');
+        if (!wrapper) return;
+
+        const top = wrapper.querySelector('.dt-top');
+        const bottom = wrapper.querySelector('.dt-bottom');
+
+        if (top && controlsTarget) {
+          controlsTarget.appendChild(top);
         }
-    });
+        if (bottom && footerTarget) {
+          footerTarget.appendChild(bottom);
+        }
+      }, 100);
+    }
   });
 
   function initIdCardBuilder() {
