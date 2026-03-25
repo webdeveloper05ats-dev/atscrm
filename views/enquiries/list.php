@@ -369,11 +369,7 @@ $baseUrl = "index.php?page=enquiries/list"
         </tr>
       </thead>
       <tbody>
-      <?php if (empty($rows)): ?>
-        <tr>
-          <td colspan="7" class="no-data"><i class="fas fa-inbox"></i> No enquiries found.</td>
-        </tr>
-      <?php else: ?>
+      <?php if (!empty($rows)): ?>
         <?php foreach ($rows as $r): ?>
         <?php
           $isConverted = (($r['status'] ?? '') === 'converted');
@@ -489,7 +485,10 @@ document.addEventListener("DOMContentLoaded", function(){
     ordering:true,
     order:[[0,'desc']],
     searchPlaceholder:"Search enquiries...",
-    dom:"<'dt-top'lfB>rt<'dt-bottom'ip>"
+    dom:"<'dt-top'lfB>rt<'dt-bottom'ip>",
+    language:{
+      emptyTable:'No enquiries found.'
+    }
   });
 
   setTimeout(function(){
