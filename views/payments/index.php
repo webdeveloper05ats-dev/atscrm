@@ -8,9 +8,13 @@ if (!defined('APP_NAME')) {
 }
 
 $pageTitle = "Payments";
+$success = '';
+$error = '';
 
 $userId   = (int)($_SESSION['user_id'] ?? 0);
 $roleName = $_SESSION['role_name'] ?? '';
+$roleId   = (int)($_SESSION['role_id'] ?? 0);
+$branchId = (int)($_SESSION['branch_id'] ?? 0);
 
 // =========================================================
 // NEW MODIFICATION DONE ON 2026-03-23
@@ -27,6 +31,63 @@ if (!function_exists('paymentsH')) {
     function paymentsH($value): string
     {
         return htmlspecialchars((string)($value ?? ''), ENT_QUOTES, 'UTF-8');
+    }
+}
+
+if (!function_exists('paymentsNull')) {
+    function paymentsNull($value): ?string
+    {
+        $value = trim((string) $value);
+        return $value === '' ? null : $value;
+    }
+}
+
+if (!function_exists('paymentsDecimal')) {
+    function paymentsDecimal($value): float
+    {
+        $value = trim((string) $value);
+        return $value === '' ? 0.0 : (float) $value;
+    }
+}
+
+if (!function_exists('paymentsMakeReceiptNo')) {
+    function paymentsMakeReceiptNo(PDO $pdo): string
+    {
+        $prefix = 'RCPT-' . date('Ym') . '-';
+        $st = $pdo->prepare("SELECT COUNT(*) FROM registration_payments WHERE DATE_FORMAT(created_at, '%Y-%m') = DATE_FORMAT(CURDATE(), '%Y-%m')");
+        $st->execute();
+        $count = (int) $st->fetchColumn();
+        return $prefix . str_pad((string) ($count + 1), 4, '0', STR_PAD_LEFT);
+    }
+}
+
+if (!function_exists('paymentsRecalcRegistrationSummary')) {
+    function paymentsRecalcRegistrationSummary(PDO $pdo, int $regId): void
+    {
+        $st = $pdo->prepare("SELECT final_fee FROM registrations WHERE id=? LIMIT 1");
+        $st->execute([$regId]);
+        $finalFee = (float) ($st->fetchColumn() ?? 0);
+
+        $st = $pdo->prepare("SELECT COALESCE(SUM(amount),0) FROM registration_payments WHERE registration_id=? AND approval_status='approved'");
+        $st->execute([$regId]);
+        $paidSum = (float) $st->fetchColumn();
+
+        $balance = max(0, $finalFee - $paidSum);
+        $paymentStatus = 'unpaid';
+
+        if ($paidSum > 0 && $paidSum < $finalFee) {
+            $paymentStatus = 'partial';
+        } elseif ($paidSum >= $finalFee && $finalFee > 0) {
+            $paymentStatus = 'paid';
+            $balance = 0;
+        }
+
+        $upd = $pdo->prepare("
+            UPDATE registrations
+            SET paid_amount=?, balance_amount=?, payment_status=?, updated_at=NOW()
+            WHERE id=?
+        ");
+        $upd->execute([$paidSum, $balance, $paymentStatus, $regId]);
     }
 }
 
@@ -121,6 +182,120 @@ if (!function_exists('paymentsStreamSpreadsheet')) {
         $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
         $writer->save('php://output');
         exit;
+    }
+}
+
+$canAllBranches = 0;
+try {
+    $roleStmt = $pdo->prepare("SELECT can_access_all_branches FROM roles WHERE id=? LIMIT 1");
+    $roleStmt->execute([$roleId]);
+    $canAllBranches = (int) ($roleStmt->fetchColumn() ?? 0);
+} catch (Exception $e) {
+    $canAllBranches = 0;
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_payment'])) {
+    $token = $_POST['csrf_token'] ?? '';
+
+    if (!verifyCSRF($token)) {
+        $error = "Invalid request (CSRF). Please refresh and try again.";
+    } else {
+        $regId = (int) ($_POST['registration_id'] ?? 0);
+        $amount = paymentsDecimal($_POST['amount'] ?? 0);
+        $paymentDate = paymentsNull($_POST['payment_date'] ?? '') ?: date('Y-m-d');
+        $paymentMode = paymentsNull($_POST['payment_mode'] ?? 'Cash') ?: 'Cash';
+        $paymentType = paymentsNull($_POST['payment_type'] ?? 'partial') ?: 'partial';
+        $referenceNo = paymentsNull($_POST['reference_no'] ?? '');
+        $remarksPay = paymentsNull($_POST['remarks'] ?? '');
+        $approvalStatus = 'approved';
+
+        if ($regId <= 0) {
+            $error = "Invalid registration selected.";
+        } elseif ($amount <= 0) {
+            $error = "Amount must be greater than zero.";
+        } else {
+            try {
+                if ($canAllBranches !== 1 && $branchId > 0) {
+                    $st = $pdo->prepare("
+                        SELECT *
+                        FROM registrations
+                        WHERE id=? AND branch_id=? AND registration_status IN ('active','completed')
+                        LIMIT 1
+                    ");
+                    $st->execute([$regId, $branchId]);
+                } else {
+                    $st = $pdo->prepare("
+                        SELECT *
+                        FROM registrations
+                        WHERE id=? AND registration_status IN ('active','completed')
+                        LIMIT 1
+                    ");
+                    $st->execute([$regId]);
+                }
+
+                $reg = $st->fetch(PDO::FETCH_ASSOC);
+
+                if (!$reg) {
+                    throw new Exception("Registration not found or access denied.");
+                }
+
+                $finalFee = (float) ($reg['final_fee'] ?? 0);
+                $paidAmount = (float) ($reg['paid_amount'] ?? 0);
+                $balance = max(0, $finalFee - $paidAmount);
+
+                if ($paymentType !== 'refund' && $amount > $balance && $balance > 0) {
+                    throw new Exception("Amount cannot be greater than balance.");
+                }
+
+                $staffId = (int) ($reg['assigned_to'] ?? 0);
+                if ($staffId <= 0) {
+                    throw new Exception("Front office owner missing in registration.");
+                }
+
+                $receiptNo = paymentsMakeReceiptNo($pdo);
+
+                $pdo->beginTransaction();
+
+                $ins = $pdo->prepare("
+                    INSERT INTO registration_payments (
+                        registration_id, branch_id, staff_id, collected_by, approved_by,
+                        amount, payment_date, payment_mode, payment_type,
+                        reference_no, receipt_no, approval_status, remarks,
+                        created_at, updated_at
+                    ) VALUES (
+                        ?, ?, ?, ?, ?,
+                        ?, ?, ?, ?,
+                        ?, ?, ?, ?,
+                        NOW(), NOW()
+                    )
+                ");
+                $ins->execute([
+                    $regId,
+                    (int) ($reg['branch_id'] ?? 0),
+                    $staffId,
+                    $userId,
+                    $userId,
+                    $amount,
+                    $paymentDate,
+                    $paymentMode,
+                    $paymentType,
+                    $referenceNo,
+                    $receiptNo,
+                    $approvalStatus,
+                    $remarksPay,
+                ]);
+
+                paymentsRecalcRegistrationSummary($pdo, $regId);
+                $pdo->commit();
+
+                $success = "Payment saved successfully! Receipt No: " . $receiptNo;
+            } catch (Exception $e) {
+                if ($pdo->inTransaction()) {
+                    $pdo->rollBack();
+                }
+                $error = "Failed to save payment. " . $e->getMessage();
+            }
+        }
     }
 }
 
@@ -1822,6 +1997,43 @@ $exportBaseUrl = 'index.php?page=payments/index&ajax=1'
 <span class="stat-item"><i class="fas fa-database"></i> Total: <?= count($payments) ?></span>
 </div>
 </div>
+
+<?php if ($success): ?>
+<script>
+(function(){
+  const msg = '<?= addslashes($success) ?>';
+  if (window.Swal && Swal.fire) {
+    Swal.fire({
+      icon:'success',
+      title:'Success',
+      text: msg,
+      confirmButtonColor:'#e91e63'
+    }).then(()=>{ window.location.href = "index.php?page=payments/index"; });
+  } else {
+    alert(msg);
+    window.location.href = "index.php?page=payments/index";
+  }
+})();
+</script>
+<?php endif; ?>
+
+<?php if ($error): ?>
+<script>
+(function(){
+  const msg = '<?= addslashes($error) ?>';
+  if (window.Swal && Swal.fire) {
+    Swal.fire({
+      icon:'error',
+      title:'Error',
+      text: msg,
+      confirmButtonColor:'#e91e63'
+    });
+  } else {
+    alert(msg);
+  }
+})();
+</script>
+<?php endif; ?>
 
 <div class="card">
 <div class="card-header">
