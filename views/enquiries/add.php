@@ -157,7 +157,7 @@ try {
 }
 
 // ---------- Submit ----------
-if (isset($_POST['save_enquiry']) && empty($error)) {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_enquiry']) && empty($error)) {
 
     $token = $_POST['csrf_token'] ?? '';
     if (!verifyCSRF($token)) {
@@ -776,6 +776,7 @@ if (window.Swal && Swal.fire) {
 
   <form method="POST" enctype="multipart/form-data" style="padding:14px;">
     <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(generateCSRF()) ?>">
+    <input type="hidden" name="save_enquiry" value="1">
     <?php if ($leadId > 0): ?>
       <input type="hidden" name="lead_id" value="<?= (int)$leadId ?>">
     <?php endif; ?>
@@ -1096,7 +1097,7 @@ if (window.Swal && Swal.fire) {
       </div>
 
       <div class="wbtns">
-        <button type="button" class="wbtn primary" data-next="1"><i class="fas fa-arrow-left"></i> Back</button>
+        <button type="button" class="wbtn primary" data-next="2"><i class="fas fa-arrow-left"></i> Back</button>
         <button type="submit" name="save_enquiry" class="wbtn primary">Save Enquiry</button>
       </div>
     </div>
