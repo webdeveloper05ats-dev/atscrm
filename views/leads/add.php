@@ -52,6 +52,7 @@ try {
         FROM users u
         LEFT JOIN roles r ON r.id = u.role_id
         WHERE u.status = 1
+          AND LOWER(COALESCE(r.role_name, '')) IN ('front office', 'corporate', 'corporate executive', 'corporte excutive', 'marketing', 'hr')
         ORDER BY r.role_name ASC, u.name ASC
     ");
     $st->execute();
@@ -81,8 +82,18 @@ if(isset($_POST['save_lead']) && empty($error)){
         $assign = (int)($_POST['assigned_to'] ?? 0);
         $remarks= toNull($_POST['remarks'] ?? '');
 
-        if($name==='' || $phone===null || $email===null){
-    $error="Please fill Name, Phone and Email.";
+        if(
+            $name === '' ||
+            $phone === null ||
+            $email === null ||
+            $source === null ||
+            $course === null ||
+            $companyCollege === null ||
+            $department === null ||
+            $leadYear === null ||
+            $assign <= 0
+        ){
+    $error="Please fill all required fields.";
 }else{
 
             try{
@@ -227,21 +238,21 @@ value="<?= h($_POST['name'] ?? $lead['name'] ?? '') ?>">
 </div>
 
 <div class="form-group">
-<label>Phone *</label>
-<input type="number" name="phone" required
+<label>Phone <span style="color:red;">*</span></label>
+<input type="tel" name="phone" required maxlength="10" inputmode="numeric" pattern="[0-9]{10}" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,10)"
 placeholder="Example: 9876543210"
 value="<?= h($_POST['phone'] ?? $lead['phone'] ?? '') ?>">
 </div>
 
 <div class="form-group">
-<label>Email *</label>
+<label>Email <span style="color:red;">*</span></label>
 <input type="email" name="email" required
 placeholder="Example: john@gmail.com"
 value="<?= h($_POST['email'] ?? $lead['email'] ?? '') ?>">
 </div>
 
 <div class="form-group">
-<label>Lead Source</label>
+<label>Lead Source <span style="color:red;">*</span></label>
 <?php $selectedSource = (string)($_POST['source'] ?? $lead['source'] ?? ''); ?>
 <select name="source">
 <option value="">Select</option>
@@ -255,35 +266,35 @@ value="<?= h($_POST['email'] ?? $lead['email'] ?? '') ?>">
 </div>
 
 <div class="form-group">
-<label>Interest</label>
+<label>Interest <span style="color:red;">*</span></label>
 <input type="text" name="course_interest"
 placeholder="Example: Data Science"
 value="<?= h($_POST['course_interest'] ?? $lead['course_interest'] ?? '') ?>">
 </div>
 
 <div class="form-group">
-<label>Company / College Name</label>
+<label>Company / College Name <span style="color:red;">*</span></label>
 <input type="text" name="company_college_name"
 placeholder="Example: XYZ College"
 value="<?= h($_POST['company_college_name'] ?? $lead['company_college_name'] ?? '') ?>">
 </div>
 
 <div class="form-group">
-<label>Department</label>
+<label>Department <span style="color:red;">*</span></label>
 <input type="text" name="department"
 placeholder="Example: Computer Science"
 value="<?= h($_POST['department'] ?? $lead['department'] ?? '') ?>">
 </div>
 
 <div class="form-group">
-<label>Year</label>
+<label>Year <span style="color:red;">*</span></label>
 <input type="text" name="lead_year"
 placeholder="Ex: 2026 or Final Year"
 value="<?= h($_POST['lead_year'] ?? $lead['lead_year'] ?? '') ?>">
 </div>
 
 <div class="form-group">
-<label>Assign To</label>
+<label>Assign To <span style="color:red;">*</span></label>
 <select name="assigned_to">
 <option value="">Select Staff</option>
 
@@ -472,6 +483,12 @@ document.addEventListener("DOMContentLoaded", function(){
     const reqName = form.querySelector('[name="name"]');
     const reqPhone = form.querySelector('[name="phone"]');
     const reqEmail = form.querySelector('[name="email"]');
+    const reqSource = form.querySelector('[name="source"]');
+    const reqInterest = form.querySelector('[name="course_interest"]');
+    const reqCompanyCollege = form.querySelector('[name="company_college_name"]');
+    const reqDepartment = form.querySelector('[name="department"]');
+    const reqLeadYear = form.querySelector('[name="lead_year"]');
+    const reqAssignedTo = form.querySelector('[name="assigned_to"]');
     const showWarn = function(title, text){
         if(window.Swal && Swal.fire){
             Swal.fire({
@@ -490,10 +507,16 @@ document.addEventListener("DOMContentLoaded", function(){
         const nameOk = !!(reqName && reqName.value.trim()!=="");
         const phoneOk = !!(reqPhone && reqPhone.value.trim()!=="");
         const emailOk = !!(reqEmail && reqEmail.value.trim()!=="");
-        saveBtn.disabled = !(nameOk && phoneOk && emailOk);
+        const sourceOk = !!(reqSource && reqSource.value.trim()!=="");
+        const interestOk = !!(reqInterest && reqInterest.value.trim()!=="");
+        const companyCollegeOk = !!(reqCompanyCollege && reqCompanyCollege.value.trim()!=="");
+        const departmentOk = !!(reqDepartment && reqDepartment.value.trim()!=="");
+        const leadYearOk = !!(reqLeadYear && reqLeadYear.value.trim()!=="");
+        const assignedOk = !!(reqAssignedTo && reqAssignedTo.value.trim()!=="");
+        saveBtn.disabled = !(nameOk && phoneOk && emailOk && sourceOk && interestOk && companyCollegeOk && departmentOk && leadYearOk && assignedOk);
     };
 
-    [reqName, reqPhone, reqEmail].forEach(function(inp){
+    [reqName, reqPhone, reqEmail, reqSource, reqInterest, reqCompanyCollege, reqDepartment, reqLeadYear, reqAssignedTo].forEach(function(inp){
         if(inp){
             inp.addEventListener("input", syncSaveState);
             inp.addEventListener("change", syncSaveState);
@@ -506,6 +529,12 @@ document.addEventListener("DOMContentLoaded", function(){
         let name = form.querySelector('[name="name"]').value.trim();
         let phone = form.querySelector('[name="phone"]').value.trim();
         let email = form.querySelector('[name="email"]').value.trim();
+        let source = form.querySelector('[name="source"]').value.trim();
+        let interest = form.querySelector('[name="course_interest"]').value.trim();
+        let companyCollege = form.querySelector('[name="company_college_name"]').value.trim();
+        let department = form.querySelector('[name="department"]').value.trim();
+        let leadYear = form.querySelector('[name="lead_year"]').value.trim();
+        let assignedTo = form.querySelector('[name="assigned_to"]').value.trim();
 
         // Name check
         if(name === ""){
@@ -541,6 +570,42 @@ document.addEventListener("DOMContentLoaded", function(){
         if(!emailPattern.test(email)){
             e.preventDefault();
             showWarn('Invalid Email','Enter valid email address');
+            return;
+        }
+
+        if(source === ""){
+            e.preventDefault();
+            showWarn('Validation Error','Lead Source is required');
+            return;
+        }
+
+        if(interest === ""){
+            e.preventDefault();
+            showWarn('Validation Error','Interest is required');
+            return;
+        }
+
+        if(companyCollege === ""){
+            e.preventDefault();
+            showWarn('Validation Error','Company / College Name is required');
+            return;
+        }
+
+        if(department === ""){
+            e.preventDefault();
+            showWarn('Validation Error','Department is required');
+            return;
+        }
+
+        if(leadYear === ""){
+            e.preventDefault();
+            showWarn('Validation Error','Year is required');
+            return;
+        }
+
+        if(assignedTo === ""){
+            e.preventDefault();
+            showWarn('Validation Error','Assign To is required');
             return;
         }
 
