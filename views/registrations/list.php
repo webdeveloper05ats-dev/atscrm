@@ -1341,6 +1341,37 @@ function payStatusBadgeList($type)
 }
 
 @media (max-width: 768px){
+  .filter-form,
+  .filter-grid{
+    min-width:0;
+  }
+
+  .filter-grid{
+    display:grid !important;
+    grid-template-columns:1fr !important;
+    gap:12px !important;
+  }
+
+  .filter-item,
+  .filter-item.search,
+  .filter-item.date,
+  .filter-actions{
+    min-width:0 !important;
+    width:100% !important;
+  }
+
+  .filter-item input,
+  .filter-item select{
+    width:100% !important;
+    min-width:0 !important;
+  }
+
+  .filter-actions{
+    display:flex !important;
+    justify-content:flex-end !important;
+    gap:10px !important;
+  }
+
   .table-container{
     overflow-x:auto;
     -webkit-overflow-scrolling:touch;
