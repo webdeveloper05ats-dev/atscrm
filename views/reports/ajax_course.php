@@ -25,7 +25,8 @@ $params = [];
 $fullAccessRoles = [1, 3, 6]; // Super Admin, HR, Marketing
 
 if (!in_array($roleId, $fullAccessRoles)) {
-    $where .= " AND r.assigned_to = ?";
+    $where .= " AND (r.assigned_to = ? OR (COALESCE(r.source_type, '') = 'direct' AND r.created_by = ?))";
+    $params[] = $userId;
     $params[] = $userId;
 }
 
@@ -59,8 +60,10 @@ if (!empty($_POST['payment_status'])) {
 
 /* Staff Filter - Super Admin / HR only */
 if (in_array($roleId, [1, 3], true) && !empty($_POST['staff_id'])) {
-    $where .= " AND r.assigned_to = ?";
-    $params[] = (int)$_POST['staff_id'];
+    $staffId = (int)$_POST['staff_id'];
+    $where .= " AND (r.assigned_to = ? OR (COALESCE(r.source_type, '') = 'direct' AND r.created_by = ?))";
+    $params[] = $staffId;
+    $params[] = $staffId;
 }
 
 /* ===============================
