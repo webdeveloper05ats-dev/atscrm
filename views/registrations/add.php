@@ -33,6 +33,16 @@ function regDateOrNull($v){
     return $v === '' ? null : $v;
 }
 
+function regIsTenDigitPhone(?string $phone): bool {
+    if ($phone === null) return false;
+    return (bool)preg_match('/^\d{10}$/', trim($phone));
+}
+
+function regIsValidEmail(?string $email): bool {
+    if ($email === null) return false;
+    return (bool)filter_var(trim($email), FILTER_VALIDATE_EMAIL);
+}
+
 function registrationNoExists(PDO $pdo, string $registrationNo, int $excludeId = 0): bool {
     $st = $pdo->prepare("SELECT id FROM registrations WHERE registration_no = ? AND id <> ? LIMIT 1");
     $st->execute([$registrationNo, $excludeId]);
@@ -259,7 +269,7 @@ if (isset($_POST['save_registration'])) {
 
             $registration_no      = regToNull($_POST['registration_no'] ?? '');
             $joined_on            = regDateOrNull($_POST['joined_on'] ?? '');
-            $reg_type             = regToNull($_POST['reg_type'] ?? 'course') ?: 'course';
+            $reg_type             = regToNull($_POST['reg_type'] ?? '');
             $program_name         = regToNull($_POST['program_name'] ?? '');
             $batch_name           = regToNull($_POST['batch_name'] ?? '');
             $registration_status  = regToNull($_POST['registration_status'] ?? 'draft') ?: 'draft';
@@ -287,7 +297,7 @@ if (isset($_POST['save_registration'])) {
             $discount_amount      = regDec($_POST['discount_amount'] ?? 0);
             $final_fee            = regDec($_POST['final_fee'] ?? 0);
 
-            if (!in_array($reg_type, ['course','internship','workshop'], true)) {
+            if ($reg_type === null || !in_array($reg_type, ['course','internship','workshop'], true)) {
                 throw new Exception("Invalid registration type.");
             }
 
@@ -299,8 +309,52 @@ if (isset($_POST['save_registration'])) {
                 throw new Exception("Student name is required.");
             }
 
+            if (!regIsTenDigitPhone($phone)) {
+                throw new Exception("Student phone number must be exactly 10 digits.");
+            }
+
+            if (!regIsValidEmail($email)) {
+                throw new Exception("Please enter a valid student email address.");
+            }
+
+            if ($gender === null) {
+                throw new Exception("Please select gender.");
+            }
+
+            if ($dob === null) {
+                throw new Exception("Date of birth is required.");
+            }
+
+            if ($aadhaar_no === null || !preg_match('/^\d{12}$/', $aadhaar_no)) {
+                throw new Exception("Aadhaar number must be exactly 12 digits.");
+            }
+
+            if ($program_name === null) {
+                throw new Exception("Program name is required.");
+            }
+
+            if ($batch_name === null) {
+                throw new Exception("Batch name is required.");
+            }
+
+            if ($qualification === null) {
+                throw new Exception("Qualification is required.");
+            }
+
+            if ($college_name === null) {
+                throw new Exception("College/University is required.");
+            }
+
+            if ($year_of_passout === null || !preg_match('/^\d{4}$/', $year_of_passout)) {
+                throw new Exception("Year of passing must be a valid 4-digit year.");
+            }
+
             if ($assigned_to <= 0) {
                 throw new Exception("Please select Front Office owner.");
+            }
+
+            if ($total_fee <= 0) {
+                throw new Exception("Total fee is required.");
             }
 
             // Preserve old registration no while editing
@@ -582,7 +636,7 @@ if (isset($_POST['save_registration'])) {
 ========================================================= */
 $registration_no     = $registration['registration_no'] ?? makeRegistrationNo($pdo, (int)($registration['id'] ?? 0));
 $joined_on           = $registration['joined_on'] ?? date('Y-m-d');
-$reg_type            = $registration['reg_type'] ?? 'course';
+$reg_type            = $registration['reg_type'] ?? '';
 $program_name        = $registration['program_name'] ?? '';
 $batch_name          = $registration['batch_name'] ?? '';
 $registration_status = $registration['registration_status'] ?? 'draft';
@@ -1390,7 +1444,7 @@ body {
 /* Step pills like enquiries/add.php */
 .reg-steps-container{
   display:grid !important;
-  grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)) !important;
   gap:10px !important;
   flex-wrap:nowrap !important;
 }
@@ -1433,8 +1487,9 @@ body {
   font-size:12px !important;
   font-weight:700 !important;
   color:#374151 !important;
-  line-height:1.1 !important;
-  white-space:nowrap !important;
+  line-height:1.15 !important;
+  white-space:normal !important;
+  overflow-wrap:anywhere !important;
   margin:0 !important;
   text-align:left !important;
 }
@@ -1541,13 +1596,82 @@ body {
 }
 
 @media (max-width: 768px){
+  .reg-portal{
+    padding:12px !important;
+  }
+  .reg-header{
+    padding:16px !important;
+  }
+  .reg-header-left{
+    width:100% !important;
+    align-items:flex-start !important;
+  }
+  .reg-header-content h1{
+    font-size:18px !important;
+  }
+  .reg-header-content p{
+    font-size:12px !important;
+  }
+  .reg-header-badge{
+    width:100% !important;
+    justify-content:center !important;
+    text-align:center !important;
+    margin-top:10px !important;
+  }
+  .reg-main-header,
+  .reg-main-body,
+  .reg-progress,
+  .reg-section-content{
+    padding:14px !important;
+  }
   .reg-steps-container{
-    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)) !important;
+    gap:8px !important;
+  }
+  .reg-step-item{
+    padding:10px !important;
+    min-height:48px !important;
+  }
+  .reg-step-label{
+    font-size:11px !important;
+    white-space:normal !important;
+    word-break:break-word !important;
+    line-height:1.15 !important;
+  }
+  .reg-section-header{
+    padding:14px !important;
+    gap:10px !important;
+  }
+  .reg-section-title h4{
+    font-size:14px !important;
+  }
+  .reg-section-title p{
+    font-size:11px !important;
+  }
+  .reg-nav,
+  .reg-actions{
+    flex-direction:column !important;
+    gap:10px !important;
+  }
+  .reg-btn{
+    width:100% !important;
   }
 }
 @media (max-width: 520px){
   .reg-steps-container{
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+  .reg-step-item{
+    justify-content:flex-start !important;
+  }
+  .reg-step-circle{
+    width:26px !important;
+    height:26px !important;
+    min-width:26px !important;
+  }
+  .reg-main-card,
+  .reg-progress{
+    border-radius:14px !important;
   }
 }
 </style>
@@ -1742,8 +1866,9 @@ body {
                                         </div>
                                         
                                         <div class="reg-field">
-                                            <label class="reg-field-label">Registration Type</label>
-                                            <select class="reg-field-select" name="reg_type">
+                                            <label class="reg-field-label">Registration Type <span class="required">*</span></label>
+                                            <select class="reg-field-select" name="reg_type" id="reg_type" required>
+                                                <option value="">-- Select Registration Type --</option>
                                                 <option value="course" <?= $reg_type==='course'?'selected':''; ?>>Course</option>
                                                 <option value="internship" <?= $reg_type==='internship'?'selected':''; ?>>Internship</option>
                                                 <option value="workshop" <?= $reg_type==='workshop'?'selected':''; ?>>Workshop</option>
@@ -1801,7 +1926,7 @@ body {
                                         </div>
                                         
                                         <div class="reg-field">
-                                            <label class="reg-field-label">Gender</label>
+                                            <label class="reg-field-label">Gender <span class="required">*</span></label>
                                             <div class="reg-gender-group">
                                                 <label class="reg-gender-option">
                                                     <input type="radio" name="gender" value="male" <?= $gender==='male'?'checked':''; ?>>
@@ -1819,12 +1944,12 @@ body {
                                         </div>
                                         
                                         <div class="reg-field">
-                                            <label class="reg-field-label">Date of Birth</label>
-                                            <input class="reg-field-input" type="date" name="dob" value="<?= h($dob) ?>">
+                                            <label class="reg-field-label">Date of Birth <span class="required">*</span></label>
+                                            <input class="reg-field-input" type="date" name="dob" id="dob" value="<?= h($dob) ?>">
                                         </div>
                                         
                                         <div class="reg-field">
-                                            <label class="reg-field-label">Aadhaar Number</label>
+                                            <label class="reg-field-label">Aadhaar Number <span class="required">*</span></label>
                                             <input class="reg-field-input" type="text" name="aadhaar_no" value="<?= h($aadhaar_no) ?>" placeholder="12-digit Aadhaar number" maxlength="12" oninput="validateAadhaar(this)">
                                         </div>
                                         
@@ -1859,28 +1984,28 @@ body {
                                 <div class="reg-section-content">
                                     <div class="reg-form-grid">
                                         <div class="reg-field">
-                                            <label class="reg-field-label">Program Name</label>
-                                            <input class="reg-field-input capitalize-input" type="text" name="program_name" value="<?= h($program_name) ?>" placeholder="e.g., Full Stack Development" oninput="capitalizeFirstLetter(this)">
+                                            <label class="reg-field-label">Program Name <span class="required">*</span></label>
+                                            <input class="reg-field-input capitalize-input" type="text" name="program_name" id="program_name" value="<?= h($program_name) ?>" placeholder="e.g., Full Stack Development" oninput="capitalizeFirstLetter(this)">
                                         </div>
                                         
                                         <div class="reg-field">
-                                            <label class="reg-field-label">Batch Name</label>
-                                            <input class="reg-field-input" type="text" name="batch_name" value="<?= h($batch_name) ?>" placeholder="e.g., Batch 2024-A">
+                                            <label class="reg-field-label">Batch Name <span class="required">*</span></label>
+                                            <input class="reg-field-input" type="text" name="batch_name" id="batch_name" value="<?= h($batch_name) ?>" placeholder="e.g., Batch 2024-A">
                                         </div>
                                         
                                         <div class="reg-field">
-                                            <label class="reg-field-label">Qualification</label>
-                                            <input class="reg-field-input capitalize-input" type="text" name="qualification" value="<?= h($qualification) ?>" placeholder="e.g., B.Tech Computer Science" oninput="capitalizeFirstLetter(this)">
+                                            <label class="reg-field-label">Qualification <span class="required">*</span></label>
+                                            <input class="reg-field-input capitalize-input" type="text" name="qualification" id="qualification" value="<?= h($qualification) ?>" placeholder="e.g., B.Tech Computer Science" oninput="capitalizeFirstLetter(this)">
                                         </div>
                                         
                                         <div class="reg-field">
-                                            <label class="reg-field-label">College/University</label>
-                                            <input class="reg-field-input capitalize-input" type="text" name="college_name" value="<?= h($college_name) ?>" placeholder="Enter college name" oninput="capitalizeFirstLetter(this)">
+                                            <label class="reg-field-label">College/University <span class="required">*</span></label>
+                                            <input class="reg-field-input capitalize-input" type="text" name="college_name" id="college_name" value="<?= h($college_name) ?>" placeholder="Enter college name" oninput="capitalizeFirstLetter(this)">
                                         </div>
                                         
                                         <div class="reg-field">
-                                            <label class="reg-field-label">Year of Passing</label>
-                                            <input class="reg-field-input" type="text" name="year_of_passout" value="<?= h($year_of_passout) ?>" placeholder="e.g., 2024" maxlength="4" oninput="validateYear(this)">
+                                            <label class="reg-field-label">Year of Passing <span class="required">*</span></label>
+                                            <input class="reg-field-input" type="text" name="year_of_passout" id="year_of_passout" value="<?= h($year_of_passout) ?>" placeholder="e.g., 2024" maxlength="4" oninput="validateYear(this)">
                                         </div>
                                     </div>
                                 </div>
@@ -1890,7 +2015,7 @@ body {
                                 <button type="button" class="reg-btn reg-btn-outline" onclick="prevStep(2)">
                                     <i class="fas fa-arrow-left"></i> Previous
                                 </button>
-                                <button type="button" class="reg-btn reg-btn-primary" onclick="nextStep(4)">
+                                <button type="button" class="reg-btn reg-btn-primary" onclick="validateStep3()">
                                     Next <i class="fas fa-arrow-right"></i>
                                 </button>
                             </div>
@@ -1955,17 +2080,17 @@ body {
                                     <div class="reg-form-grid">
                                         <div class="reg-field">
                                             <label class="reg-field-label">Total Fee (₹)</label>
-                                            <input class="reg-field-input fee-calc" type="number" step="0.01" name="total_fee" value="<?= h($total_fee) ?>" placeholder="0.00">
+                                            <input class="reg-field-input fee-calc js-decimal-input" type="text" inputmode="decimal" name="total_fee" id="total_fee" value="<?= h($total_fee) ?>" placeholder="0.00">
                                         </div>
                                         
                                         <div class="reg-field">
                                             <label class="reg-field-label">Discount (₹)</label>
-                                            <input class="reg-field-input fee-calc" type="number" step="0.01" name="discount_amount" value="<?= h($discount_amount) ?>" placeholder="0.00">
+                                            <input class="reg-field-input fee-calc js-decimal-input" type="text" inputmode="decimal" name="discount_amount" value="<?= h($discount_amount) ?>" placeholder="0.00">
                                         </div>
                                         
                                         <div class="reg-field">
                                             <label class="reg-field-label">Final Fee (₹)</label>
-                                            <input class="reg-field-input" type="number" step="0.01" name="final_fee" id="final_fee" value="<?= h($final_fee) ?>" placeholder="0.00" readonly>
+                                            <input class="reg-field-input" type="text" inputmode="decimal" name="final_fee" id="final_fee" value="<?= h($final_fee) ?>" placeholder="0.00" readonly>
                                         </div>
                                     </div>
                                 </div>
@@ -1975,7 +2100,7 @@ body {
                                 <button type="button" class="reg-btn reg-btn-outline" onclick="prevStep(4)">
                                     <i class="fas fa-arrow-left"></i> Previous
                                 </button>
-                                <button type="button" class="reg-btn reg-btn-primary" onclick="nextStep(6)">
+                                <button type="button" class="reg-btn reg-btn-primary" onclick="validateStep5()">
                                     Next <i class="fas fa-arrow-right"></i>
                                 </button>
                             </div>
@@ -2082,7 +2207,17 @@ document.querySelectorAll('.reg-step-item').forEach(step => {
 // Validation Functions
 function validateAndNext(current, next) {
     if (current === 1) {
+        const regType = document.getElementById('reg_type')?.value || '';
         const assignedTo = document.getElementById('assigned_to').value;
+        if (!regType) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Required Field',
+                text: 'Please select registration type',
+                confirmButtonColor: '#e91e63'
+            });
+            return false;
+        }
         if (!assignedTo) {
             Swal.fire({
                 icon: 'warning',
@@ -2100,6 +2235,8 @@ function validateStep2() {
     const name = document.getElementById('student_name').value.trim();
     const phone = document.getElementById('phone').value.trim();
     const email = document.getElementById('email').value.trim();
+    const gender = document.querySelector('input[name="gender"]:checked')?.value || '';
+    const dob = document.getElementById('dob')?.value.trim() || '';
     const aadhaarInput = document.querySelector('input[name="aadhaar_no"]');
     const aadhaar = aadhaarInput ? aadhaarInput.value.trim() : '';
     
@@ -2154,8 +2291,37 @@ function validateStep2() {
         return false;
     }
 
-    // Aadhaar is optional, but if entered it must be exactly 12 digits.
-    if (aadhaar !== '' && !/^\d{12}$/.test(aadhaar)) {
+    if (!gender) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Required Field',
+            text: 'Please select gender',
+            confirmButtonColor: '#e91e63'
+        });
+        return false;
+    }
+
+    if (!dob) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Required Field',
+            text: 'Please select date of birth',
+            confirmButtonColor: '#e91e63'
+        });
+        return false;
+    }
+
+    if (!aadhaar) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Required Field',
+            text: 'Please enter Aadhaar number',
+            confirmButtonColor: '#e91e63'
+        });
+        return false;
+    }
+
+    if (!/^\d{12}$/.test(aadhaar)) {
         Swal.fire({
             icon: 'warning',
             title: 'Invalid Aadhaar',
@@ -2168,14 +2334,80 @@ function validateStep2() {
     nextStep(3);
 }
 
+function validateStep3() {
+    const programName = document.getElementById('program_name')?.value.trim() || '';
+    const batchName = document.getElementById('batch_name')?.value.trim() || '';
+    const qualification = document.getElementById('qualification')?.value.trim() || '';
+    const collegeName = document.getElementById('college_name')?.value.trim() || '';
+    const yearOfPassout = document.getElementById('year_of_passout')?.value.trim() || '';
+
+    if (!programName) {
+        Swal.fire({ icon:'warning', title:'Required Field', text:'Please enter program name', confirmButtonColor:'#e91e63' });
+        return false;
+    }
+    if (!batchName) {
+        Swal.fire({ icon:'warning', title:'Required Field', text:'Please enter batch name', confirmButtonColor:'#e91e63' });
+        return false;
+    }
+    if (!qualification) {
+        Swal.fire({ icon:'warning', title:'Required Field', text:'Please enter qualification', confirmButtonColor:'#e91e63' });
+        return false;
+    }
+    if (!collegeName) {
+        Swal.fire({ icon:'warning', title:'Required Field', text:'Please enter college or university name', confirmButtonColor:'#e91e63' });
+        return false;
+    }
+    if (!yearOfPassout) {
+        Swal.fire({ icon:'warning', title:'Required Field', text:'Please enter year of passing', confirmButtonColor:'#e91e63' });
+        return false;
+    }
+    if (!/^\d{4}$/.test(yearOfPassout)) {
+        Swal.fire({ icon:'warning', title:'Invalid Year', text:'Please enter a valid 4-digit year of passing', confirmButtonColor:'#e91e63' });
+        return false;
+    }
+
+    nextStep(4);
+}
+
+function validateStep5() {
+    const totalFee = document.getElementById('total_fee')?.value.trim() || '';
+
+    if (!totalFee) {
+        Swal.fire({ icon:'warning', title:'Required Field', text:'Please enter total fee', confirmButtonColor:'#e91e63' });
+        return false;
+    }
+
+    const totalFeeNumber = parseFloat(totalFee);
+    if (isNaN(totalFeeNumber) || totalFeeNumber <= 0) {
+        Swal.fire({ icon:'warning', title:'Invalid Fee', text:'Please enter a valid total fee amount', confirmButtonColor:'#e91e63' });
+        return false;
+    }
+
+    nextStep(6);
+}
+
 function validateCoreBeforeSubmit() {
+    const regType = document.getElementById('reg_type')?.value || '';
     const assignedTo = document.getElementById('assigned_to')?.value || '';
     const name = document.getElementById('student_name')?.value.trim() || '';
     const phone = document.getElementById('phone')?.value.trim() || '';
     const email = document.getElementById('email')?.value.trim() || '';
+    const gender = document.querySelector('input[name="gender"]:checked')?.value || '';
+    const dob = document.getElementById('dob')?.value.trim() || '';
     const aadhaarInput = document.querySelector('input[name="aadhaar_no"]');
     const aadhaar = aadhaarInput ? aadhaarInput.value.trim() : '';
+    const programName = document.getElementById('program_name')?.value.trim() || '';
+    const batchName = document.getElementById('batch_name')?.value.trim() || '';
+    const qualification = document.getElementById('qualification')?.value.trim() || '';
+    const collegeName = document.getElementById('college_name')?.value.trim() || '';
+    const yearOfPassout = document.getElementById('year_of_passout')?.value.trim() || '';
+    const totalFee = document.getElementById('total_fee')?.value.trim() || '';
 
+    if (!regType) {
+        Swal.fire({ icon:'warning', title:'Required Field', text:'Please select registration type', confirmButtonColor:'#e91e63' });
+        nextStep(1);
+        return false;
+    }
     if (!assignedTo) {
         Swal.fire({ icon:'warning', title:'Required Field', text:'Please select Front Office Owner', confirmButtonColor:'#e91e63' });
         nextStep(1);
@@ -2197,9 +2429,49 @@ function validateCoreBeforeSubmit() {
         nextStep(2);
         return false;
     }
-    if (aadhaar !== '' && !/^\d{12}$/.test(aadhaar)) {
+    if (!gender) {
+        Swal.fire({ icon:'warning', title:'Required Field', text:'Please select gender', confirmButtonColor:'#e91e63' });
+        nextStep(2);
+        return false;
+    }
+    if (!dob) {
+        Swal.fire({ icon:'warning', title:'Required Field', text:'Please select date of birth', confirmButtonColor:'#e91e63' });
+        nextStep(2);
+        return false;
+    }
+    if (!aadhaar || !/^\d{12}$/.test(aadhaar)) {
         Swal.fire({ icon:'warning', title:'Invalid Aadhaar', text:'Aadhaar number must be exactly 12 digits.', confirmButtonColor:'#e91e63' });
         nextStep(2);
+        return false;
+    }
+    if (!programName) {
+        Swal.fire({ icon:'warning', title:'Required Field', text:'Please enter program name', confirmButtonColor:'#e91e63' });
+        nextStep(3);
+        return false;
+    }
+    if (!batchName) {
+        Swal.fire({ icon:'warning', title:'Required Field', text:'Please enter batch name', confirmButtonColor:'#e91e63' });
+        nextStep(3);
+        return false;
+    }
+    if (!qualification) {
+        Swal.fire({ icon:'warning', title:'Required Field', text:'Please enter qualification', confirmButtonColor:'#e91e63' });
+        nextStep(3);
+        return false;
+    }
+    if (!collegeName) {
+        Swal.fire({ icon:'warning', title:'Required Field', text:'Please enter college or university name', confirmButtonColor:'#e91e63' });
+        nextStep(3);
+        return false;
+    }
+    if (!yearOfPassout || !/^\d{4}$/.test(yearOfPassout)) {
+        Swal.fire({ icon:'warning', title:'Invalid Year', text:'Please enter a valid 4-digit year of passing', confirmButtonColor:'#e91e63' });
+        nextStep(3);
+        return false;
+    }
+    if (!totalFee || isNaN(parseFloat(totalFee)) || parseFloat(totalFee) <= 0) {
+        Swal.fire({ icon:'warning', title:'Invalid Fee', text:'Please enter a valid total fee amount', confirmButtonColor:'#e91e63' });
+        nextStep(5);
         return false;
     }
     return true;
@@ -2225,6 +2497,15 @@ function capitalizeSentences(textarea) {
 // Validation Functions for Inputs
 function validatePhone(input) {
     input.value = input.value.replace(/[^0-9]/g, '').substring(0, 10);
+}
+
+function validateDecimalInput(input) {
+    let value = input.value.replace(/[^0-9.]/g, '');
+    const parts = value.split('.');
+    if (parts.length > 2) {
+        value = parts[0] + '.' + parts.slice(1).join('');
+    }
+    input.value = value;
 }
 
 function validateAadhaar(input) {
@@ -2271,6 +2552,22 @@ function validateEmail(input) {
         });
     }
 })();
+
+document.querySelectorAll('.js-decimal-input').forEach(function(input){
+    input.addEventListener('input', function(){
+        validateDecimalInput(this);
+    });
+    input.addEventListener('keydown', function(e){
+        if (['e', 'E', '+', '-'].includes(e.key)) {
+            e.preventDefault();
+        }
+    });
+});
+
+const totalFeeLabel = document.querySelector('input[name="total_fee"]')?.closest('.reg-field')?.querySelector('.reg-field-label');
+if (totalFeeLabel && !totalFeeLabel.querySelector('.required')) {
+    totalFeeLabel.insertAdjacentHTML('beforeend', ' <span class="required">*</span>');
+}
 
 // Form Submission
 function submitRegistrationForm(status) {
