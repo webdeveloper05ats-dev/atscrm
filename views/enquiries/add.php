@@ -50,8 +50,8 @@ if (!function_exists('joinCsv')) {
 if (!function_exists('isValidPhone')) {
     function isValidPhone(?string $phone): bool {
         if ($phone === null) return true;
-        $p = preg_replace('/\s+/', '', $phone);
-        return (bool)preg_match('/^\+?[0-9]{7,15}$/', $p);
+        $p = preg_replace('/\D+/', '', $phone);
+        return (bool)preg_match('/^\d{10}$/', $p);
     }
 }
 if (!function_exists('isValidEmail')) {
@@ -191,6 +191,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_enquiry']) && em
         $father_name       = toNull($_POST['father_name'] ?? '');
         $father_occupation = toNull($_POST['father_occupation'] ?? '');
         $father_contact_no = toNull($_POST['father_contact_no'] ?? '');
+        $parent_email      = toNull($_POST['parent_email'] ?? '');
 
         $technologies  = joinCsv($_POST['technologies'] ?? []);
         $interested_in = joinCsv($_POST['interested_in'] ?? []);
@@ -209,10 +210,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_enquiry']) && em
             $error = "Branch missing.";
         } elseif ($name === '') {
             $error = "Name is required.";
+        } elseif ($phone === null || $phone === '') {
+            $error = "Phone number is required.";
         } elseif (!isValidPhone($phone)) {
-            $error = "Invalid phone.";
+            $error = "Phone number must be exactly 10 digits.";
+        } elseif ($email === null || $email === '') {
+            $error = "Email is required.";
         } elseif (!isValidEmail($email)) {
             $error = "Invalid email.";
+        } elseif ($father_name === null || $father_name === '') {
+            $error = "Parent name is required.";
+        } elseif ($father_occupation === null || $father_occupation === '') {
+            $error = "Parent occupation is required.";
+        } elseif ($father_contact_no === null || $father_contact_no === '') {
+            $error = "Parent number is required.";
+        } elseif (!isValidPhone($father_contact_no)) {
+            $error = "Parent number must be exactly 10 digits.";
+        } elseif ($parent_email === null || $parent_email === '') {
+            $error = "Parent email is required.";
+        } elseif (!isValidEmail($parent_email)) {
+            $error = "Parent email is invalid.";
         }
 
         // ===============================
@@ -270,7 +287,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_enquiry']) && em
                         enquiry_date, enquiry_no,
                         branch_id, name, phone, email, dob, gender, profession, address, instagram_id, course_interest,
                         qualification, year_of_passout, college, percentage_marks, software_languages_known,
-                        father_name, father_occupation, father_contact_no,
+                        father_name, father_occupation, father_contact_no, parent_email,
                         technologies, interested_in, placements_required, know_about, know_about_other,
                         candidate_signature_path, counselor_signature_path,
                         status, handled_by, remarks,
@@ -279,7 +296,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_enquiry']) && em
                         :enquiry_date, :enquiry_no,
                         :branch_id, :name, :phone, :email, :dob, :gender, :profession, :address, :instagram_id, :course_interest,
                         :qualification, :year_of_passout, :college, :percentage_marks, :software_languages_known,
-                        :father_name, :father_occupation, :father_contact_no,
+                        :father_name, :father_occupation, :father_contact_no, :parent_email,
                         :technologies, :interested_in, :placements_required, :know_about, :know_about_other,
                         :candidate_signature_path, :counselor_signature_path,
                         :status, :handled_by, :remarks,
@@ -310,6 +327,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_enquiry']) && em
                     ':father_name'=>$father_name,
                     ':father_occupation'=>$father_occupation,
                     ':father_contact_no'=>$father_contact_no,
+                    ':parent_email'=>$parent_email,
 
                     ':technologies'=>$technologies,
                     ':interested_in'=>$interested_in,
@@ -495,6 +513,9 @@ select[multiple]:focus{
   border-color: rgba(233,30,99,.55);
   box-shadow: 0 0 0 4px rgba(233,30,99,.12);
 }
+input::placeholder, textarea::placeholder{
+  color:#9ca3af;
+}
 
 .multi-block{
   border:1px solid #f1d6e3;
@@ -625,21 +646,55 @@ select[multiple]:focus{
 }
 .step3-note b{ color:#be185d; }
 
-.toggle { display:flex; align-items:center; gap:10px; user-select:none; }
-.toggle input { display:none; }
-.toggle span {
-  width:46px; height:26px; border-radius:999px;
-  background:#e5e7eb; position:relative; display:inline-block;
-  transition:.2s;
+.placement-card{
+  border:1px solid #f1d6e3;
+  border-radius:14px;
+  background:linear-gradient(180deg,#fff 0%,#fff7fb 100%);
+  padding:12px;
 }
-.toggle span::after{
-  content:""; width:22px; height:22px; border-radius:50%;
-  background:#fff; position:absolute; top:2px; left:2px;
-  box-shadow:0 4px 10px rgba(0,0,0,.12);
-  transition:.2s;
+.placement-head{
+  margin-bottom:10px;
 }
-.toggle input:checked + span{ background: rgba(233,30,99,.55); }
-.toggle input:checked + span::after{ left:22px; }
+.placement-head b{
+  display:block;
+  color:#111827;
+}
+.placement-head small{
+  color:var(--text-light);
+}
+.placement-pill-group{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+}
+.placement-input{
+  position:absolute;
+  opacity:0;
+  pointer-events:none;
+}
+.placement-pill{
+  border:1px solid #f1d6e3;
+  border-radius:999px;
+  padding:9px 16px;
+  background:#fff;
+  color:#6b7280;
+  font-weight:800;
+  cursor:pointer;
+  transition:all .2s ease;
+  min-width:84px;
+  text-align:center;
+}
+.placement-pill:hover{
+  border-color:#e91e63;
+  color:#be185d;
+  background:#fff1f7;
+}
+.placement-pill.active{
+  border-color:#e91e63;
+  color:#be185d;
+  background:linear-gradient(135deg,#fff1f7,#ffe4f0);
+  box-shadow:0 0 0 3px rgba(233,30,99,.12);
+}
 
 .wbtns { display:flex; gap:10px; justify-content:flex-end; margin-top:14px; flex-wrap:wrap; }
 .wbtn { padding:10px 14px; border-radius:12px; border:1px solid #e5e7eb; background:#fff; cursor:pointer; }
@@ -842,18 +897,18 @@ if (window.Swal && Swal.fire) {
 
         <div class="form-group">
           <label>Name <span style="color:red;">*</span></label>
-          <input type="text" name="name" required value="<?= htmlspecialchars($_POST['name'] ?? $prefill['name']) ?>">
+          <input type="text" name="name" required value="<?= htmlspecialchars($_POST['name'] ?? $prefill['name']) ?>" placeholder="Enter full name, e.g. Rahul Kumar">
         </div>
 
         <div class="form-group">
-          <label>Phone<span style="color:red;">*</span></label>
-          <input type="text" name="phone" required value="<?= htmlspecialchars($_POST['phone'] ?? $prefill['phone']) ?>" placeholder="+919876543210">
-          <span class="hint">Digits only - example: +91XXXXXXXXXX</span>
+          <label>Phone Number <span style="color:red;">*</span></label>
+          <input type="tel" name="phone" class="js-phone-10" required maxlength="10" inputmode="numeric" pattern="[0-9]{10}" value="<?= htmlspecialchars($_POST['phone'] ?? $prefill['phone']) ?>" placeholder="Enter 10-digit phone number">
+          <span class="hint">Digits only. Example: 9876543210</span>
         </div>
 
         <div class="form-group">
-          <label>Email<span style="color:red;">*</span></label>
-          <input type="email" name="email" required value="<?= htmlspecialchars($_POST['email'] ?? $prefill['email']) ?>" placeholder="name@company.com">
+          <label>Email <span style="color:red;">*</span></label>
+          <input type="email" name="email" required value="<?= htmlspecialchars($_POST['email'] ?? $prefill['email']) ?>" placeholder="Enter email, e.g. student@gmail.com">
         </div>
 
         <div class="form-group">
@@ -882,22 +937,22 @@ if (window.Swal && Swal.fire) {
 
         <div class="form-group">
           <label>Profession</label>
-          <input type="text" name="profession" value="<?= htmlspecialchars($_POST['profession'] ?? '') ?>">
+          <input type="text" name="profession" value="<?= htmlspecialchars($_POST['profession'] ?? '') ?>" placeholder="Enter student profession, e.g. Student">
         </div>
 
         <div class="form-group">
           <label>Address</label>
-          <textarea name="address" rows="2"><?= htmlspecialchars($_POST['address'] ?? '') ?></textarea>
+          <textarea name="address" rows="2" placeholder="Enter full address"><?= htmlspecialchars($_POST['address'] ?? '') ?></textarea>
         </div>
 
         <div class="form-group">
           <label>Instagram ID</label>
-          <input type="text" name="instagram_id" value="<?= htmlspecialchars($_POST['instagram_id'] ?? '') ?>">
+          <input type="text" name="instagram_id" value="<?= htmlspecialchars($_POST['instagram_id'] ?? '') ?>" placeholder="Enter Instagram ID, e.g. ats_student">
         </div>
 
         <div class="form-group">
           <label>Course Interest</label>
-          <input type="text" name="course_interest" value="<?= htmlspecialchars($_POST['course_interest'] ?? $prefill['course_interest']) ?>">
+          <input type="text" name="course_interest" value="<?= htmlspecialchars($_POST['course_interest'] ?? $prefill['course_interest']) ?>" placeholder="Enter interested course, e.g. Full Stack Development">
         </div>
       </div>
 
@@ -911,55 +966,61 @@ if (window.Swal && Swal.fire) {
       <div class="form-grid">
         <div class="form-group">
           <label>Qualification</label>
-          <input type="text" name="qualification" value="<?= htmlspecialchars($_POST['qualification'] ?? '') ?>">
+          <input type="text" name="qualification" value="<?= htmlspecialchars($_POST['qualification'] ?? '') ?>" placeholder="Enter qualification, e.g. BCA">
         </div>
 
         <div class="form-group">
           <label>Year of Passout</label>
-          <input type="number" name="year_of_passout" min="1990" max="2100" value="<?= htmlspecialchars($_POST['year_of_passout'] ?? '') ?>">
+          <input type="number" name="year_of_passout" min="1990" max="2100" value="<?= htmlspecialchars($_POST['year_of_passout'] ?? '') ?>" placeholder="Enter passout year, e.g. 2025">
         </div>
 
         <div class="form-group">
           <label>% Marks</label>
-          <input type="text" name="percentage_marks" value="<?= htmlspecialchars($_POST['percentage_marks'] ?? '') ?>">
+          <input type="text" name="percentage_marks" value="<?= htmlspecialchars($_POST['percentage_marks'] ?? '') ?>" placeholder="Enter marks percentage, e.g. 78.5">
         </div>
 
         <div class="form-group">
           <label>College</label>
-          <input type="text" name="college" value="<?= htmlspecialchars($_POST['college'] ?? '') ?>">
+          <input type="text" name="college" value="<?= htmlspecialchars($_POST['college'] ?? '') ?>" placeholder="Enter college or institution name">
         </div>
 
         <div class="form-group">
-          <label class="toggle">
-            <input type="checkbox" name="placements_required" value="1" <?= isset($_POST['placements_required'])?'checked':''; ?>>
-            <span></span>
-            <div><b>Placements Required?</b><br><small style="color:var(--text-light);">Enable if needed</small></div>
-          </label>
+          <div class="placement-card">
+            <div class="placement-head">
+              <b>Placements Required?</b>
+              <small>Select whether placement support is needed</small>
+            </div>
+            <input class="placement-input" type="checkbox" name="placements_required" value="1" <?= isset($_POST['placements_required'])?'checked':''; ?>>
+            <div class="placement-pill-group" data-placement-group>
+              <button type="button" class="placement-pill <?= isset($_POST['placements_required']) ? 'active' : '' ?>" data-placement-value="yes">Yes</button>
+              <button type="button" class="placement-pill <?= !isset($_POST['placements_required']) ? 'active' : '' ?>" data-placement-value="no">No</button>
+            </div>
+          </div>
         </div>
 
         <div class="form-group">
           <label>Software Languages Known</label>
-          <textarea name="software_languages_known" rows="2"><?= htmlspecialchars($_POST['software_languages_known'] ?? '') ?></textarea>
+          <textarea name="software_languages_known" rows="2" placeholder="Example: C, C++, Java, Python"><?= htmlspecialchars($_POST['software_languages_known'] ?? '') ?></textarea>
         </div>
 
         <div class="form-group">
-          <label>Father Name</label>
-          <input type="text" name="father_name" value="<?= htmlspecialchars($_POST['father_name'] ?? '') ?>">
+          <label>Parent Name <span style="color:red;">*</span></label>
+          <input type="text" name="father_name" value="<?= htmlspecialchars($_POST['father_name'] ?? '') ?>" placeholder="Enter parent name, e.g. Suresh Kumar">
         </div>
 
         <div class="form-group">
-          <label>Father Occupation</label>
-          <input type="text" name="father_occupation" value="<?= htmlspecialchars($_POST['father_occupation'] ?? '') ?>">
+          <label>Parent Occupation <span style="color:red;">*</span></label>
+          <input type="text" name="father_occupation" value="<?= htmlspecialchars($_POST['father_occupation'] ?? '') ?>" placeholder="Enter occupation, e.g. Business">
         </div>
 
         <div class="form-group">
-          <label>Father Contact No</label>
-          <input type="text" name="father_contact_no" value="<?= htmlspecialchars($_POST['father_contact_no'] ?? '') ?>">
+          <label>Parent Number <span style="color:red;">*</span></label>
+          <input type="tel" name="father_contact_no" class="js-phone-10" maxlength="10" inputmode="numeric" pattern="[0-9]{10}" value="<?= htmlspecialchars($_POST['father_contact_no'] ?? '') ?>" placeholder="Enter 10-digit parent number">
         </div>
 
         <div class="form-group">
-          <label>&nbsp;</label>
-          <div></div>
+          <label>Parent Email ID <span style="color:red;">*</span></label>
+          <input type="email" name="parent_email" value="<?= htmlspecialchars($_POST['parent_email'] ?? '') ?>" placeholder="Enter parent email, e.g. parent@gmail.com">
         </div>
       </div>
 
@@ -1056,7 +1117,7 @@ if (window.Swal && Swal.fire) {
 
         <div class="form-group full">
           <label>Other Source</label>
-          <input type="text" name="know_about_other" value="<?= htmlspecialchars($_POST['know_about_other'] ?? $prefill['know_about_other']) ?>">
+          <input type="text" name="know_about_other" value="<?= htmlspecialchars($_POST['know_about_other'] ?? $prefill['know_about_other']) ?>" placeholder="Type other source if selected above">
         </div>
 
         <div class="form-group">
@@ -1091,7 +1152,7 @@ if (window.Swal && Swal.fire) {
 
         <div class="form-group full">
           <label>Remarks</label>
-          <textarea name="remarks" rows="4"><?= htmlspecialchars($_POST['remarks'] ?? '') ?></textarea>
+          <textarea name="remarks" rows="4" placeholder="Optional note about this enquiry"><?= htmlspecialchars($_POST['remarks'] ?? '') ?></textarea>
         </div>
 
       </div>
@@ -1129,8 +1190,8 @@ document.addEventListener("DOMContentLoaded", function(){
   function clean(v){ return (v || '').toString().trim(); }
 
   function isValidPhone(phone){
-    phone = clean(phone).replace(/\s+/g,'');
-    return /^\+?[0-9]{7,15}$/.test(phone);
+    phone = clean(phone).replace(/\D+/g,'');
+    return /^\d{10}$/.test(phone);
   }
 
   function isValidEmail(email){
@@ -1166,6 +1227,10 @@ document.addEventListener("DOMContentLoaded", function(){
     name_required: true,
     phone_required: true,
     email_required: true,
+    parent_name_required: true,
+    parent_occupation_required: true,
+    parent_phone_required: true,
+    parent_email_required: true,
     qualification_required: false,
     year_required: false,
     marks_required: false,
@@ -1212,9 +1277,16 @@ document.addEventListener("DOMContentLoaded", function(){
     const qualification = getVal('qualification');
     const year = getVal('year_of_passout');
     const marks = getVal('percentage_marks');
+    const parentName = getVal('father_name');
+    const parentOccupation = getVal('father_occupation');
     const fatherPhone = getVal('father_contact_no');
+    const parentEmail = getVal('parent_email');
 
     if (scope === 'all' || scope === '2'){
+      if (rules.parent_name_required && !parentName) errors.push("Parent name is required.");
+      if (rules.parent_occupation_required && !parentOccupation) errors.push("Parent occupation is required.");
+      if (rules.parent_phone_required && !fatherPhone) errors.push("Parent number is required.");
+      if (rules.parent_email_required && !parentEmail) errors.push("Parent email is required.");
       if (rules.qualification_required && !qualification) errors.push("Qualification is required.");
       if (rules.year_required && !year) errors.push("Year of passout is required.");
       if (year){
@@ -1226,7 +1298,8 @@ document.addEventListener("DOMContentLoaded", function(){
         const m = parseFloat(marks);
         if (isNaN(m) || m < 0 || m > 100) errors.push("Percentage marks must be between 0 and 100.");
       }
-      if (fatherPhone && !isValidPhone(fatherPhone)) errors.push("Father contact number format invalid.");
+      if (fatherPhone && !isValidPhone(fatherPhone)) errors.push("Parent number must be exactly 10 digits.");
+      if (parentEmail && !isValidEmail(parentEmail)) errors.push("Parent email format invalid (example: parent@gmail.com).");
     }
 
     const technologies = getMulti('technologies');
@@ -1312,6 +1385,36 @@ document.addEventListener("DOMContentLoaded", function(){
   });
 
   const form = document.querySelector('form');
+  document.querySelectorAll('[data-placement-group]').forEach(function(group){
+    const hiddenInput = group.parentElement.querySelector('.placement-input');
+    const yesBtn = group.querySelector('[data-placement-value="yes"]');
+    const noBtn = group.querySelector('[data-placement-value="no"]');
+
+    function syncPlacementUI(isChecked){
+      if (hiddenInput) hiddenInput.checked = !!isChecked;
+      if (yesBtn) yesBtn.classList.toggle('active', !!isChecked);
+      if (noBtn) noBtn.classList.toggle('active', !isChecked);
+    }
+
+    if (yesBtn){
+      yesBtn.addEventListener('click', function(){
+        syncPlacementUI(true);
+      });
+    }
+    if (noBtn){
+      noBtn.addEventListener('click', function(){
+        syncPlacementUI(false);
+      });
+    }
+
+    syncPlacementUI(hiddenInput && hiddenInput.checked);
+  });
+
+  document.querySelectorAll('.js-phone-10').forEach(function(input){
+    input.addEventListener('input', function(){
+      this.value = this.value.replace(/\D+/g, '').slice(0, 10);
+    });
+  });
   if (form){
     form.addEventListener('submit', function(e){
       const errors = validateAll();
