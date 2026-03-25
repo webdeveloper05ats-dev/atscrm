@@ -143,7 +143,10 @@ ADD PAYMENT
 
 </div>
 
-<form method="post" action="index.php?page=payments/store_payment">
+<form method="post" action="index.php?page=payments/index">
+
+<input type="hidden" name="csrf_token" value="<?= htmlspecialchars(generateCSRF(), ENT_QUOTES, 'UTF-8') ?>">
+<input type="hidden" name="save_payment" value="1">
 
 <input type="hidden" name="registration_id" value="<?= $regId ?>">
 
