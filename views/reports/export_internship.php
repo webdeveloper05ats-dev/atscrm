@@ -26,6 +26,7 @@ echo "\xEF\xBB\xBF";
 
 $roleId = (int)($_SESSION['role_id'] ?? 0);
 $userId = (int)($_SESSION['user_id'] ?? 0);
+$roleName = trim((string) ($_SESSION['role_name'] ?? ''));
 
 /* ===============================
    FILTERS
@@ -71,8 +72,13 @@ $params = [];
 /* Match the report page access behavior */
 $fullAccessRoles = [1, 3, 6]; // Super Admin, HR, Marketing
 if (!in_array($roleId, $fullAccessRoles, true)) {
-    $where[] = "r.assigned_to = ?";
-    $params[] = $userId;
+    if ($roleName === 'Staff') {
+        $where[] = "ri.guide_staff_id = ?";
+        $params[] = $userId;
+    } else {
+        $where[] = "r.assigned_to = ?";
+        $params[] = $userId;
+    }
 }
 
 /* Filters */
@@ -98,7 +104,7 @@ if ($status!='') {
 }
 
 if (in_array($roleId,[1,3], true) && $staffId > 0) {
-    $where[] = "r.assigned_to = ?";
+    $where[] = "ri.guide_staff_id = ?";
     $params[] = $staffId;
 }
 
@@ -119,21 +125,22 @@ r.program_name,
 r.batch_name,
 r.joined_on,
 r.assigned_to,
-r.internship_days,
-r.internship_start_date,
-r.internship_end_date,
-r.internship_completion_status,
-r.internship_certificate_status,
-r.internship_certificate_issued_at,
-r.internship_report_status,
-r.internship_report_issued_at,
+ri.internship_days,
+ri.internship_start_date,
+ri.internship_end_date,
+ri.completion_status AS internship_completion_status,
+ri.certificate_status AS internship_certificate_status,
+ri.certificate_issued_at AS internship_certificate_issued_at,
+ri.report_status AS internship_report_status,
+ri.report_issued_at AS internship_report_issued_at,
 r.total_fee,
 r.paid_amount,
 r.balance_amount,
  r.payment_status,
  COALESCE(u.name, '-') AS assigned_staff_name
 FROM registrations r
-LEFT JOIN users u ON u.id = r.assigned_to
+LEFT JOIN registration_internships ri ON ri.registration_id = r.id
+LEFT JOIN users u ON u.id = ri.guide_staff_id
 $whereSql
 ORDER BY r.created_at DESC
 ";

@@ -12,6 +12,7 @@ header('Content-Type: application/json');
 =============================== */
 $roleId = (int)($_SESSION['role_id'] ?? 0);
 $userId = (int)($_SESSION['user_id'] ?? 0);
+$roleName = trim((string) ($_SESSION['role_name'] ?? ''));
 
 /* ===============================
    BASE WHERE
@@ -25,9 +26,14 @@ $params = [];
 $fullAccessRoles = [1, 3, 6]; // Super Admin, HR, Marketing
 
 if (!in_array($roleId, $fullAccessRoles)) {
-    $where .= " AND (r.assigned_to = ? OR (COALESCE(r.source_type, '') = 'direct' AND r.created_by = ?))";
-    $params[] = $userId;
-    $params[] = $userId;
+    if ($roleName === 'Staff') {
+        $where .= " AND rc.guide_staff_id = ?";
+        $params[] = $userId;
+    } else {
+        $where .= " AND (r.assigned_to = ? OR (COALESCE(r.source_type, '') = 'direct' AND r.created_by = ?))";
+        $params[] = $userId;
+        $params[] = $userId;
+    }
 }
 
 /* ===============================
@@ -61,8 +67,7 @@ if (!empty($_POST['payment_status'])) {
 /* Staff Filter - Super Admin / HR only */
 if (in_array($roleId, [1, 3], true) && !empty($_POST['staff_id'])) {
     $staffId = (int)$_POST['staff_id'];
-    $where .= " AND (r.assigned_to = ? OR (COALESCE(r.source_type, '') = 'direct' AND r.created_by = ?))";
-    $params[] = $staffId;
+    $where .= " AND rc.guide_staff_id = ?";
     $params[] = $staffId;
 }
 
@@ -83,6 +88,7 @@ SELECT
     r.balance_amount,
     r.payment_status
 FROM registrations r
+LEFT JOIN registration_courses rc ON rc.registration_id = r.id
 $where
 ORDER BY r.created_at DESC
 ";

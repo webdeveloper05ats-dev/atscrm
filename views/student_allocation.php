@@ -50,7 +50,7 @@ $offset = ($page - 1) * $perPage;
 $where = [];
 $params = [];
 
-$where[] = "r.assigned_to = ?";
+$where[] = "rc.guide_staff_id = ?";
 $params[] = $userId;
 
 $where[] = "r.reg_type = 'course'";
@@ -79,7 +79,7 @@ $whereSql = "WHERE " . implode(" AND ", $where);
 /* Count */
 $totalRows = 0;
 try {
-    $st = $pdo->prepare("SELECT COUNT(*) FROM registrations r {$whereSql}");
+    $st = $pdo->prepare("SELECT COUNT(*) FROM registrations r INNER JOIN registration_courses rc ON rc.registration_id = r.id {$whereSql}");
     $st->execute($params);
     $totalRows = (int)$st->fetchColumn();
 } catch (Exception $e) {}
@@ -104,6 +104,7 @@ try {
             r.registration_status,
             r.payment_status
         FROM registrations r
+        INNER JOIN registration_courses rc ON rc.registration_id = r.id
         {$whereSql}
         ORDER BY r.id DESC
         LIMIT {$perPage} OFFSET {$offset}

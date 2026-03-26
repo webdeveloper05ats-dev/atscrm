@@ -59,6 +59,7 @@ if (!function_exists('courseStreamSpreadsheet')) {
 
 $roleId = (int)($_SESSION['role_id'] ?? 0);
 $userId = (int)($_SESSION['user_id'] ?? 0);
+$roleName = trim((string) ($_SESSION['role_name'] ?? ''));
 
 $date_from = $_GET['date_from'] ?? '';
 $date_to   = $_GET['date_to'] ?? '';
@@ -89,8 +90,13 @@ $params = [];
 
 $fullAccessRoles = [1, 3, 6]; // Super Admin, HR, Marketing
 if (!in_array($roleId, $fullAccessRoles, true)) {
-    $where[] = "r.assigned_to = ?";
-    $params[] = $userId;
+    if ($roleName === 'Staff') {
+        $where[] = "rc.guide_staff_id = ?";
+        $params[] = $userId;
+    } else {
+        $where[] = "r.assigned_to = ?";
+        $params[] = $userId;
+    }
 }
 
 if ($date_from !== '') {
@@ -114,7 +120,7 @@ if ($status !== '') {
 }
 
 if (in_array($roleId, [1, 3], true) && $staffId > 0) {
-    $where[] = "r.assigned_to = ?";
+    $where[] = "rc.guide_staff_id = ?";
     $params[] = $staffId;
 }
 
@@ -150,7 +156,8 @@ SELECT
     shi.interview_date AS hr_interview_date,
     shi.interview_status AS hr_interview_status
 FROM registrations r
-LEFT JOIN users u ON u.id = r.assigned_to
+LEFT JOIN registration_courses rc ON rc.registration_id = r.id
+LEFT JOIN users u ON u.id = rc.guide_staff_id
 LEFT JOIN (
     SELECT
         registration_id,

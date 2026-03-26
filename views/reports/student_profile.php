@@ -18,9 +18,22 @@ if ($id <= 0) {
 ========================= */
 
 $stmt = $pdo->prepare("
-SELECT *
-FROM registrations
-WHERE id=?
+SELECT
+    r.*,
+    ri.guide_staff_id AS internship_guide_staff_id,
+    ri.internship_days,
+    ri.internship_batch,
+    ri.internship_start_date,
+    ri.internship_end_date,
+    ri.completion_status AS internship_completion_status,
+    ri.certificate_status AS internship_certificate_status,
+    ri.certificate_issued_at AS internship_certificate_issued_at,
+    ri.report_status AS internship_report_status,
+    ri.report_issued_at AS internship_report_issued_at,
+    ri.report_due_days AS internship_report_due_days
+FROM registrations r
+LEFT JOIN registration_internships ri ON ri.registration_id = r.id
+WHERE r.id=?
 LIMIT 1
 ");
 

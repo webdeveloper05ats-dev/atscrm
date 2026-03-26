@@ -26,7 +26,7 @@ $where = [
 ];
 
 if (($_SESSION['role_name'] ?? '') === 'Staff') {
-    $where[] = "r.assigned_to = ?";
+    $where[] = "rc.guide_staff_id = ?";
     $params[] = $userId;
 }
 
@@ -44,6 +44,7 @@ if ($q !== '') {
 $st = $pdo->prepare("
     SELECT r.id, r.registration_no, r.enquiry_snapshot_name, r.program_name, r.batch_name
     FROM registrations r
+    LEFT JOIN registration_courses rc ON rc.registration_id = r.id
     WHERE " . implode(' AND ', $where) . "
     ORDER BY r.enquiry_snapshot_name ASC, r.id DESC
 ");
