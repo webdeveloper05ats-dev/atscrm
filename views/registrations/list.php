@@ -1341,6 +1341,23 @@ function payStatusBadgeList($type)
 }
 
 @media (max-width: 768px){
+  .leads-dashboard{
+    padding:8px;
+  }
+
+  .dashboard-header{
+    align-items:stretch;
+  }
+
+  .header-stats{
+    width:100%;
+    border-radius:14px;
+  }
+
+  .card-header{
+    padding:10px;
+  }
+
   .filter-form,
   .filter-grid{
     min-width:0;
@@ -1368,21 +1385,47 @@ function payStatusBadgeList($type)
 
   .filter-actions{
     display:flex !important;
-    justify-content:flex-end !important;
+    justify-content:stretch !important;
     gap:10px !important;
+    flex-wrap:wrap !important;
+  }
+
+  .filter-actions .btn-icon-only{
+    flex:1 1 calc(50% - 5px);
+    width:auto !important;
+    min-width:0;
+    height:42px;
+    border-radius:10px;
   }
 
   .table-container{
     overflow-x:auto;
     -webkit-overflow-scrolling:touch;
+    padding:8px;
+  }
+
+  .leads-table{
+    min-width:860px;
+    font-size:0.82rem;
+  }
+
+  .leads-table th,
+  .leads-table td{
+    padding:8px;
   }
 
   .action-buttons{
     flex-wrap:wrap;
   }
 
+  .table-header-flex{
+    flex-direction:column;
+    align-items:stretch;
+  }
+
   #datatableControls,
   #datatableFooter{
+    width:100%;
     justify-content:flex-start;
     margin-left:0;
     padding-left:0;
@@ -1396,12 +1439,44 @@ function payStatusBadgeList($type)
 
   #datatableControls .dt-top,
   #datatableFooter .dt-bottom{
+    flex-direction:column;
+    align-items:stretch;
     justify-content:flex-start;
+    gap:10px;
   }
 
+  #datatableControls .dataTables_length,
   #datatableControls .dataTables_filter,
+  #datatableFooter .dataTables_info,
   #datatableFooter .dataTables_paginate{
     margin-left:0 !important;
+    width:100%;
+  }
+
+  #datatableControls .dataTables_length label,
+  #datatableControls .dataTables_filter label{
+    display:flex;
+    flex-direction:column;
+    align-items:stretch;
+    gap:6px;
+    width:100%;
+  }
+
+  #datatableControls .dataTables_filter input,
+  #datatableControls .dataTables_length select{
+    width:100%;
+    min-width:0;
+  }
+
+  #datatableFooter .dt-bottom{
+    text-align:center;
+  }
+
+  #datatableFooter .dataTables_paginate{
+    display:flex;
+    justify-content:center;
+    flex-wrap:wrap;
+    gap:6px;
   }
 }
 </style>
