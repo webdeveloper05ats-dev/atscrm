@@ -349,6 +349,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_enquiry']) && em
 
                 $newEnquiryId = $pdo->lastInsertId();
 
+                if ($leadId > 0) {
+                    $leadUpd = $pdo->prepare("
+                        UPDATE leads
+                        SET
+                            status='converted',
+                            updated_by=?,
+                            updated_at=NOW()
+                        WHERE id=?
+                    ");
+                    $leadUpd->execute([$userId, $leadId]);
+                }
+
                 $pdo->commit();
 
                 $success = "Enquiry saved successfully!";
