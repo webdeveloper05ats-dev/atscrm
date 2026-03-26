@@ -78,6 +78,7 @@ SELECT u.id,u.name,r.role_name
 FROM users u
 LEFT JOIN roles r ON r.id=u.role_id
 WHERE u.status=1
+  AND LOWER(COALESCE(r.role_name, '')) IN ('front office', 'hr', 'marketing', 'corporate', 'corporate executive', 'corporte excutive')
 ORDER BY r.role_name,u.name
 ");
 $staff=$st->fetchAll(PDO::FETCH_ASSOC);
