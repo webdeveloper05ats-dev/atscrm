@@ -1,3 +1,4 @@
+<link rel="stylesheet" href="<?= BASE_URL ?>assets/css/lead.css">
 <?php
 // =====================================
 // Students - Internship Management
@@ -160,11 +161,7 @@ $upd->execute([
 $q = trim($_GET['q'] ?? '');
 $paymentStatus = trim($_GET['payment_status'] ?? '');
 
-$page = (int) ($_GET['p'] ?? 1);
-if ($page < 1)
-    $page = 1;
 $perPage = 12;
-$offset = ($page - 1) * $perPage;
 
 $where = [
     "r.reg_type = 'internship'",
@@ -203,12 +200,6 @@ try {
 } catch (Exception $e) {
 }
 
-$totalPages = (int) ceil($totalRows / $perPage);
-if ($totalPages < 1)
-    $totalPages = 1;
-if ($page > $totalPages)
-    $page = $totalPages;
-
 $rows = [];
 try {
     $sql = "
@@ -239,17 +230,15 @@ try {
     FROM registrations r
     $whereSql
     ORDER BY r.id DESC
-    LIMIT $perPage OFFSET $offset
 ";
     $st = $pdo->prepare($sql);
     $st->execute($params);
     $rows = $st->fetchAll(PDO::FETCH_ASSOC);
+    $totalRows = count($rows);
 } catch (Exception $e) {
+    $rows = [];
+    $totalRows = 0;
 }
-
-$baseUrl = "index.php?page=students/internships"
-    . "&q=" . urlencode($q)
-    . "&payment_status=" . urlencode($paymentStatus);
 
 function payBadgeIntern($status)
 {
@@ -264,6 +253,65 @@ function payBadgeIntern($status)
 ?>
 
 <style>
+    .dashboard-header .header-stats{
+        display:flex;
+        align-items:center;
+        justify-content:flex-end;
+        gap:10px;
+        flex-wrap:wrap;
+    }
+
+    .dashboard-header .header-stats .stat-item{
+        display:inline-flex;
+        align-items:center;
+        gap:8px;
+        white-space:nowrap;
+    }
+
+    .filter-form input[type="text"],
+    .filter-form select,
+    .intern-modal-grid input,
+    .intern-modal-grid select{
+        appearance: none;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        background-color: #fff;
+        background-image:
+            linear-gradient(45deg, transparent 50%, #9f1239 50%),
+            linear-gradient(135deg, #9f1239 50%, transparent 50%),
+            linear-gradient(to right, #f8d7e5, #f8d7e5);
+        background-position:
+            calc(100% - 18px) calc(50% - 3px),
+            calc(100% - 12px) calc(50% - 3px),
+            calc(100% - 40px) 50%;
+        background-size: 6px 6px, 6px 6px, 1px 24px;
+        background-repeat: no-repeat;
+        border: 1px solid #f3bfd4;
+        border-radius: 14px;
+        min-height: 44px;
+        padding: 10px 44px 10px 14px;
+        font-size: 13px;
+        font-weight: 600;
+        color: #374151;
+        box-shadow: 0 6px 18px rgba(233, 30, 99, 0.04);
+        transition: all .18s ease;
+    }
+
+    .filter-form input[type="text"],
+    .intern-modal-grid input{
+        background-image:none;
+        padding-right:14px;
+    }
+
+    .filter-form input[type="text"]:focus,
+    .filter-form select:focus,
+    .intern-modal-grid input:focus,
+    .intern-modal-grid select:focus{
+        border-color:#e91e63;
+        box-shadow:0 0 0 4px rgba(233,30,99,.12);
+        outline:none;
+    }
+
     .intern-filter-row {
         display: grid;
         grid-template-columns: 2fr 1fr auto;
@@ -273,6 +321,87 @@ function payBadgeIntern($status)
 
     .intern-table thead th {
         white-space: nowrap;
+    }
+
+    .table-header-flex{
+        width:100%;
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        gap:12px;
+        flex-wrap:wrap;
+    }
+
+    .table-title{
+        display:inline-flex;
+        align-items:center;
+        gap:8px;
+        font-weight:700;
+    }
+
+    #datatableControls,
+    #datatableFooter{
+        display:flex;
+        align-items:center;
+    }
+
+    #datatableControls{
+        justify-content:flex-end;
+        margin-left:auto;
+        min-width:0;
+        flex:0 0 auto;
+    }
+
+    #datatableFooter{
+        margin-top:12px;
+        padding:0 4px;
+        width:100%;
+    }
+
+    #datatableControls .dt-top,
+    #datatableFooter .dt-bottom{
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        gap:12px;
+        width:100%;
+        flex-wrap:wrap;
+    }
+
+    #datatableControls .dataTables_length,
+    #datatableControls .dataTables_filter,
+    #datatableFooter .dataTables_info,
+    #datatableFooter .dataTables_paginate{
+        margin:0 !important;
+    }
+
+    #datatableControls .dataTables_filter{
+        margin-left:auto !important;
+    }
+
+    #datatableControls .dataTables_filter label,
+    #datatableControls .dataTables_length label{
+        margin:0;
+    }
+
+    #datatableControls .dataTables_length select,
+    #datatableControls .dataTables_filter input{
+        border:1px solid #f1d7e6;
+        border-radius:8px;
+        min-height:34px;
+        padding:6px 10px;
+        font-size:.82rem;
+        background:#fff;
+        outline:none;
+    }
+
+    #datatableControls .dataTables_filter input{
+        width:240px;
+        max-width:100%;
+    }
+
+    #datatableFooter .dataTables_paginate{
+        margin-left:auto !important;
     }
 
     .intern-name {
@@ -285,44 +414,97 @@ function payBadgeIntern($status)
         color: #6b7280;
     }
 
-    .intern-form {
-        display: grid;
-        grid-template-columns: repeat(6, minmax(120px, 1fr)) auto;
-        gap: 8px;
-        align-items: end;
+    .intern-table-wrap{
+        padding:14px;
     }
 
-    .intern-pager {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        gap: 8px;
-        margin-top: 14px;
-        flex-wrap: wrap;
+    .intern-table{
+        table-layout: fixed;
     }
 
-    .intern-pager a {
-        text-decoration: none;
-        padding: 7px 10px;
-        border: 1px solid #e2e8f0;
-        border-radius: 10px;
-        color: #334155;
-        font-weight: 700;
-        background: #fff;
+    .intern-table tbody td{
+        vertical-align: top !important;
+        padding-top: 10px !important;
+        padding-bottom: 10px !important;
+    }
+
+    .intern-table th:nth-child(1),
+    .intern-table td:nth-child(1){ width: 5%; }
+    .intern-table th:nth-child(2),
+    .intern-table td:nth-child(2){ width: 21%; }
+    .intern-table th:nth-child(3),
+    .intern-table td:nth-child(3){ width: 19%; }
+    .intern-table th:nth-child(4),
+    .intern-table td:nth-child(4){ width: 13%; }
+    .intern-table th:nth-child(5),
+    .intern-table td:nth-child(5){ width: 10%; }
+    .intern-table th:nth-child(6),
+    .intern-table td:nth-child(6){ width: 10%; }
+    .intern-table th:nth-child(7),
+    .intern-table td:nth-child(7){ width: 11%; }
+    .intern-table th:nth-child(8),
+    .intern-table td:nth-child(8){ width: 11%; }
+
+    .intern-action-wrap{
+        display:flex;
+        justify-content:center;
+        gap:8px;
+        flex-wrap:wrap;
+    }
+
+    .intern-action-btn{
+        width:36px;
+        height:36px;
+        display:inline-flex;
+        align-items:center;
+        justify-content:center;
+        border-radius:10px;
+        border:1px solid transparent;
+        cursor:pointer;
+        transition:all .2s ease;
+        box-shadow:none;
+        padding:0;
+    }
+
+    .intern-action-btn:hover{
+        transform:translateY(-1px);
+    }
+
+    .intern-view-btn{
+        background:#eef5ff;
+        color:#1565c0;
+        border-color:#d6e7ff;
+    }
+
+    .intern-manage-btn{
+        background:linear-gradient(135deg,#ff4d8d,#e91e63);
+        color:#fff;
+        box-shadow:0 8px 16px rgba(233,30,99,.18);
+    }
+
+    .intern-pay-badge{
+        display:inline-flex;
+        align-items:center;
+        gap:6px;
+        padding:5px 10px;
+        border-radius:999px;
+        background:#fff7fb;
+        border:1px solid #f3d5e2;
+        font-size:12px;
+        font-weight:700;
+    }
+
+    .intern-sub{
+        font-size:11px;
+        line-height:1.25;
     }
 
     @media (max-width: 1200px) {
-        .intern-form {
-            grid-template-columns: 1fr 1fr;
-        }
+        .intern-table{ table-layout:auto; }
     }
 
     @media (max-width: 900px) {
         .intern-filter-row {
-            grid-template-columns: 1fr;
-        }
-
-        .intern-form {
             grid-template-columns: 1fr;
         }
     }
@@ -418,22 +600,64 @@ grid-column:1/-1;
   .intern-view-grid{
     grid-template-columns:1fr;
   }
+
+  .dashboard-header .header-stats{
+    justify-content:flex-start;
+  }
+
+  #datatableControls,
+  #datatableFooter{
+    width:100%;
+    margin-left:0;
+    justify-content:flex-start;
+  }
+
+  #datatableControls{
+    flex:1 1 100%;
+  }
+
+  #datatableControls .dt-top,
+  #datatableFooter .dt-bottom{
+    justify-content:flex-start;
+  }
+
+  #datatableControls .dataTables_filter,
+  #datatableFooter .dataTables_paginate{
+    margin-left:0 !important;
+  }
+
+  #datatableControls .dataTables_filter input{
+    width:100%;
+    max-width:100%;
+  }
+
+  .intern-table-wrap{
+    padding:0;
+  }
 }
 </style>
 
-<h2 style="margin-bottom:20px;">Intern Students</h2>
+<div class="leads-dashboard">
+<div class="dashboard-header">
+    <h2><i class="fas fa-user-graduate" style="margin-right: 12px; color: #e91e63;"></i>Internship Students</h2>
+    <div class="header-stats">
+        <span class="stat-item"><i class="fas fa-database"></i> Total: <?= (int) $totalRows ?></span>
+    </div>
+</div>
 
 <div class="card">
-    <div class="card-header">Filters</div>
-    <form method="GET" action="index.php" style="padding:14px;">
+    <div class="card-header">
+        <i class="fas fa-sliders-h" style="margin-right: 8px;"></i> Filter Internship Students
+    </div>
+    <form method="GET" action="index.php" class="filter-form">
         <input type="hidden" name="page" value="students/internships">
         <div class="intern-filter-row">
-            <div>
-                <label>Search</label>
+            <div class="filter-item">
+                <label><i class="fas fa-search"></i> Search</label>
                 <input type="text" name="q" value="<?= h($q) ?>" placeholder="Reg no / student / phone / program">
             </div>
-            <div>
-                <label>Fee Status</label>
+            <div class="filter-item">
+                <label><i class="fas fa-wallet"></i> Fee Status</label>
                 <select name="payment_status">
                     <option value="">All</option>
                     <option value="paid" <?= $paymentStatus === 'paid' ? 'selected' : '' ?>>Paid</option>
@@ -441,19 +665,29 @@ grid-column:1/-1;
                     <option value="unpaid" <?= $paymentStatus === 'unpaid' ? 'selected' : '' ?>>Unpaid</option>
                 </select>
             </div>
-            <div style="display:flex; gap:8px;">
-                <button class="btn btn-primary"><i class="fas fa-filter"></i> Apply</button>
-                <a href="index.php?page=students/internships" class="btn" style="background:#f3f4f6;"><i
-                        class="fas fa-undo"></i> Reset</a>
+            <div class="filter-actions">
+                <button type="submit" class="btn-icon-only apply" title="Apply filters">
+                    <i class="fas fa-filter"></i>
+                </button>
+                <a href="index.php?page=students/internships" class="btn-icon-only reset" title="Reset filters">
+                    <i class="fas fa-undo-alt"></i>
+                </a>
             </div>
         </div>
     </form>
 </div>
 
 <div class="card" style="margin-top:16px;">
-    <div class="card-header">Intern Students (<?= (int) $totalRows ?>)</div>
-    <div class="table-responsive" style="padding:14px;">
-        <table class="table intern-table">
+    <div class="card-header">
+        <div class="table-header-flex">
+            <div class="table-title">
+                <i class="fas fa-list"></i> Internship Management Queue
+            </div>
+            <div id="datatableControls"></div>
+        </div>
+    </div>
+    <div class="table-container intern-table-wrap">
+        <table class="leads-table intern-table" id="internshipsTable">
             <thead>
                 <tr>
                     <th>#</th>
@@ -467,15 +701,9 @@ grid-column:1/-1;
                 </tr>
             </thead>
             <tbody>
-                <?php if (!$rows): ?>
-                    <tr>
-                        <td colspan="8" style="text-align:center;">No intern students found.</td>
-                    </tr>
-                <?php endif; ?>
-
                 <?php foreach ($rows as $i => $r): ?>
                     <tr>
-                        <td><?= (int) ($offset + $i + 1) ?></td>
+                        <td><?= (int) ($i + 1) ?></td>
 
                         <td>
                             <div class="intern-name"><?= h($r['enquiry_snapshot_name']) ?></div>
@@ -509,7 +737,7 @@ grid-column:1/-1;
                         </td>
 
                         <td>
-                            <div><?= payBadgeIntern((string) $r['payment_status']) ?></div>
+                            <div class="intern-pay-badge"><?= payBadgeIntern((string) $r['payment_status']) ?></div>
                             <div class="intern-sub">Final: <?= h(number_format((float) $r['final_fee'], 2)) ?></div>
                             <div class="intern-sub">Paid: <?= h(number_format((float) $r['paid_amount'], 2)) ?></div>
                             <div class="intern-sub">Balance: <?= h(number_format((float) $r['balance_amount'], 2)) ?></div>
@@ -526,7 +754,7 @@ grid-column:1/-1;
 
                         <td class="text-center">
                             <div class="intern-action-wrap">
-                                <button type="button" class="btn intern-view-btn viewInternBtn"
+                                <button type="button" class="intern-action-btn intern-view-btn viewInternBtn" title="View Internship"
                                     data-name="<?= h($r['enquiry_snapshot_name']) ?>"
                                     data-regno="<?= h($r['registration_no']) ?>"
                                     data-phone="<?= h(visibleStudentContactValue($r['enquiry_snapshot_phone'] ?? '')) ?>"
@@ -541,10 +769,10 @@ grid-column:1/-1;
                                     data-paid="<?= h(number_format((float) $r['paid_amount'], 2)) ?>"
                                     data-balance="<?= h(number_format((float) $r['balance_amount'], 2)) ?>"
                                     data-paystatus="<?= h($r['payment_status']) ?>">
-                                    <i class="fas fa-eye"></i> View
+                                    <i class="fas fa-eye"></i>
                                 </button>
 
-                                <button type="button" class="btn btn-primary manageInternBtn" data-id="<?= (int) $r['id'] ?>"
+                                <button type="button" class="intern-action-btn intern-manage-btn manageInternBtn" title="Manage Internship" data-id="<?= (int) $r['id'] ?>"
                                     data-name="<?= h($r['enquiry_snapshot_name']) ?>"
                                     data-start="<?= h($r['internship_start_date']) ?>"
                                     data-end="<?= h($r['internship_end_date']) ?>"
@@ -558,7 +786,7 @@ grid-column:1/-1;
                                     data-reportissuedat="<?= h(!empty($r['internship_report_issued_at']) ? date('Y-m-d\TH:i', strtotime($r['internship_report_issued_at'])) : '') ?>"
                                     data-paymentstatus="<?= h($r['payment_status']) ?>"
                                     >
-                                    <i class="fas fa-pen"></i> Manage
+                                    <i class="fas fa-pen"></i>
                                 </button>
                             </div>
                         </td>
@@ -567,6 +795,7 @@ grid-column:1/-1;
             </tbody>
         </table>
     </div>
+    <div id="datatableFooter"></div>
 
     <div id="internModalBackdrop"
         style="display:none;position:fixed;inset:0;background:rgba(15,23,42,.45);z-index:9998;"></div>
@@ -679,16 +908,36 @@ grid-column:1/-1;
     </div>
 </div>
 
-    <div class="intern-pager">
-        <a href="<?= $baseUrl ?>&p=1"><i class="fas fa-angle-double-left"></i></a>
-        <a href="<?= $baseUrl ?>&p=<?= max(1, $page - 1) ?>"><i class="fas fa-angle-left"></i></a>
-        <span style="font-weight:700;">Page <?= (int) $page ?> / <?= (int) $totalPages ?></span>
-        <a href="<?= $baseUrl ?>&p=<?= min($totalPages, $page + 1) ?>"><i class="fas fa-angle-right"></i></a>
-        <a href="<?= $baseUrl ?>&p=<?= (int) $totalPages ?>"><i class="fas fa-angle-double-right"></i></a>
-    </div>
+</div>
 </div>
 
 <script>
+(function(){
+    document.addEventListener("DOMContentLoaded", function(){
+        if (typeof crmDataTable === "function" && document.querySelector('#internshipsTable')) {
+            crmDataTable('#internshipsTable', {
+                pageLength: <?= (int) $perPage ?>,
+                lengthMenu: [5, 10, 12, 20, 50, 100],
+                ordering: true,
+                searchPlaceholder: "Search internship students...",
+                language: {
+                    emptyTable: "No intern students found"
+                },
+                dom: "<'dt-top'lf>rt<'dt-bottom'ip>"
+            });
+        }
+
+        setTimeout(() => {
+            const controls = document.querySelector('.intern-table-wrap .dt-top');
+            const footer = document.querySelector('.intern-table-wrap .dt-bottom');
+            const topTarget = document.getElementById('datatableControls');
+            const bottomTarget = document.getElementById('datatableFooter');
+            if (controls && topTarget) topTarget.appendChild(controls);
+            if (footer && bottomTarget) bottomTarget.appendChild(footer);
+        }, 100);
+    });
+})();
+
 (function(){
     const modal = document.getElementById('internModal');
     const backdrop = document.getElementById('internModalBackdrop');
