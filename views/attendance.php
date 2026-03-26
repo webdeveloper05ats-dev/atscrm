@@ -51,19 +51,21 @@ function fetchAttendanceStudent(PDO $pdo, int $registrationId, int $userId, int 
             r.joined_on,
             r.created_at,
             r.updated_at,
+            rc.assigned_at AS guide_assigned_at,
             r.enquiry_snapshot_name,
             r.enquiry_snapshot_phone,
             r.enquiry_snapshot_email,
             r.program_name,
             r.batch_name
         FROM registrations r
+        LEFT JOIN registration_courses rc ON rc.registration_id = r.id
         WHERE r.id = ?
           AND r.reg_type = 'course'
           AND r.registration_status IN ('active','completed')
     ";
 
     if (!$canViewAllAttendance) {
-        $sql .= " AND r.assigned_to = ?";
+        $sql .= " AND rc.guide_staff_id = ?";
         $params[] = $userId;
     }
 
@@ -90,6 +92,7 @@ function resolveAttendanceStartDate(array $student): string
     $joinedOn = trim((string) ($student['joined_on'] ?? ''));
     $createdAt = trim((string) ($student['created_at'] ?? ''));
     $updatedAt = trim((string) ($student['updated_at'] ?? ''));
+    $assignedAt = trim((string) ($student['guide_assigned_at'] ?? ''));
 
     if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $joinedOn)) {
         $candidates[] = $joinedOn;
@@ -97,6 +100,10 @@ function resolveAttendanceStartDate(array $student): string
 
     if (preg_match('/^\d{4}-\d{2}-\d{2}/', $createdAt)) {
         $candidates[] = substr($createdAt, 0, 10);
+    }
+
+    if (preg_match('/^\d{4}-\d{2}-\d{2}/', $assignedAt)) {
+        $candidates[] = substr($assignedAt, 0, 10);
     }
 
     if (preg_match('/^\d{4}-\d{2}-\d{2}/', $updatedAt) && $updatedAt > $createdAt) {
@@ -621,7 +628,7 @@ $where = ["r.reg_type = 'course'", "r.registration_status IN ('active','complete
 $params = [];
 
 if (!$attendanceReadOnlyViewer) {
-    $where[] = "r.assigned_to = ?";
+    $where[] = "rc.guide_staff_id = ?";
     $params[] = $userId;
 }
 
@@ -647,7 +654,7 @@ $whereSql = "WHERE " . implode(" AND ", $where);
 
 $totalRows = 0;
 try {
-    $st = $pdo->prepare("SELECT COUNT(*) FROM registrations r {$whereSql}");
+    $st = $pdo->prepare("SELECT COUNT(*) FROM registrations r LEFT JOIN registration_courses rc ON rc.registration_id = r.id {$whereSql}");
     $st->execute($params);
     $totalRows = (int) $st->fetchColumn();
 } catch (Exception $e) {
@@ -671,6 +678,7 @@ try {
             r.joined_on,
             r.created_at,
             r.updated_at,
+            rc.assigned_at AS guide_assigned_at,
             r.enquiry_snapshot_name,
             r.enquiry_snapshot_phone,
             r.enquiry_snapshot_email,
@@ -678,6 +686,7 @@ try {
             r.batch_name,
             r.registration_status
         FROM registrations r
+        LEFT JOIN registration_courses rc ON rc.registration_id = r.id
         {$whereSql}
         ORDER BY r.id DESC
         LIMIT {$perPage} OFFSET {$offset}

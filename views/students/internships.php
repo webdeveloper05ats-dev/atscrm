@@ -24,6 +24,8 @@ if (!function_exists('h')) {
 $userId = (int) ($_SESSION['user_id'] ?? 0);
 $roleId = (int) ($_SESSION['role_id'] ?? 0);
 $branchId = (int) ($_SESSION['branch_id'] ?? 0);
+$roleName = trim((string) ($_SESSION['role_name'] ?? ''));
+$isStaffRole = ($roleName === 'Staff');
 
 $canAllBranches = 0;
 try {
@@ -93,16 +95,26 @@ if ($reportStatus === 'not_provided') {
 
         $params = [$registrationId];
         $sql = "
-    SELECT id, internship_completion_status, internship_report_status, internship_certificate_status
-    FROM registrations
-    WHERE id = ?
-      AND reg_type = 'internship'
-      AND registration_status IN ('active','completed')
+    SELECT
+        r.id,
+        ri.completion_status AS internship_completion_status,
+        ri.report_status AS internship_report_status,
+        ri.certificate_status AS internship_certificate_status
+    FROM registrations r
+    INNER JOIN registration_internships ri ON ri.registration_id = r.id
+    WHERE r.id = ?
+      AND r.reg_type = 'internship'
+      AND r.registration_status IN ('active','completed')
 ";
 
         if (!$canAllBranches) {
-            $sql .= " AND branch_id = ?";
+            $sql .= " AND r.branch_id = ?";
             $params[] = $branchId;
+        }
+
+        if ($isStaffRole) {
+            $sql .= " AND ri.guide_staff_id = ?";
+            $params[] = $userId;
         }
 
         $sql .= " LIMIT 1";
@@ -123,17 +135,17 @@ if ($reportStatus === 'not_provided') {
         }
 
         $upd = $pdo->prepare("
-    UPDATE registrations
+    UPDATE registration_internships
     SET internship_start_date = ?,
         internship_end_date = ?,
-        internship_completion_status = ?,
-        internship_certificate_status = ?,
-        internship_certificate_issued_at = ?,
-        internship_report_status = ?,
-        internship_report_issued_at = ?,
-        internship_report_due_days = ?,
+        completion_status = ?,
+        certificate_status = ?,
+        certificate_issued_at = ?,
+        report_status = ?,
+        report_issued_at = ?,
+        report_due_days = ?,
         updated_at = NOW()
-    WHERE id = ?
+    WHERE registration_id = ?
     LIMIT 1
 ");
 $upd->execute([
@@ -174,6 +186,11 @@ if (!$canAllBranches && $branchId > 0) {
     $params[] = $branchId;
 }
 
+if ($isStaffRole) {
+    $where[] = "ri.guide_staff_id = ?";
+    $params[] = $userId;
+}
+
 if ($paymentStatus !== '' && in_array($paymentStatus, ['paid', 'partial', 'unpaid'], true)) {
     $where[] = "r.payment_status = ?";
     $params[] = $paymentStatus;
@@ -194,7 +211,7 @@ $whereSql = 'WHERE ' . implode(' AND ', $where);
 
 $totalRows = 0;
 try {
-    $st = $pdo->prepare("SELECT COUNT(*) FROM registrations r $whereSql");
+    $st = $pdo->prepare("SELECT COUNT(*) FROM registrations r INNER JOIN registration_internships ri ON ri.registration_id = r.id $whereSql");
     $st->execute($params);
     $totalRows = (int) $st->fetchColumn();
 } catch (Exception $e) {
@@ -213,21 +230,23 @@ try {
         r.program_name,
         r.batch_name,
         r.notes,
-        r.internship_days,
-        r.internship_batch,
-        r.internship_start_date,
-        r.internship_end_date,
-        r.internship_completion_status,
-        r.internship_certificate_status,
-        r.internship_report_status,
-        r.internship_report_due_days,
+        ri.guide_staff_id,
+        ri.internship_days,
+        ri.internship_batch,
+        ri.internship_start_date,
+        ri.internship_end_date,
+        ri.completion_status AS internship_completion_status,
+        ri.certificate_status AS internship_certificate_status,
+        ri.report_status AS internship_report_status,
+        ri.report_due_days AS internship_report_due_days,
         r.payment_status,
         r.final_fee,
         r.paid_amount,
-        r.internship_certificate_issued_at,
-        r.internship_report_issued_at,
+        ri.certificate_issued_at AS internship_certificate_issued_at,
+        ri.report_issued_at AS internship_report_issued_at,
         r.balance_amount
     FROM registrations r
+    INNER JOIN registration_internships ri ON ri.registration_id = r.id
     $whereSql
     ORDER BY r.id DESC
 ";

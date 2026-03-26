@@ -120,7 +120,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['assign_student'])) {
 
         if ($canAllBranches === 1) {
             $st = $pdo->prepare("
-        SELECT id, reg_type, created_by
+        SELECT id, reg_type, created_by, registration_status
         FROM registrations
         WHERE id = ?
           AND registration_status IN ('active','completed')
@@ -129,7 +129,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['assign_student'])) {
             $st->execute([$registrationId]);
         } else {
             $st = $pdo->prepare("
-        SELECT id, reg_type, created_by
+        SELECT id, reg_type, created_by, registration_status
         FROM registrations
         WHERE id = ?
           AND branch_id = ?
@@ -164,21 +164,58 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['assign_student'])) {
             $internshipBatch = null;
         }
 
-        $upd = $pdo->prepare("
-    UPDATE registrations
-    SET assigned_to = ?,
-        internship_days = ?,
-        internship_batch = ?,
-        updated_at = NOW()
-    WHERE id = ?
-    LIMIT 1
-");
-        $upd->execute([
-            $staffId,
-            $internshipDays,
-            $internshipBatch,
-            $registrationId
-        ]);
+        if ($regType === 'internship') {
+            $upd = $pdo->prepare("
+                INSERT INTO registration_internships (
+                    registration_id,
+                    guide_staff_id,
+                    assigned_by,
+                    assigned_at,
+                    internship_days,
+                    internship_batch,
+                    created_at,
+                    updated_at
+                ) VALUES (?, ?, ?, NOW(), ?, ?, NOW(), NOW())
+                ON DUPLICATE KEY UPDATE
+                    guide_staff_id = VALUES(guide_staff_id),
+                    assigned_by = VALUES(assigned_by),
+                    assigned_at = VALUES(assigned_at),
+                    internship_days = VALUES(internship_days),
+                    internship_batch = VALUES(internship_batch),
+                    updated_at = NOW()
+            ");
+            $upd->execute([
+                $registrationId,
+                $staffId,
+                $userId > 0 ? $userId : null,
+                $internshipDays,
+                $internshipBatch,
+            ]);
+        } else {
+            $upd = $pdo->prepare("
+                INSERT INTO registration_courses (
+                    registration_id,
+                    guide_staff_id,
+                    assigned_by,
+                    assigned_at,
+                    course_status,
+                    created_at,
+                    updated_at
+                ) VALUES (?, ?, ?, NOW(), ?, NOW(), NOW())
+                ON DUPLICATE KEY UPDATE
+                    guide_staff_id = VALUES(guide_staff_id),
+                    assigned_by = VALUES(assigned_by),
+                    assigned_at = VALUES(assigned_at),
+                    course_status = VALUES(course_status),
+                    updated_at = NOW()
+            ");
+            $upd->execute([
+                $registrationId,
+                $staffId,
+                $userId > 0 ? $userId : null,
+                (string) ($registrationRow['registration_status'] ?? 'active'),
+            ]);
+        }
 
         setFlash('success', 'Student assigned successfully.');
     } catch (Exception $e) {
@@ -210,7 +247,7 @@ if (!$canSeeAllStudentAssignments) {
 }
 
 if ($staffFilter > 0) {
-    $where[] = "r.assigned_to = ?";
+    $where[] = "COALESCE(rc.guide_staff_id, ri.guide_staff_id) = ?";
     $params[] = $staffFilter;
 }
 
@@ -234,6 +271,8 @@ try {
     $cnt = $pdo->prepare("
         SELECT COUNT(*)
         FROM registrations r
+        LEFT JOIN registration_courses rc ON rc.registration_id = r.id AND r.reg_type = 'course'
+        LEFT JOIN registration_internships ri ON ri.registration_id = r.id AND r.reg_type = 'internship'
         $whereSql
     ");
     $cnt->execute($params);
@@ -262,11 +301,11 @@ try {
 
     $st = $pdo->prepare("
         SELECT
-            SUM(CASE WHEN ur.role_name = 'Staff' THEN 1 ELSE 0 END) AS assigned_count,
-            SUM(CASE WHEN ur.role_name = 'Staff' THEN 0 ELSE 1 END) AS unassigned_count
+            SUM(CASE WHEN COALESCE(rc.guide_staff_id, ri.guide_staff_id) IS NOT NULL THEN 1 ELSE 0 END) AS assigned_count,
+            SUM(CASE WHEN COALESCE(rc.guide_staff_id, ri.guide_staff_id) IS NULL THEN 1 ELSE 0 END) AS unassigned_count
         FROM registrations r
-        LEFT JOIN users u ON u.id = r.assigned_to
-        LEFT JOIN roles ur ON ur.id = u.role_id
+        LEFT JOIN registration_courses rc ON rc.registration_id = r.id AND r.reg_type = 'course'
+        LEFT JOIN registration_internships ri ON ri.registration_id = r.id AND r.reg_type = 'internship'
         $sumSql
     ");
     $st->execute($sumParams);
@@ -291,13 +330,14 @@ try {
     r.program_name,
     r.batch_name,
     r.reg_type,
-    r.internship_days,
-    r.internship_batch,
-    r.assigned_to,
-    CASE WHEN ur.role_name = 'Staff' THEN u.name ELSE NULL END AS assigned_staff
+    ri.internship_days,
+    ri.internship_batch,
+    COALESCE(rc.guide_staff_id, ri.guide_staff_id) AS guide_staff_id,
+    guide_u.name AS assigned_staff
 FROM registrations r
-LEFT JOIN users u ON u.id = r.assigned_to
-LEFT JOIN roles ur ON ur.id = u.role_id
+LEFT JOIN registration_courses rc ON rc.registration_id = r.id AND r.reg_type = 'course'
+LEFT JOIN registration_internships ri ON ri.registration_id = r.id AND r.reg_type = 'internship'
+LEFT JOIN users guide_u ON guide_u.id = COALESCE(rc.guide_staff_id, ri.guide_staff_id)
         $whereSql
         ORDER BY r.id DESC
     ";
@@ -787,7 +827,7 @@ LEFT JOIN roles ur ON ur.id = u.role_id
                                     <select name="staff_id" class="stu-assign-main" title="<?= h($r['assigned_staff'] ?: 'Select Staff') ?>" required>
                                         <option value="">Select Staff</option>
                                         <?php foreach ($staffUsers as $s): ?>
-                                            <option value="<?= (int) $s['id'] ?>" <?= ((int) $r['assigned_to'] === (int) $s['id']) ? 'selected' : '' ?>>
+                                            <option value="<?= (int) $s['id'] ?>" <?= ((int) $r['guide_staff_id'] === (int) $s['id']) ? 'selected' : '' ?>>
                                                 <?= h($s['name']) ?><?= !empty($s['branch_name']) ? ' (' . h($s['branch_name']) . ')' : '' ?>
                                             </option>
                                         <?php endforeach; ?>

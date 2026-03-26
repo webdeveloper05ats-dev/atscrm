@@ -180,12 +180,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_mock_interview']
             }
 
             $studentSql = "
-                SELECT id, branch_id
-                FROM registrations
-                WHERE id = ?
-                  AND assigned_to = ?
-                  AND reg_type = 'course'
-                  AND registration_status IN ('active','completed')
+                SELECT r.id, r.branch_id
+                FROM registrations r
+                INNER JOIN registration_courses rc ON rc.registration_id = r.id
+                WHERE r.id = ?
+                  AND rc.guide_staff_id = ?
+                  AND r.reg_type = 'course'
+                  AND r.registration_status IN ('active','completed')
             ";
             $studentParams = [$registrationId, $userId];
 
@@ -266,9 +267,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['mark_mock_done'])) {
                     mi.theoretical_marks,
                     mi.machine_task_marks
                 FROM registrations r
+                INNER JOIN registration_courses rc ON rc.registration_id = r.id
                 INNER JOIN mock_interviews mi ON mi.registration_id = r.id
                 WHERE r.id = ?
-                  AND r.assigned_to = ?
+                  AND rc.guide_staff_id = ?
                   AND r.reg_type = 'course'
                   AND r.registration_status IN ('active','completed')
             ";
@@ -349,9 +351,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['send_to_hr'])) {
                     mi.workflow_status,
                     mi.mock_average
                 FROM registrations r
+                INNER JOIN registration_courses rc ON rc.registration_id = r.id
                 INNER JOIN mock_interviews mi ON mi.registration_id = r.id
                 WHERE r.id = ?
-                  AND r.assigned_to = ?
+                  AND rc.guide_staff_id = ?
                   AND r.reg_type = 'course'
                   AND r.registration_status IN ('active','completed')
             ";
@@ -425,7 +428,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['send_to_hr'])) {
 
 $q = trim((string) ($_GET['q'] ?? ''));
 $where = [
-    "r.assigned_to = ?",
+    "rc.guide_staff_id = ?",
     "r.reg_type = 'course'",
     "r.registration_status IN ('active','completed')",
 ];
@@ -474,6 +477,7 @@ try {
             mi.mock_average,
             {$workflowSelect}
         FROM registrations r
+        INNER JOIN registration_courses rc ON rc.registration_id = r.id
         {$assessmentJoin}
         {$hrJoin}
         LEFT JOIN mock_interviews mi ON mi.registration_id = r.id

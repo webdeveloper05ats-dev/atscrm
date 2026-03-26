@@ -24,12 +24,16 @@ function studentReportResolveAttendanceStartDate(array $student): string
     $candidates = [];
     $joinedOn = trim((string) ($student['joined_on'] ?? ''));
     $createdAt = trim((string) ($student['created_at'] ?? ''));
+    $assignedAt = trim((string) ($student['guide_assigned_at'] ?? ''));
 
     if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $joinedOn)) {
         $candidates[] = $joinedOn;
     }
     if (preg_match('/^\d{4}-\d{2}-\d{2}/', $createdAt)) {
         $candidates[] = substr($createdAt, 0, 10);
+    }
+    if (preg_match('/^\d{4}-\d{2}-\d{2}/', $assignedAt)) {
+        $candidates[] = substr($assignedAt, 0, 10);
     }
 
     return $candidates ? max($candidates) : date('Y-m-d');
@@ -53,16 +57,19 @@ function studentReportFetchBaseStudent(PDO $pdo, int $registrationId, int $userI
             rp.parent_occupation,
             rp.emergency_contact,
             rp.remarks AS profile_remarks,
+            rc.guide_staff_id,
+            rc.assigned_at AS guide_assigned_at,
             u.name AS assigned_staff_name
         FROM registrations r
         LEFT JOIN registration_profiles rp ON rp.registration_id = r.id
-        LEFT JOIN users u ON u.id = r.assigned_to
+        LEFT JOIN registration_courses rc ON rc.registration_id = r.id
+        LEFT JOIN users u ON u.id = rc.guide_staff_id
         WHERE r.id = ?
           AND r.reg_type = 'course'
     ";
 
     if ($mode === 'staff') {
-        $sql .= " AND r.assigned_to = ?";
+        $sql .= " AND rc.guide_staff_id = ?";
         $params[] = $userId;
     } elseif ($mode === 'hr') {
         $sql .= " AND EXISTS (SELECT 1 FROM student_hr_interviews shi WHERE shi.registration_id = r.id)";
