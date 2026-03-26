@@ -1,3 +1,4 @@
+<link rel="stylesheet" href="<?= BASE_URL ?>assets/css/lead.css">
 <?php
 // =====================================
 // Students - Assign To Staff
@@ -23,6 +24,8 @@ if (!function_exists('h')) {
 $userId = (int) ($_SESSION['user_id'] ?? 0);
 $roleId = (int) ($_SESSION['role_id'] ?? 0);
 $branchId = (int) ($_SESSION['branch_id'] ?? 0);
+$roleName = strtolower(trim((string) ($_SESSION['role_name'] ?? '')));
+$canSeeAllStudentAssignments = in_array($roleName, ['super admin', 'hr'], true);
 
 $canAllBranches = 0;
 try {
@@ -117,7 +120,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['assign_student'])) {
 
         if ($canAllBranches === 1) {
             $st = $pdo->prepare("
-        SELECT id, reg_type
+        SELECT id, reg_type, created_by
         FROM registrations
         WHERE id = ?
           AND registration_status IN ('active','completed')
@@ -126,7 +129,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['assign_student'])) {
             $st->execute([$registrationId]);
         } else {
             $st = $pdo->prepare("
-        SELECT id, reg_type
+        SELECT id, reg_type, created_by
         FROM registrations
         WHERE id = ?
           AND branch_id = ?
@@ -140,6 +143,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['assign_student'])) {
 
         if (!$registrationRow) {
             throw new Exception("Student record not found or access denied.");
+        }
+
+        if (!$canSeeAllStudentAssignments && (int) ($registrationRow['created_by'] ?? 0) !== $userId) {
+            throw new Exception("You can only manage students converted by you.");
         }
 
         $regType = trim((string) ($registrationRow['reg_type'] ?? ''));
@@ -186,11 +193,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['assign_student'])) {
 $q = trim($_GET['q'] ?? '');
 $staffFilter = (int) ($_GET['staff_id'] ?? 0);
 
-$page = (int) ($_GET['p'] ?? 1);
-if ($page < 1)
-    $page = 1;
 $perPage = 15;
-$offset = ($page - 1) * $perPage;
 
 /* Where */
 $where = ["r.registration_status IN ('active','completed')"];
@@ -199,6 +202,11 @@ $params = [];
 if ($canAllBranches !== 1 && $branchId > 0) {
     $where[] = "r.branch_id = ?";
     $params[] = $branchId;
+}
+
+if (!$canSeeAllStudentAssignments) {
+    $where[] = "r.created_by = ?";
+    $params[] = $userId;
 }
 
 if ($staffFilter > 0) {
@@ -234,30 +242,31 @@ try {
     $totalRows = 0;
 }
 
-$totalPages = (int) ceil($totalRows / $perPage);
-if ($totalPages < 1)
-    $totalPages = 1;
-if ($page > $totalPages)
-    $page = $totalPages;
-
 /* Summary */
 $summary = ['assigned' => 0, 'unassigned' => 0];
 try {
-    $sumWhere = ["registration_status IN ('active','completed')"];
+    $sumWhere = ["r.registration_status IN ('active','completed')"];
     $sumParams = [];
 
     if ($canAllBranches !== 1 && $branchId > 0) {
-        $sumWhere[] = "branch_id = ?";
+        $sumWhere[] = "r.branch_id = ?";
         $sumParams[] = $branchId;
+    }
+
+    if (!$canSeeAllStudentAssignments) {
+        $sumWhere[] = "r.created_by = ?";
+        $sumParams[] = $userId;
     }
 
     $sumSql = 'WHERE ' . implode(' AND ', $sumWhere);
 
     $st = $pdo->prepare("
         SELECT
-            SUM(CASE WHEN assigned_to IS NOT NULL AND assigned_to > 0 THEN 1 ELSE 0 END) AS assigned_count,
-            SUM(CASE WHEN assigned_to IS NULL OR assigned_to = 0 THEN 1 ELSE 0 END) AS unassigned_count
-        FROM registrations
+            SUM(CASE WHEN ur.role_name = 'Staff' THEN 1 ELSE 0 END) AS assigned_count,
+            SUM(CASE WHEN ur.role_name = 'Staff' THEN 0 ELSE 1 END) AS unassigned_count
+        FROM registrations r
+        LEFT JOIN users u ON u.id = r.assigned_to
+        LEFT JOIN roles ur ON ur.id = u.role_id
         $sumSql
     ");
     $st->execute($sumParams);
@@ -285,115 +294,101 @@ try {
     r.internship_days,
     r.internship_batch,
     r.assigned_to,
-    u.name AS assigned_staff
+    CASE WHEN ur.role_name = 'Staff' THEN u.name ELSE NULL END AS assigned_staff
 FROM registrations r
 LEFT JOIN users u ON u.id = r.assigned_to
+LEFT JOIN roles ur ON ur.id = u.role_id
         $whereSql
         ORDER BY r.id DESC
-        LIMIT $perPage OFFSET $offset
     ";
     $st = $pdo->prepare($sql);
     $st->execute($params);
     $rows = $st->fetchAll(PDO::FETCH_ASSOC);
+    $totalRows = count($rows);
 } catch (Exception $e) {
     $rows = [];
+    $totalRows = 0;
 }
-
-$baseUrl = "index.php?page=students/assign"
-    . "&q=" . urlencode($q)
-    . "&staff_id=" . urlencode((string) $staffFilter);
 ?>
 
 <style>
-    :root {
-        --stu-primary: #e91e63;
-        --stu-primary-dark: #c2185b;
-        --stu-text: #1f2937;
-        --stu-muted: #6b7280;
-        --stu-card: #ffffff;
-        --stu-shadow: 0 16px 40px rgba(15, 23, 42, .06);
-    }
-
-    .stu-page {
-        background: linear-gradient(180deg, #fff 0%, #fff7fb 18%, #f7f9fd 100%);
-        border-radius: 24px;
-        padding: 18px;
-    }
-
-    .stu-page-top {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        gap: 14px;
-        flex-wrap: wrap;
-        margin-bottom: 18px;
-    }
-
-    .stu-page-title h2 {
-        margin: 0;
-        font-size: 28px;
-        font-weight: 900;
-        color: var(--stu-text);
-    }
-
-    .stu-page-title p {
-        margin: 6px 0 0;
-        color: var(--stu-muted);
-        font-size: 14px;
-    }
-
-    .stu-chip {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        background: #fff;
-        color: var(--stu-primary-dark);
-        border: 1px solid rgba(233, 30, 99, .12);
-        border-radius: 999px;
-        padding: 10px 14px;
+    .filter-form input[type="text"],
+    .filter-form select,
+    .stu-assign-form select {
+        appearance: none;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        background-color: #fff;
+        background-image:
+            linear-gradient(45deg, transparent 50%, #9f1239 50%),
+            linear-gradient(135deg, #9f1239 50%, transparent 50%),
+            linear-gradient(to right, #f8d7e5, #f8d7e5);
+        background-position:
+            calc(100% - 18px) calc(50% - 3px),
+            calc(100% - 12px) calc(50% - 3px),
+            calc(100% - 40px) 50%;
+        background-size: 6px 6px, 6px 6px, 1px 24px;
+        background-repeat: no-repeat;
+        border: 1px solid #f3bfd4;
+        border-radius: 14px;
+        min-height: 44px;
+        padding: 10px 44px 10px 14px;
         font-size: 13px;
-        font-weight: 800;
+        font-weight: 600;
+        color: #374151;
+        box-shadow: 0 6px 18px rgba(233, 30, 99, 0.04);
+        transition: all .18s ease;
     }
 
-    .stu-summary {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-        gap: 14px;
-        margin-bottom: 18px;
+    .filter-form input[type="text"]{
+        appearance: auto;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        background-image: none;
+        padding-right: 14px;
     }
 
-    .stu-summary-card {
-        position: relative;
-        background: var(--stu-card);
-        border: 1px solid rgba(15, 23, 42, .06);
-        border-radius: 18px;
-        padding: 16px;
-        box-shadow: var(--stu-shadow);
+    .filter-form input[type="text"]:hover,
+    .filter-form select:hover,
+    .stu-assign-form select:hover {
+        border-color: #ec6a9a;
+        box-shadow: 0 10px 20px rgba(233, 30, 99, 0.08);
     }
 
-    .stu-summary-card:before {
-        content: "";
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 4px;
-        background: linear-gradient(90deg, var(--stu-primary), #ff6ba6);
+    .filter-form input[type="text"]:focus,
+    .filter-form select:focus,
+    .stu-assign-form select:focus {
+        border-color: #e91e63;
+        box-shadow: 0 0 0 4px rgba(233, 30, 99, 0.12);
+        outline: none;
     }
 
-    .stu-summary-title {
+    .filter-form input[type="text"]::placeholder{
+        color: #9ca3af;
+        font-weight: 500;
+    }
+
+    .filter-form label,
+    .stu-assign-form label{
         font-size: 12px;
-        color: var(--stu-muted);
         font-weight: 800;
-        text-transform: uppercase;
-        letter-spacing: .5px;
+        color: #6b7280;
+        letter-spacing: .02em;
     }
 
-    .stu-summary-value {
-        margin-top: 8px;
-        font-size: 26px;
-        font-weight: 900;
-        color: var(--stu-text);
+    .dashboard-header .header-stats{
+        display:flex;
+        align-items:center;
+        justify-content:flex-end;
+        gap:10px;
+        flex-wrap:wrap;
+    }
+
+    .dashboard-header .header-stats .stat-item{
+        display:inline-flex;
+        align-items:center;
+        gap:8px;
+        white-space:nowrap;
     }
 
     .stu-filter-row {
@@ -407,14 +402,164 @@ $baseUrl = "index.php?page=students/assign"
         white-space: nowrap;
     }
 
+    .stu-table{
+        table-layout: fixed;
+    }
+
+    .stu-table tbody td{
+        padding-top: 10px !important;
+        padding-bottom: 10px !important;
+        vertical-align: top !important;
+    }
+
+    .stu-table th:nth-child(1),
+    .stu-table td:nth-child(1){
+        width: 4%;
+    }
+
+    .stu-table th:nth-child(2),
+    .stu-table td:nth-child(2){
+        width: 16%;
+    }
+
+    .stu-table th:nth-child(3),
+    .stu-table td:nth-child(3){
+        width: 18%;
+    }
+
+    .stu-table th:nth-child(4),
+    .stu-table td:nth-child(4){
+        width: 16%;
+    }
+
+    .stu-table th:nth-child(5),
+    .stu-table td:nth-child(5){
+        width: 10%;
+    }
+
+    .stu-table th:nth-child(6),
+    .stu-table td:nth-child(6){
+        width: 10%;
+    }
+
+    .stu-table th:nth-child(7),
+    .stu-table td:nth-child(7){
+        width: 26%;
+    }
+
+    .table-header-flex{
+        width:100%;
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        gap:12px;
+        flex-wrap:wrap;
+    }
+
+    .table-title{
+        display:inline-flex;
+        align-items:center;
+        gap:8px;
+        font-weight:700;
+    }
+
+    #datatableControls,
+    #datatableFooter{
+        display:flex;
+        align-items:center;
+    }
+
+    #datatableControls{
+        justify-content:flex-end;
+        margin-left:auto;
+        min-width:0;
+        flex:0 0 auto;
+    }
+
+    #datatableFooter{
+        margin-top:12px;
+        padding:0 4px;
+        width:100%;
+    }
+
+    #datatableControls .dt-top,
+    #datatableFooter .dt-bottom{
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        gap:12px;
+        width:100%;
+        flex-wrap:wrap;
+    }
+
+    #datatableControls .dataTables_length,
+    #datatableControls .dataTables_filter,
+    #datatableFooter .dataTables_info,
+    #datatableFooter .dataTables_paginate{
+        margin:0 !important;
+    }
+
+    #datatableControls .dataTables_filter{
+        margin-left:auto !important;
+    }
+
+    #datatableControls .dataTables_filter label,
+    #datatableControls .dataTables_length label{
+        margin:0;
+    }
+
+    #datatableControls .dataTables_length select,
+    #datatableControls .dataTables_filter input{
+        border:1px solid #f1d7e6;
+        border-radius:8px;
+        min-height:34px;
+        padding:6px 10px;
+        font-size:.82rem;
+        background:#fff;
+        outline:none;
+    }
+
+    #datatableControls .dataTables_filter input{
+        width:240px;
+        max-width:100%;
+    }
+
+    #datatableFooter .dataTables_paginate{
+        margin-left:auto !important;
+    }
+
+    .stu-table-wrap{
+        padding:14px;
+    }
+
     .stu-name {
         font-weight: 800;
         color: #111827;
+        line-height: 1.2;
+        margin-bottom: 2px;
     }
 
     .stu-sub {
-        font-size: 12px;
+        font-size: 11px;
         color: #6b7280;
+        line-height: 1.25;
+    }
+
+    .stu-current-staff{
+        display:inline-flex;
+        align-items:center;
+        gap:6px;
+        padding:5px 10px;
+        border:1px solid #f3d5e2;
+        border-radius:999px;
+        background:#fff7fb;
+        font-size:12px;
+        font-weight:700;
+        color:#7c2d5a;
+        max-width:100%;
+        white-space:nowrap;
+        overflow:hidden;
+        text-overflow:ellipsis;
     }
 
     .stu-assign-form {
@@ -422,34 +567,60 @@ $baseUrl = "index.php?page=students/assign"
         gap: 8px;
         align-items: center;
         justify-content: center;
+        flex-wrap: wrap;
+        padding: 8px;
+        border: 1px solid #f5d8e5;
+        border-radius: 14px;
+        background: linear-gradient(180deg, #fff 0%, #fff8fb 100%);
+        box-shadow: 0 6px 16px rgba(233, 30, 99, 0.05);
+    }
+
+    .stu-assign-form select,
+    .stu-assign-form .stu-save-btn{
+        min-height: 38px;
+        border-radius: 12px;
     }
 
     .stu-assign-form select {
-        min-width: 170px;
+        min-width: 140px;
+        font-size: 12px;
+        padding-top: 8px;
+        padding-bottom: 8px;
     }
 
-    .stu-pager {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        gap: 8px;
-        margin-top: 14px;
-        flex-wrap: wrap;
+    .stu-save-btn{
+        display:inline-flex;
+        align-items:center;
+        justify-content:center;
+        gap:6px;
+        padding: 0 16px;
+        border: none;
+        background: linear-gradient(135deg, #ff4d8d, #e91e63);
+        color: #fff;
+        font-size: 13px;
+        font-weight: 800;
+        box-shadow: 0 8px 18px rgba(233, 30, 99, 0.18);
+        transition: all .2s ease;
+        white-space: nowrap;
     }
 
-    .stu-pager a {
-        text-decoration: none;
-        padding: 7px 10px;
-        border: 1px solid #e2e8f0;
-        border-radius: 10px;
-        color: #334155;
-        font-weight: 700;
-        background: #fff;
+    .stu-save-btn:hover{
+        transform: translateY(-1px);
+        box-shadow: 0 10px 20px rgba(233, 30, 99, 0.22);
     }
 
-    .stu-pager a:hover {
-        border-color: #f3b4cd;
-        color: var(--stu-primary-dark);
+    .stu-assign-main{
+        flex: 1 1 230px;
+        min-width: 230px !important;
+    }
+
+    .stu-assign-mini{
+        min-width: 104px !important;
+        flex: 0 0 104px;
+    }
+
+    .stu-type-block{
+        line-height:1.2;
     }
 
     @media (max-width: 900px) {
@@ -462,48 +633,81 @@ $baseUrl = "index.php?page=students/assign"
             align-items: stretch;
         }
 
-        .stu-assign-form select {
+        .stu-assign-form select,
+        .stu-save-btn {
             min-width: unset;
+            width: 100%;
+        }
+
+        .stu-assign-main,
+        .stu-assign-mini{
+            flex: 1 1 auto;
+        }
+    }
+
+    @media (max-width: 768px){
+        .dashboard-header .header-stats{
+            justify-content:flex-start;
+        }
+
+        #datatableControls,
+        #datatableFooter{
+            width:100%;
+            margin-left:0;
+            justify-content:flex-start;
+        }
+
+        #datatableControls{
+            flex:1 1 100%;
+        }
+
+        #datatableControls .dt-top,
+        #datatableFooter .dt-bottom{
+            justify-content:flex-start;
+        }
+
+        #datatableControls .dataTables_filter,
+        #datatableFooter .dataTables_paginate{
+            margin-left:0 !important;
+        }
+
+        #datatableControls .dataTables_filter input{
+            width:100%;
+            max-width:100%;
+        }
+
+        .stu-table-wrap{
+            padding:0;
         }
     }
 </style>
 
-<div class="stu-page">
-    <div class="stu-page-top">
-        <div class="stu-page-title">
-            <h2><i class="fas fa-user-tag" style="color:#e91e63;"></i> Assign Students</h2>
-            <p>View registered students and assign them to staff.</p>
-        </div>
-        <div class="stu-chip">
-            <i class="fas fa-list"></i>
-            Total: <?= (int) $totalRows ?>
-        </div>
-    </div>
-
-    <div class="stu-summary">
-        <div class="stu-summary-card">
-            <div class="stu-summary-title">Assigned</div>
-            <div class="stu-summary-value"><?= (int) $summary['assigned'] ?></div>
-        </div>
-        <div class="stu-summary-card">
-            <div class="stu-summary-title">Unassigned</div>
-            <div class="stu-summary-value"><?= (int) $summary['unassigned'] ?></div>
+<div class="leads-dashboard">
+    <div class="dashboard-header">
+        <h2><i class="fas fa-user-tag" style="margin-right: 12px; color: #e91e63;"></i>Assign Students</h2>
+        <div class="header-stats">
+            <span class="stat-item"><i class="fas fa-list"></i> Total: <?= (int) $totalRows ?></span>
+            <span class="stat-item"><i class="fas fa-user-check"></i> Assigned: <?= (int) $summary['assigned'] ?></span>
+            <span class="stat-item"><i class="fas fa-user-clock"></i> Unassigned: <?= (int) $summary['unassigned'] ?></span>
         </div>
     </div>
 
     <div class="card">
-        <div class="card-header">Filters</div>
-        <form method="GET" action="index.php" style="padding:14px;">
+        <div class="card-header">
+            <i class="fas fa-sliders-h" style="margin-right: 8px;"></i> Filter Students
+        </div>
+        <form method="GET" action="index.php" class="filter-form">
             <input type="hidden" name="page" value="students/assign">
-            <div class="stu-filter-row">
-                <div>
-                    <label>Search</label>
+            <div class="filter-grid">
+                <div class="filter-item">
+                    <label><i class="fas fa-search"></i> Search</label>
                     <input type="text" name="q" value="<?= h($q) ?>" placeholder="Reg no / student / phone / program">
                 </div>
-                <div>
-                    <label>Assigned Staff</label>
+
+                <div class="filter-item">
+                    <label><i class="fas fa-user-check"></i> Assigned Staff</label>
                     <select name="staff_id">
-                        <option value="">All</option>
+                        <option value="">All Staff</option>
                         <?php foreach ($staffUsers as $s): ?>
                             <option value="<?= (int) $s['id'] ?>" <?= $staffFilter === (int) $s['id'] ? 'selected' : '' ?>>
                                 <?= h($s['name']) ?>
@@ -511,19 +715,31 @@ $baseUrl = "index.php?page=students/assign"
                         <?php endforeach; ?>
                     </select>
                 </div>
-                <div style="display:flex; gap:8px;">
-                    <button class="btn btn-primary"><i class="fas fa-filter"></i> Apply</button>
-                    <a href="index.php?page=students/assign" class="btn" style="background:#f3f4f6;"><i
-                            class="fas fa-undo"></i> Reset</a>
+
+                <div class="filter-actions">
+                    <button type="submit" class="btn-icon-only apply" title="Apply filters">
+                        <i class="fas fa-filter"></i>
+                    </button>
+                    <a href="index.php?page=students/assign" class="btn-icon-only reset" title="Reset filters">
+                        <i class="fas fa-undo-alt"></i>
+                    </a>
                 </div>
             </div>
         </form>
     </div>
 
     <div class="card" style="margin-top:16px;">
-        <div class="card-header">Registered Students (<?= (int) $totalRows ?>)</div>
-        <div class="table-responsive" style="padding:14px;">
-            <table class="table stu-table">
+        <div class="card-header">
+            <div class="table-header-flex">
+                <div class="table-title">
+                    <i class="fas fa-list"></i> Student Assignment Queue
+                </div>
+                <div id="datatableControls"></div>
+            </div>
+        </div>
+
+        <div class="table-container stu-table-wrap">
+            <table class="leads-table stu-table" id="assignStudentsTable">
                 <thead>
                     <tr>
                         <th>#</th>
@@ -536,15 +752,9 @@ $baseUrl = "index.php?page=students/assign"
                     </tr>
                 </thead>
                 <tbody>
-                    <?php if (!$rows): ?>
-                        <tr>
-                            <td colspan="7" style="text-align:center;">No registered students found.</td>
-                        </tr>
-                    <?php endif; ?>
-
                     <?php foreach ($rows as $i => $r): ?>
                         <tr>
-                            <td><?= (int) ($offset + $i + 1) ?></td>
+                            <td><?= (int) ($i + 1) ?></td>
                             <td><strong><?= h($r['registration_no'] ?: '-') ?></strong></td>
                             <td>
                                 <div class="stu-name"><?= h($r['enquiry_snapshot_name'] ?: '-') ?></div>
@@ -555,7 +765,7 @@ $baseUrl = "index.php?page=students/assign"
                                 <div class="stu-sub"><?= h($r['batch_name'] ?: '-') ?></div>
                             </td>
                             <td>
-                                <div><?= h(ucfirst($r['reg_type'] ?: '-')) ?></div>
+                                <div class="stu-type-block"><?= h(ucfirst($r['reg_type'] ?: '-')) ?></div>
                                 <?php if (($r['reg_type'] ?? '') === 'internship'): ?>
                                     <div class="stu-sub">
                                         <?= h($r['internship_days'] ?: '-') ?> Days
@@ -563,39 +773,36 @@ $baseUrl = "index.php?page=students/assign"
                                     </div>
                                 <?php endif; ?>
                             </td>
-                            <td><?= h($r['assigned_staff'] ?: '-') ?></td>
-
-                            <!-- <td><?= h($r['assigned_staff'] ?: '-') ?></td> -->
-
+                            <td>
+                                <span class="stu-current-staff" title="<?= h($r['assigned_staff'] ?: '-') ?>">
+                                    <?= h($r['assigned_staff'] ?: '-') ?>
+                                </span>
+                            </td>
                             <td class="text-center">
                                 <form method="POST" class="stu-assign-form">
                                     <input type="hidden" name="csrf_token" value="<?= h(generateCSRF()) ?>">
                                     <input type="hidden" name="assign_student" value="1">
                                     <input type="hidden" name="registration_id" value="<?= (int) $r['id'] ?>">
 
-                                    <select name="staff_id" required>
+                                    <select name="staff_id" class="stu-assign-main" title="<?= h($r['assigned_staff'] ?: 'Select Staff') ?>" required>
                                         <option value="">Select Staff</option>
                                         <?php foreach ($staffUsers as $s): ?>
                                             <option value="<?= (int) $s['id'] ?>" <?= ((int) $r['assigned_to'] === (int) $s['id']) ? 'selected' : '' ?>>
-                                                <?= h($s['name']) ?>        <?= !empty($s['branch_name']) ? ' (' . h($s['branch_name']) . ')' : '' ?>
+                                                <?= h($s['name']) ?><?= !empty($s['branch_name']) ? ' (' . h($s['branch_name']) . ')' : '' ?>
                                             </option>
                                         <?php endforeach; ?>
                                     </select>
 
                                     <?php if (($r['reg_type'] ?? '') === 'internship'): ?>
-                                        <select name="internship_days" required>
+                                        <select name="internship_days" class="stu-assign-mini" required>
                                             <option value="">Days</option>
-                                            <option value="7" <?= ((int) $r['internship_days'] === 7) ? 'selected' : '' ?>>7 Days
-                                            </option>
-                                            <option value="15" <?= ((int) $r['internship_days'] === 15) ? 'selected' : '' ?>>15 Days
-                                            </option>
-                                            <option value="21" <?= ((int) $r['internship_days'] === 21) ? 'selected' : '' ?>>21 Days
-                                            </option>
-                                            <option value="30" <?= ((int) $r['internship_days'] === 30) ? 'selected' : '' ?>>30 Days
-                                            </option>
+                                            <option value="7" <?= ((int) $r['internship_days'] === 7) ? 'selected' : '' ?>>7 Days</option>
+                                            <option value="15" <?= ((int) $r['internship_days'] === 15) ? 'selected' : '' ?>>15 Days</option>
+                                            <option value="21" <?= ((int) $r['internship_days'] === 21) ? 'selected' : '' ?>>21 Days</option>
+                                            <option value="30" <?= ((int) $r['internship_days'] === 30) ? 'selected' : '' ?>>30 Days</option>
                                         </select>
 
-                                        <select name="internship_batch" required>
+                                        <select name="internship_batch" class="stu-assign-mini" required>
                                             <option value="">Batch</option>
                                             <option value="Morning" <?= (($r['internship_batch'] ?? '') === 'Morning') ? 'selected' : '' ?>>Morning</option>
                                             <option value="Evening" <?= (($r['internship_batch'] ?? '') === 'Evening') ? 'selected' : '' ?>>Evening</option>
@@ -603,7 +810,7 @@ $baseUrl = "index.php?page=students/assign"
                                         </select>
                                     <?php endif; ?>
 
-                                    <button class="btn btn-primary" type="submit">
+                                    <button class="stu-save-btn" type="submit">
                                         <i class="fas fa-save"></i> Save
                                     </button>
                                 </form>
@@ -613,13 +820,36 @@ $baseUrl = "index.php?page=students/assign"
                 </tbody>
             </table>
         </div>
-
-        <div class="stu-pager">
-            <a href="<?= $baseUrl ?>&p=1"><i class="fas fa-angle-double-left"></i></a>
-            <a href="<?= $baseUrl ?>&p=<?= max(1, $page - 1) ?>"><i class="fas fa-angle-left"></i></a>
-            <span style="font-weight:700;">Page <?= (int) $page ?> / <?= (int) $totalPages ?></span>
-            <a href="<?= $baseUrl ?>&p=<?= min($totalPages, $page + 1) ?>"><i class="fas fa-angle-right"></i></a>
-            <a href="<?= $baseUrl ?>&p=<?= (int) $totalPages ?>"><i class="fas fa-angle-double-right"></i></a>
-        </div>
+        <div id="datatableFooter"></div>
     </div>
 </div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function(){
+    if (typeof crmDataTable === "function" && document.querySelector('#assignStudentsTable')) {
+        crmDataTable('#assignStudentsTable', {
+            pageLength: <?= (int) $perPage ?>,
+            lengthMenu: [5, 10, 15, 20, 50, 100],
+            ordering: true,
+            searchPlaceholder: "Search students...",
+            language: {
+                emptyTable: "No registered students found"
+            },
+            dom: "<'dt-top'lf>rt<'dt-bottom'ip>"
+        });
+    }
+
+    setTimeout(() => {
+        const controls = document.querySelector('.stu-table-wrap .dt-top');
+        const footer = document.querySelector('.stu-table-wrap .dt-bottom');
+        const topTarget = document.getElementById('datatableControls');
+        const bottomTarget = document.getElementById('datatableFooter');
+        if (controls && topTarget) {
+            topTarget.appendChild(controls);
+        }
+        if (footer && bottomTarget) {
+            bottomTarget.appendChild(footer);
+        }
+    }, 100);
+});
+</script>
