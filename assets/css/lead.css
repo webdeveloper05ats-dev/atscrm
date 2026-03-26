@@ -872,6 +872,19 @@ body {
     overflow: visible;
 }
 
+.dataTables_wrapper .dataTables_scroll,
+.dataTables_wrapper .dataTables_scrollHead,
+.dataTables_wrapper .dataTables_scrollHeadInner,
+.dataTables_wrapper .dataTables_scrollBody,
+.dataTables_wrapper .dataTables_scrollFoot {
+    overflow: visible !important;
+}
+
+.dataTables_wrapper .dataTables_scrollBody {
+    overflow-x: auto !important;
+    overflow-y: visible !important;
+}
+
 #leadsTable {
     width: 100% !important;
     max-width: 100% !important;
