@@ -224,7 +224,7 @@ function renderAttendanceCalendar(array $student, array $attendanceMap, string $
                 ?>
                 <button type="button"
                     class="att-grid-cell att-grid-day <?= h($cellClass) ?> <?= $date === $today ? 'att-day-today' : '' ?>"
-                    <?= !$canOpenDay ? 'disabled title="' . h($lockTitle) . '"' : "onclick=\"openAttendanceEntry(" . (int) $student['id'] . ", '" . h($student['enquiry_snapshot_name']) . "', '" . h($date) . "', " . ($readOnlyMode ? 'true' : 'false') . ")\" title=\"" . h($lockTitle) . "\"" ?>>
+                    <?= !$canOpenDay ? 'disabled data-modern-tooltip="' . h($lockTitle) . '" aria-label="' . h($lockTitle) . '"' : "onclick=\"openAttendanceEntry(" . (int) $student['id'] . ", '" . h($student['enquiry_snapshot_name']) . "', '" . h($date) . "', " . ($readOnlyMode ? 'true' : 'false') . ")\" data-modern-tooltip=\"" . h($lockTitle) . "\" aria-label=\"" . h($lockTitle) . "\"" ?>>
                     <span class="att-day-no"><?= (int) $day ?></span>
                     <span class="att-day-text"><?= $isLockedDate ? 'Locked' : ($status === 'present' ? 'Present' : ($status === 'absent' ? 'Absent' : ($readOnlyMode ? 'View' : 'Mark'))) ?></span>
                 </button>
@@ -617,12 +617,14 @@ if ($isAjax) {
 }
 
 $q = trim($_GET['q'] ?? '');
-$page = (int) ($_GET['p'] ?? 1);
-if ($page < 1) {
-    $page = 1;
+$dateFrom = trim((string) ($_GET['date_from'] ?? ''));
+$dateTo = trim((string) ($_GET['date_to'] ?? ''));
+if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $dateFrom)) {
+    $dateFrom = '';
 }
-$perPage = 12;
-$offset = ($page - 1) * $perPage;
+if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $dateTo)) {
+    $dateTo = '';
+}
 
 $where = ["r.reg_type = 'course'", "r.registration_status IN ('active','completed')"];
 $params = [];
@@ -650,6 +652,16 @@ if ($q !== '') {
     array_push($params, $like, $like, $like, $like, $like, $like);
 }
 
+if ($dateFrom !== '') {
+    $where[] = "DATE(r.joined_on) >= ?";
+    $params[] = $dateFrom;
+}
+
+if ($dateTo !== '') {
+    $where[] = "DATE(r.joined_on) <= ?";
+    $params[] = $dateTo;
+}
+
 $whereSql = "WHERE " . implode(" AND ", $where);
 
 $totalRows = 0;
@@ -659,14 +671,6 @@ try {
     $totalRows = (int) $st->fetchColumn();
 } catch (Exception $e) {
     $totalRows = 0;
-}
-
-$totalPages = (int) ceil($totalRows / $perPage);
-if ($totalPages < 1) {
-    $totalPages = 1;
-}
-if ($page > $totalPages) {
-    $page = $totalPages;
 }
 
 $rows = [];
@@ -689,7 +693,6 @@ try {
         LEFT JOIN registration_courses rc ON rc.registration_id = r.id
         {$whereSql}
         ORDER BY r.id DESC
-        LIMIT {$perPage} OFFSET {$offset}
     ";
     $st = $pdo->prepare($sql);
     $st->execute($params);
@@ -728,33 +731,60 @@ if (!empty($rows)) {
         }
     }
 }
-
-$baseUrl = "index.php?page=attendance&q=" . urlencode($q);
 ?>
 
-<h2 style="margin-bottom:20px;">Student Attendance</h2>
+<div class="payments-dashboard attendance-dashboard">
+    <div class="dashboard-header">
+        <h2><i class="fas fa-user-check" style="margin-right:12px; color:#e91e63;"></i>Attendance Management</h2>
+        <div class="header-stats">
+            <span class="stat-item"><i class="fas fa-database"></i> Total: <?= (int) $totalRows ?></span>
+        </div>
+    </div>
 
-<div class="card">
-    <div class="card-header">Filters</div>
-    <form method="GET" action="index.php">
-        <input type="hidden" name="page" value="attendance">
-        <div class="att-filter-row">
-            <div>
-                <label>Search</label>
-                <input type="text" name="q" value="<?= h($q) ?>" placeholder="Reg no / name / phone / program">
+    <div class="card">
+        <div class="card-header">
+            <i class="fas fa-sliders-h" style="margin-right:8px;"></i> Filter Attendance
+        </div>
+        <form method="GET" action="index.php" class="filter-form">
+            <input type="hidden" name="page" value="attendance">
+            <div class="filter-grid">
+                <div class="filter-item">
+                    <label><i class="fas fa-search"></i> Search</label>
+                    <input type="text" name="q" value="<?= h($q) ?>" placeholder="Reg no / name / phone / program">
+                </div>
+                <div class="filter-item">
+                    <label><i class="fas fa-calendar-day"></i> Date From</label>
+                    <input type="date" name="date_from" value="<?= h($dateFrom) ?>">
+                </div>
+                <div class="filter-item">
+                    <label><i class="fas fa-calendar-check"></i> Date To</label>
+                    <input type="date" name="date_to" value="<?= h($dateTo) ?>">
+                </div>
+                <div class="filter-actions">
+                    <button type="submit" class="btn-icon-only apply" data-modern-tooltip="Apply filters" aria-label="Apply filters">
+                        <i class="fas fa-filter"></i>
+                    </button>
+                    <a href="index.php?page=attendance" class="btn-icon-only reset" data-modern-tooltip="Reset filters" aria-label="Reset filters">
+                        <i class="fas fa-undo-alt"></i>
+                    </a>
+                </div>
             </div>
-            <div class="att-filter-actions">
-                <button class="btn btn-primary">Apply</button>
-                <a href="index.php?page=attendance" class="btn" style="background:#f3f4f6;">Reset</a>
+        </form>
+    </div>
+
+    <div class="card" style="margin-top:16px;">
+        <div class="card-header">
+            <div class="table-header-flex">
+                <div class="table-title">
+                    <i class="fas fa-list"></i>
+                    <?= $attendanceReadOnlyViewer ? 'All Course Students Attendance' : 'Assigned Course Students Attendance' ?>
+                </div>
+                <div id="datatableControls"></div>
             </div>
         </div>
-    </form>
-</div>
-
-<div class="card" style="margin-top:16px;">
-    <div class="card-header"><?= $attendanceReadOnlyViewer ? 'All Course Students Attendance (View Only) (' . (int) $totalRows . ')' : 'Assigned Course Students (' . (int) $totalRows . ')' ?></div>
-    <div class="att-table-wrap">
-        <table class="att-table">
+        <div class="table-container">
+            <div class="crm-table-wrapper">
+                <table id="attendanceTable" class="crm-table att-table display" style="width:100%;">
             <thead>
                 <tr>
                     <th>ID</th>
@@ -805,25 +835,20 @@ $baseUrl = "index.php?page=attendance&q=" . urlencode($q);
                         <td class="text-center">
                             <button type="button" class="att-icon-btn"
                                 onclick="openAttendanceCalendar(<?= (int) $r['id'] ?>, '<?= h($r['enquiry_snapshot_name']) ?>')"
-                                title="Attendance Calendar">
+                                data-modern-tooltip="Attendance Calendar"
+                                aria-label="Attendance Calendar">
                                 <i class="fas fa-calendar-check"></i>
                             </button>
-                            <a href="index.php?page=reports/student_schedule&registration_id=<?= (int) $r['id'] ?>" class="att-icon-btn att-icon-btn-report" title="Student Schedule Report">
+                            <a href="index.php?page=reports/student_schedule&registration_id=<?= (int) $r['id'] ?>" class="att-icon-btn att-icon-btn-report" data-modern-tooltip="Student Schedule Report" aria-label="Student Schedule Report">
                                 <i class="fas fa-file-alt"></i>
                             </a>
                         </td>
                     </tr>
                 <?php endforeach; ?>
             </tbody>
-        </table>
-    </div>
-
-    <div class="att-pager">
-        <a href="<?= $baseUrl ?>&p=1"><i class="fas fa-angle-double-left"></i></a>
-        <a href="<?= $baseUrl ?>&p=<?= max(1, $page - 1) ?>"><i class="fas fa-angle-left"></i></a>
-        <span class="att-page-info">Page <?= (int) $page ?> / <?= (int) $totalPages ?></span>
-        <a href="<?= $baseUrl ?>&p=<?= min($totalPages, $page + 1) ?>"><i class="fas fa-angle-right"></i></a>
-        <a href="<?= $baseUrl ?>&p=<?= (int) $totalPages ?>"><i class="fas fa-angle-double-right"></i></a>
+                </table>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -848,59 +873,439 @@ $baseUrl = "index.php?page=attendance&q=" . urlencode($q);
 </div>
 
 <style>
-    .att-filter-row { display:flex; gap:16px; align-items:end; flex-wrap:wrap; }
-    .att-filter-row input { min-width:280px; }
-    .att-filter-actions { display:flex; gap:10px; align-items:center; }
-    .att-table-wrap { padding:16px; }
-    .att-table { width:100%; border-collapse:collapse; }
-    .att-table th { background:#f5f6fa; padding:14px; text-align:left; font-weight:700; }
-    .att-table td { padding:14px; border-bottom:1px solid #eee; }
-    .att-primary { font-weight:700; color:#111827; }
-    .att-sub { font-size:12px; color:#6b7280; }
-    .att-reg-badge { font-weight:700; color:#2e7d32; }
+    :root {
+        --primary: #e91e63;
+        --primary-light: #f8bbd0;
+        --primary-dark: #c2185b;
+        --gray-200: #e9ecef;
+        --gray-300: #dee2e6;
+        --gray-400: #ced4da;
+        --gray-700: #495057;
+        --gray-800: #343a40;
+        --gray-900: #212529;
+    }
+    .payments-dashboard.attendance-dashboard {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+    .dashboard-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+    .dashboard-header h2 {
+        margin: 0;
+        font-size: 28px;
+        font-weight: 900;
+        color: var(--gray-800);
+        letter-spacing: .2px;
+    }
+    .header-stats {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+    .stat-item {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 12px;
+        border-radius: 999px;
+        background: #fff5f9;
+        color: var(--primary-dark);
+        font-size: 13px;
+        font-weight: 800;
+        border: 1px solid #f5d6e3;
+    }
+    .card-header {
+        font-weight: 900;
+        font-size: 16px;
+        color: var(--gray-800);
+        border-bottom: 1px solid #f2f2f2;
+    }
+    .table-header-flex {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+        width: 100%;
+        flex-wrap: nowrap;
+    }
+    .table-title {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-weight: 900;
+        color: var(--gray-800);
+        flex: 1 1 auto;
+        min-width: 0;
+        white-space: nowrap;
+    }
+    .filter-form {
+        padding: 12px 14px;
+    }
+    .filter-grid {
+        display: grid;
+        grid-template-columns: minmax(240px, 1fr) minmax(180px, 220px) minmax(180px, 220px) auto;
+        gap: 14px;
+        align-items: end;
+    }
+    .filter-item label {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        margin-bottom: 8px;
+        font-size: 13px;
+        font-weight: 800;
+        color: #5f6b7a;
+        text-transform: uppercase;
+        letter-spacing: .3px;
+    }
+    .filter-item input {
+        width: 100%;
+        border: 1px solid #d7dde5;
+        border-radius: 10px;
+        min-height: 42px;
+        padding: 10px 12px;
+        background: #fff;
+        outline: none;
+        transition: .15s ease;
+    }
+    .filter-item input:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(233, 30, 99, .14);
+    }
+    .filter-actions {
+        display: inline-flex;
+        gap: 8px;
+        align-items: center;
+        justify-content: flex-end;
+    }
+    .btn-icon-only {
+        width: 40px;
+        height: 40px;
+        border: none;
+        border-radius: 10px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        text-decoration: none;
+        cursor: pointer;
+        transition: .15s ease;
+    }
+    .btn-icon-only.apply {
+        background: var(--primary);
+        color: #fff;
+    }
+    .btn-icon-only.apply:hover {
+        background: var(--primary-dark);
+    }
+    .btn-icon-only.reset {
+        background: #f1f3f5;
+        color: var(--primary-dark);
+    }
+    .btn-icon-only.reset:hover {
+        background: #e9ecef;
+    }
+    .table-container {
+        padding: 12px 14px 16px;
+    }
+    .crm-table-wrapper {
+        width: 100%;
+        overflow-x: auto;
+    }
+    #attendanceTable.crm-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    #attendanceTable.crm-table th,
+    #attendanceTable.crm-table td {
+        padding: 12px 10px;
+        border-bottom: 1px solid #f0f0f0;
+        vertical-align: middle;
+        font-size: 13px;
+    }
+    #attendanceTable.crm-table th {
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: .35px;
+        font-weight: 800;
+        color: var(--gray-800);
+        background: #fafbfd;
+    }
+    #attendanceTable.crm-table tbody tr:hover {
+        background: #fff5f9;
+    }
+    .att-primary { font-weight: 800; color: #111827; }
+    .att-sub { font-size: 12px; color: #6b7280; }
+    .att-reg-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 4px 10px;
+        border-radius: 999px;
+        background: #eaf7ee;
+        color: #2e7d32;
+        font-weight: 800;
+        font-size: 12px;
+    }
     .att-summary-chip { display:inline-flex; align-items:center; justify-content:center; min-width:44px; padding:6px 10px; border-radius:999px; font-weight:800; font-size:12px; }
     .att-summary-present { background:#eaf7ee; color:#2e7d32; }
     .att-summary-absent { background:#fdecec; color:#c62828; }
-    .att-icon-btn { width:38px; height:38px; border-radius:10px; border:none; background:#e8f4fd; color:#1565c0; cursor:pointer; }
-    .att-icon-btn-report { display:inline-flex; align-items:center; justify-content:center; text-decoration:none; background:#fff7ed; color:#c2410c; margin-left:6px; }
-    .att-pager { display:flex; justify-content:center; align-items:center; gap:8px; padding:16px; }
-    .att-pager a { width:36px; height:36px; display:flex; align-items:center; justify-content:center; border-radius:8px; border:1px solid #ddd; text-decoration:none; color:#333; }
-    .att-page-info { padding:0 8px; font-weight:600; }
-    .att-modal-backdrop { position:fixed; inset:0; background:rgba(15,23,42,.45); z-index:9998; align-items:center; justify-content:center; padding:20px; }
-    .att-modal, .att-entry-modal { width:min(980px, 96vw); max-height:90vh; overflow:auto; background:#fff; border-radius:18px; box-shadow:0 30px 80px rgba(0, 0, 0, .25); }
-    .att-entry-modal { width:min(640px, 94vw); }
-    .att-modal-header { display:flex; justify-content:space-between; align-items:center; padding:16px 18px; border-bottom:1px solid #eee; }
-    .att-modal-body { padding:18px; }
-    .att-close-btn { width:40px; height:40px; border:none; border-radius:10px; background:#f3f4f6; font-size:24px; cursor:pointer; }
-    .att-calendar-toolbar { display:flex; justify-content:center; align-items:center; gap:12px; margin-bottom:16px; }
-    .att-calendar-title { min-width:180px; text-align:center; font-size:20px; font-weight:800; color:#111827; }
-    .att-month-btn { min-width:42px; }
-    .att-month-btn-disabled { opacity:.45; cursor:not-allowed; }
-    .att-student-meta { display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:12px; margin-bottom:16px; padding:14px; border-radius:14px; background:#f8fafc; border:1px solid #eef2f7; }
-    .att-legend { display:flex; gap:16px; flex-wrap:wrap; margin-bottom:16px; }
+    .att-icon-btn {
+        width: 34px;
+        height: 34px;
+        border-radius: 10px;
+        border: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        background: #ffeaf3;
+        color: var(--primary-dark);
+    }
+    .att-icon-btn:hover {
+        background: #ffd3e5;
+    }
+    .att-icon-btn-report {
+        display:inline-flex;
+        align-items:center;
+        justify-content:center;
+        text-decoration:none;
+        margin-left:6px;
+        background:#fff0f6;
+        color:var(--primary-dark);
+    }
+    #datatableControls {
+        width: auto;
+        margin-left: 0;
+        display: flex;
+        justify-content: flex-end;
+        flex: 0 0 auto;
+    }
+    #datatableControls .dt-top {
+        display:flex;
+        align-items:center;
+        justify-content:flex-end;
+        gap:12px;
+        flex-wrap:nowrap;
+    }
+    .dataTables_wrapper .dt-top,
+    .dataTables_wrapper .dt-bottom { display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+    .dataTables_wrapper .dt-bottom { justify-content:space-between; margin-top:12px; }
+    .dataTables_wrapper .dataTables_length,
+    .dataTables_wrapper .dataTables_filter { margin:0; }
+    .dataTables_wrapper .dataTables_length {
+        display:inline-flex !important;
+        align-items:center;
+        width:auto !important;
+        white-space:nowrap !important;
+        flex:0 0 auto;
+    }
+    .dataTables_wrapper .dataTables_length label,
+    .dataTables_wrapper .dataTables_filter label { display:flex; align-items:center; gap:8px; font-weight:700; color:#334155; margin:0; white-space:nowrap !important; flex-wrap:nowrap !important; }
+    .dataTables_wrapper .dataTables_length,
+    .dataTables_wrapper .dataTables_filter { display:flex; align-items:center; }
+    .dataTables_wrapper .dataTables_filter input,
+    .dataTables_wrapper .dataTables_length select {
+        border:1px solid var(--gray-300);
+        border-radius:10px;
+        padding:8px 12px;
+        background:#fff;
+        min-height:38px;
+        outline:none;
+    }
+    .dataTables_wrapper .dataTables_filter input { min-width: 240px; }
+    .dataTables_wrapper .dataTables_filter input:focus,
+    .dataTables_wrapper .dataTables_length select:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(233, 30, 99, .14);
+    }
+    .dataTables_wrapper .dataTables_paginate .paginate_button {
+        border:1px solid #f1d6e3 !important;
+        background:#fff !important;
+        color:var(--gray-700) !important;
+        border-radius:8px !important;
+        padding:6px 10px !important;
+    }
+    .dataTables_wrapper .dataTables_paginate .paginate_button.current {
+        background:var(--primary) !important;
+        border-color:var(--primary) !important;
+        color:#fff !important;
+    }
+    .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+        background:#fff5f9 !important;
+        color:var(--primary-dark) !important;
+        border-color:#f1d6e3 !important;
+    }
+    .dataTables_wrapper .dataTables_info { color:#64748b; font-weight:600; }
+    .att-modal-backdrop {
+        position: fixed;
+        inset: 0;
+        background: radial-gradient(circle at top, rgba(30, 41, 59, .42), rgba(15, 23, 42, .62));
+        backdrop-filter: blur(6px);
+        z-index: 9998;
+        align-items: center;
+        justify-content: center;
+        padding: 22px;
+    }
+    .att-modal, .att-entry-modal {
+        width: min(1020px, 96vw);
+        max-height: 90vh;
+        overflow: auto;
+        background: linear-gradient(180deg, #ffffff 0%, #fcfdff 100%);
+        border-radius: 22px;
+        border: 1px solid #e8edf5;
+        box-shadow: 0 28px 80px rgba(15, 23, 42, .28);
+    }
+    .att-entry-modal { width: min(680px, 94vw); }
+    .att-modal-header {
+        position: sticky;
+        top: 0;
+        z-index: 4;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 16px 18px;
+        border-bottom: 1px solid #edf2f7;
+        background: linear-gradient(180deg, rgba(255,255,255,.98), rgba(255,255,255,.94));
+        backdrop-filter: blur(4px);
+    }
+    .att-modal-header h3 {
+        margin: 0;
+        font-size: 18px;
+        font-weight: 900;
+        color: #0f172a;
+    }
+    .att-modal-body { padding: 18px; }
+    .att-close-btn {
+        width: 38px;
+        height: 38px;
+        border: 1px solid #e5e7eb;
+        border-radius: 11px;
+        background: #f8fafc;
+        color: #334155;
+        font-size: 22px;
+        cursor: pointer;
+        transition: .15s ease;
+    }
+    .att-close-btn:hover {
+        background: #eef2ff;
+        border-color: #cbd5e1;
+    }
+    .att-calendar-toolbar {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 16px;
+        padding: 10px;
+        border-radius: 14px;
+        background: #f8fafc;
+        border: 1px solid #edf2f7;
+    }
+    .att-calendar-title {
+        min-width: 220px;
+        text-align: center;
+        font-size: 24px;
+        font-weight: 900;
+        color: #0f172a;
+        letter-spacing: .2px;
+    }
+    .att-month-btn {
+        min-width: 40px;
+        height: 36px;
+        border-radius: 10px;
+        border: 1px solid #e2e8f0;
+    }
+    .att-month-btn-disabled { opacity: .45; cursor: not-allowed; }
+    .att-student-meta {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 12px;
+        margin-bottom: 14px;
+        padding: 14px;
+        border-radius: 14px;
+        background: linear-gradient(180deg, #f8fbff, #f8fafc);
+        border: 1px solid #e8eef6;
+    }
+    .att-student-meta b {
+        color: #334155;
+    }
+    .att-legend {
+        display: flex;
+        gap: 14px;
+        flex-wrap: wrap;
+        margin-bottom: 14px;
+        padding: 10px 12px;
+        border-radius: 12px;
+        background: #ffffff;
+        border: 1px solid #edf2f7;
+    }
     .att-legend-item { display:inline-flex; align-items:center; gap:8px; font-size:13px; font-weight:700; color:#374151; }
     .att-dot { width:12px; height:12px; border-radius:50%; display:inline-block; }
     .att-dot-present { background:#2e7d32; }
     .att-dot-absent { background:#e53935; }
     .att-dot-empty { background:#cbd5e1; }
     .att-dot-locked { background:#94a3b8; }
-    .att-grid { display:grid; grid-template-columns:repeat(7, minmax(0, 1fr)); gap:10px; }
-    .att-grid-head { padding:10px; text-align:center; font-weight:800; color:#475569; background:#f8fafc; border-radius:10px; }
-    .att-grid-cell { min-height:88px; border-radius:14px; }
+    .att-grid {
+        display: grid;
+        grid-template-columns: repeat(7, minmax(0, 1fr));
+        gap: 10px;
+        padding: 12px;
+        border-radius: 14px;
+        background: linear-gradient(180deg, #fbfdff, #f8fafc);
+        border: 1px solid #edf2f7;
+    }
+    .att-grid-head {
+        padding: 10px;
+        text-align: center;
+        font-weight: 900;
+        color: #334155;
+        background: #f1f5f9;
+        border-radius: 10px;
+        border: 1px solid #e2e8f0;
+        font-size: 12px;
+        letter-spacing: .35px;
+        text-transform: uppercase;
+    }
+    .att-grid-cell { min-height: 92px; border-radius: 12px; }
     .att-grid-cell-empty { background:transparent; }
-    .att-grid-day { border:1px solid #e5e7eb; background:#fff; display:flex; flex-direction:column; align-items:flex-start; justify-content:space-between; padding:10px; cursor:pointer; text-align:left; }
-    .att-grid-day:hover { transform:translateY(-1px); box-shadow:0 10px 24px rgba(15, 23, 42, .08); }
+    .att-grid-day {
+        border: 1px solid #dbe4ee;
+        background: linear-gradient(180deg, #ffffff, #f8fbff);
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        justify-content: space-between;
+        padding: 10px;
+        cursor: pointer;
+        text-align: left;
+        transition: .18s ease;
+    }
+    .att-grid-day:hover {
+        transform: translateY(-2px);
+        border-color: #cbd5e1;
+        box-shadow: 0 12px 28px rgba(15, 23, 42, .10);
+    }
     .att-grid-day:disabled { cursor:not-allowed; transform:none; box-shadow:none; }
-    .att-day-no { font-size:18px; font-weight:800; color:#111827; }
-    .att-day-text { font-size:12px; font-weight:700; }
+    .att-day-no { font-size: 19px; font-weight: 900; color: #0f172a; }
+    .att-day-text { font-size: 12px; font-weight: 800; }
     .att-status-present { background:#eaf7ee; border-color:#9bd3a7; }
     .att-status-present .att-day-text { color:#2e7d32; }
     .att-status-absent { background:#fdecec; border-color:#f1a6a6; }
     .att-status-absent .att-day-text { color:#c62828; }
     .att-status-empty .att-day-text { color:#64748b; }
-    .att-status-locked { background:#f8fafc; border-color:#e2e8f0; opacity:.72; }
+    .att-status-locked { background:#f8fafc; border-color:#e2e8f0; opacity:.72; box-shadow:none; }
     .att-status-locked .att-day-text { color:#94a3b8; }
-    .att-day-today { outline:2px solid #1565c0; }
+    .att-day-today {
+        border-color: #2563eb;
+        box-shadow: 0 0 0 2px rgba(37, 99, 235, .20);
+    }
     .att-info-box { padding:12px 14px; border:1px solid #eceff3; border-radius:12px; background:#f8fafc; display:flex; flex-direction:column; gap:4px; }
     .att-info-box b { font-size:12px; color:#6b7280; text-transform:uppercase; }
     .att-info-box span { font-weight:700; color:#111827; }
@@ -912,7 +1317,15 @@ $baseUrl = "index.php?page=attendance&q=" . urlencode($q);
     .att-radio-row { display:flex; gap:18px; flex-wrap:wrap; }
     .att-radio-option { display:inline-flex; align-items:center; gap:8px; font-weight:700; color:#334155; }
     .att-radio-option input { margin:0; }
-    .att-form-note { padding:12px 14px; border-radius:12px; background:#eff6ff; color:#1d4ed8; font-weight:700; margin-bottom:14px; }
+    .att-form-note {
+        padding: 12px 14px;
+        border-radius: 12px;
+        background: linear-gradient(180deg, #ecf3ff, #e9f1ff);
+        color: #1d4ed8;
+        font-weight: 800;
+        margin-bottom: 14px;
+        border: 1px solid #dbeafe;
+    }
     .att-form-note-danger { background:#fdecec; color:#c62828; }
     .att-form-actions { display:flex; justify-content:flex-end; gap:10px; margin-top:18px; }
     .att-empty-note { color:#64748b; padding:10px 0; }
@@ -938,18 +1351,186 @@ $baseUrl = "index.php?page=attendance&q=" . urlencode($q);
         opacity:.8;
         pointer-events:none;
     }
+    .modern-tooltip {
+        position: fixed;
+        left: 0;
+        top: 0;
+        z-index: 100000;
+        pointer-events: none;
+        background: linear-gradient(180deg, #0f172a, #1e293b);
+        color: #fff;
+        border: 1px solid rgba(255, 255, 255, .16);
+        box-shadow: 0 14px 34px rgba(2, 6, 23, .35);
+        border-radius: 10px;
+        padding: 7px 10px;
+        font-size: 12px;
+        font-weight: 700;
+        line-height: 1.2;
+        white-space: nowrap;
+        opacity: 0;
+        transform: translateY(-4px);
+        transition: opacity .14s ease, transform .14s ease;
+    }
+    .modern-tooltip.is-show {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    .modern-tooltip::after {
+        content: "";
+        position: absolute;
+        left: 50%;
+        bottom: -6px;
+        width: 10px;
+        height: 10px;
+        background: #1e293b;
+        border-right: 1px solid rgba(255, 255, 255, .14);
+        border-bottom: 1px solid rgba(255, 255, 255, .14);
+        transform: translateX(-50%) rotate(45deg);
+    }
     @keyframes attSpin {
         to { transform:rotate(360deg); }
     }
 
     @media (max-width: 900px) {
+        .table-header-flex { flex-wrap: wrap; align-items: flex-start; }
+        .dashboard-header h2 { font-size:24px; }
+        .filter-grid { grid-template-columns: 1fr; }
+        .filter-actions { justify-content: flex-start; }
         .att-student-meta, .att-entry-grid { grid-template-columns:1fr; }
         .att-grid { grid-template-columns:repeat(2, minmax(0, 1fr)); }
         .att-grid-head { display:none; }
+        #attendanceTable.crm-table th,
+        #attendanceTable.crm-table td { font-size: 12px; padding:10px 8px; }
+    }
+    @media (max-width: 768px) {
+        #datatableControls { width:100%; margin-left:0; justify-content:flex-start; }
+        #datatableControls .dt-top,
+        .dataTables_wrapper .dt-bottom { justify-content:flex-start; }
+        #datatableControls .dt-top { flex-wrap: wrap; }
+        .dataTables_wrapper .dataTables_filter,
+        .dataTables_wrapper .dataTables_length { width:100%; }
+        .dataTables_wrapper .dataTables_filter label { width:100%; }
+        .dataTables_wrapper .dataTables_filter input { width:100% !important; }
     }
 </style>
 
 <script>
+    let modernTooltipEl = null;
+    let modernTooltipTarget = null;
+
+    function ensureModernTooltip() {
+        if (modernTooltipEl) return modernTooltipEl;
+        modernTooltipEl = document.createElement('div');
+        modernTooltipEl.className = 'modern-tooltip';
+        modernTooltipEl.setAttribute('role', 'tooltip');
+        document.body.appendChild(modernTooltipEl);
+        return modernTooltipEl;
+    }
+
+    function hideModernTooltip() {
+        if (!modernTooltipEl) return;
+        modernTooltipEl.classList.remove('is-show');
+        modernTooltipTarget = null;
+    }
+
+    function positionModernTooltip(target) {
+        if (!modernTooltipEl || !target) return;
+        const rect = target.getBoundingClientRect();
+        const tipRect = modernTooltipEl.getBoundingClientRect();
+        const gap = 10;
+        let top = rect.top - tipRect.height - gap;
+        if (top < 8) {
+            top = rect.bottom + gap;
+        }
+        let left = rect.left + (rect.width / 2) - (tipRect.width / 2);
+        const maxLeft = window.innerWidth - tipRect.width - 8;
+        left = Math.max(8, Math.min(left, maxLeft));
+        modernTooltipEl.style.top = `${top}px`;
+        modernTooltipEl.style.left = `${left}px`;
+    }
+
+    function showModernTooltip(target) {
+        const text = (target.getAttribute('data-modern-tooltip') || '').trim();
+        if (!text) return;
+        const tip = ensureModernTooltip();
+        modernTooltipTarget = target;
+        tip.textContent = text;
+        tip.classList.add('is-show');
+        positionModernTooltip(target);
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        if (typeof crmDataTable !== 'function') return;
+
+        try {
+            crmDataTable('#attendanceTable', {
+                pageLength: 10,
+                lengthMenu: [5, 10, 20, 50, 100],
+                ordering: true,
+                scrollX: false,
+                responsive: false,
+                searchPlaceholder: 'Search attendance...',
+                columnDefs: [
+                    { orderable: false, targets: 8 }
+                ],
+                dom:
+                    "<'dt-top'lf>" +
+                    "rt" +
+                    "<'dt-bottom'ip>"
+            });
+
+            setTimeout(function () {
+                const controls = document.querySelector('.dt-top');
+                const target = document.getElementById('datatableControls');
+                if (controls && target) {
+                    target.appendChild(controls);
+                }
+            }, 100);
+        } catch (e) {}
+    });
+
+    document.addEventListener('mouseover', function (e) {
+        const target = e.target.closest('[data-modern-tooltip]');
+        if (!target) {
+            hideModernTooltip();
+            return;
+        }
+        showModernTooltip(target);
+    });
+
+    document.addEventListener('mouseout', function (e) {
+        const from = e.target.closest('[data-modern-tooltip]');
+        if (!from) return;
+        const to = e.relatedTarget ? e.relatedTarget.closest('[data-modern-tooltip]') : null;
+        if (from !== to) {
+            hideModernTooltip();
+        }
+    });
+
+    document.addEventListener('focusin', function (e) {
+        const target = e.target.closest('[data-modern-tooltip]');
+        if (!target) return;
+        showModernTooltip(target);
+    });
+
+    document.addEventListener('focusout', function (e) {
+        const target = e.target.closest('[data-modern-tooltip]');
+        if (!target) return;
+        hideModernTooltip();
+    });
+
+    window.addEventListener('scroll', function () {
+        if (modernTooltipTarget) {
+            positionModernTooltip(modernTooltipTarget);
+        }
+    }, true);
+
+    window.addEventListener('resize', function () {
+        if (modernTooltipTarget) {
+            positionModernTooltip(modernTooltipTarget);
+        }
+    });
+
     let activeAttendanceRegistrationId = 0;
     let activeAttendanceStudentName = '';
     let activeAttendanceMonth = '';
