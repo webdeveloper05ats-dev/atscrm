@@ -7,6 +7,7 @@ require_once __DIR__ . '/_student_report_helpers.php';
 
 $id = (int)($_GET['id'] ?? 0);
 $isPrintMode = (int)($_GET['print'] ?? 0) === 1;
+$isStaffViewer = (($_SESSION['role_name'] ?? '') === 'Staff');
 
 if ($id <= 0) {
     echo "<div class='alert alert-danger'>Invalid student ID</div>";
@@ -372,11 +373,30 @@ margin-bottom:16px;
 
 body.print-report-mode{
 background:#fff !important;
+height:auto !important;
+min-height:100% !important;
+overflow-y:auto !important;
+overflow-x:hidden !important;
 }
 
 body.print-report-mode .sidebar,
 body.print-report-mode .topbar{
 display:none !important;
+}
+
+body.print-report-mode .wrapper,
+body.print-report-mode .main-content,
+body.print-report-mode .main-panel,
+body.print-report-mode .content-wrapper,
+body.print-report-mode .content,
+body.print-report-mode .page-content,
+body.print-report-mode .container,
+body.print-report-mode .container-fluid{
+height:auto !important;
+min-height:0 !important;
+max-height:none !important;
+overflow:visible !important;
+position:static !important;
 }
 
 body.print-report-mode .content,
@@ -671,6 +691,14 @@ display:block !important;
 margin-bottom:16px;
 }
 
+body.print-report-mode .tab-content{
+display:none !important;
+}
+
+body.print-report-mode .tab-content.active{
+display:block !important;
+}
+
 .payment-table-wrap,
 .report-table{
 overflow:visible !important;
@@ -718,16 +746,18 @@ document.body.classList.add('print-report-mode');
 <div class="student-header-top">
 <div class="student-info">
 <h2><?= htmlspecialchars((string)($student['enquiry_snapshot_name'] ?? '-')) ?></h2>
-<div class="student-subline">Student progress summary and payment overview</div>
+<div class="student-subline"><?= $isStaffViewer ? 'Student progress summary' : 'Student progress summary and payment overview' ?></div>
 <div class="student-meta">
 <span class="meta-chip"><i class="fas fa-graduation-cap"></i> <?= htmlspecialchars((string)($student['program_name'] ?? '-')) ?></span>
 <span class="meta-chip"><i class="fas fa-id-badge"></i> <?= htmlspecialchars((string)($student['registration_no'] ?? '-')) ?></span>
 <span class="meta-chip"><i class="fas fa-calendar-alt"></i> Joined <?= htmlspecialchars((string)($student['joined_on'] ?? '-')) ?></span>
 </div>
 </div>
+<?php if (!$isStaffViewer): ?>
 <span class="status-badge status-<?= htmlspecialchars((string)($student['payment_status'] ?? 'unpaid')) ?>">
 <?= ucfirst((string)($student['payment_status'] ?? 'unpaid')) ?>
 </span>
+<?php endif; ?>
 </div>
 
 </div>
@@ -737,6 +767,7 @@ document.body.classList.add('print-report-mode');
 
 <div class="summary-grid">
 
+<?php if (!$isStaffViewer): ?>
 <div class="summary-card">
 <div class="summary-title">Total Fee</div>
 <div class="summary-value">Rs <?= number_format((float)$student['total_fee'],2) ?></div>
@@ -754,6 +785,7 @@ document.body.classList.add('print-report-mode');
 <div class="summary-value">Rs <?= number_format((float)$student['balance_amount'],2) ?></div>
 <div class="summary-note">Pending collection amount</div>
 </div>
+<?php endif; ?>
 
 <?php if ($isCourseStudent): ?>
 <div class="summary-card">
@@ -777,7 +809,9 @@ document.body.classList.add('print-report-mode');
 <div class="profile-tabs">
 
 <button class="tab-btn active" data-tab="profile">Profile</button>
+<?php if (!$isStaffViewer): ?>
 <button class="tab-btn" data-tab="payments">Payments</button>
+<?php endif; ?>
 <?php if ($isCourseStudent): ?>
 <button class="tab-btn" data-tab="progress">Course Progress</button>
 <button class="tab-btn" data-tab="attendance">Attendance</button>
@@ -867,7 +901,7 @@ document.body.classList.add('print-report-mode');
 
 
 <!-- PAYMENTS TAB -->
-
+<?php if (!$isStaffViewer): ?>
 <div class="tab-content" id="payments">
 
 <div class="tab-panel">
@@ -914,6 +948,7 @@ document.body.classList.add('print-report-mode');
 </table>
 
 </div>
+<?php endif; ?>
 
 </div>
 
@@ -1084,6 +1119,22 @@ document.body.classList.add('print-report-mode');
 <div class="tab-content" id="placement">
 
 <div class="tab-panel">
+<?php if ($isStaffViewer): ?>
+<h3 class="panel-title">Placement Status</h3>
+<div class="profile-grid">
+<div class="profile-item">
+<div class="profile-label">Moved To HR</div>
+<div class="profile-value">
+<span class="value-pill <?= !empty($hr['sent_to_hr_at']) ? 'success' : 'neutral' ?>">
+<?= !empty($hr['sent_to_hr_at']) ? 'Moved to HR' : 'Not Moved to HR' ?>
+</span>
+<div class="value-subnote">
+<?= !empty($hr['sent_to_hr_at']) ? 'Sent on ' . htmlspecialchars(studentProfileReportDate($hr['sent_to_hr_at'])) : 'No HR movement yet' ?>
+</div>
+</div>
+</div>
+</div>
+<?php else: ?>
 <h3 class="panel-title">Placement Interview History</h3>
 <div class="payment-table-wrap">
 <table class="report-table">
@@ -1115,6 +1166,7 @@ document.body.classList.add('print-report-mode');
 </tbody>
 </table>
 </div>
+<?php endif; ?>
 </div>
 
 </div>
