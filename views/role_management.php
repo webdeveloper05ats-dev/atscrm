@@ -253,7 +253,13 @@ $statusValue=isset($_POST['status'])
 }
 </style>
 
-<h2 class="page-title">Role Management</h2>
+<div class="role-page-head">
+  <h2 class="page-title">Role Management</h2>
+  <div class="role-total-badge">
+    <i class="fas fa-users-cog"></i>
+    Total Roles: <?= (int)$total ?>
+  </div>
+</div>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <?php if($error): ?>
@@ -352,7 +358,7 @@ confirmButtonColor:'#e91e63'
           <table  id="usersTable" class="crm-table">
             <thead>
               <tr>
-                <th>ID</th>
+                <th>#</th>
                 <th>Role</th>
                 <th>Dashboard</th>
                 <th>Branch</th>
@@ -363,7 +369,7 @@ confirmButtonColor:'#e91e63'
             <tbody>
               <?php foreach($roles as $r): ?>
               <tr>
-                <td><strong><?= $r['id'] ?></strong></td>
+                <td data-order="<?= (int)$r['id'] ?>"><strong class="role-row-index"></strong></td>
                 <td><?= htmlspecialchars($r['role_name']) ?></td>
                 <td><code><?= htmlspecialchars($r['default_dashboard_slug']) ?></code></td>
                <td align="center">
@@ -512,8 +518,30 @@ crmDataTable('#usersTable',{
 pageLength:5,
 lengthMenu:[5,10,20,50],
 ordering:true,
-order:[[1,'asc']]
+order:[[1,'asc']],
+scrollY:false,
+scrollCollapse:false
 });
+
+function syncRoleRowIndex() {
+  if (!window.jQuery || !window.jQuery.fn.DataTable) return;
+  const $table = window.jQuery('#usersTable');
+  if (!$table.length || !window.jQuery.fn.DataTable.isDataTable($table)) return;
+
+  const dt = $table.DataTable();
+  const start = dt.page.info().start;
+  dt.column(0, { search: 'applied', order: 'applied', page: 'current' })
+    .nodes()
+    .each(function (cell, i) {
+      const el = cell.querySelector('.role-row-index');
+      if (el) el.textContent = String(start + i + 1);
+    });
+}
+
+if (window.jQuery) {
+  window.jQuery('#usersTable').on('draw.dt order.dt search.dt', syncRoleRowIndex);
+}
+setTimeout(syncRoleRowIndex, 80);
 
 setTimeout(function () {
   function relocateRoleTableControls() {
@@ -568,4 +596,3 @@ setTimeout(function () {
 });
 
 </script>
-
