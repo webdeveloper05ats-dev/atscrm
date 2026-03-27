@@ -90,25 +90,116 @@ document.addEventListener("DOMContentLoaded", function () {
             document.querySelectorAll(".sidebar li.has-children.open").forEach(function(other){
                 if (other !== li) {
                     other.classList.remove("open");
+                    const otherToggle = other.querySelector(".menu-toggle");
+                    if (otherToggle) otherToggle.setAttribute("aria-expanded", "false");
                     const sm = other.querySelector(".submenu");
-                    if (sm) sm.style.display = "none";
+                    if (sm) {
+                        sm.style.display = "none";
+                        sm.setAttribute("hidden", "");
+                    }
                 }
             });
 
             if (isOpen) {
                 li.classList.remove("open");
                 submenu.style.display = "none";
+                submenu.setAttribute("hidden", "");
+                btn.setAttribute("aria-expanded", "false");
             } else {
                 li.classList.add("open");
                 submenu.style.display = "flex";
                 submenu.style.flexDirection = "column";
                 submenu.style.gap = "6px";
+                submenu.removeAttribute("hidden");
+                btn.setAttribute("aria-expanded", "true");
             }
 
         });
 
     });
 
+});
+</script>
+
+<!-- ============================= -->
+<!-- Sidebar Menu Search -->
+<!-- ============================= -->
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const searchInput = document.getElementById("sidebarMenuSearch");
+    const sidebar = document.getElementById("crmSidebar");
+    if (!searchInput || !sidebar) return;
+
+    const topItems = Array.from(sidebar.querySelectorAll(".menu-list > li"));
+
+    function setItemVisibility(item, visible) {
+        item.style.display = visible ? "" : "none";
+    }
+
+    function applySearch(query) {
+        const q = query.trim().toLowerCase();
+
+        topItems.forEach(function (item) {
+            if (item.classList.contains("sidebar-logout")) {
+                setItemVisibility(item, true);
+                return;
+            }
+
+            const hasChildren = item.classList.contains("has-children");
+
+            if (!hasChildren) {
+                const text = (item.textContent || "").toLowerCase();
+                setItemVisibility(item, q === "" || text.includes(q));
+                return;
+            }
+
+            const toggleText = (item.querySelector(".menu-toggle")?.textContent || "").toLowerCase();
+            const submenu = item.querySelector(".submenu");
+            const childItems = Array.from(item.querySelectorAll(".submenu > li"));
+            const parentMatch = q === "" || toggleText.includes(q);
+
+            let anyChildVisible = false;
+            childItems.forEach(function (child) {
+                const childText = (child.textContent || "").toLowerCase();
+                const childMatch = q === "" || parentMatch || childText.includes(q);
+                child.style.display = childMatch ? "" : "none";
+                if (childMatch) anyChildVisible = true;
+            });
+
+            const showParent = parentMatch || anyChildVisible;
+            setItemVisibility(item, showParent);
+
+            if (!submenu) return;
+
+            if (q === "") {
+                const initiallyOpen = item.getAttribute("data-initial-open") === "1";
+                item.classList.toggle("open", initiallyOpen);
+                submenu.style.display = initiallyOpen ? "flex" : "none";
+                if (initiallyOpen) {
+                    submenu.removeAttribute("hidden");
+                } else {
+                    submenu.setAttribute("hidden", "");
+                }
+                const toggle = item.querySelector(".menu-toggle");
+                if (toggle) toggle.setAttribute("aria-expanded", initiallyOpen ? "true" : "false");
+                return;
+            }
+
+            if (showParent) {
+                item.classList.add("open");
+                submenu.style.display = "flex";
+                submenu.style.flexDirection = "column";
+                submenu.style.gap = "6px";
+                submenu.removeAttribute("hidden");
+                const toggle = item.querySelector(".menu-toggle");
+                if (toggle) toggle.setAttribute("aria-expanded", "true");
+            }
+        });
+    }
+
+    searchInput.addEventListener("input", function () {
+        applySearch(searchInput.value || "");
+    });
 });
 </script>
 
@@ -171,6 +262,12 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 
   overlay.addEventListener("click", closeMobile);
+
+  sidebar.addEventListener("click", function (e) {
+    const menuLink = e.target.closest(".menu-list a[href]");
+    if (!menuLink) return;
+    if (isMobile()) closeMobile();
+  });
 
   document.addEventListener("keydown", function (e) {
     if (e.key === "Escape") closeMobile();
