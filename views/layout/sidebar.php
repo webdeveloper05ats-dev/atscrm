@@ -22,20 +22,42 @@ $currentPage = $_GET['page'] ?? '';
 // -------------------------------
 $dashboardSlug = $defaultPage ?? 'dashboard/superadmin'; // fallback
 
-// Fetch allowed menus
-$stmt = $pdo->prepare("
-    SELECT m.*
-    FROM menus m
-    LEFT JOIN role_permissions rp 
-        ON rp.menu_id = m.id AND rp.role_id = :role_id
-    WHERE rp.can_view = 1
-    AND m.status = 1
-    ORDER BY m.parent_id ASC, m.sort_order ASC
-");
-$stmt->execute([
-    'role_id' => $role_id
-]);
-$menus = $stmt->fetchAll(PDO::FETCH_ASSOC);
+// Fetch allowed menus (with short session cache to reduce repeated DB load)
+$menus = [];
+$sidebarMenuCacheTtl = 120; // seconds
+$sidebarMenuCacheKey = 'role_' . (int)$role_id;
+$sidebarMenuCacheRoot = $_SESSION['sidebar_menu_cache'] ?? [];
+$cached = $sidebarMenuCacheRoot[$sidebarMenuCacheKey] ?? null;
+$nowTs = time();
+
+if (
+    is_array($cached)
+    && isset($cached['menus'], $cached['ts'])
+    && is_array($cached['menus'])
+    && (($nowTs - (int)$cached['ts']) < $sidebarMenuCacheTtl)
+) {
+    $menus = $cached['menus'];
+} else {
+    $stmt = $pdo->prepare("
+        SELECT m.*
+        FROM menus m
+        INNER JOIN role_permissions rp
+            ON rp.menu_id = m.id
+        WHERE rp.role_id = :role_id
+          AND rp.can_view = 1
+          AND m.status = 1
+        ORDER BY m.parent_id ASC, m.sort_order ASC
+    ");
+    $stmt->execute([
+        'role_id' => $role_id
+    ]);
+    $menus = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    $_SESSION['sidebar_menu_cache'][$sidebarMenuCacheKey] = [
+        'ts' => $nowTs,
+        'menus' => $menus
+    ];
+}
 
 // -------------------------------
 // IMPORTANT FIX:
@@ -47,7 +69,7 @@ $menus = array_values(array_filter($menus, function($m) {
     return !(strpos($slug, 'dashboard/') === 0 || $slug === 'dashboard');
 }));
 
-// Build parent → child tree
+// Build parent -> child tree
 $menuTree = [];
 
 foreach ($menus as $menu) {
@@ -80,12 +102,22 @@ $isDashboardActive = ($currentPage === '' || strpos($currentPage, 'dashboard/') 
 <div class="sidebar" id="crmSidebar">
 
     <div class="logo"><?= APP_NAME ?></div>
+    <div class="sidebar-search">
+        <label for="sidebarMenuSearch" class="sidebar-search-label">Search Menu</label>
+        <input
+            type="text"
+            id="sidebarMenuSearch"
+            class="sidebar-search-input"
+            placeholder="Search menu..."
+            autocomplete="off"
+        >
+    </div>
 
     <ul class="menu-list">
 
         <!-- Dashboard (ONLY ONE) -->
         <li class="<?= $isDashboardActive ? 'active' : '' ?>">
-            <a href="index.php?page=<?= htmlspecialchars($dashboardSlug) ?>">
+            <a href="index.php?page=<?= htmlspecialchars($dashboardSlug) ?>" data-tooltip="Dashboard">
                 <i class="fas fa-home"></i>
                 <span>Dashboard</span>
             </a>
@@ -98,17 +130,25 @@ $isDashboardActive = ($currentPage === '' || strpos($currentPage, 'dashboard/') 
                 $parentActive = ($currentPage === $parent['menu_slug']) || $parentOpen;
             ?>
 
-            <li class="<?= $parentActive ? 'active' : '' ?> <?= $hasChildren ? 'has-children' : '' ?> <?= $parentOpen ? 'open' : '' ?>">
+            <li class="<?= $parentActive ? 'active' : '' ?> <?= $hasChildren ? 'has-children' : '' ?> <?= $parentOpen ? 'open' : '' ?>"<?= $hasChildren ? ' data-initial-open="' . ($parentOpen ? '1' : '0') . '"' : '' ?>>
 
                 <?php if ($hasChildren): ?>
                     <!-- Parent toggle -->
-                    <a href="javascript:void(0)" class="menu-toggle" data-menu-id="<?= (int)$parent['id'] ?>">
+                    <?php $submenuId = 'submenu-' . (int)$parent['id']; ?>
+                    <button
+                        type="button"
+                        class="menu-toggle"
+                        data-menu-id="<?= (int)$parent['id'] ?>"
+                        data-tooltip="<?= htmlspecialchars($parent['menu_name']) ?>"
+                        aria-expanded="<?= $parentOpen ? 'true' : 'false' ?>"
+                        aria-controls="<?= htmlspecialchars($submenuId) ?>"
+                    >
                         <i class="<?= htmlspecialchars($parent['icon'] ?: 'fas fa-circle') ?>"></i>
                         <span><?= htmlspecialchars($parent['menu_name']) ?></span>
                         <i class="fas fa-chevron-down caret"></i>
-                    </a>
+                    </button>
 
-                    <ul class="submenu" <?= $parentOpen ? '' : 'style="display:none;"' ?>>
+                    <ul id="<?= htmlspecialchars($submenuId) ?>" class="submenu" <?= $parentOpen ? '' : 'style="display:none;" hidden' ?>>
                         <?php foreach ($parent['children'] as $child): ?>
                             <li class="<?= ($currentPage === $child['menu_slug']) ? 'active' : '' ?>">
                                 <a href="index.php?page=<?= htmlspecialchars($child['menu_slug']) ?>">
@@ -121,7 +161,7 @@ $isDashboardActive = ($currentPage === '' || strpos($currentPage, 'dashboard/') 
 
                 <?php else: ?>
                     <!-- Normal menu link -->
-                    <a href="index.php?page=<?= htmlspecialchars($parent['menu_slug']) ?>">
+                    <a href="index.php?page=<?= htmlspecialchars($parent['menu_slug']) ?>" data-tooltip="<?= htmlspecialchars($parent['menu_name']) ?>">
                         <i class="<?= htmlspecialchars($parent['icon'] ?: 'fas fa-circle') ?>"></i>
                         <span><?= htmlspecialchars($parent['menu_name']) ?></span>
                     </a>
@@ -131,8 +171,8 @@ $isDashboardActive = ($currentPage === '' || strpos($currentPage, 'dashboard/') 
         <?php endforeach; ?>
 
         <!-- Logout -->
-        <li>
-            <a href="logout.php">
+        <li class="sidebar-logout">
+            <a href="logout.php" data-tooltip="Logout">
                 <i class="fas fa-sign-out-alt"></i>
                 <span>Logout</span>
             </a>
@@ -141,3 +181,4 @@ $isDashboardActive = ($currentPage === '' || strpos($currentPage, 'dashboard/') 
     </ul>
 
 </div>
+
