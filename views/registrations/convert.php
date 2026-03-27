@@ -35,6 +35,16 @@ function regDateOrNull($v){
     return $v === '' ? null : $v;
 }
 
+function regIsTenDigitPhone(?string $phone): bool {
+    if ($phone === null) return false;
+    return (bool)preg_match('/^\d{10}$/', trim($phone));
+}
+
+function regIsValidEmail(?string $email): bool {
+    if ($email === null) return false;
+    return (bool)filter_var(trim($email), FILTER_VALIDATE_EMAIL);
+}
+
 function makeRegistrationNo(PDO $pdo): string {
     $prefix = 'REG-' . date('Ym') . '-';
 
@@ -224,6 +234,50 @@ if (isset($_POST['save_registration'])) {
 
             if ($student_name === null) {
                 throw new Exception("Student name is required.");
+            }
+
+            if (!regIsTenDigitPhone($phone)) {
+                throw new Exception("Student phone number must be exactly 10 digits.");
+            }
+
+            if (!regIsValidEmail($email)) {
+                throw new Exception("Please enter a valid student email address.");
+            }
+
+            if ($gender === null) {
+                throw new Exception("Please select gender.");
+            }
+
+            if ($dob === null) {
+                throw new Exception("Date of birth is required.");
+            }
+
+            if ($aadhaar_no === null || !preg_match('/^\d{12}$/', $aadhaar_no)) {
+                throw new Exception("Aadhaar number must be exactly 12 digits.");
+            }
+
+            if ($program_name === null) {
+                throw new Exception("Program name is required.");
+            }
+
+            if ($batch_name === null) {
+                throw new Exception("Batch name is required.");
+            }
+
+            if ($qualification === null) {
+                throw new Exception("Qualification is required.");
+            }
+
+            if ($college_name === null) {
+                throw new Exception("College/University is required.");
+            }
+
+            if ($year_of_passout === null || !preg_match('/^\d{4}$/', $year_of_passout)) {
+                throw new Exception("Year of passing must be a valid 4-digit year.");
+            }
+
+            if ($total_fee <= 0) {
+                throw new Exception("Total fee is required.");
             }
 
             // IMPORTANT FIX: preserve existing registration no on edit
@@ -1452,7 +1506,7 @@ $final_fee         = $registration['final_fee'] ?? '0.00';
               <div class="reg-step-nav">
                 <button type="button" class="btn-reg btn-reg-light" onclick="goRegStep(2)"><i class="fas fa-arrow-left"></i> Back</button>
                 <div class="right">
-                  <button type="button" class="btn-reg btn-reg-primary" onclick="goRegStep(4)">Next <i class="fas fa-arrow-right"></i></button>
+                  <button type="button" class="btn-reg btn-reg-primary" onclick="validateStep3AndNext()">Next <i class="fas fa-arrow-right"></i></button>
                 </div>
               </div>
             </div>
@@ -1491,7 +1545,7 @@ $final_fee         = $registration['final_fee'] ?? '0.00';
               <div class="reg-step-nav">
                 <button type="button" class="btn-reg btn-reg-light" onclick="goRegStep(3)"><i class="fas fa-arrow-left"></i> Back</button>
                 <div class="right">
-                  <button type="button" class="btn-reg btn-reg-primary" onclick="goRegStep(5)">Next <i class="fas fa-arrow-right"></i></button>
+                  <button type="button" class="btn-reg btn-reg-primary" onclick="validateStep4AndNext()">Next <i class="fas fa-arrow-right"></i></button>
                 </div>
               </div>
             </div>
@@ -1514,7 +1568,7 @@ $final_fee         = $registration['final_fee'] ?? '0.00';
 
                 <div class="reg-field">
                   <label class="reg-label">Final Fee</label>
-                  <input class="reg-input" type="number" step="0.01" name="final_fee" value="<?= h($final_fee) ?>">
+                  <input class="reg-input" type="number" step="0.01" name="final_fee" value="<?= h($final_fee) ?>" readonly>
                   <div class="reg-inline-note">Auto-calculated from Total Fee - Discount Amount.</div>
                 </div>
               </div>
@@ -1538,7 +1592,7 @@ $final_fee         = $registration['final_fee'] ?? '0.00';
               <div class="reg-step-nav">
                 <button type="button" class="btn-reg btn-reg-light" onclick="goRegStep(4)"><i class="fas fa-arrow-left"></i> Back</button>
                 <div class="right">
-                  <button type="button" class="btn-reg btn-reg-primary" onclick="goRegStep(6)">Next <i class="fas fa-arrow-right"></i></button>
+                  <button type="button" class="btn-reg btn-reg-primary" onclick="validateStep5AndNext()">Next <i class="fas fa-arrow-right"></i></button>
                 </div>
               </div>
             </div>
@@ -1700,6 +1754,8 @@ function validateStep2AndNext() {
   const name = (document.querySelector('input[name="student_name"]')?.value || '').trim();
   const phone = (document.querySelector('input[name="phone"]')?.value || '').trim();
   const email = (document.querySelector('input[name="email"]')?.value || '').trim();
+  const gender = document.querySelector('input[name="gender"]:checked')?.value || '';
+  const dob = (document.querySelector('input[name="dob"]')?.value || '').trim();
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
   if (!name) {
@@ -1714,17 +1770,100 @@ function validateStep2AndNext() {
     Swal.fire({ icon:'warning', title:'Invalid Email', text:'Please enter a valid email address', confirmButtonColor:'#e91e63' });
     return false;
   }
-
+  if (!gender) {
+    Swal.fire({ icon:'warning', title:'Required Field', text:'Please select gender', confirmButtonColor:'#e91e63' });
+    return false;
+  }
+  if (!dob) {
+    Swal.fire({ icon:'warning', title:'Required Field', text:'Please select date of birth', confirmButtonColor:'#e91e63' });
+    return false;
+  }
   goRegStep(3);
   return true;
 }
 
+function validateStep3AndNext() {
+  const programName = (document.querySelector('input[name="program_name"]')?.value || '').trim();
+  const batchName = (document.querySelector('input[name="batch_name"]')?.value || '').trim();
+  const qualification = (document.querySelector('input[name="qualification"]')?.value || '').trim();
+  const collegeName = (document.querySelector('input[name="college_name"]')?.value || '').trim();
+  const yearOfPassout = (document.querySelector('input[name="year_of_passout"]')?.value || '').trim();
+
+  if (!programName) {
+    Swal.fire({ icon:'warning', title:'Required Field', text:'Please enter program name', confirmButtonColor:'#e91e63' });
+    return false;
+  }
+  if (!batchName) {
+    Swal.fire({ icon:'warning', title:'Required Field', text:'Please enter batch name', confirmButtonColor:'#e91e63' });
+    return false;
+  }
+  if (!qualification) {
+    Swal.fire({ icon:'warning', title:'Required Field', text:'Please enter qualification', confirmButtonColor:'#e91e63' });
+    return false;
+  }
+  if (!collegeName) {
+    Swal.fire({ icon:'warning', title:'Required Field', text:'Please enter college or university name', confirmButtonColor:'#e91e63' });
+    return false;
+  }
+  if (!yearOfPassout || !/^\d{4}$/.test(yearOfPassout)) {
+    Swal.fire({ icon:'warning', title:'Invalid Year', text:'Please enter a valid 4-digit year of passing', confirmButtonColor:'#e91e63' });
+    return false;
+  }
+
+  goRegStep(4);
+  return true;
+}
+
+function validateStep4AndNext() {
+  const aadhaar = (document.querySelector('input[name="aadhaar_no"]')?.value || '').trim();
+
+  if (!aadhaar || !/^\d{12}$/.test(aadhaar)) {
+    Swal.fire({ icon:'warning', title:'Invalid Aadhaar', text:'Aadhaar number must be exactly 12 digits.', confirmButtonColor:'#e91e63' });
+    return false;
+  }
+
+  goRegStep(5);
+  return true;
+}
+
+function validateStep5AndNext() {
+  const totalFee = (document.querySelector('input[name="total_fee"]')?.value || '').trim();
+  const totalFeeNumber = parseFloat(totalFee);
+
+  if (!totalFee || isNaN(totalFeeNumber) || totalFeeNumber <= 0) {
+    Swal.fire({ icon:'warning', title:'Invalid Fee', text:'Please enter a valid total fee amount', confirmButtonColor:'#e91e63' });
+    return false;
+  }
+
+  goRegStep(6);
+  return true;
+}
+
 function validateCoreBeforeSubmit() {
+  const programName = (document.querySelector('input[name="program_name"]')?.value || '').trim();
+  const batchName = (document.querySelector('input[name="batch_name"]')?.value || '').trim();
+  const qualification = (document.querySelector('input[name="qualification"]')?.value || '').trim();
+  const collegeName = (document.querySelector('input[name="college_name"]')?.value || '').trim();
+  const yearOfPassout = (document.querySelector('input[name="year_of_passout"]')?.value || '').trim();
   const name = (document.querySelector('input[name="student_name"]')?.value || '').trim();
   const phone = (document.querySelector('input[name="phone"]')?.value || '').trim();
   const email = (document.querySelector('input[name="email"]')?.value || '').trim();
+  const gender = document.querySelector('input[name="gender"]:checked')?.value || '';
+  const dob = (document.querySelector('input[name="dob"]')?.value || '').trim();
   const aadhaar = (document.querySelector('input[name="aadhaar_no"]')?.value || '').trim();
+  const totalFee = (document.querySelector('input[name="total_fee"]')?.value || '').trim();
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+  if (!programName) {
+    Swal.fire({ icon:'warning', title:'Required Field', text:'Please enter program name', confirmButtonColor:'#e91e63' });
+    goRegStep(1);
+    return false;
+  }
+  if (!batchName) {
+    Swal.fire({ icon:'warning', title:'Required Field', text:'Please enter batch name', confirmButtonColor:'#e91e63' });
+    goRegStep(1);
+    return false;
+  }
 
   if (!name) {
     Swal.fire({ icon:'warning', title:'Required Field', text:'Please enter student name', confirmButtonColor:'#e91e63' });
@@ -1741,9 +1880,39 @@ function validateCoreBeforeSubmit() {
     goRegStep(2);
     return false;
   }
-  if (aadhaar !== '' && !/^\d{12}$/.test(aadhaar)) {
+  if (!gender) {
+    Swal.fire({ icon:'warning', title:'Required Field', text:'Please select gender', confirmButtonColor:'#e91e63' });
+    goRegStep(2);
+    return false;
+  }
+  if (!dob) {
+    Swal.fire({ icon:'warning', title:'Required Field', text:'Please select date of birth', confirmButtonColor:'#e91e63' });
+    goRegStep(2);
+    return false;
+  }
+  if (!aadhaar || !/^\d{12}$/.test(aadhaar)) {
     Swal.fire({ icon:'warning', title:'Invalid Aadhaar', text:'Aadhaar number must be exactly 12 digits.', confirmButtonColor:'#e91e63' });
     goRegStep(4);
+    return false;
+  }
+  if (!qualification) {
+    Swal.fire({ icon:'warning', title:'Required Field', text:'Please enter qualification', confirmButtonColor:'#e91e63' });
+    goRegStep(3);
+    return false;
+  }
+  if (!collegeName) {
+    Swal.fire({ icon:'warning', title:'Required Field', text:'Please enter college or university name', confirmButtonColor:'#e91e63' });
+    goRegStep(3);
+    return false;
+  }
+  if (!yearOfPassout || !/^\d{4}$/.test(yearOfPassout)) {
+    Swal.fire({ icon:'warning', title:'Invalid Year', text:'Please enter a valid 4-digit year of passing', confirmButtonColor:'#e91e63' });
+    goRegStep(3);
+    return false;
+  }
+  if (!totalFee || isNaN(parseFloat(totalFee)) || parseFloat(totalFee) <= 0) {
+    Swal.fire({ icon:'warning', title:'Invalid Fee', text:'Please enter a valid total fee amount', confirmButtonColor:'#e91e63' });
+    goRegStep(5);
     return false;
   }
 
