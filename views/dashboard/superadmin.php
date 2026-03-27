@@ -59,6 +59,34 @@ SELECT IFNULL(SUM(amount),0)
 FROM registration_payments
 ")->fetchColumn();
 
+/* FOLLOWUPS DUE TODAY */
+$todayFollowups = $pdo->query("
+SELECT COUNT(*)
+FROM enquiry_followups
+WHERE followup_date = CURDATE()
+")->fetchColumn();
+
+/* PENDING DUES */
+$pendingDueStudents = $pdo->query("
+SELECT COUNT(*)
+FROM registrations
+WHERE registration_status='active'
+  AND balance_amount > 0
+  AND payment_status IN ('unpaid','partial')
+")->fetchColumn();
+
+$pendingDueAmount = $pdo->query("
+SELECT IFNULL(SUM(balance_amount),0)
+FROM registrations
+WHERE registration_status='active'
+  AND balance_amount > 0
+  AND payment_status IN ('unpaid','partial')
+")->fetchColumn();
+
+$todayConversionRate = ((float)$todayLeads > 0)
+    ? round((((float)$todayRegistrations / (float)$todayLeads) * 100), 1)
+    : 0.0;
+
 /* RECENT REGISTRATIONS */
 
 $recentRegistrations = $pdo->query("
@@ -66,7 +94,7 @@ SELECT registration_no,enquiry_snapshot_name,program_name,joined_on
 FROM registrations
 WHERE registration_status='active'
 ORDER BY id DESC
-LIMIT 5
+LIMIT 3
 ")->fetchAll(PDO::FETCH_ASSOC);
 
 /* RECENT PAYMENTS */
@@ -83,7 +111,7 @@ JOIN registrations r ON r.id = rp.registration_id
 LEFT JOIN registration_profiles p ON p.registration_id = r.id
 GROUP BY r.id
 ORDER BY last_payment_date DESC
-LIMIT 5
+LIMIT 3
 ")->fetchAll(PDO::FETCH_ASSOC);
 
 /* REVENUE ANALYTICS (30 DAYS) */
@@ -113,526 +141,8 @@ $chartData = array_values($chartData);
 
 ?>
 
-<style>
-:root{
---sa-primary:#d9468b;
---sa-primary-dark:#b83273;
---sa-primary-soft:#fff0f7;
---sa-ink:#1f2940;
---sa-muted:#6b7280;
---sa-border:#efd7e5;
---sa-bg:#f7f4f8;
---sa-card:#ffffff;
---sa-accent:#223a5e;
---sa-shadow:0 18px 40px rgba(38, 24, 45, 0.08);
---sa-shadow-soft:0 10px 24px rgba(38, 24, 45, 0.06);
-}
+<!-- Super Admin dashboard styles moved to assets/css/style.css -->
 
-body{
-background:
-radial-gradient(circle at top left, rgba(217,70,139,0.10), transparent 22%),
-radial-gradient(circle at top right, rgba(34,58,94,0.08), transparent 20%),
-var(--sa-bg);
-}
-
-.sa-dashboard{
-display:grid;
-gap:22px;
-padding:8px 0 28px;
-}
-
-.sa-card{
-background:var(--sa-card);
-border:1px solid var(--sa-border);
-border-radius:24px;
-box-shadow:var(--sa-shadow-soft);
-}
-
-.sa-hero{
-display:grid;
-grid-template-columns:minmax(0, 1.45fr) minmax(300px, .85fr);
-gap:20px;
-}
-
-.sa-hero-main{
-padding:28px;
-background:
-linear-gradient(135deg, rgba(217,70,139,0.14), rgba(255,255,255,0.95)),
-linear-gradient(180deg, #fff 0%, #fff7fb 100%);
-position:relative;
-overflow:hidden;
-}
-
-.sa-hero-main::after{
-content:'';
-position:absolute;
-right:-40px;
-top:-48px;
-width:180px;
-height:180px;
-border-radius:50%;
-background:radial-gradient(circle, rgba(217,70,139,0.16) 0%, rgba(217,70,139,0) 70%);
-}
-
-.sa-kicker{
-display:inline-flex;
-align-items:center;
-gap:8px;
-padding:8px 14px;
-border-radius:999px;
-background:#fff;
-border:1px solid rgba(217,70,139,0.18);
-font-size:11px;
-font-weight:800;
-letter-spacing:.08em;
-text-transform:uppercase;
-color:var(--sa-primary-dark);
-margin-bottom:16px;
-}
-
-.sa-hero-title{
-margin:0;
-font-size:34px;
-line-height:1.08;
-font-weight:800;
-color:var(--sa-ink);
-max-width:760px;
-}
-
-.sa-hero-title strong{
-color:var(--sa-primary-dark);
-}
-
-.sa-hero-copy{
-margin:14px 0 0;
-max-width:720px;
-font-size:15px;
-line-height:1.7;
-color:#586174;
-}
-
-.sa-hero-meta{
-display:flex;
-flex-wrap:wrap;
-gap:12px;
-margin-top:22px;
-}
-
-.sa-chip{
-display:inline-flex;
-align-items:center;
-gap:8px;
-padding:10px 14px;
-border-radius:999px;
-background:#fff;
-border:1px solid var(--sa-border);
-font-size:13px;
-font-weight:700;
-color:#4b5563;
-}
-
-.sa-hero-side{
-padding:24px;
-display:grid;
-gap:16px;
-background:linear-gradient(180deg, #ffffff 0%, #fff8fb 100%);
-}
-
-.sa-panel-label{
-font-size:11px;
-font-weight:800;
-letter-spacing:.08em;
-text-transform:uppercase;
-color:#7b8190;
-display:flex;
-align-items:center;
-gap:8px;
-}
-
-.sa-panel-title{
-font-size:22px;
-font-weight:800;
-color:var(--sa-ink);
-line-height:1.2;
-margin-top:6px;
-}
-
-.sa-panel-copy{
-font-size:13px;
-line-height:1.6;
-color:#6b7280;
-}
-
-.sa-mini-grid{
-display:grid;
-grid-template-columns:repeat(2, minmax(0, 1fr));
-gap:12px;
-}
-
-.sa-mini-stat{
-padding:14px;
-border-radius:18px;
-background:#fff;
-border:1px solid #f3dce8;
-}
-
-.sa-mini-stat .label{
-font-size:11px;
-font-weight:800;
-letter-spacing:.08em;
-text-transform:uppercase;
-color:#7b8190;
-margin-bottom:8px;
-}
-
-.sa-mini-stat .value{
-font-size:24px;
-font-weight:800;
-color:var(--sa-accent);
-line-height:1.1;
-}
-
-.sa-mini-stat .sub{
-margin-top:6px;
-font-size:12px;
-color:#6b7280;
-}
-
-.sa-kpi-grid{
-display:grid;
-grid-template-columns:repeat(6, minmax(0, 1fr));
-gap:16px;
-}
-
-.sa-kpi-card{
-padding:18px;
-position:relative;
-overflow:hidden;
-}
-
-.sa-kpi-card::before{
-content:'';
-position:absolute;
-top:0;
-left:0;
-right:0;
-height:4px;
-background:linear-gradient(90deg, var(--sa-primary), #ff8fbe);
-}
-
-.sa-kpi-icon{
-width:46px;
-height:46px;
-display:inline-flex;
-align-items:center;
-justify-content:center;
-border-radius:16px;
-background:var(--sa-primary-soft);
-color:var(--sa-primary-dark);
-font-size:18px;
-margin-bottom:14px;
-}
-
-.sa-kpi-label{
-font-size:11px;
-font-weight:800;
-letter-spacing:.08em;
-text-transform:uppercase;
-color:#7b8190;
-margin-bottom:8px;
-}
-
-.sa-kpi-value{
-font-size:28px;
-font-weight:800;
-line-height:1.1;
-color:var(--sa-ink);
-}
-
-.sa-kpi-sub{
-margin-top:8px;
-font-size:12px;
-line-height:1.55;
-color:#6b7280;
-}
-
-.sa-main-grid{
-display:grid;
-grid-template-columns:minmax(0, 1.35fr) minmax(300px, .85fr);
-gap:20px;
-}
-
-.sa-block{
-padding:22px;
-}
-
-.sa-block-head{
-display:flex;
-justify-content:space-between;
-align-items:flex-start;
-gap:14px;
-margin-bottom:18px;
-}
-
-.sa-block-copy{
-display:grid;
-gap:6px;
-}
-
-.sa-block-kicker{
-font-size:11px;
-font-weight:800;
-letter-spacing:.08em;
-text-transform:uppercase;
-color:#7b8190;
-display:flex;
-align-items:center;
-gap:8px;
-}
-
-.sa-block-title{
-margin:0;
-font-size:22px;
-font-weight:800;
-color:var(--sa-ink);
-}
-
-.sa-block-sub{
-font-size:13px;
-line-height:1.6;
-color:#6b7280;
-}
-
-.sa-link-btn{
-display:inline-flex;
-align-items:center;
-gap:8px;
-height:40px;
-padding:0 16px;
-border-radius:999px;
-background:linear-gradient(135deg, var(--sa-primary), var(--sa-primary-dark));
-color:#fff;
-font-size:13px;
-font-weight:700;
-text-decoration:none;
-box-shadow:0 12px 24px rgba(217,70,139,0.22);
-transition:transform .18s ease, box-shadow .18s ease;
-}
-
-.sa-link-btn:hover{
-color:#fff;
-transform:translateY(-1px);
-box-shadow:0 16px 28px rgba(217,70,139,0.28);
-}
-
-.sa-chart-shell{
-height:360px;
-padding:12px 4px 0;
-}
-
-.sa-side-stack{
-display:grid;
-gap:20px;
-}
-
-.sa-snapshot-grid{
-display:grid;
-gap:12px;
-}
-
-.sa-snapshot-item{
-display:flex;
-justify-content:space-between;
-align-items:flex-start;
-gap:12px;
-padding:14px 0;
-border-bottom:1px solid #f2e4ec;
-}
-
-.sa-snapshot-item:last-child{
-border-bottom:none;
-padding-bottom:0;
-}
-
-.sa-snapshot-item:first-child{
-padding-top:0;
-}
-
-.sa-snapshot-label{
-font-size:13px;
-font-weight:700;
-color:#4b5563;
-}
-
-.sa-snapshot-copy{
-font-size:12px;
-line-height:1.55;
-color:#7b8190;
-margin-top:4px;
-}
-
-.sa-snapshot-value{
-font-size:22px;
-font-weight:800;
-color:var(--sa-accent);
-white-space:nowrap;
-}
-
-.sa-note{
-padding:16px 18px;
-border-radius:18px;
-background:linear-gradient(135deg, #fff4fa, #fff);
-border:1px solid #f4d6e6;
-}
-
-.sa-note-title{
-font-size:13px;
-font-weight:800;
-color:var(--sa-primary-dark);
-margin-bottom:6px;
-}
-
-.sa-note-copy{
-font-size:13px;
-line-height:1.6;
-color:#6b7280;
-}
-
-.sa-table-grid{
-display:grid;
-grid-template-columns:repeat(2, minmax(0, 1fr));
-gap:20px;
-}
-
-.sa-table-wrap{
-overflow:auto;
-border:1px solid #f1dce8;
-border-radius:18px;
-background:#fff;
-}
-
-.sa-table{
-width:100%;
-border-collapse:collapse;
-min-width:620px;
-}
-
-.sa-table th{
-padding:14px 16px;
-background:#fff4fa;
-border-bottom:1px solid #f1dce8;
-font-size:11px;
-font-weight:800;
-letter-spacing:.08em;
-text-transform:uppercase;
-color:#7b8190;
-text-align:left;
-white-space:nowrap;
-}
-
-.sa-table td{
-padding:15px 16px;
-border-bottom:1px solid #f7e8f0;
-font-size:14px;
-color:#334155;
-vertical-align:middle;
-}
-
-.sa-table tbody tr:hover{
-background:#fff9fc;
-}
-
-.sa-table tbody tr:last-child td{
-border-bottom:none;
-}
-
-.sa-strong{
-font-weight:800;
-color:var(--sa-ink);
-}
-
-.sa-muted{
-color:#7b8190;
-}
-
-.sa-money{
-font-weight:800;
-color:var(--sa-primary-dark);
-white-space:nowrap;
-}
-
-.sa-empty{
-padding:34px 20px;
-text-align:center;
-color:#7b8190;
-}
-
-.sa-empty i{
-display:block;
-font-size:28px;
-margin-bottom:10px;
-color:#d39ab7;
-}
-
-@media (max-width: 1400px){
-.sa-kpi-grid{
-grid-template-columns:repeat(3, minmax(0, 1fr));
-}
-}
-
-@media (max-width: 1100px){
-.sa-hero,
-.sa-main-grid,
-.sa-table-grid{
-grid-template-columns:1fr;
-}
-}
-
-@media (max-width: 768px){
-.sa-dashboard{
-gap:18px;
-}
-
-.sa-hero-main,
-.sa-hero-side,
-.sa-block{
-padding:18px;
-}
-
-.sa-hero-title{
-font-size:28px;
-}
-
-.sa-kpi-grid,
-.sa-mini-grid{
-grid-template-columns:repeat(2, minmax(0, 1fr));
-}
-
-.sa-block-head{
-flex-direction:column;
-}
-}
-
-@media (max-width: 576px){
-.sa-kpi-grid,
-.sa-mini-grid{
-grid-template-columns:1fr;
-}
-
-.sa-hero-title{
-font-size:24px;
-}
-
-.sa-snapshot-item{
-flex-direction:column;
-}
-
-.sa-link-btn{
-width:100%;
-justify-content:center;
-}
-}
-</style>
 
 <div class="sa-dashboard">
     <section class="sa-hero">
@@ -649,16 +159,16 @@ justify-content:center;
             </p>
             <div class="sa-hero-meta">
                 <span class="sa-chip">
-                    <i class="fas fa-user-plus"></i>
-                    <?= number_format((float)$todayLeads) ?> leads today
+                    <i class="fas fa-percent"></i>
+                    <?= number_format((float)$todayConversionRate, 1) ?>% conversion today
                 </span>
                 <span class="sa-chip">
-                    <i class="fas fa-user-check"></i>
-                    <?= number_format((float)$todayRegistrations) ?> registrations today
+                    <i class="fas fa-phone"></i>
+                    <?= number_format((float)$todayFollowups) ?> followups due today
                 </span>
                 <span class="sa-chip">
-                    <i class="fas fa-wallet"></i>
-                    Rs <?= number_format((float)$todayCollection, 2) ?> collected today
+                    <i class="fas fa-file-invoice-dollar"></i>
+                    ₹ <?= number_format((float)$pendingDueAmount, 2) ?> pending dues
                 </span>
             </div>
         </div>
@@ -688,7 +198,7 @@ justify-content:center;
                 </div>
                 <div class="sa-mini-stat">
                     <div class="label">Total Collection</div>
-                    <div class="value">Rs <?= number_format((float)$totalCollection, 0) ?></div>
+                    <div class="value">₹ <?= number_format((float)$totalCollection, 0) ?></div>
                     <div class="sub">Lifetime collected amount</div>
                 </div>
                 <div class="sa-mini-stat">
@@ -698,6 +208,37 @@ justify-content:center;
                 </div>
             </div>
         </aside>
+    </section>
+
+    <section class="sa-action-grid">
+        <a href="index.php?page=enquiries/add" class="sa-action-card">
+            <span class="sa-action-icon"><i class="fas fa-user-plus"></i></span>
+            <span>
+                <span class="sa-action-title">Add Enquiry</span>
+                <span class="sa-action-sub">Capture new inbound lead instantly.</span>
+            </span>
+        </a>
+        <a href="index.php?page=registrations/add" class="sa-action-card">
+            <span class="sa-action-icon"><i class="fas fa-id-card"></i></span>
+            <span>
+                <span class="sa-action-title">New Registration</span>
+                <span class="sa-action-sub">Create direct or walk-in admission.</span>
+            </span>
+        </a>
+        <a href="index.php?page=payments" class="sa-action-card">
+            <span class="sa-action-icon"><i class="fas fa-wallet"></i></span>
+            <span>
+                <span class="sa-action-title">Collect Payment</span>
+                <span class="sa-action-sub">Post fees and clear due balances.</span>
+            </span>
+        </a>
+        <a href="index.php?page=enquiries/followups&ui=list&tab=today" class="sa-action-card">
+            <span class="sa-action-icon"><i class="fas fa-list-check"></i></span>
+            <span>
+                <span class="sa-action-title">Today Followups</span>
+                <span class="sa-action-sub">Work pending calls for better conversion.</span>
+            </span>
+        </a>
     </section>
 
     <section class="sa-kpi-grid">
@@ -718,15 +259,15 @@ justify-content:center;
         <article class="sa-card sa-kpi-card">
             <div class="sa-kpi-icon"><i class="fas fa-wallet"></i></div>
             <div class="sa-kpi-label">Today Collection</div>
-            <div class="sa-kpi-value">Rs <?= number_format((float)$todayCollection, 2) ?></div>
+            <div class="sa-kpi-value">₹ <?= number_format((float)$todayCollection, 2) ?></div>
             <div class="sa-kpi-sub">Payments captured against registrations today.</div>
         </article>
 
         <article class="sa-card sa-kpi-card">
-            <div class="sa-kpi-icon"><i class="fas fa-chart-line"></i></div>
-            <div class="sa-kpi-label">Total Collection</div>
-            <div class="sa-kpi-value">Rs <?= number_format((float)$totalCollection, 2) ?></div>
-            <div class="sa-kpi-sub">Overall fee collection accumulated in the system.</div>
+            <div class="sa-kpi-icon"><i class="fas fa-percent"></i></div>
+            <div class="sa-kpi-label">Today Conversion</div>
+            <div class="sa-kpi-value"><?= number_format((float)$todayConversionRate, 1) ?>%</div>
+            <div class="sa-kpi-sub">Lead-to-registration conversion based on today activity.</div>
         </article>
 
         <article class="sa-card sa-kpi-card">
@@ -737,10 +278,10 @@ justify-content:center;
         </article>
 
         <article class="sa-card sa-kpi-card">
-            <div class="sa-kpi-icon"><i class="fas fa-layer-group"></i></div>
-            <div class="sa-kpi-label">Active Batches</div>
-            <div class="sa-kpi-value"><?= number_format((float)$activeBatches) ?></div>
-            <div class="sa-kpi-sub">Training batches marked active right now.</div>
+            <div class="sa-kpi-icon"><i class="fas fa-file-invoice-dollar"></i></div>
+            <div class="sa-kpi-label">Pending Dues</div>
+            <div class="sa-kpi-value">₹ <?= number_format((float)$pendingDueAmount, 0) ?></div>
+            <div class="sa-kpi-sub"><?= number_format((float)$pendingDueStudents) ?> active students with unpaid or partial balances.</div>
         </article>
     </section>
 
@@ -781,23 +322,35 @@ justify-content:center;
                     <div class="sa-snapshot-item">
                         <div>
                             <div class="sa-snapshot-label">Lead to registration pulse</div>
-                            <div class="sa-snapshot-copy">Compare new leads created today with actual registration movement.</div>
+                            <div class="sa-snapshot-copy">Today conversion quality with quick path to enquiry followups.</div>
+                            <a href="index.php?page=enquiries/followups&ui=list&tab=today" class="sa-link-btn" style="margin-top:10px;height:34px;padding:0 12px;font-size:12px;">
+                                <i class="fas fa-arrow-right"></i>
+                                Open Followups
+                            </a>
                         </div>
-                        <div class="sa-snapshot-value"><?= number_format((float)$todayLeads) ?> / <?= number_format((float)$todayRegistrations) ?></div>
+                        <div class="sa-snapshot-value"><?= number_format((float)$todayConversionRate, 1) ?>%</div>
                     </div>
                     <div class="sa-snapshot-item">
                         <div>
-                            <div class="sa-snapshot-label">Collection throughput</div>
-                            <div class="sa-snapshot-copy">Cash realized today versus the lifetime collection base.</div>
+                            <div class="sa-snapshot-label">Due collections</div>
+                            <div class="sa-snapshot-copy">Students with outstanding balances requiring payment follow-up.</div>
+                            <a href="index.php?page=payments" class="sa-link-btn" style="margin-top:10px;height:34px;padding:0 12px;font-size:12px;">
+                                <i class="fas fa-arrow-right"></i>
+                                Open Payments
+                            </a>
                         </div>
-                        <div class="sa-snapshot-value">Rs <?= number_format((float)$todayCollection, 0) ?></div>
+                        <div class="sa-snapshot-value">₹ <?= number_format((float)$pendingDueAmount, 0) ?></div>
                     </div>
                     <div class="sa-snapshot-item">
                         <div>
-                            <div class="sa-snapshot-label">Delivery capacity</div>
-                            <div class="sa-snapshot-copy">Active student population supported by current running batches.</div>
+                            <div class="sa-snapshot-label">Followups due today</div>
+                            <div class="sa-snapshot-copy">Open call tasks expected to move enquiries closer to conversion.</div>
+                            <a href="index.php?page=enquiries/followups&ui=list&tab=today" class="sa-link-btn" style="margin-top:10px;height:34px;padding:0 12px;font-size:12px;">
+                                <i class="fas fa-arrow-right"></i>
+                                Review Queue
+                            </a>
                         </div>
-                        <div class="sa-snapshot-value"><?= number_format((float)$activeBatches) ?></div>
+                        <div class="sa-snapshot-value"><?= number_format((float)$todayFollowups) ?></div>
                     </div>
                 </div>
             </div>
@@ -826,9 +379,8 @@ justify-content:center;
                         Review recent admissions and jump into the full registration list for deeper verification.
                     </div>
                 </div>
-                <a href="index.php?page=registrations/list" class="sa-link-btn">
+                <a href="index.php?page=registrations/list" class="sa-icon-btn" data-modern-tooltip="View all registrations" aria-label="View all registrations">
                     <i class="fas fa-arrow-right"></i>
-                    View More
                 </a>
             </div>
 
@@ -877,9 +429,8 @@ justify-content:center;
                         Keep a quick watch on the most recent paid accounts before moving into full payment tracking.
                     </div>
                 </div>
-                <a href="index.php?page=payments" class="sa-link-btn">
+                <a href="index.php?page=payments" class="sa-icon-btn" data-modern-tooltip="View all payments" aria-label="View all payments">
                     <i class="fas fa-arrow-right"></i>
-                    View More
                 </a>
             </div>
 
@@ -899,7 +450,7 @@ justify-content:center;
                                 <tr>
                                     <td class="sa-strong"><?= htmlspecialchars($p['student_name'] ?? 'N/A') ?></td>
                                     <td><?= htmlspecialchars($p['program_name'] ?? '') ?></td>
-                                    <td class="sa-money">Rs <?= number_format((float)$p['total_paid'], 2) ?></td>
+                                    <td class="sa-money">₹ <?= number_format((float)$p['total_paid'], 2) ?></td>
                                     <td class="sa-muted"><?= htmlspecialchars($p['last_payment_date']) ?></td>
                                 </tr>
                             <?php endforeach; ?>
