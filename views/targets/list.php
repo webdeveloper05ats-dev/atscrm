@@ -420,6 +420,9 @@ function buildTargetListUrl(array $overrides = [])
     overflow:hidden;
     margin-bottom:14px;
 }
+.targets-filter-card{
+    overflow:visible;
+}
 .targets-card-head{
     background:linear-gradient(180deg, rgba(255,255,255,.95), rgba(255,249,252,.9));
     color:#24324a;
@@ -430,6 +433,9 @@ function buildTargetListUrl(array $overrides = [])
 }
 .targets-card-body{
     padding:20px;
+}
+.targets-filter-card .targets-card-body{
+    overflow:visible;
 }
 .targets-table-card .targets-card-body{
     padding:0;
@@ -469,6 +475,16 @@ function buildTargetListUrl(array $overrides = [])
     flex-wrap: wrap;
     gap: 12px;
     align-items: flex-end;
+    position: relative;
+    overflow: visible;
+}
+
+.targets-filter-grid .ms-select{
+    position: relative;
+}
+
+.targets-filter-grid .ms-select.open{
+    z-index: 25;
 }
 
 .targets-filter-grid > div {
