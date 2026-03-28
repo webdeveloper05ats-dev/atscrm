@@ -662,6 +662,7 @@ font-weight:900;
 .sidebar{
 left:-260px;
 box-shadow:18px 0 30px rgba(16,24,40,.20);
+height:100dvh;
 }
 
 .sidebar.mobile-active{
@@ -669,7 +670,10 @@ left:0;
 }
 
 .sidebar .menu-list{
-height:calc(100vh - 64px);
+height:auto;
+flex:1;
+min-height:0;
+overflow-y:auto;
 }
 
 .content,
