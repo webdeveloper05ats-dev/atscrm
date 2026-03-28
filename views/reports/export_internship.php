@@ -104,7 +104,9 @@ if ($status!='') {
 }
 
 if (in_array($roleId,[1,3], true) && $staffId > 0) {
-    $where[] = "ri.guide_staff_id = ?";
+    $where[] = "(r.assigned_to = ? OR ri.guide_staff_id = ? OR (COALESCE(r.source_type, '') = 'direct' AND r.created_by = ?))";
+    $params[] = $staffId;
+    $params[] = $staffId;
     $params[] = $staffId;
 }
 
