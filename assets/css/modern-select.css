@@ -1,0 +1,159 @@
+.ms-native-select {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  margin: -1px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+.ms-select {
+  position: relative;
+  width: 100%;
+}
+
+.ms-trigger {
+  width: 100%;
+  min-height: 38px;
+  border: 1px solid #efbfd3;
+  border-radius: 12px;
+  background: #fff;
+  padding: 7px 36px 7px 11px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #374151;
+  text-align: left;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(233, 30, 99, 0.05);
+  transition: border-color .15s ease, box-shadow .15s ease;
+  position: relative;
+}
+
+.ms-trigger:hover {
+  border-color: #eaa4c2;
+}
+
+.ms-select.open .ms-trigger {
+  border-color: #e91e63;
+  box-shadow: 0 0 0 4px rgba(233, 30, 99, .12);
+}
+
+.ms-trigger::after {
+  content: "";
+  position: absolute;
+  right: 13px;
+  top: 50%;
+  width: 8px;
+  height: 8px;
+  border-right: 2px solid #be185d;
+  border-bottom: 2px solid #be185d;
+  transform: translateY(-60%) rotate(45deg);
+  transition: transform .16s ease;
+}
+
+.ms-select.open .ms-trigger::after {
+  transform: translateY(-35%) rotate(-135deg);
+}
+
+.ms-panel {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  background: #fff;
+  border: 1px solid #f1c9da;
+  border-radius: 12px;
+  box-shadow: 0 14px 30px rgba(17, 24, 39, .14);
+  overflow: hidden;
+  z-index: 1200;
+}
+
+.ms-search-wrap {
+  padding: 8px;
+  border-bottom: 1px solid #f7dce8;
+  background: #fff9fc;
+}
+
+.ms-search {
+  width: 100%;
+  min-height: 30px;
+  border: 1px solid #efbfd3;
+  border-radius: 9px;
+  padding: 5px 9px;
+  font-size: 12px;
+  font-weight: 600;
+  outline: none;
+}
+
+.ms-search:focus {
+  border-color: #e91e63;
+  box-shadow: 0 0 0 3px rgba(233, 30, 99, .12);
+}
+
+.ms-options {
+  max-height: 190px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 5px;
+}
+
+.ms-option {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  background: transparent;
+  color: #4b5563;
+  min-height: 30px;
+  padding: 5px 9px;
+  font-size: 12px;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+}
+
+.ms-option:hover {
+  background: #fff3f8;
+  color: #9f1239;
+}
+
+.ms-option.active {
+  background: linear-gradient(135deg, #ff4d8d, #e91e63);
+  color: #fff;
+  border-color: #e91e63;
+}
+
+.ms-option[disabled] {
+  opacity: .45;
+  cursor: not-allowed;
+}
+
+.ms-empty {
+  padding: 8px 10px;
+  font-size: 12px;
+  color: #9ca3af;
+  font-weight: 600;
+}
+
+/* Keep DataTable length dropdown options strictly vertical and stable */
+.dataTables_length .ms-select {
+  min-width: 74px;
+}
+
+.dataTables_length .ms-panel {
+  right: auto;
+  min-width: 74px;
+}
+
+.dataTables_length .ms-options {
+  display: block;
+  max-height: none;
+  overflow-y: visible;
+}
+
+.dataTables_length .ms-option {
+  display: block;
+  width: 100%;
+}
