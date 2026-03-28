@@ -1281,6 +1281,27 @@ function payStatusBadgeList($type)
 ?>
 
 <style>
+.leads-dashboard .card.filter-card{
+  overflow: visible !important;
+  position: relative;
+  z-index: 12;
+}
+
+.leads-dashboard .card.filter-card .card-header,
+.leads-dashboard .card.filter-card .filter-form,
+.leads-dashboard .card.filter-card .filter-grid,
+.leads-dashboard .card.filter-card .filter-item{
+  overflow: visible !important;
+}
+
+.leads-dashboard .card.filter-card .ms-select{
+  position: relative;
+}
+
+.leads-dashboard .card.filter-card .ms-select.open{
+  z-index: 40;
+}
+
 .table-header-flex{
   width:100%;
   display:flex;
@@ -1513,7 +1534,7 @@ function payStatusBadgeList($type)
     </div>
   </div>
 
-  <div class="card">
+  <div class="card filter-card">
     <div class="card-header">
       <i class="fas fa-sliders-h" style="margin-right: 8px;"></i> Filter Registrations
     </div>
