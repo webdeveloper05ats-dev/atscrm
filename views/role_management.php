@@ -519,6 +519,7 @@ pageLength:5,
 lengthMenu:[5,10,20,50],
 ordering:true,
 order:[[1,'asc']],
+scrollX:false,
 scrollY:false,
 scrollCollapse:false
 });
