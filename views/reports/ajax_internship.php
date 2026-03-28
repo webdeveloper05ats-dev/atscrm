@@ -13,6 +13,7 @@ header('Content-Type: application/json');
 $roleId = (int)($_SESSION['role_id'] ?? 0);
 $userId = (int)($_SESSION['user_id'] ?? 0);
 $roleName = trim((string) ($_SESSION['role_name'] ?? ''));
+$isStaffViewer = strtolower($roleName) === 'staff';
 
 /* ===============================
    BASE WHERE
@@ -109,11 +110,13 @@ $data = [];
 $sn = 1;
 
 foreach ($rows as $r) {
+    $studentPhone = $isStaffViewer
+        ? ''
+        : '<br><small>' . htmlspecialchars((string)($r['enquiry_snapshot_phone'] ?? ''), ENT_QUOTES, 'UTF-8') . '</small>';
 
     $student = "
     <strong>{$r['enquiry_snapshot_name']}</strong><br>
-    <small>{$r['registration_no']}</small><br>
-    <small>{$r['enquiry_snapshot_phone']}</small>
+    <small>{$r['registration_no']}</small>{$studentPhone}
     ";
 
     $program = "

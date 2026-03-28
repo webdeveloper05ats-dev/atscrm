@@ -22,6 +22,26 @@ if (!$student) {
 }
 
 $rows = studentReportFetchAttendanceRows($pdo, $registrationId);
+$attendanceSummary = studentReportBuildAttendanceSummary($student, $rows);
+$academicData = studentReportFetchAcademicAndHrData($pdo, $registrationId);
+$assessment = $academicData['assessment'] ?? [];
+$mock = $academicData['mock'] ?? [];
+$hr = $academicData['hr'] ?? [];
+
+$assessmentAverage = isset($assessment['average_marks']) && $assessment['average_marks'] !== null
+    ? (float) $assessment['average_marks']
+    : null;
+$mockAverage = isset($mock['mock_average']) && $mock['mock_average'] !== null
+    ? (float) $mock['mock_average']
+    : null;
+$overallAverage = null;
+if ($assessmentAverage !== null && $mockAverage !== null) {
+    $overallAverage = round(($assessmentAverage + $mockAverage) / 2, 2);
+} elseif ($assessmentAverage !== null) {
+    $overallAverage = $assessmentAverage;
+} elseif ($mockAverage !== null) {
+    $overallAverage = $mockAverage;
+}
 
 header('Content-Type: text/csv; charset=UTF-8');
 header('Content-Disposition: attachment; filename=student_schedule_' . $registrationId . '_' . date('Ymd_His') . '.csv');
@@ -32,20 +52,16 @@ fputcsv($out, ['Student Name', $student['student_name'] ?: $student['enquiry_sna
 fputcsv($out, ['Registration No', $student['registration_no'] ?: '-']);
 fputcsv($out, ['Program', $student['program_name'] ?: '-']);
 fputcsv($out, ['Batch', $student['batch_name'] ?: '-']);
-fputcsv($out, []);
-fputcsv($out, ['Date', 'Status', 'Topic Taught', 'Task Given', 'Absent Informed', 'Absent Reason', 'Absent Informed By']);
-
-foreach ($rows as $row) {
-    fputcsv($out, [
-        $row['attendance_date'] ?: '',
-        $row['status'] ?: '',
-        $row['topics_taught'] ?: '',
-        $row['task_given'] ?: '',
-        $row['absent_informed'] ?: '',
-        $row['absent_reason'] ?: '',
-        $row['absent_informed_by'] ?: '',
-    ]);
-}
+fputcsv($out, ['Attendance %', number_format((float) ($attendanceSummary['attendance_percent'] ?? 0), 2) . '%']);
+fputcsv($out, ['Present Days', (int) ($attendanceSummary['present_days'] ?? 0)]);
+fputcsv($out, ['Absent Days', (int) ($attendanceSummary['absent_days'] ?? 0)]);
+fputcsv($out, ['Tracking Start', $attendanceSummary['start_date'] ?? '-']);
+fputcsv($out, ['Recorded Entries', count($rows)]);
+fputcsv($out, ['Assessment Avg', $assessmentAverage !== null ? number_format($assessmentAverage, 2) : '-']);
+fputcsv($out, ['Mock Avg', $mockAverage !== null ? number_format($mockAverage, 2) : '-']);
+fputcsv($out, ['Overall Avg', $overallAverage !== null ? number_format($overallAverage, 2) : '-']);
+fputcsv($out, ['Mock Workflow', $mock['workflow_status'] ?? '-']);
+fputcsv($out, ['HR Status', $hr['interview_status'] ?? '-']);
 
 fclose($out);
 exit;

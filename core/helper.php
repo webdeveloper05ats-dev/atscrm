@@ -156,7 +156,8 @@ function verifyCSRF($token)
 
 function isStaffRestrictedFromStudentContacts(): bool
 {
-    return (($_SESSION['role_name'] ?? '') === 'Staff');
+    $roleName = strtolower(trim((string) ($_SESSION['role_name'] ?? '')));
+    return $roleName === 'staff';
 }
 
 function visibleStudentContactValue($value, string $fallback = '-'): string

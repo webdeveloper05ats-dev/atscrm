@@ -27,6 +27,7 @@ echo "\xEF\xBB\xBF";
 $roleId = (int)($_SESSION['role_id'] ?? 0);
 $userId = (int)($_SESSION['user_id'] ?? 0);
 $roleName = trim((string) ($_SESSION['role_name'] ?? ''));
+$canViewPersonalDetails = in_array(strtolower($roleName), ['super admin', 'hr'], true) || $roleId === 1;
 
 /* ===============================
    FILTERS
@@ -161,29 +162,37 @@ $output = fopen("php://output","w");
    CSV HEADER
 =============================== */
 
-fputcsv($output,[
-'S.No',
-'Student Name',
-'Registration No',
-'Phone',
-'Email',
-'Program',
-'Batch',
-'Assigned Staff',
-'Join Date',
-'Internship Days',
-'Start Date',
-'End Date',
-'Completion Status',
-'Certificate Status',
-'Certificate Issued Date',
-'Report Status',
-'Report Issued Date',
-'Total Fee',
-'Paid Amount',
-'Balance',
-'Payment Status'
+$headers = [
+    'S.No',
+    'Student Name',
+    'Registration No',
+];
+
+if ($canViewPersonalDetails) {
+    $headers[] = 'Phone';
+    $headers[] = 'Email';
+}
+
+$headers = array_merge($headers, [
+    'Program',
+    'Batch',
+    'Assigned Staff',
+    'Join Date',
+    'Internship Days',
+    'Start Date',
+    'End Date',
+    'Completion Status',
+    'Certificate Status',
+    'Certificate Issued Date',
+    'Report Status',
+    'Report Issued Date',
+    'Total Fee',
+    'Paid Amount',
+    'Balance',
+    'Payment Status'
 ]);
+
+fputcsv($output, $headers);
 
 /* ===============================
    CSV DATA
@@ -197,51 +206,37 @@ $totalFee = (float)($r['total_fee'] ?? 0);
 $paidAmount = (float)($r['paid_amount'] ?? 0);
 $balanceAmount = (float)($r['balance_amount'] ?? 0);
 
-fputcsv($output,[
+    $csvRow = [
+        $sn++,
+        trim((string)($r['enquiry_snapshot_name'] ?? '')),
+        trim((string)($r['registration_no'] ?? '')),
+    ];
 
-$sn++,
+    if ($canViewPersonalDetails) {
+        $csvRow[] = trim((string)($r['enquiry_snapshot_phone'] ?? ''));
+        $csvRow[] = trim((string)($r['enquiry_snapshot_email'] ?? ''));
+    }
 
-trim((string)($r['enquiry_snapshot_name'] ?? '')),
+    $csvRow = array_merge($csvRow, [
+        trim((string)($r['program_name'] ?? '')),
+        trim((string)($r['batch_name'] ?? '')),
+        $r['assigned_staff_name'] !== '' ? $r['assigned_staff_name'] : '-',
+        $formatDate($r['joined_on'] ?? ''),
+        (string)($r['internship_days'] ?? ''),
+        $formatDate($r['internship_start_date'] ?? ''),
+        $formatDate($r['internship_end_date'] ?? ''),
+        $formatStatus($r['internship_completion_status'] ?? ''),
+        $formatStatus($r['internship_certificate_status'] ?? ''),
+        $formatDate($r['internship_certificate_issued_at'] ?? ''),
+        $formatStatus($r['internship_report_status'] ?? ''),
+        $formatDate($r['internship_report_issued_at'] ?? ''),
+        number_format($totalFee, 2, '.', ''),
+        number_format($paidAmount, 2, '.', ''),
+        number_format($balanceAmount, 2, '.', ''),
+        $formatStatus($r['payment_status'] ?? '')
+    ]);
 
-trim((string)($r['registration_no'] ?? '')),
-
-trim((string)($r['enquiry_snapshot_phone'] ?? '')),
-
-trim((string)($r['enquiry_snapshot_email'] ?? '')),
-
-trim((string)($r['program_name'] ?? '')),
-
-trim((string)($r['batch_name'] ?? '')),
-
-$r['assigned_staff_name'] !== '' ? $r['assigned_staff_name'] : '-',
-
-$formatDate($r['joined_on'] ?? ''),
-
-(string)($r['internship_days'] ?? ''),
-
-$formatDate($r['internship_start_date'] ?? ''),
-
-$formatDate($r['internship_end_date'] ?? ''),
-
-$formatStatus($r['internship_completion_status'] ?? ''),
-
-$formatStatus($r['internship_certificate_status'] ?? ''),
-
-$formatDate($r['internship_certificate_issued_at'] ?? ''),
-
-$formatStatus($r['internship_report_status'] ?? ''),
-
-$formatDate($r['internship_report_issued_at'] ?? ''),
-
-number_format($totalFee, 2, '.', ''),
-
-number_format($paidAmount, 2, '.', ''),
-
-number_format($balanceAmount, 2, '.', ''),
-
-$formatStatus($r['payment_status'] ?? '')
-
-]);
+    fputcsv($output, $csvRow);
 
 }
 
