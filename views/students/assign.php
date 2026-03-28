@@ -659,6 +659,21 @@ LEFT JOIN users guide_u ON guide_u.id = COALESCE(rc.guide_staff_id, ri.guide_sta
         flex: 0 0 104px;
     }
 
+    .stu-assign-form .ms-select{
+        width: auto;
+        flex: 0 0 auto;
+    }
+
+    .stu-assign-form .ms-select:has(> select.stu-assign-main){
+        flex: 1 1 230px;
+        min-width: 230px;
+    }
+
+    .stu-assign-form .ms-select:has(> select.stu-assign-mini){
+        flex: 0 0 104px;
+        min-width: 104px;
+    }
+
     .stu-type-block{
         line-height:1.2;
     }
@@ -677,6 +692,12 @@ LEFT JOIN users guide_u ON guide_u.id = COALESCE(rc.guide_staff_id, ri.guide_sta
         .stu-save-btn {
             min-width: unset;
             width: 100%;
+        }
+
+        .stu-assign-form .ms-select{
+            width: 100%;
+            flex: 1 1 auto;
+            min-width: 0;
         }
 
         .stu-assign-main,
@@ -746,7 +767,7 @@ LEFT JOIN users guide_u ON guide_u.id = COALESCE(rc.guide_staff_id, ri.guide_sta
 
                 <div class="filter-item">
                     <label><i class="fas fa-user-check"></i> Assigned Staff</label>
-                    <select name="staff_id">
+                    <select name="staff_id" data-modern-select="on">
                         <option value="">All Staff</option>
                         <?php foreach ($staffUsers as $s): ?>
                             <option value="<?= (int) $s['id'] ?>" <?= $staffFilter === (int) $s['id'] ? 'selected' : '' ?>>
@@ -824,7 +845,7 @@ LEFT JOIN users guide_u ON guide_u.id = COALESCE(rc.guide_staff_id, ri.guide_sta
                                     <input type="hidden" name="assign_student" value="1">
                                     <input type="hidden" name="registration_id" value="<?= (int) $r['id'] ?>">
 
-                                    <select name="staff_id" class="stu-assign-main" title="<?= h($r['assigned_staff'] ?: 'Select Staff') ?>" required>
+                                    <select name="staff_id" class="stu-assign-main" data-modern-select="on" title="<?= h($r['assigned_staff'] ?: 'Select Staff') ?>" required>
                                         <option value="">Select Staff</option>
                                         <?php foreach ($staffUsers as $s): ?>
                                             <option value="<?= (int) $s['id'] ?>" <?= ((int) $r['guide_staff_id'] === (int) $s['id']) ? 'selected' : '' ?>>
@@ -834,7 +855,7 @@ LEFT JOIN users guide_u ON guide_u.id = COALESCE(rc.guide_staff_id, ri.guide_sta
                                     </select>
 
                                     <?php if (($r['reg_type'] ?? '') === 'internship'): ?>
-                                        <select name="internship_days" class="stu-assign-mini" required>
+                                        <select name="internship_days" class="stu-assign-mini" data-modern-select="on" required>
                                             <option value="">Days</option>
                                             <option value="7" <?= ((int) $r['internship_days'] === 7) ? 'selected' : '' ?>>7 Days</option>
                                             <option value="15" <?= ((int) $r['internship_days'] === 15) ? 'selected' : '' ?>>15 Days</option>
@@ -842,7 +863,7 @@ LEFT JOIN users guide_u ON guide_u.id = COALESCE(rc.guide_staff_id, ri.guide_sta
                                             <option value="30" <?= ((int) $r['internship_days'] === 30) ? 'selected' : '' ?>>30 Days</option>
                                         </select>
 
-                                        <select name="internship_batch" class="stu-assign-mini" required>
+                                        <select name="internship_batch" class="stu-assign-mini" data-modern-select="on" required>
                                             <option value="">Batch</option>
                                             <option value="Morning" <?= (($r['internship_batch'] ?? '') === 'Morning') ? 'selected' : '' ?>>Morning</option>
                                             <option value="Evening" <?= (($r['internship_batch'] ?? '') === 'Evening') ? 'selected' : '' ?>>Evening</option>
