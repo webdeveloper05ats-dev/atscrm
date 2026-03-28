@@ -22,42 +22,21 @@ $currentPage = $_GET['page'] ?? '';
 // -------------------------------
 $dashboardSlug = $defaultPage ?? 'dashboard/superadmin'; // fallback
 
-// Fetch allowed menus (with short session cache to reduce repeated DB load)
-$menus = [];
-$sidebarMenuCacheTtl = 120; // seconds
-$sidebarMenuCacheKey = 'role_' . (int)$role_id;
-$sidebarMenuCacheRoot = $_SESSION['sidebar_menu_cache'] ?? [];
-$cached = $sidebarMenuCacheRoot[$sidebarMenuCacheKey] ?? null;
-$nowTs = time();
-
-if (
-    is_array($cached)
-    && isset($cached['menus'], $cached['ts'])
-    && is_array($cached['menus'])
-    && (($nowTs - (int)$cached['ts']) < $sidebarMenuCacheTtl)
-) {
-    $menus = $cached['menus'];
-} else {
-    $stmt = $pdo->prepare("
-        SELECT m.*
-        FROM menus m
-        INNER JOIN role_permissions rp
-            ON rp.menu_id = m.id
-        WHERE rp.role_id = :role_id
-          AND rp.can_view = 1
-          AND m.status = 1
-        ORDER BY m.parent_id ASC, m.sort_order ASC
-    ");
-    $stmt->execute([
-        'role_id' => $role_id
-    ]);
-    $menus = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-    $_SESSION['sidebar_menu_cache'][$sidebarMenuCacheKey] = [
-        'ts' => $nowTs,
-        'menus' => $menus
-    ];
-}
+// Fetch allowed menus (always fresh to avoid stale/missing role menus)
+$stmt = $pdo->prepare("
+    SELECT m.*
+    FROM menus m
+    INNER JOIN role_permissions rp
+        ON rp.menu_id = m.id
+    WHERE rp.role_id = :role_id
+      AND rp.can_view = 1
+      AND m.status = 1
+    ORDER BY m.parent_id ASC, m.sort_order ASC
+");
+$stmt->execute([
+    'role_id' => $role_id
+]);
+$menus = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 // -------------------------------
 // IMPORTANT FIX:
@@ -82,6 +61,18 @@ foreach ($menus as $menu) {
 foreach ($menus as $menu) {
     if ($menu['parent_id'] !== NULL && isset($menuTree[$menu['parent_id']])) {
         $menuTree[$menu['parent_id']]['children'][] = $menu;
+    }
+}
+
+// Fallback: if a child menu's parent isn't present in fetched list,
+// surface it as a top-level item instead of dropping it.
+foreach ($menus as $menu) {
+    if ($menu['parent_id'] !== NULL && !isset($menuTree[$menu['parent_id']])) {
+        if (!isset($menuTree[$menu['id']])) {
+            $menu['parent_id'] = null;
+            $menu['children'] = [];
+            $menuTree[$menu['id']] = $menu;
+        }
     }
 }
 
