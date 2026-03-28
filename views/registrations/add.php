@@ -1595,6 +1595,23 @@ body {
   color:#7c2d5a !important;
 }
 
+/* Allow modern select panels to expand inside registration form */
+.reg-main-card,
+.reg-main-body,
+.reg-step-container.active,
+.reg-section,
+.reg-section-content{
+  overflow: visible !important;
+}
+
+.reg-main-body .ms-select{
+  position: relative;
+}
+
+.reg-main-body .ms-select.open{
+  z-index: 40;
+}
+
 @media (max-width: 768px){
   .reg-portal{
     padding:12px !important;
