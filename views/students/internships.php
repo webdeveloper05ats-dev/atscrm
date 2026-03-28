@@ -338,6 +338,125 @@ function payBadgeIntern($status)
         align-items: end;
     }
 
+    .intern-filter-row .filter-item.fee-status-filter{
+        max-width: 240px;
+    }
+
+    .intern-modern-select{
+        position:relative;
+    }
+
+    .intern-modern-select .ims-trigger{
+        width:100%;
+        min-height:44px;
+        border:1px solid #efbfd3;
+        border-radius:14px;
+        background:#fff;
+        box-shadow:0 8px 20px rgba(233,30,99,.05);
+        padding:10px 42px 10px 14px;
+        text-align:left;
+        font-size:13px;
+        font-weight:700;
+        color:#374151;
+        cursor:pointer;
+        transition:all .18s ease;
+        position:relative;
+    }
+
+    .intern-modern-select .ims-trigger:hover{
+        border-color:#eaa4c2;
+        box-shadow:0 10px 24px rgba(233,30,99,.08);
+    }
+
+    .intern-modern-select.open .ims-trigger{
+        border-color:#e91e63;
+        box-shadow:0 0 0 4px rgba(233,30,99,.12),0 10px 24px rgba(233,30,99,.08);
+    }
+
+    .intern-modern-select .ims-trigger::after{
+        content:"";
+        position:absolute;
+        right:14px;
+        top:50%;
+        width:8px;
+        height:8px;
+        border-right:2px solid #be185d;
+        border-bottom:2px solid #be185d;
+        transform:translateY(-60%) rotate(45deg);
+        transition:transform .16s ease;
+    }
+
+    .intern-modern-select.open .ims-trigger::after{
+        transform:translateY(-35%) rotate(-135deg);
+    }
+
+    .intern-modern-select .ims-panel{
+        position:absolute;
+        top:calc(100% + 8px);
+        left:0;
+        right:0;
+        background:#fff;
+        border:1px solid #f1c9da;
+        border-radius:12px;
+        box-shadow:0 16px 36px rgba(17,24,39,.16);
+        z-index:50;
+        overflow:hidden;
+    }
+
+    .intern-modern-select .ims-search-wrap{
+        padding:8px;
+        border-bottom:1px solid #f6ddea;
+        background:#fff9fc;
+    }
+
+    .intern-modern-select .ims-search{
+        width:100%;
+        min-height:34px;
+        border:1px solid #efbfd3;
+        border-radius:10px;
+        padding:6px 10px;
+        font-size:12px;
+        font-weight:600;
+        outline:none;
+    }
+
+    .intern-modern-select .ims-search:focus{
+        border-color:#e91e63;
+        box-shadow:0 0 0 3px rgba(233,30,99,.12);
+    }
+
+    .intern-modern-select .ims-options{
+        max-height:180px;
+        overflow-y:auto;
+        padding:6px;
+    }
+
+    .intern-modern-select .ims-option{
+        width:100%;
+        text-align:left;
+        border:1px solid transparent;
+        background:transparent;
+        border-radius:10px;
+        min-height:34px;
+        padding:6px 10px;
+        font-size:12px;
+        font-weight:700;
+        color:#4b5563;
+        cursor:pointer;
+        transition:all .16s ease;
+    }
+
+    .intern-modern-select .ims-option:hover{
+        background:#fff3f8;
+        color:#9f1239;
+    }
+
+    .intern-modern-select .ims-option.active{
+        background:linear-gradient(135deg,#ff4d8d,#e91e63);
+        color:#fff;
+        border-color:#e91e63;
+    }
+
     .intern-table thead th {
         white-space: nowrap;
     }
@@ -675,14 +794,25 @@ grid-column:1/-1;
                 <label><i class="fas fa-search"></i> Search</label>
                 <input type="text" name="q" value="<?= h($q) ?>" placeholder="Reg no / student / phone / program">
             </div>
-            <div class="filter-item">
+            <div class="filter-item fee-status-filter">
                 <label><i class="fas fa-wallet"></i> Fee Status</label>
-                <select name="payment_status">
-                    <option value="">All</option>
-                    <option value="paid" <?= $paymentStatus === 'paid' ? 'selected' : '' ?>>Paid</option>
-                    <option value="partial" <?= $paymentStatus === 'partial' ? 'selected' : '' ?>>Partial</option>
-                    <option value="unpaid" <?= $paymentStatus === 'unpaid' ? 'selected' : '' ?>>Unpaid</option>
-                </select>
+                <input type="hidden" name="payment_status" id="paymentStatusInput" value="<?= h($paymentStatus) ?>">
+                <div class="intern-modern-select" id="paymentStatusSelect">
+                    <button type="button" class="ims-trigger" aria-haspopup="listbox" aria-expanded="false">
+                        <span class="ims-label">All</span>
+                    </button>
+                    <div class="ims-panel" hidden>
+                        <div class="ims-search-wrap">
+                            <input type="text" class="ims-search" placeholder="Search status...">
+                        </div>
+                        <div class="ims-options" role="listbox">
+                            <button type="button" class="ims-option" data-value="">All</button>
+                            <button type="button" class="ims-option" data-value="paid">Paid</button>
+                            <button type="button" class="ims-option" data-value="partial">Partial</button>
+                            <button type="button" class="ims-option" data-value="unpaid">Unpaid</button>
+                        </div>
+                    </div>
+                </div>
             </div>
             <div class="filter-actions">
                 <button type="submit" class="btn-icon-only apply" title="Apply filters">
@@ -954,6 +1084,91 @@ grid-column:1/-1;
             if (controls && topTarget) topTarget.appendChild(controls);
             if (footer && bottomTarget) bottomTarget.appendChild(footer);
         }, 100);
+
+        const paymentStatusInput = document.getElementById('paymentStatusInput');
+        const paymentStatusSelect = document.getElementById('paymentStatusSelect');
+        if (paymentStatusInput && paymentStatusSelect) {
+            const trigger = paymentStatusSelect.querySelector('.ims-trigger');
+            const label = paymentStatusSelect.querySelector('.ims-label');
+            const panel = paymentStatusSelect.querySelector('.ims-panel');
+            const searchWrap = paymentStatusSelect.querySelector('.ims-search-wrap');
+            const search = paymentStatusSelect.querySelector('.ims-search');
+            const options = Array.from(paymentStatusSelect.querySelectorAll('.ims-option'));
+
+            const syncSearchVisibility = function(){
+                const showSearch = options.length > 5;
+                if (searchWrap) searchWrap.hidden = !showSearch;
+                if (!showSearch && search) search.value = '';
+                return showSearch;
+            };
+
+            const closePanel = function(){
+                paymentStatusSelect.classList.remove('open');
+                if (panel) panel.hidden = true;
+                if (trigger) trigger.setAttribute('aria-expanded', 'false');
+                if (search) search.value = '';
+                options.forEach(function(opt){ opt.style.display = ''; });
+            };
+
+            const setValue = function(value){
+                paymentStatusInput.value = value;
+                let selected = options.find(function(opt){
+                    return (opt.getAttribute('data-value') || '') === value;
+                });
+                if (!selected) selected = options[0] || null;
+                options.forEach(function(opt){ opt.classList.remove('active'); });
+                if (selected) {
+                    selected.classList.add('active');
+                    if (label) label.textContent = selected.textContent.trim();
+                }
+            };
+
+            const openPanel = function(){
+                paymentStatusSelect.classList.add('open');
+                if (panel) panel.hidden = false;
+                if (trigger) trigger.setAttribute('aria-expanded', 'true');
+                if (syncSearchVisibility() && search) search.focus();
+            };
+
+            if (trigger) {
+                trigger.addEventListener('click', function(){
+                    if (paymentStatusSelect.classList.contains('open')) {
+                        closePanel();
+                    } else {
+                        openPanel();
+                    }
+                });
+            }
+
+            options.forEach(function(opt){
+                opt.addEventListener('click', function(){
+                    setValue(this.getAttribute('data-value') || '');
+                    closePanel();
+                });
+            });
+
+            if (search) {
+                search.addEventListener('input', function(){
+                    if (!syncSearchVisibility()) return;
+                    const q = (this.value || '').trim().toLowerCase();
+                    options.forEach(function(opt){
+                        const text = (opt.textContent || '').toLowerCase();
+                        opt.style.display = (q === '' || text.includes(q)) ? '' : 'none';
+                    });
+                });
+            }
+
+            document.addEventListener('click', function(e){
+                if (!paymentStatusSelect.contains(e.target)) closePanel();
+            });
+
+            document.addEventListener('keydown', function(e){
+                if (e.key === 'Escape') closePanel();
+            });
+
+            setValue(paymentStatusInput.value || '');
+            syncSearchVisibility();
+        }
     });
 })();
 
