@@ -193,6 +193,7 @@ exit;
 .perm-sidebar-card {
   position: sticky;
   top: 14px;
+  overflow: visible;
 }
 
 .perm-card-head {
@@ -284,8 +285,11 @@ exit;
 }
 
 .perm-toolbar-wrap {
-  overflow-x: auto;
+  overflow-x: visible;
+  overflow-y: visible;
   padding-bottom: 4px;
+  position: relative;
+  z-index: 8;
 }
 
 .perm-toolbar {
@@ -296,6 +300,8 @@ exit;
   margin-bottom: 12px;
   overflow: visible;
   min-width: max-content;
+  position: relative;
+  z-index: 9;
 }
 
 .perm-toolbar-left {
