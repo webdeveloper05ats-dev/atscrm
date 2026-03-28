@@ -194,14 +194,18 @@ ORDER BY sort_order ASC
   overflow: hidden;
 }
 
+.menu-right .menu-card {
+  overflow: visible;
+}
+
 .menu-card-head {
-  padding: 12px 14px;
-  background: var(--light);
+  padding: 14px 16px;
+  background: linear-gradient(180deg, #fff8fc 0%, #fff2f8 100%);
   border-bottom: 1px solid var(--border);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
+  gap: 12px;
 }
 
 .menu-title {
@@ -221,6 +225,9 @@ ORDER BY sort_order ASC
   display: inline-flex;
   align-items: center;
   gap: 8px;
+  color: #3f2a36;
+  font-weight: 800;
+  letter-spacing: .2px;
 }
 
 .menu-table-controls {
@@ -228,16 +235,21 @@ ORDER BY sort_order ASC
   min-width: 0;
   display: flex;
   justify-content: flex-end;
+  padding-left: 8px;
 }
 
 .menu-table-footer {
-  margin: 10px 14px 14px;
+  margin: 12px 16px 14px;
+  padding-top: 10px;
+  border-top: 1px solid #f3dbe7;
 }
 
 .menu-table-controls .dt-top {
   width: 100%;
   margin: 0 !important;
   justify-content: flex-end !important;
+  gap: 12px;
+  margin-bottom: 2px !important;
 }
 
 .menu-table-footer .dt-bottom {
@@ -247,8 +259,8 @@ ORDER BY sort_order ASC
 .menu-card > form,
 .menu-card > .menu-table-wrapper,
 .menu-card > .menu-pagination {
-  margin-left: 14px;
-  margin-right: 14px;
+  margin-left: 16px;
+  margin-right: 16px;
 }
 
 .menu-card > form {
@@ -258,6 +270,7 @@ ORDER BY sort_order ASC
 
 .menu-card > .menu-table-wrapper {
   margin-top: 14px;
+  margin-bottom: 0;
 }
 
 #menuTableArea > .menu-table-wrapper {
@@ -376,31 +389,46 @@ ORDER BY sort_order ASC
 
 .menu-table-wrapper {
   overflow-x: auto;
-  border: 1px solid var(--border);
-  border-radius: 10px;
+  overflow-y: visible;
+  border: 1px solid #f0d2e1;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.55);
+  margin-top: 10px;
+  position: relative;
+  z-index: 1;
 }
 
 .menu-table {
   width: 100%;
   border-collapse: collapse;
-  min-width: 760px;
+  min-width: 100%;
+  table-layout: fixed;
 }
 
 .menu-table th,
 .menu-table td {
-  padding: 10px;
-  font-size: 0.88rem;
+  padding: 11px;
+  font-size: 0.9rem;
   border: none;
   border-bottom: 1px solid #f3e4eb;
+  vertical-align: middle;
+  white-space: normal;
+  word-break: break-word;
 }
 
+.menu-table th:nth-child(1),
+.menu-table td:nth-child(1) { width: 56px; }
+.menu-table th:nth-child(6),
+.menu-table td:nth-child(6) { width: 120px; }
+
 .menu-table th {
-  background: #fff0f7;
-  font-size: 0.7rem;
-  color: var(--text-light);
+  background: #fff1f8;
+  font-size: 0.72rem;
+  color: #7b4361;
   font-weight: 800;
   text-transform: uppercase;
-  letter-spacing: 0.3px;
+  letter-spacing: 0.45px;
   border-bottom: 2px solid var(--border);
 }
 
@@ -415,14 +443,21 @@ ORDER BY sort_order ASC
 
 .menu-edit,
 .menu-delete {
-  width: 30px;
-  height: 30px;
+  width: 32px;
+  height: 32px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   border-radius: 8px;
   color: #fff;
   text-decoration: none;
+  transition: transform .14s ease, box-shadow .14s ease, filter .14s ease;
+}
+
+.menu-edit:hover,
+.menu-delete:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px rgba(17,24,39,.12);
 }
 
 .menu-edit { background: var(--primary); }
@@ -463,9 +498,10 @@ ORDER BY sort_order ASC
   display: flex !important;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
+  gap: 12px;
   flex-wrap: wrap;
   margin: 0;
+  width: 100%;
 }
 
 #menuTableArea .dataTables_length,
@@ -477,21 +513,23 @@ ORDER BY sort_order ASC
 #menuTableArea .dataTables_length label,
 #menuTableArea .dataTables_filter label {
   margin: 0;
-  font-size: 0.8rem;
-  color: var(--text-light);
+  font-size: 0.78rem;
+  color: #7b6472;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 7px;
+  font-weight: 600;
   white-space: nowrap;
 }
 
 #menuTableArea .dataTables_length select,
 #menuTableArea .dataTables_filter input {
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  min-height: 32px;
-  padding: 5px 9px;
-  font-size: 0.8rem;
+  border: 1px solid #eecfe0;
+  border-radius: 9px;
+  min-height: 34px;
+  padding: 6px 10px;
+  font-size: 0.82rem;
+  color: #4d3a45;
   background: #fff;
 }
 
@@ -506,6 +544,13 @@ ORDER BY sort_order ASC
   max-width: 100%;
 }
 
+#menuTableArea .dataTables_length select:focus,
+#menuTableArea .dataTables_filter input:focus {
+  outline: none;
+  border-color: #e91e63;
+  box-shadow: 0 0 0 3px rgba(233,30,99,.12);
+}
+
 .dt-buttons .buttons-csv {
   background: var(--primary) !important;
   color: #fff !important;
@@ -517,8 +562,9 @@ ORDER BY sort_order ASC
 }
 
 #menuTableArea .dataTables_info {
-  font-size: 0.8rem;
-  color: var(--text-light);
+  font-size: 0.79rem;
+  color: #7b6472;
+  font-weight: 500;
   margin: 0;
 }
 
@@ -529,18 +575,20 @@ ORDER BY sort_order ASC
 }
 
 #menuTableArea .dataTables_paginate .paginate_button {
-  border: 1px solid #f2cfde !important;
-  border-radius: 8px !important;
-  padding: 5px 10px !important;
-  font-size: 0.8rem;
+  border: 1px solid #efcfdf !important;
+  border-radius: 9px !important;
+  padding: 6px 11px !important;
+  font-size: 0.78rem;
+  font-weight: 700;
   color: #be185d !important;
-  background: #fff !important;
+  background: #fff9fc !important;
 }
 
 #menuTableArea .dataTables_paginate .paginate_button.current {
   background: var(--primary) !important;
   border-color: var(--primary) !important;
   color: #fff !important;
+  box-shadow: 0 6px 12px rgba(233,30,99,.26);
 }
 
 #menuTableArea .dataTables_paginate .paginate_button:hover {
@@ -551,6 +599,55 @@ ORDER BY sort_order ASC
 #menuTableArea .dataTables_paginate .paginate_button.disabled {
   opacity: .5;
   cursor: not-allowed !important;
+}
+
+#menuTable_wrapper .dataTables_scroll,
+#menuTable_wrapper .dataTables_scrollHead,
+#menuTable_wrapper .dataTables_scrollBody,
+#menuTable_wrapper .dataTables_scrollFoot {
+  width: 100% !important;
+}
+
+#menuTable_wrapper .dataTables_scroll {
+  overflow: visible !important;
+}
+
+#menuTable_wrapper .dataTables_scrollBody {
+  max-height: none !important;
+  height: auto !important;
+  overflow-y: visible !important;
+  overflow-x: auto !important;
+  border: none !important;
+}
+
+#menuTable_wrapper .dataTables_scrollHead,
+#menuTable_wrapper .dataTables_scrollFoot {
+  overflow: visible !important;
+}
+
+/* DataTables v2 wrappers */
+#menuTable_wrapper .dt-scroll,
+#menuTable_wrapper .dt-scroll-head,
+#menuTable_wrapper .dt-scroll-body,
+#menuTable_wrapper .dt-scroll-foot {
+  width: 100% !important;
+}
+
+#menuTable_wrapper .dt-scroll {
+  overflow: visible !important;
+}
+
+#menuTable_wrapper .dt-scroll-body {
+  max-height: none !important;
+  height: auto !important;
+  overflow-y: visible !important;
+  overflow-x: auto !important;
+  border: none !important;
+}
+
+#menuTable_wrapper .dt-scroll-head,
+#menuTable_wrapper .dt-scroll-foot {
+  overflow: visible !important;
 }
 
 #menuTableArea.loading {
@@ -599,7 +696,7 @@ ORDER BY sort_order ASC
   border-radius: 7px;
   font-size: 11px;
   white-space: nowrap;
-  z-index: 50;
+  z-index: 9999;
 }
 
 .tooltip::before {
@@ -611,7 +708,7 @@ ORDER BY sort_order ASC
   border-left: 5px solid transparent;
   border-right: 5px solid transparent;
   border-bottom: 6px solid #1f2937;
-  z-index: 50;
+  z-index: 9999;
 }
 
 .tooltip:hover::after,
@@ -621,6 +718,20 @@ ORDER BY sort_order ASC
   opacity: 1;
   visibility: visible;
   transform: translateX(-50%) translateY(0);
+}
+
+.menu-edit.tooltip::after,
+.menu-delete.tooltip::after {
+  top: calc(100% + 8px);
+  bottom: auto;
+}
+
+.menu-edit.tooltip::before,
+.menu-delete.tooltip::before {
+  top: calc(100% + 2px);
+  bottom: auto;
+  border-top: 0;
+  border-bottom: 6px solid #1f2937;
 }
 
 .swal2-popup {
@@ -781,7 +892,6 @@ confirmButtonColor:'#e91e63'
 <tbody>
 
 <?php
-$serial=1;
 foreach($menus as $menu):
 
 $isProtected=in_array($menu['menu_slug'],$protectedSlugs,true);
@@ -789,7 +899,7 @@ $isProtected=in_array($menu['menu_slug'],$protectedSlugs,true);
 
 <tr>
 
-<td><?=$serial++?></td>
+<td data-order="<?= (int)$menu['id'] ?>"><strong class="menu-row-index"></strong></td>
 
 <td>
 <i class="<?=htmlspecialchars($menu['icon']?:'fas fa-circle')?>"></i>
@@ -857,9 +967,26 @@ pageLength:10,
 lengthMenu:[5,10,20,50,100],
 ordering:true,
 order:[[0,'asc']],
+scrollX:false,
+scrollY:false,
+scrollCollapse:false,
 searchPlaceholder:"Search menus...",
 dom:"<'dt-top'lfB>rt<'dt-bottom'ip>"
 });
+
+function syncMenuRowIndex() {
+if (!window.jQuery || !window.jQuery.fn.DataTable) return;
+const $table = window.jQuery('#menuTable');
+if (!$table.length || !window.jQuery.fn.DataTable.isDataTable($table)) return;
+const dt = $table.DataTable();
+const start = dt.page.info().start;
+dt.column(0, { search: 'applied', order: 'applied', page: 'current' })
+  .nodes()
+  .each(function (cell, i) {
+    const el = cell.querySelector('.menu-row-index');
+    if (el) el.textContent = String(start + i + 1);
+  });
+}
 
 setTimeout(function () {
 const wrapper=document.querySelector('#menuTable_wrapper');
@@ -871,6 +998,11 @@ const bottom=wrapper.querySelector('.dt-bottom');
 if(top && controlsTarget){ controlsTarget.appendChild(top); }
 if(bottom && footerTarget){ footerTarget.appendChild(bottom); }
 },120);
+
+if (window.jQuery) {
+window.jQuery('#menuTable').on('draw.dt order.dt search.dt', syncMenuRowIndex);
+}
+setTimeout(syncMenuRowIndex, 80);
 }
 
 const statusInput=document.getElementById('menuStatusInput');
