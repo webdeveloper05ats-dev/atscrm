@@ -38,6 +38,7 @@ if (!defined('APP_NAME')) {
 <!-- ============================= -->
 
 <script src="assets/js/crm-datatable.js"></script>
+<script src="assets/js/modern-select.js"></script>
 
 <!-- ============================= -->
 <!-- Flash Messages -->
