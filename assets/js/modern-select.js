@@ -40,9 +40,11 @@
     var panel = document.createElement("div");
     panel.className = "ms-panel";
     panel.hidden = true;
+    panel.style.display = "none";
 
     var searchWrap = document.createElement("div");
     searchWrap.className = "ms-search-wrap";
+
     var search = document.createElement("input");
     search.type = "text";
     search.className = "ms-search";
@@ -64,6 +66,74 @@
 
     select.classList.add("ms-native-select");
     select.dataset.msEnhanced = "1";
+
+    var isPortaled = false;
+    var onViewportChange = null;
+
+    function portalPanel() {
+      if (isPortaled) return;
+      document.body.appendChild(panel);
+      panel.style.position = "fixed";
+      panel.style.zIndex = "5000";
+      panel.style.margin = "0";
+      panel.style.right = "auto";
+      isPortaled = true;
+    }
+
+    function unportalPanel() {
+      if (!isPortaled) return;
+      wrapper.appendChild(panel);
+      panel.style.position = "";
+      panel.style.left = "";
+      panel.style.top = "";
+      panel.style.width = "";
+      panel.style.zIndex = "";
+      panel.style.margin = "";
+      panel.style.right = "";
+      isPortaled = false;
+    }
+
+    function positionPanel() {
+      if (!isPortaled || panel.hidden) return;
+      var rect = trigger.getBoundingClientRect();
+      var vw = window.innerWidth || document.documentElement.clientWidth || 0;
+      var vh = window.innerHeight || document.documentElement.clientHeight || 0;
+      var margin = 8;
+      var desiredWidth = Math.max(rect.width, 220);
+      var width = Math.min(desiredWidth, Math.max(180, vw - margin * 2));
+
+      var left = rect.left;
+      if (left + width > vw - margin) left = vw - margin - width;
+      if (left < margin) left = margin;
+
+      var panelHeight = Math.min(panel.scrollHeight || 280, 320);
+      var below = vh - rect.bottom;
+      var above = rect.top;
+      var showAbove = below < panelHeight && above > below;
+      var top = showAbove
+        ? Math.max(margin, rect.top - panelHeight - 6)
+        : Math.min(vh - margin - panelHeight, rect.bottom + 6);
+
+      panel.style.left = left + "px";
+      panel.style.top = top + "px";
+      panel.style.width = width + "px";
+    }
+
+    function bindViewportWatch() {
+      if (onViewportChange) return;
+      onViewportChange = function () {
+        positionPanel();
+      };
+      window.addEventListener("resize", onViewportChange);
+      window.addEventListener("scroll", onViewportChange, true);
+    }
+
+    function unbindViewportWatch() {
+      if (!onViewportChange) return;
+      window.removeEventListener("resize", onViewportChange);
+      window.removeEventListener("scroll", onViewportChange, true);
+      onViewportChange = null;
+    }
 
     function ensureDtLengthOptions() {
       if (!select.closest(".dataTables_length")) return;
@@ -88,7 +158,7 @@
       values.forEach(function (v) {
         var opt = document.createElement("option");
         opt.value = String(v);
-        opt.textContent = (v === -1) ? "All" : String(v);
+        opt.textContent = v === -1 ? "All" : String(v);
         if (String(v) === current) opt.selected = true;
         select.appendChild(opt);
       });
@@ -127,10 +197,12 @@
       var hasVisible = false;
       var canSearch = syncSearchVisibility();
       var q = canSearch ? (search.value || "").trim().toLowerCase() : "";
+
       for (var i = 0; i < select.options.length; i++) {
         var opt = select.options[i];
         var txt = (opt.textContent || "").trim();
         if (q && txt.toLowerCase().indexOf(q) === -1) continue;
+
         hasVisible = true;
         var btn = document.createElement("button");
         btn.type = "button";
@@ -138,6 +210,7 @@
         btn.textContent = txt || "\u00a0";
         btn.dataset.value = opt.value;
         if (opt.disabled) btn.disabled = true;
+
         btn.addEventListener("click", function (e) {
           var value = e.currentTarget.dataset.value || "";
           select.value = value;
@@ -146,42 +219,56 @@
           close();
           render();
         });
+
         options.appendChild(btn);
       }
+
       if (!hasVisible) {
         var empty = document.createElement("div");
         empty.className = "ms-empty";
         empty.textContent = "No results";
         options.appendChild(empty);
       }
+
       trigger.textContent = selectedLabel(select) || "Select";
       trigger.disabled = !!select.disabled;
     }
 
     function open() {
       if (trigger.disabled) return;
+      portalPanel();
       wrapper.classList.add("open");
       panel.hidden = false;
+      panel.style.display = "";
       trigger.setAttribute("aria-expanded", "true");
       search.value = "";
       render();
+      positionPanel();
+      bindViewportWatch();
       if (!searchWrap.hidden) search.focus();
     }
 
     function close() {
       wrapper.classList.remove("open");
       panel.hidden = true;
+      panel.style.display = "none";
       trigger.setAttribute("aria-expanded", "false");
+      unbindViewportWatch();
+      unportalPanel();
     }
 
     trigger.addEventListener("click", function () {
-      if (wrapper.classList.contains("open")) close(); else open();
+      if (wrapper.classList.contains("open")) close();
+      else open();
     });
 
-    search.addEventListener("input", render);
+    search.addEventListener("input", function () {
+      render();
+      positionPanel();
+    });
 
     document.addEventListener("click", function (e) {
-      if (!wrapper.contains(e.target)) close();
+      if (!wrapper.contains(e.target) && !panel.contains(e.target)) close();
     });
 
     document.addEventListener("keydown", function (e) {
@@ -191,10 +278,12 @@
     select.addEventListener("change", function () {
       trigger.textContent = selectedLabel(select) || "Select";
       render();
+      positionPanel();
     });
 
     var observer = new MutationObserver(function () {
       render();
+      positionPanel();
     });
     observer.observe(select, {
       childList: true,
