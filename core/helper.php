@@ -153,7 +153,9 @@ function verifyCSRF($token)
 {
     if (isset($_SESSION['csrf_token']) && hash_equals($_SESSION['csrf_token'], $token)) {
         // Rotate token after successful verification to prevent replay
-        $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+        if (empty($_SERVER['HTTP_X_REQUESTED_WITH']) && empty($_POST['ajax_save_attendance'])) {
+            $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+        }
         return true;
     }
     return false;
