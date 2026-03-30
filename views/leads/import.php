@@ -589,14 +589,17 @@ if ($batchId > 0) {
                 </select>
             </div>
 
-            <div class="filter-actions">
-                <button class="btn-filter" id="uploadLeadsBtn" type="submit">
-                    <i class="fas fa-upload"></i> Upload Leads
-                </button>
+            <div class="filter-item filter-actions">
+                <label class="actions-label">Actions</label>
+                <div class="import-actions-row">
+                    <button class="btn-filter" id="uploadLeadsBtn" type="submit">
+                        <i class="fas fa-upload"></i> Upload Leads
+                    </button>
 
-                <a href="index.php?page=leads/import&download=template" class="btn-reset">
-                    <i class="fas fa-download"></i> Download CSV Template
-                </a>
+                    <a href="index.php?page=leads/import&download=template" class="btn-reset">
+                        <i class="fas fa-download"></i> Download CSV Template
+                    </a>
+                </div>
             </div>
         </div>
     </form>
@@ -789,7 +792,7 @@ if ($batchId > 0) {
         display: grid !important;
         grid-template-columns: minmax(240px, 1.2fr) minmax(220px, 1fr) auto;
         gap: 12px;
-        align-items: end;
+        align-items: start;
         width: 100%;
     }
 
@@ -797,9 +800,28 @@ if ($batchId > 0) {
         min-width: 0;
     }
 
-    .import-grid .filter-actions {
+    .import-grid .filter-item.filter-actions {
         margin-left: 0;
-        align-self: end;
+        align-self: start;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .import-grid .filter-item.filter-actions .actions-label {
+        visibility: hidden;
+        font-size: .75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: .3px;
+        line-height: 1;
+        margin: 0;
+    }
+
+    .import-actions-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
         flex-wrap: nowrap;
     }
 
@@ -1100,6 +1122,10 @@ if ($batchId > 0) {
         .import-grid .filter-actions {
             grid-column: 1 / -1;
             justify-content: flex-start;
+            flex-wrap: wrap;
+        }
+
+        .import-actions-row {
             flex-wrap: wrap;
         }
     }
