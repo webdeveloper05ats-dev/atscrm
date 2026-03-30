@@ -512,7 +512,7 @@ if (isset($_POST['save_registration'])) {
                         created_at,
                         updated_at
                     ) VALUES (
-                        ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW()
+                        ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW()
                     )
                 ");
                 $ins->execute([
