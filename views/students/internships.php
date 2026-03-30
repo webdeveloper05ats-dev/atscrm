@@ -115,6 +115,12 @@ if ($reportStatus === 'not_provided') {
         if ($isStaffRole) {
             $sql .= " AND ri.guide_staff_id = ?";
             $params[] = $userId;
+        } elseif (strtolower($roleName) === 'front office') {
+            $sql .= " AND r.created_by = ?";
+            $params[] = $userId;
+        } elseif (!in_array(strtolower($roleName), ['super admin', 'hr'], true)) {
+            $sql .= " AND r.assigned_to = ?";
+            $params[] = $userId;
         }
 
         $sql .= " LIMIT 1";
@@ -188,6 +194,12 @@ if (!$canAllBranches && $branchId > 0) {
 
 if ($isStaffRole) {
     $where[] = "ri.guide_staff_id = ?";
+    $params[] = $userId;
+} elseif (strtolower($roleName) === 'front office') {
+    $where[] = "r.created_by = ?";
+    $params[] = $userId;
+} elseif (!in_array(strtolower($roleName), ['super admin', 'hr'], true)) {
+    $where[] = "r.assigned_to = ?";
     $params[] = $userId;
 }
 

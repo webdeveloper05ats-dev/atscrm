@@ -1092,7 +1092,10 @@ $offset = ($page - 1) * $perPage;
 $where = ["r.registration_status IN ('active','completed')"];
 $params = [];
 
-if (!in_array($roleName, ['super admin', 'hr'], true)) {
+if (strtolower($roleName) === 'front office') {
+    $where[] = "r.created_by = ?";
+    $params[] = $userId;
+} elseif (!in_array(strtolower($roleName), ['super admin', 'hr'], true)) {
     $where[] = "r.assigned_to = ?";
     $params[] = $userId;
 }

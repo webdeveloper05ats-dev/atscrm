@@ -1,0 +1,24 @@
+﻿diff --git a/views/students/internships.php b/views/students/internships.php
+index c6ecb37..29850ab 100644
+--- a/views/students/internships.php
++++ b/views/students/internships.php
+@@ -115,6 +115,9 @@ if ($reportStatus === 'not_provided') {
+         if ($isStaffRole) {
+             $sql .= " AND ri.guide_staff_id = ?";
+             $params[] = $userId;
++        } elseif (!in_array(strtolower($roleName), ['super admin', 'hr'], true)) {
++            $sql .= " AND r.assigned_to = ?";
++            $params[] = $userId;
+         }
+ 
+         $sql .= " LIMIT 1";
+@@ -189,6 +192,9 @@ if (!$canAllBranches && $branchId > 0) {
+ if ($isStaffRole) {
+     $where[] = "ri.guide_staff_id = ?";
+     $params[] = $userId;
++} elseif (!in_array(strtolower($roleName), ['super admin', 'hr'], true)) {
++    $where[] = "r.assigned_to = ?";
++    $params[] = $userId;
+ }
+ 
+ if ($paymentStatus !== '' && in_array($paymentStatus, ['paid', 'partial', 'unpaid'], true)) {

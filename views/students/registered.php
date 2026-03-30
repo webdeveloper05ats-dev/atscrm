@@ -20,6 +20,7 @@ if (!function_exists('h')) {
 $userId   = (int)($_SESSION['user_id'] ?? 0);
 $roleId   = (int)($_SESSION['role_id'] ?? 0);
 $branchId = (int)($_SESSION['branch_id'] ?? 0);
+$roleName = trim((string)($_SESSION['role_name'] ?? ''));
 
 $canAllBranches = 0;
 try {
@@ -46,6 +47,22 @@ $params = [];
 if ($canAllBranches !== 1 && $branchId > 0) {
     $where[] = "r.branch_id = ?";
     $params[] = $branchId;
+}
+
+if (strtolower($roleName) === 'front office') {
+    $where[] = "r.created_by = ?";
+    $params[] = $userId;
+} elseif ($roleName === 'Staff') {
+    $where[] = "(
+        EXISTS (SELECT 1 FROM registration_courses rc WHERE rc.registration_id = r.id AND rc.guide_staff_id = ?)
+        OR
+        EXISTS (SELECT 1 FROM registration_internships ri WHERE ri.registration_id = r.id AND ri.guide_staff_id = ?)
+    )";
+    $params[] = $userId;
+    $params[] = $userId;
+} elseif (!in_array(strtolower($roleName), ['super admin', 'hr'], true)) {
+    $where[] = "r.assigned_to = ?";
+    $params[] = $userId;
 }
 
 if ($status !== '' && in_array($status, ['active', 'completed'], true)) {
