@@ -2291,6 +2291,25 @@ background:#fff5fa;
 .crm-table-wrapper{
 position:relative;
 }
+
+/* Follow-ups table: keep controls/dropdowns from creating temporary scrollbars */
+#followupsSection .crm-table-wrapper{
+overflow: visible !important;
+}
+
+#followupsSection .crm-table-wrapper .dataTables_wrapper{
+overflow: visible !important;
+}
+
+#followupsSection #usersTable.crm-table{
+min-width: 0 !important;
+table-layout: auto;
+}
+
+#followupsSection #usersTable.crm-table th,
+#followupsSection #usersTable.crm-table td{
+white-space: normal;
+}
 .followup-table-loading{
 position:absolute;
 inset:0;
@@ -2764,7 +2783,7 @@ class="icon-btn btn-done">
         <div class="add-fu-grid">
             <div class="fu-full">
                 <label class="lbl">Select Enquiry</label>
-                <select name="enquiry_id" required>
+                <select name="enquiry_id" data-modern-select="off" required>
                     <option value="">-- Select --</option>
                     <?php foreach ($enquiryOptions as $e): ?>
                         <option value="<?= (int)$e['id'] ?>">
@@ -3658,6 +3677,7 @@ function initFollowupTable() {
             lengthMenu: [5, 10, 20, 50],
             ordering: true,
             order: [[0, 'desc']],
+            scrollX: false,
             searchPlaceholder: "Search follow-ups..."
         });
         return;
@@ -3668,7 +3688,8 @@ function initFollowupTable() {
             pageLength: 5,
             lengthMenu: [5, 10, 20, 50],
             ordering: true,
-            order: [[0, 'desc']]
+            order: [[0, 'desc']],
+            scrollX: false
         });
     }
 }
