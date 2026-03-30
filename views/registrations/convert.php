@@ -214,6 +214,7 @@ if (isset($_POST['save_registration'])) {
             $parent_name       = regToNull($_POST['parent_name'] ?? '');
             $parent_phone      = regToNull($_POST['parent_phone'] ?? '');
             $parent_occupation = regToNull($_POST['parent_occupation'] ?? '');
+            $parent_email      = regToNull($_POST['parent_email'] ?? '');
             $emergency_contact = regToNull($_POST['emergency_contact'] ?? '');
             $aadhaar_no        = regToNull($_POST['aadhaar_no'] ?? '');
             $remarks           = regToNull($_POST['remarks'] ?? '');
@@ -274,6 +275,14 @@ if (isset($_POST['save_registration'])) {
 
             if ($year_of_passout === null || !preg_match('/^\d{4}$/', $year_of_passout)) {
                 throw new Exception("Year of passing must be a valid 4-digit year.");
+            }
+
+            if ($parent_email === null) {
+                throw new Exception("Parent email is required.");
+            }
+
+            if (!regIsValidEmail($parent_email)) {
+                throw new Exception("Please enter a valid parent email address.");
             }
 
             if ($total_fee <= 0) {
@@ -458,6 +467,7 @@ if (isset($_POST['save_registration'])) {
                         parent_name=?,
                         parent_phone=?,
                         parent_occupation=?,
+                        parent_email=?,
                         emergency_contact=?,
                         aadhaar_no=?,
                         remarks=?,
@@ -475,6 +485,7 @@ if (isset($_POST['save_registration'])) {
                     $parent_name,
                     $parent_phone,
                     $parent_occupation,
+                    $parent_email,
                     $emergency_contact,
                     $aadhaar_no,
                     $remarks,
@@ -494,6 +505,7 @@ if (isset($_POST['save_registration'])) {
                         parent_name,
                         parent_phone,
                         parent_occupation,
+                        parent_email,
                         emergency_contact,
                         aadhaar_no,
                         remarks,
@@ -515,6 +527,7 @@ if (isset($_POST['save_registration'])) {
                     $parent_name,
                     $parent_phone,
                     $parent_occupation,
+                    $parent_email,
                     $emergency_contact,
                     $aadhaar_no,
                     $remarks
@@ -627,6 +640,9 @@ $parent_phone      = $profile['parent_phone']
 
 $parent_occupation = $profile['parent_occupation']
                     ?? ($enquiry['father_occupation'] ?? '');
+
+$parent_email      = $profile['parent_email']
+                    ?? ($enquiry['parent_email'] ?? '');
 
 $emergency_contact = $profile['emergency_contact'] ?? '';
 $aadhaar_no        = $profile['aadhaar_no'] ?? '';
@@ -1533,6 +1549,11 @@ $final_fee         = $registration['final_fee'] ?? '0.00';
                 </div>
 
                 <div class="reg-field">
+                  <label class="reg-label">Parent Email ID <span style="color:#e91e63;">*</span></label>
+                  <input class="reg-input" type="email" name="parent_email" value="<?= h($parent_email) ?>" placeholder="Enter parent email, e.g. parent@gmail.com">
+                </div>
+
+                <div class="reg-field">
                   <label class="reg-label">Emergency Contact</label>
                   <input class="reg-input" type="text" name="emergency_contact" value="<?= h($emergency_contact) ?>" placeholder="Enter emergency contact">
                 </div>
@@ -1815,7 +1836,19 @@ function validateStep3AndNext() {
 }
 
 function validateStep4AndNext() {
+  const parentEmail = (document.querySelector('input[name="parent_email"]')?.value || '').trim();
   const aadhaar = (document.querySelector('input[name="aadhaar_no"]')?.value || '').trim();
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+  if (!parentEmail) {
+    Swal.fire({ icon:'warning', title:'Required Field', text:'Please enter parent email address', confirmButtonColor:'#e91e63' });
+    return false;
+  }
+
+  if (!emailRegex.test(parentEmail)) {
+    Swal.fire({ icon:'warning', title:'Invalid Email', text:'Please enter a valid parent email address', confirmButtonColor:'#e91e63' });
+    return false;
+  }
 
   if (!aadhaar || !/^\d{12}$/.test(aadhaar)) {
     Swal.fire({ icon:'warning', title:'Invalid Aadhaar', text:'Aadhaar number must be exactly 12 digits.', confirmButtonColor:'#e91e63' });
@@ -1850,6 +1883,7 @@ function validateCoreBeforeSubmit() {
   const email = (document.querySelector('input[name="email"]')?.value || '').trim();
   const gender = document.querySelector('input[name="gender"]:checked')?.value || '';
   const dob = (document.querySelector('input[name="dob"]')?.value || '').trim();
+  const parentEmail = (document.querySelector('input[name="parent_email"]')?.value || '').trim();
   const aadhaar = (document.querySelector('input[name="aadhaar_no"]')?.value || '').trim();
   const totalFee = (document.querySelector('input[name="total_fee"]')?.value || '').trim();
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -1888,6 +1922,16 @@ function validateCoreBeforeSubmit() {
   if (!dob) {
     Swal.fire({ icon:'warning', title:'Required Field', text:'Please select date of birth', confirmButtonColor:'#e91e63' });
     goRegStep(2);
+    return false;
+  }
+  if (!parentEmail) {
+    Swal.fire({ icon:'warning', title:'Required Field', text:'Please enter parent email address', confirmButtonColor:'#e91e63' });
+    goRegStep(4);
+    return false;
+  }
+  if (!emailRegex.test(parentEmail)) {
+    Swal.fire({ icon:'warning', title:'Invalid Email', text:'Please enter a valid parent email address', confirmButtonColor:'#e91e63' });
+    goRegStep(4);
     return false;
   }
   if (!aadhaar || !/^\d{12}$/.test(aadhaar)) {
