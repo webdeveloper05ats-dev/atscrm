@@ -9,6 +9,8 @@
     if (mode === "off") return true;
     if (select.classList.contains("swal-modern-select")) return true;
     if (select.closest(".dataTables_filter")) return true;
+    if (select.closest(".flatpickr-calendar")) return true;
+    if (select.classList.contains("flatpickr-monthDropdown-months")) return true;
     if (select.multiple) return true;
     if ((select.size || 0) > 1) return true;
     if (select.closest(".dataTables_wrapper") && !inDtLength && !force) return true;
