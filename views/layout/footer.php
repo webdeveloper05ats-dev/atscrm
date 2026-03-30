@@ -32,6 +32,7 @@ if (!defined('APP_NAME')) {
 
 <!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 
 <!-- ============================= -->
 <!-- CRM Custom Scripts -->
@@ -39,6 +40,7 @@ if (!defined('APP_NAME')) {
 
 <script src="assets/js/crm-datatable.js"></script>
 <script src="assets/js/modern-select.js"></script>
+<script src="assets/js/modern-datepicker.js"></script>
 
 <!-- ============================= -->
 <!-- Flash Messages -->
