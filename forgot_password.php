@@ -72,17 +72,14 @@ require_once __DIR__ . '/PHPMailer/src/SMTP.php';
 try {
     $mail = new PHPMailer(true);
 
-    // SMTP config (Gmail)
+    // SMTP config (from config/app.php)
     $mail->isSMTP();
-    $mail->Host       = 'smtp.gmail.com';
+    $mail->Host       = SMTP_HOST;
     $mail->SMTPAuth   = true;
-
-    // ✅ CHANGE THESE 2 values to your SMTP account
-    $mail->Username   = 'sgssk63@gmail.com';
-    $mail->Password   = 'emdancgmhsvdcmfy';
-
+    $mail->Username   = SMTP_USERNAME;
+    $mail->Password   = SMTP_PASSWORD;
     $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
-    $mail->Port       = 465;
+    $mail->Port       = SMTP_PORT;
 
     // ✅ Always setFrom as YOUR domain email (NOT user input)
     $mail->setFrom($mail->Username, APP_NAME);

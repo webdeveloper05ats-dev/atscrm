@@ -12,9 +12,17 @@ try {
     }
 
     $reportId = (int)($_POST['report_id'] ?? 0);
+    $userId   = (int)$_SESSION['user_id'];
 
     if (!$reportId) {
         throw new Exception("Invalid report");
+    }
+
+    // Verify report ownership
+    $ownerCheck = $pdo->prepare("SELECT id FROM reports WHERE id = ? AND user_id = ? LIMIT 1");
+    $ownerCheck->execute([$reportId, $userId]);
+    if (!$ownerCheck->fetchColumn()) {
+        throw new Exception("Access denied. You can only modify your own reports.");
     }
 
     $fields = [

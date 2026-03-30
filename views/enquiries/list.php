@@ -37,8 +37,12 @@ try {
 // ✅ IMPORTANT FIX: we check delete_enquiry from hidden input also
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['delete_enquiry'])) {
 
-    $token = $_POST['csrf_token'] ?? '';
-    if (!verifyCSRF($token)) {
+    // RBAC permission check
+    if (!canDelete('enquiries/list') && !$isSuperAdmin) {
+        $error = "Access denied. You do not have delete permission.";
+    }
+
+    elseif (!verifyCSRF($_POST['csrf_token'] ?? '')) {
         $error = "Invalid request (CSRF). Please refresh and try again.";
     } else {
 

@@ -10,6 +10,8 @@ if (!defined('APP_NAME')) {
   die("Unauthorized access.");
 }
 
+requireView('registrations/list');
+
 $success = "";
 $error = "";
 
@@ -37,10 +39,10 @@ if (!function_exists('makeReceiptNo')) {
   function makeReceiptNo(PDO $pdo): string
   {
     $prefix = 'RCPT-' . date('Ym') . '-';
-    $st = $pdo->prepare("SELECT COUNT(*) FROM registration_payments WHERE DATE_FORMAT(created_at, '%Y-%m') = DATE_FORMAT(CURDATE(), '%Y-%m')");
-    $st->execute();
-    $count = (int) $st->fetchColumn();
-    return $prefix . str_pad((string) ($count + 1), 4, '0', STR_PAD_LEFT);
+    $st = $pdo->prepare("SELECT MAX(CAST(SUBSTRING(receipt_no, LENGTH(?) + 1) AS UNSIGNED)) FROM registration_payments WHERE receipt_no LIKE CONCAT(?, '%')");
+    $st->execute([$prefix, $prefix]);
+    $maxNum = (int) ($st->fetchColumn() ?? 0);
+    return $prefix . str_pad((string) ($maxNum + 1), 4, '0', STR_PAD_LEFT);
   }
 }
 if (!function_exists('recalcRegistrationPaymentsSummary')) {

@@ -124,7 +124,7 @@ function uploadFile($file, $destinationFolder)
     $uploadPath = __DIR__ . '/../uploads/' . $destinationFolder . '/' . $newName;
 
     if (!is_dir(dirname($uploadPath))) {
-        mkdir(dirname($uploadPath), 0777, true);
+        mkdir(dirname($uploadPath), 0755, true);
     }
 
     if (move_uploaded_file($fileTmp, $uploadPath)) {
@@ -151,7 +151,12 @@ function generateCSRF()
 
 function verifyCSRF($token)
 {
-    return isset($_SESSION['csrf_token']) && hash_equals($_SESSION['csrf_token'], $token);
+    if (isset($_SESSION['csrf_token']) && hash_equals($_SESSION['csrf_token'], $token)) {
+        // Rotate token after successful verification to prevent replay
+        $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+        return true;
+    }
+    return false;
 }
 
 function isStaffRestrictedFromStudentContacts(): bool

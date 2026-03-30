@@ -31,16 +31,43 @@ $isEdit = $leadId > 0;
 function h($v){ return htmlspecialchars((string)$v,ENT_QUOTES,'UTF-8'); }
 function toNull($v){ $v=trim((string)$v); return $v===''?null:$v; }
 
-// Load lead for editing
+// Load lead for editing (with branch + ownership check)
 $lead = [];
+$roleId = (int)($_SESSION['role_id'] ?? 0);
+
+// Check branch access
+$canAllBranches = 0;
+try {
+    $br = $pdo->prepare("SELECT can_access_all_branches FROM roles WHERE id=? LIMIT 1");
+    $br->execute([$roleId]);
+    $canAllBranches = (int)($br->fetchColumn() ?? 0);
+} catch(Exception $e) {}
 
 if ($isEdit) {
-    $st = $pdo->prepare("SELECT * FROM leads WHERE id=? LIMIT 1");
-    $st->execute([$leadId]);
+    // Build secure query with branch + creator/assigned check
+    $editSql = "SELECT * FROM leads WHERE id=?";
+    $editParams = [$leadId];
+
+    if (!$canAllBranches && $branchId > 0) {
+        $editSql .= " AND branch_id=?";
+        $editParams[] = $branchId;
+    }
+
+    // Non-admin roles can only edit leads they created or are assigned to
+    $allowedToEditAll = ['Super Admin','HR','Marketing'];
+    if (!in_array($roleName, $allowedToEditAll, true)) {
+        $editSql .= " AND (created_by=? OR assigned_to=?)";
+        $editParams[] = $userId;
+        $editParams[] = $userId;
+    }
+
+    $editSql .= " LIMIT 1";
+    $st = $pdo->prepare($editSql);
+    $st->execute($editParams);
     $lead = $st->fetch(PDO::FETCH_ASSOC);
 
     if (!$lead) {
-        $error = "Lead not found.";
+        $error = "Lead not found or access denied.";
     }
 }
 
@@ -100,7 +127,8 @@ if(isset($_POST['save_lead']) && empty($error)){
 
                 if($isEdit){
 
-                    $st=$pdo->prepare("
+                    // Add branch restriction to UPDATE
+                    $updateSql = "
                             UPDATE leads SET
                             name=:name,
                             phone=:phone,
@@ -115,9 +143,9 @@ if(isset($_POST['save_lead']) && empty($error)){
                             updated_by=:uid,
                             updated_at=NOW()
                             WHERE id=:id
-                        ");
+                        ";
 
-                    $st->execute([
+                    $updateParams = [
                         ':name'=>$name,
                         ':phone'=>$phone,
                         ':email'=>$email,
@@ -130,7 +158,15 @@ if(isset($_POST['save_lead']) && empty($error)){
                         ':remarks'=>$remarks,
                         ':uid'=>$userId,
                         ':id'=>$leadId
-                    ]);
+                    ];
+
+                    if (!$canAllBranches && $branchId > 0) {
+                        $updateSql .= " AND branch_id=:branch_id";
+                        $updateParams[':branch_id'] = $branchId;
+                    }
+
+                    $st=$pdo->prepare($updateSql);
+                    $st->execute($updateParams);
 
                     $success="Lead updated successfully.";
 

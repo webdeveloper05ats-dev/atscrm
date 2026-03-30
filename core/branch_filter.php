@@ -9,14 +9,10 @@ if (!defined('APP_NAME')) {
 
 /*
 |--------------------------------------------------------------------------
-| Check If User Is Super Admin
+| Note: isSuperAdmin() is defined in core/permission.php (loaded first).
+| Uses: $_SESSION['role_name'] === 'Super Admin'
 |--------------------------------------------------------------------------
 */
-
-function isSuperAdmin()
-{
-    return isset($_SESSION['role_id']) && $_SESSION['role_id'] == 1;
-}
 
 /*
 |--------------------------------------------------------------------------
