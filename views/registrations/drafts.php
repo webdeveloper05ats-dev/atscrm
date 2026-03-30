@@ -681,18 +681,6 @@ $rows=$stmt->fetchAll(PDO::FETCH_ASSOC);
 
                     <tbody>
 
-                    <?php if(!$rows): ?>
-                        <tr>
-                            <td colspan="6" class="draft-empty">
-                                <div class="draft-empty-icon">
-                                    <i class="fas fa-folder-open"></i>
-                                </div>
-                                <div class="draft-empty-title">No draft registrations found</div>
-                                <p class="draft-empty-text">Any incomplete registration conversion will appear here.</p>
-                            </td>
-                        </tr>
-                    <?php endif; ?>
-
                     <?php foreach($rows as $r): ?>
                         <?php
                             $studentName = trim((string)($r['enquiry_snapshot_name'] ?? 'Student'));
@@ -786,6 +774,9 @@ document.addEventListener("DOMContentLoaded", function(){
             ordering: true,
             order: [[4, 'desc']],
             searchPlaceholder: "Search drafts...",
+            language: {
+                emptyTable: "No draft registrations found"
+            },
             dom:
                 "<'dt-top'lfB>" +
                 "rt" +
