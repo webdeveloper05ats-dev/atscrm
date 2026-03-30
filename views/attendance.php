@@ -85,6 +85,11 @@ function isFutureAttendanceDate(string $date): bool
     return $date > date('Y-m-d');
 }
 
+function isPastAttendanceDateTooOld(string $date): bool
+{
+    return $date < date('Y-m-d', strtotime('-1 day'));
+}
+
 function resolveAttendanceStartDate(array $student): string
 {
     $candidates = [];
@@ -173,12 +178,13 @@ function renderAttendanceCalendar(array $student, array $attendanceMap, string $
             <div><b>Student:</b> <?= h($student['enquiry_snapshot_name']) ?></div>
             <div><b>Registration:</b> <?= h($student['registration_no']) ?></div>
             <div><b>Program:</b> <?= h($student['program_name']) ?></div>
+            <div><b>Assigned On:</b> <?= h($attendanceStartDate) ?></div>
         </div>
 
         <div class="att-legend">
             <span class="att-legend-item"><i class="att-dot att-dot-present"></i> Present</span>
             <span class="att-legend-item"><i class="att-dot att-dot-absent"></i> Absent</span>
-            <span class="att-legend-item"><i class="att-dot att-dot-empty"></i> Not Marked</span>
+            <span class="att-legend-item"><i class="att-dot att-dot-pending"></i> Not Marked</span>
             <span class="att-legend-item"><i class="att-dot att-dot-locked"></i> Locked</span>
         </div>
 
@@ -186,7 +192,7 @@ function renderAttendanceCalendar(array $student, array $attendanceMap, string $
             <?php if ($readOnlyMode): ?>
                 View only access. Attendance is visible from <b><?= h($attendanceStartDate) ?></b> up to today.
             <?php else: ?>
-                Attendance can be marked only from <b><?= h($attendanceStartDate) ?></b> up to today.
+                Attendance can be marked strictly for <b>Today</b> and <b>Yesterday</b> only.
             <?php endif; ?>
         </div>
 
@@ -204,20 +210,33 @@ function renderAttendanceCalendar(array $student, array $attendanceMap, string $
                 $status = strtolower((string) ($record['status'] ?? ''));
                 $isBeforeAssignment = ($date < $attendanceStartDate);
                 $isFutureDate = isFutureAttendanceDate($date);
-                $isLockedDate = ($isBeforeAssignment || $isFutureDate);
+                $isTooOldDate = isPastAttendanceDateTooOld($date);
+                $isLockedDate = ($isBeforeAssignment || $isFutureDate || $isTooOldDate);
                 $canOpenDay = !$isLockedDate;
                 $cellClass = 'att-status-empty';
+                $buttonText = $readOnlyMode ? 'View' : 'Mark';
+                
                 if ($status === 'present') {
                     $cellClass = 'att-status-present';
+                    $buttonText = 'Present';
                 } elseif ($status === 'absent') {
                     $cellClass = 'att-status-absent';
+                    $buttonText = 'Absent';
+                } elseif (!$isBeforeAssignment && !$isFutureDate) {
+                    $cellClass = 'att-status-pending';
+                    $buttonText = 'Not Marked';
                 }
-                if ($isLockedDate) {
+                if ($isLockedDate && $cellClass !== 'att-status-pending') {
                     $cellClass .= ' att-status-locked';
                 }
-                $lockTitle = $isBeforeAssignment
-                    ? 'Dates before staff assignment are locked'
-                    : 'Future dates are locked';
+                $lockTitle = '';
+                if ($isBeforeAssignment) {
+                    $lockTitle = 'Dates before staff assignment are locked';
+                } elseif ($isFutureDate) {
+                    $lockTitle = 'Future dates are locked';
+                } elseif ($isTooOldDate) {
+                    $lockTitle = 'Attendance can only be marked for today and yesterday';
+                }
                 if ($readOnlyMode && !$isLockedDate) {
                     $lockTitle = 'View attendance details';
                 }
@@ -226,7 +245,7 @@ function renderAttendanceCalendar(array $student, array $attendanceMap, string $
                     class="att-grid-cell att-grid-day <?= h($cellClass) ?> <?= $date === $today ? 'att-day-today' : '' ?>"
                     <?= !$canOpenDay ? 'disabled data-modern-tooltip="' . h($lockTitle) . '" aria-label="' . h($lockTitle) . '"' : "onclick=\"openAttendanceEntry(" . (int) $student['id'] . ", '" . h($student['enquiry_snapshot_name']) . "', '" . h($date) . "', " . ($readOnlyMode ? 'true' : 'false') . ")\" data-modern-tooltip=\"" . h($lockTitle) . "\" aria-label=\"" . h($lockTitle) . "\"" ?>>
                     <span class="att-day-no"><?= (int) $day ?></span>
-                    <span class="att-day-text"><?= $isLockedDate ? 'Locked' : ($status === 'present' ? 'Present' : ($status === 'absent' ? 'Absent' : ($readOnlyMode ? 'View' : 'Mark'))) ?></span>
+                    <span class="att-day-text"><?= $isLockedDate && $cellClass !== 'att-status-pending' && $cellClass === 'att-status-empty' ? 'Locked' : $buttonText ?></span>
                 </button>
             <?php endfor; ?>
         </div>
@@ -269,6 +288,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax_save_attendance'
     }
     if (isFutureAttendanceDate($date)) {
         responseJson('error', 'Future attendance dates are locked.');
+    }
+    if (isPastAttendanceDateTooOld($date)) {
+        responseJson('error', 'You can only mark attendance for today and yesterday.');
     }
 
     try {
@@ -333,6 +355,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax_save_attendance'
         $ins = $pdo->prepare("
             INSERT INTO attendance (
                 registration_id,
+                user_id,
+                course_id,
                 branch_id,
                 attendance_date,
                 status,
@@ -344,10 +368,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax_save_attendance'
                 marked_by,
                 created_at,
                 updated_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
         ");
         $ins->execute([
             $registrationId,
+            $registrationId, // Used to bypass the (user_id, course_id, attendance_date) legacy unique constraint properly
+            0,               // Default legacy course_id
             (int) ($student['branch_id'] ?? 0),
             $date,
             $status,
@@ -423,6 +449,10 @@ if ($isAjax) {
         }
         if (isFutureAttendanceDate($date)) {
             echo "<div class='att-empty-note att-empty-note-danger'>Future attendance dates are locked.</div>";
+            exit;
+        }
+        if (isPastAttendanceDateTooOld($date)) {
+            echo "<div class='att-empty-note att-empty-note-danger'>You can only mark attendance for today and yesterday.</div>";
             exit;
         }
 
@@ -1248,10 +1278,12 @@ if (!empty($rows)) {
     }
     .att-legend-item { display:inline-flex; align-items:center; gap:8px; font-size:13px; font-weight:700; color:#374151; }
     .att-dot { width:12px; height:12px; border-radius:50%; display:inline-block; }
-    .att-dot-present { background:#2e7d32; }
-    .att-dot-absent { background:#e53935; }
+    .att-dot-present { background:#16a34a; }
+    .att-dot-absent { background:#dc2626; }
     .att-dot-empty { background:#cbd5e1; }
+    .att-dot-pending { background:#f59e0b; }
     .att-dot-locked { background:#94a3b8; }
+    
     .att-grid {
         display: grid;
         grid-template-columns: repeat(7, minmax(0, 1fr));
@@ -1295,11 +1327,13 @@ if (!empty($rows)) {
     .att-grid-day:disabled { cursor:not-allowed; transform:none; box-shadow:none; }
     .att-day-no { font-size: 19px; font-weight: 900; color: #0f172a; }
     .att-day-text { font-size: 12px; font-weight: 800; }
-    .att-status-present { background:#eaf7ee; border-color:#9bd3a7; }
-    .att-status-present .att-day-text { color:#2e7d32; }
-    .att-status-absent { background:#fdecec; border-color:#f1a6a6; }
-    .att-status-absent .att-day-text { color:#c62828; }
+    .att-status-present { background:#16a34a !important; border-color:#15803d !important; }
+    .att-status-present .att-day-no, .att-status-present .att-day-text { color:#ffffff !important; }
+    .att-status-absent { background:#dc2626 !important; border-color:#b91c1c !important; }
+    .att-status-absent .att-day-no, .att-status-absent .att-day-text { color:#ffffff !important; }
     .att-status-empty .att-day-text { color:#64748b; }
+    .att-status-pending { background:#fffbeb !important; border-color:#fcd34d !important; opacity: 0.9 !important; }
+    .att-status-pending .att-day-text { color:#b45309 !important; }
     .att-status-locked { background:#f8fafc; border-color:#e2e8f0; opacity:.72; box-shadow:none; }
     .att-status-locked .att-day-text { color:#94a3b8; }
     .att-day-today {
@@ -1657,7 +1691,7 @@ if (!empty($rows)) {
                 return;
             }
             closeAttendanceEntry();
-            await loadAttendanceCalendar(activeAttendanceRegistrationId, activeAttendanceStudentName, activeAttendanceMonth);
+            closeAttendanceCalendar();
             Swal.fire({
                 icon: 'success',
                 title: 'Attendance Saved',
