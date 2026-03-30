@@ -39,7 +39,21 @@ if (!function_exists('makeReceiptNo')) {
   function makeReceiptNo(PDO $pdo): string
   {
     $prefix = 'RCPT-' . date('Ym') . '-';
-    $st = $pdo->prepare("SELECT MAX(CAST(SUBSTRING(receipt_no, LENGTH(?) + 1) AS UNSIGNED)) FROM registration_payments WHERE receipt_no LIKE CONCAT(?, '%')");
+    $st = $pdo->prepare("
+      SELECT MAX(
+        CAST(
+          SUBSTRING(
+            receipt_no,
+            CHAR_LENGTH(CAST(? AS CHAR CHARACTER SET utf8mb4) COLLATE utf8mb4_general_ci) + 1
+          ) AS UNSIGNED
+        )
+      )
+      FROM registration_payments
+      WHERE receipt_no COLLATE utf8mb4_general_ci LIKE CONCAT(
+        CAST(? AS CHAR CHARACTER SET utf8mb4) COLLATE utf8mb4_general_ci,
+        '%'
+      )
+    ");
     $st->execute([$prefix, $prefix]);
     $maxNum = (int) ($st->fetchColumn() ?? 0);
     return $prefix . str_pad((string) ($maxNum + 1), 4, '0', STR_PAD_LEFT);
@@ -558,7 +572,7 @@ if ($isAjax) {
               </div>
               <div>
                 <label class="m-label"><i class="fas fa-credit-card"></i> Payment Mode</label>
-                <select name="payment_mode" class="m-input">
+                <select name="payment_mode" class="m-input" data-modern-select="force">
                   <option value="cash">Cash</option>
                   <option value="upi">UPI</option>
                   <option value="card">Card</option>
@@ -569,7 +583,7 @@ if ($isAjax) {
               </div>
               <div>
                 <label class="m-label"><i class="fas fa-tags"></i> Payment Type</label>
-                <select name="payment_type" class="m-input">
+                <select name="payment_type" class="m-input" data-modern-select="force">
                   <option value="advance">Advance</option>
                   <option value="partial" selected>Partial</option>
                   <option value="full">Full</option>
@@ -970,8 +984,10 @@ if (isset($_POST['delete_registration'])) {
 ========================================================= */
 if (isset($_POST['add_payment'])) {
   $token = $_POST['csrf_token'] ?? '';
+  $returnUrl = $_SERVER['REQUEST_URI'] ?? 'index.php?page=registrations/list';
   if (!verifyCSRF($token)) {
-    $error = "Invalid request (CSRF). Please refresh and try again.";
+    setFlash('error', 'Invalid request (CSRF). Please refresh and try again.');
+    redirect($returnUrl);
   } else {
     $regId = (int) ($_POST['reg_id'] ?? 0);
     $amount = regDecVal($_POST['amount'] ?? 0);
@@ -983,11 +999,14 @@ if (isset($_POST['add_payment'])) {
     $remarksPay = regNull($_POST['remarks_payment'] ?? '');
 
     if ($regId <= 0) {
-      $error = "Invalid registration selected.";
+      setFlash('error', 'Invalid registration selected.');
+      redirect($returnUrl);
     } elseif ($amount <= 0) {
-      $error = "Amount must be greater than zero.";
+      setFlash('error', 'Amount must be greater than zero.');
+      redirect($returnUrl);
     } elseif ($payment_date === null) {
-      $error = "Payment date is required.";
+      setFlash('error', 'Payment date is required.');
+      redirect($returnUrl);
     } else {
       try {
         if ($canAllBranches !== 1 && $branchId > 0) {
@@ -1062,11 +1081,13 @@ if (isset($_POST['add_payment'])) {
         recalcRegistrationPaymentsSummary($pdo, $regId);
 
         $pdo->commit();
-        $success = "Payment saved successfully! Receipt No: " . $receiptNo;
+        setFlash('success', 'Payment saved successfully! Receipt No: ' . $receiptNo);
+        redirect($returnUrl);
       } catch (Exception $e) {
         if ($pdo->inTransaction())
           $pdo->rollBack();
-        $error = "Failed to add payment. " . $e->getMessage();
+        setFlash('error', 'Failed to add payment. ' . $e->getMessage());
+        redirect($returnUrl);
       }
     }
   }
@@ -1247,6 +1268,20 @@ $baseUrl = "index.php?page=registrations/list"
   . "&payment_status=" . urlencode($payStat)
   . "&from=" . urlencode($from)
   . "&to=" . urlencode($to);
+
+if ($success === '' && function_exists('getFlash')) {
+  $flashSuccess = getFlash('success');
+  if ($flashSuccess) {
+    $success = $flashSuccess;
+  }
+}
+
+if ($error === '' && function_exists('getFlash')) {
+  $flashError = getFlash('error');
+  if ($flashError) {
+    $error = $flashError;
+  }
+}
 
 function regTypeBadgeList($type)
 {
@@ -1516,7 +1551,7 @@ function payStatusBadgeList($type)
       title: 'Success',
       text: '<?= addslashes($success) ?>',
       confirmButtonColor: '#e91e63'
-    }).then(() => window.location.href = "<?= $baseUrl ?>");
+    });
   </script>
 <?php endif; ?>
 
@@ -1826,8 +1861,12 @@ function payStatusBadgeList($type)
     openCrmModal('Payment Entry');
     const url = `index.php?page=registrations/list&ajax=1&action=payment_modal&reg_id=${regId}`;
     const html = await loadModalHtml(url);
-    document.getElementById('crmModalBody').innerHTML = html;
-    applyModernIconTooltips(document.getElementById('crmModalBody'));
+    const modalBody = document.getElementById('crmModalBody');
+    modalBody.innerHTML = html;
+    applyModernIconTooltips(modalBody);
+    if (typeof window.initModernSelect === 'function') {
+      window.initModernSelect(modalBody);
+    }
   }
 
   function validatePaymentEntryForm(form) {

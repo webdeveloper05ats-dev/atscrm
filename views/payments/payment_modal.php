@@ -154,7 +154,7 @@ ADD PAYMENT
 
 <div>
 <label class="m-label">Amount</label>
-<input type="number" step="0.01" name="amount" class="m-input" required>
+<input type="number" step="0.01" max="<?= htmlspecialchars((string) $balance, ENT_QUOTES, 'UTF-8') ?>" name="amount" class="m-input" required>
 </div>
 
 <div>
@@ -164,19 +164,23 @@ ADD PAYMENT
 
 <div>
 <label class="m-label">Payment Mode</label>
-<select name="payment_mode" class="m-input">
-<option value="Cash">Cash</option>
-<option value="UPI">UPI</option>
-<option value="Card">Card</option>
-<option value="Bank Transfer">Bank Transfer</option>
+<select name="payment_mode" class="m-input" data-modern-select="force">
+<option value="cash">Cash</option>
+<option value="upi">UPI</option>
+<option value="card">Card</option>
+<option value="bank_transfer">Bank Transfer</option>
+<option value="cheque">Cheque</option>
+<option value="other">Other</option>
 </select>
 </div>
 
 <div>
 <label class="m-label">Payment Type</label>
-<select name="payment_type" class="m-input">
+<select name="payment_type" class="m-input" data-modern-select="force">
+<option value="advance">Advance</option>
 <option value="partial">Partial</option>
 <option value="full">Full</option>
+<option value="refund">Refund</option>
 </select>
 </div>
 

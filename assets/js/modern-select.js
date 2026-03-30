@@ -299,6 +299,8 @@
     (root || document).querySelectorAll("select").forEach(enhance);
   }
 
+  window.initModernSelect = init;
+
   document.addEventListener("DOMContentLoaded", function () {
     init(document);
     var bodyObserver = new MutationObserver(function (mutations) {

@@ -56,7 +56,21 @@ if (!function_exists('paymentsMakeReceiptNo')) {
     function paymentsMakeReceiptNo(PDO $pdo): string
     {
         $prefix = 'RCPT-' . date('Ym') . '-';
-        $st = $pdo->prepare("SELECT MAX(CAST(SUBSTRING(receipt_no, LENGTH(?) + 1) AS UNSIGNED)) FROM registration_payments WHERE receipt_no LIKE CONCAT(?, '%')");
+        $st = $pdo->prepare("
+            SELECT MAX(
+                CAST(
+                    SUBSTRING(
+                        receipt_no,
+                        CHAR_LENGTH(CAST(? AS CHAR CHARACTER SET utf8mb4) COLLATE utf8mb4_general_ci) + 1
+                    ) AS UNSIGNED
+                )
+            )
+            FROM registration_payments
+            WHERE receipt_no COLLATE utf8mb4_general_ci LIKE CONCAT(
+                CAST(? AS CHAR CHARACTER SET utf8mb4) COLLATE utf8mb4_general_ci,
+                '%'
+            )
+        ");
         $st->execute([$prefix, $prefix]);
         $maxNum = (int) ($st->fetchColumn() ?? 0);
         return $prefix . str_pad((string) ($maxNum + 1), 4, '0', STR_PAD_LEFT);
@@ -1819,6 +1833,28 @@ $exportBaseUrl = 'index.php?page=payments/index&ajax=1'
     transition: .2s ease;
   }
 
+  .native-modern-select {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    padding-right: 42px;
+    background-color: #fff;
+    background-image:
+      linear-gradient(45deg, transparent 50%, #be185d 50%),
+      linear-gradient(135deg, #be185d 50%, transparent 50%);
+    background-position:
+      calc(100% - 20px) calc(50% - 3px),
+      calc(100% - 14px) calc(50% - 3px);
+    background-size: 7px 7px, 7px 7px;
+    background-repeat: no-repeat;
+    cursor: pointer;
+  }
+
+  .native-modern-select:focus {
+    border-color: #e91e63;
+    box-shadow: 0 0 0 4px rgba(233, 30, 99, .12);
+  }
+
   .modal-actions {
     display: flex;
     justify-content: flex-end;
@@ -2332,7 +2368,11 @@ const res = await fetch(url);
 
 const html = await res.text();
 
-document.getElementById("crmModalBody").innerHTML = html;
+const modalBody = document.getElementById("crmModalBody");
+modalBody.innerHTML = html;
+if (typeof window.initModernSelect === 'function') {
+window.initModernSelect(modalBody);
+}
 
 }
 catch(e){
