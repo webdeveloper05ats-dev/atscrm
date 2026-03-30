@@ -60,6 +60,15 @@ if (!function_exists('isValidEmail')) {
         return (bool)filter_var($email, FILTER_VALIDATE_EMAIL);
     }
 }
+if (!function_exists('isValidDateYmd')) {
+    function isValidDateYmd(?string $date): bool {
+        if ($date === null || trim($date) === '') return true;
+        $d = trim($date);
+        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $d)) return false;
+        $dt = DateTime::createFromFormat('Y-m-d', $d);
+        return $dt && $dt->format('Y-m-d') === $d;
+    }
+}
 if (!function_exists('generateEnquiryNo')) {
     function generateEnquiryNo(PDO $pdo): string {
 
@@ -218,6 +227,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_enquiry']) && em
             $error = "Email is required.";
         } elseif (!isValidEmail($email)) {
             $error = "Invalid email.";
+        } elseif (!isValidDateYmd($dob)) {
+            $error = "DOB format is invalid. Use YYYY-MM-DD.";
+        } elseif ($dob !== null && $dob > date('Y-m-d')) {
+            $error = "DOB cannot be a future date.";
         } elseif ($father_name === null || $father_name === '') {
             $error = "Parent name is required.";
         } elseif ($father_occupation === null || $father_occupation === '') {
@@ -924,8 +937,11 @@ if (window.Swal && Swal.fire) {
         </div>
 
         <div class="form-group">
-          <label>DOB</label>
-          <input type="date" name="dob" value="<?= htmlspecialchars($_POST['dob'] ?? '') ?>">
+          <label>DOB <span class="hint" style="display:inline;margin-left:6px;">(DD-MM-YYYY)</span></label>
+          <input type="text" name="dob" class="js-date-ymd" inputmode="numeric" maxlength="10"
+                 value="<?= htmlspecialchars($_POST['dob'] ?? '') ?>"
+                 placeholder="YYYY-MM-DD"
+                 title="Type DOB in YYYY-MM-DD format">
         </div>
 
         <div class="form-group">
@@ -1211,6 +1227,18 @@ document.addEventListener("DOMContentLoaded", function(){
     return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email);
   }
 
+  function isValidDateYmd(dateStr){
+    dateStr = clean(dateStr);
+    if (!dateStr) return true;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return false;
+    const d = new Date(dateStr + 'T00:00:00');
+    if (Number.isNaN(d.getTime())) return false;
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}` === dateStr;
+  }
+
   function getVal(name){
     return clean(document.querySelector(`[name="${name}"]`)?.value);
   }
@@ -1277,6 +1305,7 @@ document.addEventListener("DOMContentLoaded", function(){
     const name  = getVal('name');
     const phone = getVal('phone');
     const email = getVal('email');
+    const dob = getVal('dob');
 
     if (scope === 'all' || scope === '1'){
       if (rules.name_required && !name) errors.push("Name is required.");
@@ -1284,6 +1313,13 @@ document.addEventListener("DOMContentLoaded", function(){
       if (rules.email_required && !email) errors.push("Email is required.");
       if (phone && !isValidPhone(phone)) errors.push("Phone format invalid (example: +919876543210).");
       if (email && !isValidEmail(email)) errors.push("Email format invalid (example: name@company.com).");
+      if (dob && !isValidDateYmd(dob)) errors.push("DOB format invalid. Use YYYY-MM-DD.");
+      if (dob){
+        const today = new Date();
+        const d = new Date(dob + 'T00:00:00');
+        today.setHours(0,0,0,0);
+        if (!Number.isNaN(d.getTime()) && d > today) errors.push("DOB cannot be a future date.");
+      }
     }
 
     const qualification = getVal('qualification');
@@ -1427,6 +1463,92 @@ document.addEventListener("DOMContentLoaded", function(){
       this.value = this.value.replace(/\D+/g, '').slice(0, 10);
     });
   });
+
+  // Ensure DOB uses modern calendar even if global initializer misses this field
+  (function initDobModernCalendar(){
+    const dobInput = document.querySelector('input[name="dob"]');
+    if (!dobInput) return;
+    if (dobInput.dataset.datepicker === 'off') return;
+    if (typeof window.flatpickr !== 'function') return;
+
+    function formatDdMmYyyy(raw){
+      const digits = String(raw || '').replace(/\D+/g, '').slice(0, 8);
+      let out = '';
+      if (digits.length > 0) out += digits.slice(0, 2);
+      if (digits.length >= 3) out += '-' + digits.slice(2, 4);
+      if (digits.length >= 5) out += '-' + digits.slice(4, 8);
+      return out;
+    }
+
+    function parseDdMmYyyy(raw){
+      const s = String(raw || '').trim();
+      const m = s.match(/^(\d{2})-(\d{2})-(\d{4})$/);
+      if (!m) return null;
+      const dd = parseInt(m[1], 10);
+      const mm = parseInt(m[2], 10);
+      const yyyy = parseInt(m[3], 10);
+      const dt = new Date(yyyy, mm - 1, dd);
+      if (dt.getFullYear() !== yyyy || dt.getMonth() !== (mm - 1) || dt.getDate() !== dd) return null;
+      return `${yyyy}-${String(mm).padStart(2, '0')}-${String(dd).padStart(2, '0')}`;
+    }
+
+    function wireDobTyping(instance){
+      if (!instance || !instance.altInput) return;
+      if (instance.altInput.dataset.dobTypedWired === '1') return;
+
+      const alt = instance.altInput;
+      alt.dataset.dobTypedWired = '1';
+      alt.placeholder = 'dd-mm-yyyy';
+
+      alt.addEventListener('input', function(){
+        const pos = this.selectionStart || 0;
+        this.value = formatDdMmYyyy(this.value);
+        const nextPos = Math.min(this.value.length, pos + (this.value.length > pos ? 1 : 0));
+        this.setSelectionRange(nextPos, nextPos);
+      });
+
+      const syncTypedValue = function(){
+        const parsed = parseDdMmYyyy(alt.value);
+        if (!alt.value.trim()) {
+          instance.clear();
+          return;
+        }
+        if (parsed) {
+          instance.setDate(parsed, true, 'Y-m-d');
+        }
+      };
+
+      alt.addEventListener('blur', syncTypedValue);
+      alt.addEventListener('keydown', function(e){
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          syncTypedValue();
+          alt.blur();
+        }
+      });
+    }
+
+    if (dobInput._flatpickr) {
+      wireDobTyping(dobInput._flatpickr);
+      return;
+    }
+
+    const fp = window.flatpickr(dobInput, {
+      dateFormat: "Y-m-d",
+      altInput: true,
+      altFormat: "d-m-Y",
+      altInputClass: "date-modern-input",
+      allowInput: true,
+      disableMobile: true,
+      maxDate: "today",
+      onReady: function(selectedDates, dateStr, instance){
+        wireDobTyping(instance);
+      }
+    });
+
+    wireDobTyping(fp);
+  })();
+
   if (form){
     form.addEventListener('submit', function(e){
       const errors = validateAll();
