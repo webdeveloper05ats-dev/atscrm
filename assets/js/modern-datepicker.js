@@ -48,6 +48,23 @@
     return { y: y, m: m, d: d };
   }
 
+  function formatDisplayDate(raw) {
+    var s = String(raw || "").trim();
+    if (!s) return "";
+
+    var ymd = s.match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})$/);
+    if (ymd) {
+      return pad2(parseInt(ymd[3], 10)) + "-" + pad2(parseInt(ymd[2], 10)) + "-" + ymd[1];
+    }
+
+    var digits = s.replace(/\D+/g, "").slice(0, 8);
+    var out = "";
+    if (digits.length > 0) out += digits.slice(0, 2);
+    if (digits.length >= 3) out += "-" + digits.slice(2, 4);
+    if (digits.length >= 5) out += "-" + digits.slice(4, 8);
+    return out;
+  }
+
   function applyTypedValue(instance) {
     if (!instance || !instance.altInput) return true;
     var raw = (instance.altInput.value || "").trim();
@@ -63,6 +80,35 @@
     var normalized = parsed.y + "-" + pad2(parsed.m) + "-" + pad2(parsed.d);
     instance.setDate(normalized, true, "Y-m-d");
     return true;
+  }
+
+  function wireTypedHandlers(instance) {
+    if (!instance || !instance.altInput) return;
+    if (instance.altInput.dataset.fpTypedWired === "1") return;
+
+    instance.altInput.dataset.fpTypedWired = "1";
+    instance.altInput.placeholder = "dd-mm-yyyy";
+
+    instance.altInput.addEventListener("input", function () {
+      this.value = formatDisplayDate(this.value);
+    });
+
+    instance.altInput.addEventListener("blur", function () {
+      var ok = applyTypedValue(instance);
+      if (!ok) {
+        instance.altInput.value = "";
+        instance.clear();
+      }
+    });
+
+    instance.altInput.addEventListener("keydown", function (e) {
+      if (e.key !== "Enter") return;
+      var ok = applyTypedValue(instance);
+      if (!ok) {
+        instance.altInput.value = "";
+        instance.clear();
+      }
+    });
   }
 
   function ensureMonthPanel(instance) {
@@ -139,22 +185,7 @@
       appendTo: staticMode ? wrapper : undefined,
       onReady: function (selectedDates, dateStr, instance) {
         if (instance && instance.altInput) {
-          instance.altInput.placeholder = "dd-mm-yyyy";
-          instance.altInput.addEventListener("blur", function () {
-            var ok = applyTypedValue(instance);
-            if (!ok) {
-              instance.altInput.value = "";
-              instance.clear();
-            }
-          });
-          instance.altInput.addEventListener("keydown", function (e) {
-            if (e.key !== "Enter") return;
-            var ok = applyTypedValue(instance);
-            if (!ok) {
-              instance.altInput.value = "";
-              instance.clear();
-            }
-          });
+          wireTypedHandlers(instance);
         }
         ensureMonthPanel(instance);
         wireMonthHeader(instance);
