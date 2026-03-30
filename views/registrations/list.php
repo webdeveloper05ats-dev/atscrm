@@ -1664,7 +1664,7 @@ function payStatusBadgeList($type)
                         <i class="fas fa-eye"></i>
                       </button>
 
-                      <a class="action-btn edit" href="index.php?page=registrations/convert&reg_id=<?= (int) $r['id'] ?>"
+                      <a class="action-btn edit" href="index.php?page=registrations/convert & reg_id=<?= (int) $r['id'] ?>"
                         title="Edit Registration">
                         <i class="fas fa-pen"></i>
                       </a>
