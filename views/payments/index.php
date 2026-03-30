@@ -7,6 +7,8 @@ if (!defined('APP_NAME')) {
     die("Unauthorized access.");
 }
 
+requireView('payments/index');
+
 $pageTitle = "Payments";
 $success = '';
 $error = '';
@@ -54,10 +56,10 @@ if (!function_exists('paymentsMakeReceiptNo')) {
     function paymentsMakeReceiptNo(PDO $pdo): string
     {
         $prefix = 'RCPT-' . date('Ym') . '-';
-        $st = $pdo->prepare("SELECT COUNT(*) FROM registration_payments WHERE DATE_FORMAT(created_at, '%Y-%m') = DATE_FORMAT(CURDATE(), '%Y-%m')");
-        $st->execute();
-        $count = (int) $st->fetchColumn();
-        return $prefix . str_pad((string) ($count + 1), 4, '0', STR_PAD_LEFT);
+        $st = $pdo->prepare("SELECT MAX(CAST(SUBSTRING(receipt_no, LENGTH(?) + 1) AS UNSIGNED)) FROM registration_payments WHERE receipt_no LIKE CONCAT(?, '%')");
+        $st->execute([$prefix, $prefix]);
+        $maxNum = (int) ($st->fetchColumn() ?? 0);
+        return $prefix . str_pad((string) ($maxNum + 1), 4, '0', STR_PAD_LEFT);
     }
 }
 
@@ -92,10 +94,16 @@ if (!function_exists('paymentsRecalcRegistrationSummary')) {
 }
 
 if (!function_exists('paymentsBuildFilters')) {
-    function paymentsBuildFilters(string $roleName, int $userId, string $q, string $statusFilter, int $staffFilter): array
+    function paymentsBuildFilters(string $roleName, int $userId, string $q, string $statusFilter, int $staffFilter, int $branchId = 0, int $canAllBranches = 0): array
     {
         $where = [];
         $params = [];
+
+        // Branch filtering
+        if ($canAllBranches !== 1 && $branchId > 0) {
+            $where[] = 'r.branch_id = ?';
+            $params[] = $branchId;
+        }
 
         if ($roleName === 'Front Office') {
             $where[] = 'COALESCE(lp.staff_id, r.assigned_to) = ?';
@@ -299,7 +307,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_payment'])) {
     }
 }
 
-$filterParts = paymentsBuildFilters($roleName, $userId, $q, $statusFilter, $staffFilter);
+$filterParts = paymentsBuildFilters($roleName, $userId, $q, $statusFilter, $staffFilter, $branchId, $canAllBranches);
 $whereSql = $filterParts['where_sql'];
 $params = $filterParts['params'];
 
@@ -344,6 +352,12 @@ if ($exportAction === 'all_transactions' && $canDownloadAll) {
 
     $exportWhere = [];
     $exportParams = [];
+
+    // Branch filter for exports
+    if ($canAllBranches !== 1 && $branchId > 0) {
+        $exportWhere[] = 'r.branch_id = ?';
+        $exportParams[] = $branchId;
+    }
 
     if ($targetOwnerId > 0) {
         $exportWhere[] = 'p.staff_id = ?';
@@ -599,7 +613,7 @@ if ($exportAction === 'all_transactions' && $canDownloadAll) {
 if ($exportAction === 'student_details') {
     $registrationId = (int)($_GET['reg_id'] ?? 0);
     if ($registrationId > 0) {
-        $studentStmt = $pdo->prepare("
+        $studentExportSql = "
             SELECT
                 r.id,
                 r.registration_no,
@@ -623,10 +637,20 @@ if ($exportAction === 'student_details') {
             ) lp ON lp.registration_id = r.id
             LEFT JOIN users owner_u ON owner_u.id = lp.staff_id
             LEFT JOIN users fallback_u ON fallback_u.id = r.assigned_to
-            WHERE r.id = ?
-            LIMIT 1
-        ");
-        $studentStmt->execute([$registrationId]);
+            WHERE r.id = ?";
+
+        $studentExportParams = [$registrationId];
+
+        // Branch scope for student export
+        if ($canAllBranches !== 1 && $branchId > 0) {
+            $studentExportSql .= " AND r.branch_id = ?";
+            $studentExportParams[] = $branchId;
+        }
+
+        $studentExportSql .= " LIMIT 1";
+
+        $studentStmt = $pdo->prepare($studentExportSql);
+        $studentStmt->execute($studentExportParams);
         $student = $studentStmt->fetch(PDO::FETCH_ASSOC);
 
         if ($student && paymentsCanDownloadRegistration($roleName, $userId, (int)($student['credit_owner_id'] ?? 0))) {

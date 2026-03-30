@@ -70,11 +70,14 @@ function requireLogin()
 */
 function loginUser($user)
 {
-    $_SESSION['user_id']    = $user['id'];
-    $_SESSION['user_name']  = $user['name'];
-    $_SESSION['role_id']    = $user['role_id'];
-    $_SESSION['branch_id']  = $user['branch_id'];
-    $_SESSION['last_login'] = date('Y-m-d H:i:s');
+    $_SESSION['user_id']     = $user['id'];
+    $_SESSION['user_name']   = $user['name'];
+    $_SESSION['user_email']  = $user['email'] ?? '';
+    $_SESSION['role_id']     = $user['role_id'];
+    $_SESSION['role_name']   = $user['role_name'] ?? '';
+    $_SESSION['branch_id']   = $user['branch_id'] ?? 0;
+    $_SESSION['branch_name'] = $user['branch_name'] ?? '';
+    $_SESSION['last_login']  = date('Y-m-d H:i:s');
 
     session_regenerate_id(true);
 }

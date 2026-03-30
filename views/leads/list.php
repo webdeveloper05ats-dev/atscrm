@@ -4,6 +4,8 @@ if (!defined('APP_NAME')) {
     die("Unauthorized access.");
 }
 
+requireView('leads/list');
+
 $success="";
 $error="";
 

@@ -9,6 +9,8 @@ if (!defined('APP_NAME')) {
     die("Unauthorized access.");
 }
 
+requireView('registrations/add');
+
 $success = "";
 $error   = "";
 

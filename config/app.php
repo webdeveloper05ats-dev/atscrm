@@ -50,6 +50,16 @@ define('UPLOAD_PATH', ROOT_PATH . '/uploads/');
 define('LOG_PATH', ROOT_PATH . '/logs/');
 
 // -------------------------------
+// SMTP Configuration
+// (Move these to .env in production)
+// -------------------------------
+define('SMTP_HOST', 'smtp.gmail.com');
+define('SMTP_USERNAME', 'sgssk63@gmail.com');
+define('SMTP_PASSWORD', 'emdancgmhsvdcmfy');
+define('SMTP_PORT', 465);
+define('SMTP_ENCRYPTION', 'smtps');
+
+// -------------------------------
 // Security Headers
 // -------------------------------
 header("X-Frame-Options: SAMEORIGIN");
