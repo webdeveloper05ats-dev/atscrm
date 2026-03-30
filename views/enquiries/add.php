@@ -938,10 +938,7 @@ if (window.Swal && Swal.fire) {
 
         <div class="form-group">
           <label>DOB <span class="hint" style="display:inline;margin-left:6px;">(DD-MM-YYYY)</span></label>
-          <input type="text" name="dob" class="js-date-ymd" inputmode="numeric" maxlength="10"
-                 value="<?= htmlspecialchars($_POST['dob'] ?? '') ?>"
-                 placeholder="YYYY-MM-DD"
-                 title="Type DOB in YYYY-MM-DD format">
+          <input type="date" name="dob" value="<?= htmlspecialchars($_POST['dob'] ?? '') ?>" max="<?= h(date('Y-m-d')) ?>" title="Type DOB in DD-MM-YYYY or use calendar">
         </div>
 
         <div class="form-group">
@@ -1463,91 +1460,6 @@ document.addEventListener("DOMContentLoaded", function(){
       this.value = this.value.replace(/\D+/g, '').slice(0, 10);
     });
   });
-
-  // Ensure DOB uses modern calendar even if global initializer misses this field
-  (function initDobModernCalendar(){
-    const dobInput = document.querySelector('input[name="dob"]');
-    if (!dobInput) return;
-    if (dobInput.dataset.datepicker === 'off') return;
-    if (typeof window.flatpickr !== 'function') return;
-
-    function formatDdMmYyyy(raw){
-      const digits = String(raw || '').replace(/\D+/g, '').slice(0, 8);
-      let out = '';
-      if (digits.length > 0) out += digits.slice(0, 2);
-      if (digits.length >= 3) out += '-' + digits.slice(2, 4);
-      if (digits.length >= 5) out += '-' + digits.slice(4, 8);
-      return out;
-    }
-
-    function parseDdMmYyyy(raw){
-      const s = String(raw || '').trim();
-      const m = s.match(/^(\d{2})-(\d{2})-(\d{4})$/);
-      if (!m) return null;
-      const dd = parseInt(m[1], 10);
-      const mm = parseInt(m[2], 10);
-      const yyyy = parseInt(m[3], 10);
-      const dt = new Date(yyyy, mm - 1, dd);
-      if (dt.getFullYear() !== yyyy || dt.getMonth() !== (mm - 1) || dt.getDate() !== dd) return null;
-      return `${yyyy}-${String(mm).padStart(2, '0')}-${String(dd).padStart(2, '0')}`;
-    }
-
-    function wireDobTyping(instance){
-      if (!instance || !instance.altInput) return;
-      if (instance.altInput.dataset.dobTypedWired === '1') return;
-
-      const alt = instance.altInput;
-      alt.dataset.dobTypedWired = '1';
-      alt.placeholder = 'dd-mm-yyyy';
-
-      alt.addEventListener('input', function(){
-        const pos = this.selectionStart || 0;
-        this.value = formatDdMmYyyy(this.value);
-        const nextPos = Math.min(this.value.length, pos + (this.value.length > pos ? 1 : 0));
-        this.setSelectionRange(nextPos, nextPos);
-      });
-
-      const syncTypedValue = function(){
-        const parsed = parseDdMmYyyy(alt.value);
-        if (!alt.value.trim()) {
-          instance.clear();
-          return;
-        }
-        if (parsed) {
-          instance.setDate(parsed, true, 'Y-m-d');
-        }
-      };
-
-      alt.addEventListener('blur', syncTypedValue);
-      alt.addEventListener('keydown', function(e){
-        if (e.key === 'Enter') {
-          e.preventDefault();
-          syncTypedValue();
-          alt.blur();
-        }
-      });
-    }
-
-    if (dobInput._flatpickr) {
-      wireDobTyping(dobInput._flatpickr);
-      return;
-    }
-
-    const fp = window.flatpickr(dobInput, {
-      dateFormat: "Y-m-d",
-      altInput: true,
-      altFormat: "d-m-Y",
-      altInputClass: "date-modern-input",
-      allowInput: true,
-      disableMobile: true,
-      maxDate: "today",
-      onReady: function(selectedDates, dateStr, instance){
-        wireDobTyping(instance);
-      }
-    });
-
-    wireDobTyping(fp);
-  })();
 
   if (form){
     form.addEventListener('submit', function(e){
