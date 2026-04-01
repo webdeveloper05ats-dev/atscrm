@@ -26,6 +26,7 @@ if (($_SESSION['role_name'] ?? '') !== 'HR') {
 $roleId = (int) ($_SESSION['role_id'] ?? 0);
 $branchId = (int) ($_SESSION['branch_id'] ?? 0);
 $canAllBranches = 0;
+$csrfToken = generateCSRF();
 
 try {
     $st = $pdo->prepare("SELECT can_access_all_branches FROM roles WHERE id=? LIMIT 1");
@@ -209,14 +210,16 @@ try {
                                         aria-label="View student details">
                                         <i class="fas fa-eye"></i>
                                     </a>
-                                    <a
-                                        href="index.php?page=students/course_certificate&id=<?= (int) $row['id'] ?>"
-                                        target="_blank"
-                                        class="crm-icon-btn is-success"
+                                    <button
+                                        type="button"
+                                        class="crm-icon-btn is-success js-open-certificate-modal"
+                                        data-registration-id="<?= (int) $row['id'] ?>"
+                                        data-student-name="<?= h($studentName) ?>"
+                                        data-registration-no="<?= h($row['registration_no'] ?: ('REG-' . $row['id'])) ?>"
                                         data-modern-tooltip="<?= h($certificateStatus === 'given' ? 'Open certificate' : 'Generate certificate') ?>"
                                         aria-label="<?= h($certificateStatus === 'given' ? 'Open certificate' : 'Generate certificate') ?>">
                                         <i class="fas fa-certificate"></i>
-                                    </a>
+                                    </button>
                                 </div>
                             </td>
                         </tr>
@@ -224,6 +227,66 @@ try {
                 </tbody>
             </table>
         </div>
+    </div>
+</div>
+
+<div class="crm-modal" id="courseCertificateModal" aria-hidden="true">
+    <div class="crm-modal-backdrop" data-close-modal></div>
+    <div class="crm-modal-dialog handlink-certificate-dialog" role="dialog" aria-modal="true" aria-labelledby="courseCertificateModalTitle">
+        <div class="crm-modal-header">
+            <div>
+                <h3 id="courseCertificateModalTitle">Generate Course Certificate</h3>
+                <p class="handlink-modal-copy">Upload the final signature along with the performance remark before opening the certificate.</p>
+            </div>
+            <button type="button" class="crm-modal-close" data-close-modal aria-label="Close">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <form method="POST" action="index.php?page=students/course_certificate" target="_blank" enctype="multipart/form-data" class="handlink-certificate-form">
+            <input type="hidden" name="csrf_token" value="<?= h($csrfToken) ?>">
+            <input type="hidden" name="registration_id" id="certificateRegistrationId" value="">
+
+            <div class="crm-modal-body">
+                <div class="handlink-modal-summary">
+                    <div class="handlink-modal-label">Student</div>
+                    <div class="handlink-modal-value" id="certificateStudentName">-</div>
+                </div>
+                <div class="handlink-modal-summary">
+                    <div class="handlink-modal-label">Registration</div>
+                    <div class="handlink-modal-value" id="certificateRegistrationNo">-</div>
+                </div>
+
+                <div class="filter-field">
+                    <label for="certificateRemarks"><i class="fas fa-star"></i> Remarks</label>
+                    <input type="text" name="certificate_remarks" id="certificateRemarks" value="Excellent" required placeholder="Example: Excellent">
+                </div>
+
+                <div class="filter-field">
+                    <label for="certificateHrName"><i class="fas fa-user-tie"></i> HR Name</label>
+                    <input
+                        type="text"
+                        name="hr_name"
+                        id="certificateHrName"
+                        value="<?= h((string) ($_SESSION['full_name'] ?? $_SESSION['name'] ?? $_SESSION['username'] ?? '')) ?>"
+                        required
+                        placeholder="Enter HR name">
+                </div>
+
+                <div class="filter-field">
+                    <label for="certificateSignature"><i class="fas fa-file-signature"></i> Signature Image</label>
+                    <input type="file" name="authority_signature" id="certificateSignature" accept=".png,.jpg,.jpeg" required>
+                    <div class="handlink-upload-note">Accepted: JPG or PNG, up to 2 MB.</div>
+                </div>
+            </div>
+
+            <div class="crm-modal-footer">
+                <button type="button" class="crm-btn ghost" data-close-modal>Cancel</button>
+                <button type="submit" class="crm-btn primary">
+                    <i class="fas fa-certificate"></i> Open Certificate
+                </button>
+            </div>
+        </form>
     </div>
 </div>
 
@@ -507,6 +570,159 @@ try {
         border-color: #cad8ff;
     }
 
+    .crm-modal {
+        position: fixed;
+        inset: 0;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        z-index: 10030;
+    }
+
+    .crm-modal.show {
+        display: flex;
+    }
+
+    .crm-modal-backdrop {
+        position: absolute;
+        inset: 0;
+        background: rgba(15, 23, 42, .42);
+        backdrop-filter: blur(2px);
+    }
+
+    .crm-modal-dialog {
+        position: relative;
+        z-index: 1;
+        width: min(100%, 560px);
+        background: linear-gradient(180deg, #fffefe 0%, #fff7fb 100%);
+        border: 1px solid #f2d6e3;
+        border-radius: 22px;
+        box-shadow: 0 30px 60px rgba(15, 23, 42, .24);
+        overflow: hidden;
+    }
+
+    .crm-modal-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 20px 22px 14px;
+        border-bottom: 1px solid #f4e1ea;
+    }
+
+    .crm-modal-header h3 {
+        margin: 0;
+        font-size: 22px;
+        font-weight: 900;
+        color: #243046;
+    }
+
+    .crm-modal-close {
+        width: 38px;
+        height: 38px;
+        border: 1px solid #f0d7e3;
+        border-radius: 12px;
+        background: #fff;
+        color: #64748b;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: .15s ease;
+    }
+
+    .crm-modal-close:hover {
+        background: #fff2f7;
+        color: #c2185b;
+        border-color: #efc5d8;
+    }
+
+    .crm-modal-body {
+        padding: 18px 22px;
+    }
+
+    .crm-modal-footer {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 10px;
+        padding: 0 22px 22px;
+        flex-wrap: wrap;
+    }
+
+    .handlink-certificate-dialog {
+        max-width: 560px;
+    }
+
+    .handlink-modal-copy {
+        margin: 6px 0 0;
+        color: #7a8698;
+        font-size: 13px;
+        font-weight: 600;
+    }
+
+    .handlink-certificate-form {
+        margin: 0;
+    }
+
+    .handlink-modal-summary {
+        padding: 12px 14px;
+        border-radius: 14px;
+        background: #fff7fb;
+        border: 1px solid #f6d7e4;
+        margin-bottom: 14px;
+    }
+
+    .handlink-modal-label {
+        font-size: 12px;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: .35px;
+        color: #8b5e72;
+    }
+
+    .handlink-modal-value {
+        margin-top: 4px;
+        color: #1f2937;
+        font-size: 15px;
+        font-weight: 800;
+    }
+
+    .handlink-upload-note {
+        margin-top: 8px;
+        font-size: 12px;
+        color: #7a8698;
+        font-weight: 600;
+    }
+
+    .crm-btn {
+        border: none;
+        border-radius: 10px;
+        min-height: 44px;
+        min-width: 140px;
+        padding: 10px 18px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        font-weight: 800;
+        cursor: pointer;
+        text-decoration: none;
+        white-space: nowrap;
+        flex: 0 0 auto;
+    }
+
+    .crm-btn.primary {
+        background: #e91e63;
+        color: #fff;
+    }
+
+    .crm-btn.ghost {
+        background: #f1f5f9;
+        color: #475569;
+    }
+
     @media (max-width: 900px) {
         .handlink-filter-grid {
             grid-template-columns: 1fr;
@@ -514,6 +730,27 @@ try {
 
         .filter-actions {
             justify-content: flex-start;
+        }
+
+        .crm-modal {
+            padding: 12px;
+        }
+
+        .crm-modal-header,
+        .crm-modal-body,
+        .crm-modal-footer {
+            padding-left: 16px;
+            padding-right: 16px;
+        }
+
+        .crm-modal-footer {
+            justify-content: stretch;
+        }
+
+        .crm-modal-footer .crm-btn {
+            flex: 1 1 100%;
+            width: 100%;
+            min-width: 0;
         }
 
         #datatableControls {
@@ -578,5 +815,47 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         }, 100);
     } catch (e) {}
+
+    const modal = document.getElementById('courseCertificateModal');
+    if (!modal) {
+        return;
+    }
+
+    const registrationIdInput = document.getElementById('certificateRegistrationId');
+    const studentNameNode = document.getElementById('certificateStudentName');
+    const registrationNoNode = document.getElementById('certificateRegistrationNo');
+    const remarksInput = document.getElementById('certificateRemarks');
+
+    function openModal(button) {
+        registrationIdInput.value = button.getAttribute('data-registration-id') || '';
+        studentNameNode.textContent = button.getAttribute('data-student-name') || '-';
+        registrationNoNode.textContent = button.getAttribute('data-registration-no') || '-';
+        if (!remarksInput.value.trim()) {
+            remarksInput.value = 'Excellent';
+        }
+        modal.classList.add('show');
+        modal.setAttribute('aria-hidden', 'false');
+    }
+
+    function closeModal() {
+        modal.classList.remove('show');
+        modal.setAttribute('aria-hidden', 'true');
+    }
+
+    document.querySelectorAll('.js-open-certificate-modal').forEach(function (button) {
+        button.addEventListener('click', function () {
+            openModal(button);
+        });
+    });
+
+    modal.querySelectorAll('[data-close-modal]').forEach(function (node) {
+        node.addEventListener('click', closeModal);
+    });
+
+    document.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape' && modal.classList.contains('show')) {
+            closeModal();
+        }
+    });
 });
 </script>

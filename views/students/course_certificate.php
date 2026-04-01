@@ -16,6 +16,34 @@ if (!function_exists('h')) {
     }
 }
 
+if (!function_exists('uploadCourseCertificateSignature')) {
+    function uploadCourseCertificateSignature($file): ?string
+    {
+        if (!isset($file) || empty($file['name'])) {
+            return null;
+        }
+        if (($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
+            return null;
+        }
+        if (!empty($file['size']) && (int) $file['size'] > (2 * 1024 * 1024)) {
+            return '__ERROR__SIZE__';
+        }
+
+        $allowedExt = ['jpg', 'jpeg', 'png'];
+        $ext = strtolower(pathinfo((string) $file['name'], PATHINFO_EXTENSION));
+        if (!in_array($ext, $allowedExt, true)) {
+            return '__ERROR__TYPE__';
+        }
+
+        $saved = uploadFile($file, 'course_certificates');
+        if ($saved === false) {
+            return '__ERROR__UPLOAD__';
+        }
+
+        return 'uploads/course_certificates/' . $saved;
+    }
+}
+
 $roleId = (int) ($_SESSION['role_id'] ?? 0);
 $branchId = (int) ($_SESSION['branch_id'] ?? 0);
 $canAllBranches = 0;
@@ -28,10 +56,52 @@ try {
     $canAllBranches = 0;
 }
 
-$id = (int) ($_GET['id'] ?? 0);
+$requestMethod = strtoupper((string) ($_SERVER['REQUEST_METHOD'] ?? 'GET'));
+$id = (int) (($requestMethod === 'POST' ? ($_POST['registration_id'] ?? 0) : ($_GET['id'] ?? 0)));
 if ($id <= 0) {
     echo 'Invalid student.';
     return;
+}
+
+$submittedRemark = '';
+$submittedHrName = '';
+$uploadedSignaturePath = '';
+
+if ($requestMethod === 'POST') {
+    if (!verifyCSRF($_POST['csrf_token'] ?? '')) {
+        echo 'Invalid CSRF token.';
+        return;
+    }
+
+    $submittedRemark = trim((string) ($_POST['certificate_remarks'] ?? ''));
+    if ($submittedRemark === '') {
+        echo 'Certificate remark is required.';
+        return;
+    }
+
+    $submittedHrName = trim((string) ($_POST['hr_name'] ?? ''));
+    if ($submittedHrName === '') {
+        echo 'HR name is required.';
+        return;
+    }
+
+    $uploadedSignaturePath = (string) uploadCourseCertificateSignature($_FILES['authority_signature'] ?? null);
+    if ($uploadedSignaturePath === '' || $uploadedSignaturePath === null) {
+        echo 'Signature image is required.';
+        return;
+    }
+    if ($uploadedSignaturePath === '__ERROR__SIZE__') {
+        echo 'Signature image must be under 2 MB.';
+        return;
+    }
+    if ($uploadedSignaturePath === '__ERROR__TYPE__') {
+        echo 'Signature image must be JPG or PNG.';
+        return;
+    }
+    if ($uploadedSignaturePath === '__ERROR__UPLOAD__') {
+        echo 'Failed to upload signature image.';
+        return;
+    }
 }
 
 $params = [$id];
@@ -65,6 +135,24 @@ if (!$student) {
     return;
 }
 
+$assessmentAverage = null;
+$mockAverage = null;
+try {
+    $st = $pdo->prepare("SELECT average_marks FROM assessment WHERE registration_id = ? ORDER BY id DESC LIMIT 1");
+    $st->execute([$id]);
+    $assessmentAverage = $st->fetchColumn();
+} catch (Exception $e) {
+    $assessmentAverage = null;
+}
+
+try {
+    $st = $pdo->prepare("SELECT mock_average FROM mock_interviews WHERE registration_id = ? ORDER BY id DESC LIMIT 1");
+    $st->execute([$id]);
+    $mockAverage = $st->fetchColumn();
+} catch (Exception $e) {
+    $mockAverage = null;
+}
+
 $issuedAt = trim((string) ($student['internship_certificate_issued_at'] ?? ''));
 if ($issuedAt === '' || $issuedAt === '0000-00-00 00:00:00') {
     $issuedAt = date('Y-m-d H:i:s');
@@ -88,6 +176,39 @@ if ($issuedAt === '' || $issuedAt === '0000-00-00 00:00:00') {
     } catch (Exception $e) {
     }
 }
+
+$performanceNumbers = [];
+if ($assessmentAverage !== null && $assessmentAverage !== false && is_numeric($assessmentAverage)) {
+    $performanceNumbers[] = (float) $assessmentAverage;
+}
+if ($mockAverage !== null && $mockAverage !== false && is_numeric($mockAverage)) {
+    $performanceNumbers[] = (float) $mockAverage;
+}
+$overallScore = $performanceNumbers ? round(array_sum($performanceNumbers) / count($performanceNumbers), 2) : null;
+
+$performanceRemark = 'Satisfactory';
+if ($overallScore !== null) {
+    if ($overallScore >= 85) {
+        $performanceRemark = 'Excellent';
+    } elseif ($overallScore >= 70) {
+        $performanceRemark = 'Very Good';
+    } elseif ($overallScore >= 55) {
+        $performanceRemark = 'Good';
+    }
+}
+if ($submittedRemark !== '') {
+    $performanceRemark = $submittedRemark;
+}
+
+$startDate = trim((string) ($student['joined_on'] ?? ''));
+$startDateText = $startDate !== '' ? date('d.m.Y', strtotime($startDate)) : date('d.m.Y', strtotime($issuedAt));
+$endDateText = date('d.m.Y', strtotime($issuedAt));
+$studentName = strtoupper(trim((string) ($student['student_name'] ?? '-')));
+$programName = strtoupper(trim((string) ($student['program_name'] ?? '-')));
+$certificateNo = 'UCSPL8024103156';
+$hrName = $submittedHrName !== ''
+    ? $submittedHrName
+    : (string) ($_SESSION['full_name'] ?? $_SESSION['name'] ?? $_SESSION['username'] ?? 'Human Resource');
 ?>
 <!doctype html>
 <html lang="en">
@@ -97,21 +218,21 @@ if ($issuedAt === '' || $issuedAt === '0000-00-00 00:00:00') {
     <style>
         body {
             margin: 0;
-            padding: 24px;
-            background: #f6f8fc;
-            font-family: Georgia, "Times New Roman", serif;
-            color: #1f2937;
+            padding: 20px;
+            background: #f5f2f7;
+            font-family: "Times New Roman", Georgia, serif;
+            color: #231f20;
         }
         .toolbar {
-            max-width: 1100px;
-            margin: 0 auto 18px;
+            max-width: 1080px;
+            margin: 0 auto 16px;
             display: flex;
             justify-content: flex-end;
             gap: 10px;
         }
         .toolbar button,
         .toolbar a {
-            border: 1px solid #e5c2d3;
+            border: 1px solid #e8bfd0;
             background: #fff;
             color: #c2185b;
             border-radius: 10px;
@@ -121,104 +242,191 @@ if ($issuedAt === '' || $issuedAt === '0000-00-00 00:00:00') {
             cursor: pointer;
         }
         .certificate-shell {
-            max-width: 1100px;
+            max-width: 1080px;
             margin: 0 auto;
             background: #fff;
-            border: 14px solid #f4d8e5;
-            box-shadow: 0 24px 50px rgba(17, 24, 39, .12);
+            border: 16px solid #e6137f;
+            box-shadow: 0 24px 50px rgba(17, 24, 39, .10);
         }
         .certificate {
-            border: 3px solid #d81b60;
-            margin: 14px;
-            padding: 56px 68px;
             position: relative;
-            background:
-                radial-gradient(circle at top right, rgba(216, 27, 96, .08), transparent 22%),
-                radial-gradient(circle at bottom left, rgba(59, 130, 246, .08), transparent 28%),
-                linear-gradient(180deg, #fffdfd 0%, #fff8fb 100%);
+            margin: 16px;
+            min-height: 700px;
+            padding: 28px 36px 26px;
+            overflow: hidden;
+            background: #fff;
+            border: 1px solid rgba(230, 19, 127, .18);
         }
-        .title {
-            text-align: center;
-            font-size: 18px;
-            letter-spacing: 5px;
-            text-transform: uppercase;
-            color: #be185d;
+        .certificate::before {
+            content: "";
+            position: relative;
+        }
+        .certificate::after {
+            content: "";
+            position: absolute;
+            inset: 120px 120px 130px 120px;
+            background: url('assets/images/logo.png') center center / contain no-repeat;
+            opacity: .08;
+            pointer-events: none;
+            filter: saturate(120%);
+        }
+        .topbar {
+            position: relative;
+            z-index: 1;
+            display: grid;
+            grid-template-columns: 1.4fr .9fr;
+            gap: 18px;
+            align-items: start;
+        }
+        .brand-block {
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+        }
+        .brand-logo {
+            width: 160px;
+            height: auto;
+            object-fit: contain;
+            margin-top: -6px;
+        }
+        .brand-copy {
+            padding-top: 8px;
+        }
+        .brand-name {
+            font-size: 34px;
+            line-height: 1;
+            letter-spacing: .5px;
             font-weight: 700;
+            color: #111;
         }
-        .name {
+        .brand-tagline {
+            margin-top: 6px;
+            font-size: 22px;
+            font-style: italic;
+            color: #cf1c7d;
+            text-align: right;
+        }
+        .accreditation {
+            justify-self: end;
             text-align: center;
-            font-size: 50px;
-            margin: 28px 0 12px;
-            color: #a21caf;
-            font-weight: 700;
+            padding-top: 10px;
         }
-        .subtitle {
-            text-align: center;
-            font-size: 20px;
-            line-height: 1.8;
-            color: #374151;
-            max-width: 820px;
-            margin: 0 auto;
+        .credentials-image {
+            width: 100%;
+            max-width: 310px;
+            height: auto;
+            display: block;
         }
-        .program {
+        .hero {
+            position: relative;
+            z-index: 1;
             text-align: center;
             margin-top: 18px;
-            font-size: 28px;
-            color: #111827;
+        }
+        .emblem-image {
+            width: min(320px, 46%);
+            height: auto;
+            display: inline-block;
+        }
+        .content {
+            position: relative;
+            z-index: 1;
+            margin-top: 56px;
+            padding: 0 12px;
+        }
+        .certificate-intro {
+            margin: 0;
+            font-size: 27px;
+            line-height: 1.3;
+            color: #1d1d1d;
+            text-align: left;
+        }
+        .student-name-wrap {
+            margin: 16px 0 18px;
+            text-align: center;
+        }
+        .student-inline {
+            display: inline-block;
+            min-width: 720px;
+            max-width: 100%;
+            border-bottom: 3px solid #2d2d2d;
+            text-align: center;
+            font-size: 30px;
+            font-weight: 700;
+            letter-spacing: .9px;
+            line-height: 1.2;
+            padding: 0 12px 6px;
+        }
+        .certificate-body {
+            margin: 0;
+            font-size: 25px;
+            line-height: 1.52;
+            color: #1d1d1d;
+            text-align: justify;
+            text-align-last: left;
+        }
+        .highlight {
+            color: #d8137d;
             font-weight: 700;
         }
-        .meta-grid {
-            display: grid;
-            grid-template-columns: repeat(3, minmax(0, 1fr));
-            gap: 18px;
-            margin-top: 44px;
-        }
-        .meta-card {
-            border: 1px solid #f2d3e0;
-            border-radius: 16px;
-            padding: 18px;
-            background: rgba(255,255,255,.86);
-        }
-        .meta-label {
-            font-size: 11px;
+        .highlight-remark {
             font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            color: #9d174d;
         }
-        .meta-value {
-            margin-top: 8px;
-            font-size: 18px;
-            font-weight: 700;
-            color: #1f2937;
-        }
-        .footer-row {
+        .footer-area {
+            position: relative;
+            z-index: 1;
             display: flex;
             justify-content: space-between;
-            gap: 24px;
-            margin-top: 56px;
-            align-items: end;
+            align-items: flex-end;
+            margin-top: 54px;
         }
-        .signature {
-            width: 240px;
-            border-top: 1px solid #9ca3af;
-            padding-top: 10px;
+        .portrait-image {
+            width: 180px;
+            height: auto;
+            display: block;
+        }
+        .signatory {
+            text-align: center;
+            min-width: 270px;
+        }
+        .signature-image {
+            max-width: 210px;
+            max-height: 92px;
+            object-fit: contain;
+            margin: 0 auto 8px;
+            display: block;
+        }
+        .signatory-name {
+            font-size: 20px;
+            font-weight: 700;
+            color: #1f1f1f;
+        }
+        .signatory-role,
+        .signatory-org {
+            font-size: 18px;
+            margin-top: 4px;
+            color: #1f1f1f;
+        }
+        .website {
+            position: absolute;
+            left: 50%;
+            bottom: 22px;
+            transform: translateX(-50%);
+            color: #d8137d;
             text-align: center;
             font-weight: 700;
-            color: #374151;
+            font-size: 18px;
         }
-        .seal {
-            width: 130px;
-            height: 130px;
-            border-radius: 50%;
-            border: 3px solid #d81b60;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            color: #d81b60;
-            font-weight: 700;
-            line-height: 1.4;
+        @media (max-width: 1200px) {
+            .student-inline {
+                min-width: 0;
+                width: 66%;
+                font-size: 25px;
+            }
+            .certificate-intro,
+            .certificate-body {
+                font-size: 22px;
+            }
         }
         @media print {
             body {
@@ -231,7 +439,7 @@ if ($issuedAt === '' || $issuedAt === '0000-00-00 00:00:00') {
             .certificate-shell {
                 max-width: none;
                 box-shadow: none;
-                border: none;
+                border-width: 14px;
             }
             .certificate {
                 margin: 0;
@@ -247,44 +455,48 @@ if ($issuedAt === '' || $issuedAt === '0000-00-00 00:00:00') {
 
     <div class="certificate-shell">
         <div class="certificate">
-            <div class="title">Course Completion Certificate</div>
-            <div class="name"><?= h($student['student_name'] ?: '-') ?></div>
-            <div class="subtitle">
-                This is to certify that the above student has successfully completed the course requirements and training program conducted by ATS CRM.
-            </div>
-            <div class="program"><?= h($student['program_name'] ?: '-') ?></div>
-
-            <div class="meta-grid">
-                <div class="meta-card">
-                    <div class="meta-label">Registration No</div>
-                    <div class="meta-value"><?= h($student['registration_no'] ?: '-') ?></div>
+            <div class="topbar">
+                <div class="brand-block">
+                    <img src="assets/images/logo.png" alt="ATS Logo" class="brand-logo">
+                    <div class="brand-copy">
+                        <div class="brand-name">ACCENT TECHNO SOFT</div>
+                        <div class="brand-tagline">Quality Matters...</div>
+                    </div>
                 </div>
-                <div class="meta-card">
-                    <div class="meta-label">Batch</div>
-                    <div class="meta-value"><?= h($student['batch_name'] ?: '-') ?></div>
-                </div>
-                <div class="meta-card">
-                    <div class="meta-label">Issued On</div>
-                    <div class="meta-value"><?= h(date('d-m-Y', strtotime($issuedAt))) ?></div>
-                </div>
-                <div class="meta-card">
-                    <div class="meta-label">Qualification</div>
-                    <div class="meta-value"><?= h($student['qualification'] ?: '-') ?></div>
-                </div>
-                <div class="meta-card">
-                    <div class="meta-label">College</div>
-                    <div class="meta-value"><?= h($student['college_name'] ?: '-') ?></div>
-                </div>
-                <div class="meta-card">
-                    <div class="meta-label">Paid Status</div>
-                    <div class="meta-value"><?= h(ucfirst((string) ($student['payment_status'] ?? '-'))) ?></div>
+                <div class="accreditation">
+                    <img src="assets/images/certificate elements/credentials.png" alt="ISO, KAB and IAF Credentials" class="credentials-image">
                 </div>
             </div>
 
-            <div class="footer-row">
-                <div class="signature">Authorized Signatory</div>
-                <div class="seal">ATS CRM<br>Certified</div>
+            <div class="hero">
+                <img src="assets/images/certificate elements/certificate_emblem.png" alt="Certificate Emblem" class="emblem-image">
             </div>
+
+            <div class="content">
+                <p class="certificate-intro">This is to certify that Mr.</p>
+                <div class="student-name-wrap">
+                    <span class="student-inline"><?= h($studentName) ?></span>
+                </div>
+                <p class="certificate-body">
+                    has successfully completed <span class="highlight">"<?= h($programName) ?>"</span> Technology Training and gained Hands-on
+                    experience during the period from <?= h($startDateText) ?> to <?= h($endDateText) ?> and has achieved
+                    <span class="highlight-remark"><?= h($performanceRemark) ?></span> as remark for his performance in the exams conducted by Accent Techno Soft (ATS).
+                </p>
+
+                <div class="footer-area">
+                    <img src="assets/images/certificate elements/abdul_kalam.png" alt="Dr. A.P.J. Abdul Kalam Illustration" class="portrait-image">
+                    <div class="signatory">
+                        <?php if ($uploadedSignaturePath !== ''): ?>
+                            <img src="<?= h($uploadedSignaturePath) ?>" alt="Authority Signature" class="signature-image">
+                        <?php endif; ?>
+                        <div class="signatory-name"><?= h($hrName) ?></div>
+                        <div class="signatory-role">Human Resource</div>
+                        <div class="signatory-org">Accent Techno Soft (ATS)</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="website">www.accenttechnosoft.com</div>
         </div>
     </div>
 </body>
