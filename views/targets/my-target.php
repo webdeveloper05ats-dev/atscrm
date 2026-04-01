@@ -679,8 +679,14 @@ height:320px;
           </select>
         </div>
         <div class="toolbar-actions">
-          <button type="submit" class="toolbar-btn primary">Apply</button>
-          <a href="index.php?page=targets/my-target" class="toolbar-btn secondary">Reset</a>
+          <div class="crm-icon-actions">
+            <button type="submit" class="crm-icon-btn is-primary" data-modern-tooltip="Apply filters" aria-label="Apply filters">
+              <i class="fas fa-filter"></i>
+            </button>
+            <a href="index.php?page=targets/my-target" class="crm-icon-btn is-muted" data-modern-tooltip="Reset filters" aria-label="Reset filters">
+              <i class="fas fa-rotate-left"></i>
+            </a>
+          </div>
         </div>
       </form>
     </aside>

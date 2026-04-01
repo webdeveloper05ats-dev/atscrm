@@ -597,8 +597,14 @@ if ($hrWorkflowReady) {
                     </select>
                 </div>
                 <div class="placement-filter-actions">
-                    <button class="btn btn-primary">Apply</button>
-                    <a href="index.php?page=interviews/placement" class="btn" style="background:#f3f4f6;">Reset</a>
+                    <div class="crm-icon-actions">
+                        <button type="submit" class="crm-icon-btn is-primary" data-modern-tooltip="Apply filters" aria-label="Apply filters">
+                            <i class="fas fa-filter"></i>
+                        </button>
+                        <a href="index.php?page=interviews/placement" class="crm-icon-btn is-muted" data-modern-tooltip="Reset filters" aria-label="Reset filters">
+                            <i class="fas fa-rotate-left"></i>
+                        </a>
+                    </div>
                 </div>
             </div>
         </form>
@@ -642,15 +648,15 @@ if ($hrWorkflowReady) {
                                     <div class="placement-sub"><?= placementWorkflowH($row['last_interview_date'] ?: 'No placement interview yet') ?></div>
                                 </td>
                                 <td>
-                                    <div class="placement-action-stack">
-                                        <button type="button" class="btn btn-primary js-placement-add" data-registration-id="<?= (int) $row['registration_id'] ?>" data-student-name="<?= placementWorkflowH($row['enquiry_snapshot_name'] ?: '-') ?>">
-                                            Add Interview
+                                    <div class="placement-action-stack crm-icon-actions">
+                                        <button type="button" class="crm-icon-btn is-primary js-placement-add" data-registration-id="<?= (int) $row['registration_id'] ?>" data-student-name="<?= placementWorkflowH($row['enquiry_snapshot_name'] ?: '-') ?>" data-modern-tooltip="Add interview" aria-label="Add interview">
+                                            <i class="fas fa-plus"></i>
                                         </button>
-                                        <button type="button" class="btn placement-view-btn js-placement-view" data-registration-id="<?= (int) $row['registration_id'] ?>" data-student-name="<?= placementWorkflowH($row['enquiry_snapshot_name'] ?: '-') ?>">
-                                            View Interviews
+                                        <button type="button" class="crm-icon-btn is-warning placement-view-btn js-placement-view" data-registration-id="<?= (int) $row['registration_id'] ?>" data-student-name="<?= placementWorkflowH($row['enquiry_snapshot_name'] ?: '-') ?>" data-modern-tooltip="View interviews" aria-label="View interviews">
+                                            <i class="fas fa-list"></i>
                                         </button>
-                                        <a href="index.php?page=reports/student_overall&registration_id=<?= (int) $row['registration_id'] ?>" class="btn" style="background:#f8fafc;border:1px solid #cbd5e1;color:#334155;">
-                                            Overall Report
+                                        <a href="index.php?page=reports/student_overall&registration_id=<?= (int) $row['registration_id'] ?>" class="crm-icon-btn is-muted" data-modern-tooltip="Open overall report" aria-label="Open overall report">
+                                            <i class="fas fa-chart-line"></i>
                                         </a>
                                     </div>
                                 </td>

@@ -74,6 +74,139 @@ font-family:"Font Awesome 6 Free","Font Awesome 6 Brands" !important;
 }
 
 /* ==========================================
+GLOBAL TOOLTIP + ICON ACTIONS
+========================================== */
+
+[data-tooltip]::before,
+[data-tooltip]::after,
+[data-modern-tooltip]::before,
+[data-modern-tooltip]::after,
+.ui-tooltip::before,
+.ui-tooltip::after,
+.tooltip::before,
+.tooltip::after{
+content:none !important;
+display:none !important;
+}
+
+.floating-ui-tooltip{
+position:fixed;
+left:0;
+top:0;
+opacity:0;
+visibility:hidden;
+pointer-events:none;
+transform:translate3d(0,4px,0);
+transition:opacity .16s ease,transform .16s ease,visibility .16s ease;
+z-index:200000;
+}
+
+.floating-ui-tooltip.is-visible{
+opacity:1;
+visibility:visible;
+transform:translate3d(0,0,0);
+}
+
+.floating-ui-tooltip__bubble{
+background:#111827;
+color:#fff;
+font-size:11px;
+font-weight:600;
+line-height:1;
+padding:7px 10px;
+border-radius:8px;
+white-space:nowrap;
+box-shadow:0 8px 22px rgba(2,6,23,.35);
+letter-spacing:.2px;
+}
+
+.floating-ui-tooltip__arrow{
+position:absolute;
+left:50%;
+width:0;
+height:0;
+transform:translateX(-50%);
+border-left:5px solid transparent;
+border-right:5px solid transparent;
+}
+
+.floating-ui-tooltip[data-placement="top"] .floating-ui-tooltip__arrow{
+top:100%;
+border-top:6px solid #111827;
+border-bottom:0;
+}
+
+.floating-ui-tooltip[data-placement="bottom"] .floating-ui-tooltip__arrow{
+bottom:100%;
+border-bottom:6px solid #111827;
+border-top:0;
+}
+
+.crm-icon-actions{
+display:flex;
+align-items:center;
+gap:8px;
+flex-wrap:wrap;
+}
+
+.crm-icon-btn{
+width:38px;
+height:38px;
+display:inline-flex;
+align-items:center;
+justify-content:center;
+border-radius:12px;
+border:1px solid #e5e7eb;
+background:#fff;
+color:#334155;
+text-decoration:none;
+cursor:pointer;
+transition:transform .18s ease,box-shadow .18s ease,background-color .18s ease,border-color .18s ease,color .18s ease;
+box-shadow:0 6px 18px rgba(15,23,42,.06);
+}
+
+.crm-icon-btn:hover,
+.crm-icon-btn:focus-visible{
+transform:translateY(-1px);
+box-shadow:0 10px 24px rgba(15,23,42,.10);
+outline:none;
+}
+
+.crm-icon-btn i{
+pointer-events:none;
+}
+
+.crm-icon-btn.is-primary{
+background:linear-gradient(135deg,#ff4d8d,#e91e63);
+border-color:#e91e63;
+color:#fff;
+}
+
+.crm-icon-btn.is-success{
+background:#ecfdf5;
+border-color:#86efac;
+color:#15803d;
+}
+
+.crm-icon-btn.is-info{
+background:#eff6ff;
+border-color:#93c5fd;
+color:#1d4ed8;
+}
+
+.crm-icon-btn.is-warning{
+background:#fff7ed;
+border-color:#fdba74;
+color:#c2410c;
+}
+
+.crm-icon-btn.is-muted{
+background:#f8fafc;
+border-color:#cbd5e1;
+color:#475569;
+}
+
+/* ==========================================
 4. PAGE BASE
 ========================================== */
 

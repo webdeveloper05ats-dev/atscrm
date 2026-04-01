@@ -59,6 +59,18 @@ if (!function_exists('makeReceiptNo')) {
     return $prefix . str_pad((string) ($maxNum + 1), 4, '0', STR_PAD_LEFT);
   }
 }
+if (!function_exists('makePaymentReferenceNo')) {
+  function makePaymentReferenceNo(int $regId = 0): string
+  {
+    $prefix = 'REF';
+    $datePart = date('Ymd');
+    $regPart = $regId > 0 ? str_pad((string) $regId, 4, '0', STR_PAD_LEFT) : '0000';
+    $timePart = date('His');
+    $randomPart = str_pad((string) random_int(100, 999), 3, '0', STR_PAD_LEFT);
+
+    return $prefix . '-' . $datePart . '-' . $regPart . '-' . $timePart . $randomPart;
+  }
+}
 if (!function_exists('recalcRegistrationPaymentsSummary')) {
   function recalcRegistrationPaymentsSummary(PDO $pdo, int $regId): void
   {
@@ -226,9 +238,10 @@ if ($isAjax) {
                 LEFT JOIN users u1 ON u1.id = p.collected_by
                 WHERE p.registration_id=?
                 ORDER BY p.payment_date DESC, p.id DESC
-            ");
+      ");
       $st->execute([$regId]);
       $payments = $st->fetchAll(PDO::FETCH_ASSOC);
+      $defaultReferenceNo = makePaymentReferenceNo((int) $reg['id']);
       ?>
 
       <div class="pro-modal-wrap history-modal-modern" id="registrationHistoryModalView">
@@ -513,6 +526,7 @@ if ($isAjax) {
       $finalFee = (float) ($reg['final_fee'] ?? 0);
       $paidAmt = (float) ($reg['paid_amount'] ?? 0);
       $balance = max(0, $finalFee - $paidAmt);
+      $defaultReferenceNo = makePaymentReferenceNo((int) $reg['id']);
       ?>
 
       <div class="pro-modal-wrap payment-modal-modern payment-entry-layout">
@@ -592,7 +606,7 @@ if ($isAjax) {
               </div>
               <div>
                 <label class="m-label"><i class="fas fa-hashtag"></i> Reference No</label>
-                <input type="text" name="reference_no" class="m-input" placeholder="Transaction / Ref number">
+                <input type="text" name="reference_no" class="m-input" value="<?= h($defaultReferenceNo) ?>" placeholder="Transaction / Ref number">
               </div>
               <div>
                 <label class="m-label"><i class="fas fa-check-circle"></i> Approval Status</label>
@@ -1784,6 +1798,9 @@ function payStatusBadgeList($type)
       el.classList.add('ui-tooltip');
       el.removeAttribute('title');
     });
+    if (window.initializeFloatingTooltips) {
+      window.initializeFloatingTooltips(scope);
+    }
   }
 
   function setCrmModalState(isOpen) {

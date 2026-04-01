@@ -24,6 +24,30 @@
     return opt ? (opt.textContent || "").trim() : "";
   }
 
+  function resolvePanelZIndex(select) {
+    var zIndex = 5000;
+    var node = select;
+
+    while (node && node !== document.body) {
+      if (node.nodeType === 1) {
+        var value = window.getComputedStyle(node).zIndex;
+        var parsed = parseInt(value, 10);
+        if (!isNaN(parsed)) {
+          zIndex = Math.max(zIndex, parsed + 2);
+        }
+      }
+      node = node.parentElement;
+    }
+
+    return String(zIndex);
+  }
+
+  function shouldPortalPanel(select) {
+    if (!select) return false;
+    if (select.closest(".crm-modal")) return false;
+    return true;
+  }
+
   function enhance(select) {
     if (shouldSkip(select) || select.dataset.msEnhanced === "1") return;
 
@@ -71,10 +95,11 @@
     var onViewportChange = null;
 
     function portalPanel() {
+      if (!shouldPortalPanel(select)) return;
       if (isPortaled) return;
       document.body.appendChild(panel);
       panel.style.position = "fixed";
-      panel.style.zIndex = "5000";
+      panel.style.zIndex = resolvePanelZIndex(select);
       panel.style.margin = "0";
       panel.style.right = "auto";
       isPortaled = true;
@@ -94,7 +119,8 @@
     }
 
     function positionPanel() {
-      if (!isPortaled || panel.hidden) return;
+      if (panel.hidden) return;
+      if (!isPortaled) return;
       var rect = trigger.getBoundingClientRect();
       var vw = window.innerWidth || document.documentElement.clientWidth || 0;
       var vh = window.innerHeight || document.documentElement.clientHeight || 0;

@@ -151,8 +151,14 @@ $baseUrl = "index.php?page=student_allocation&q=" . urlencode($q);
             </div>
 
             <div class="filter-actions">
-                <button class="btn btn-primary">Apply</button>
-                <a href="index.php?page=student_allocation" class="btn-reset">Reset</a>
+                <div class="crm-icon-actions">
+                    <button type="submit" class="crm-icon-btn is-primary" data-modern-tooltip="Apply filters" aria-label="Apply filters">
+                        <i class="fas fa-filter"></i>
+                    </button>
+                    <a href="index.php?page=student_allocation" class="crm-icon-btn is-muted" data-modern-tooltip="Reset filters" aria-label="Reset filters">
+                        <i class="fas fa-rotate-left"></i>
+                    </a>
+                </div>
             </div>
         </div>
     </form>

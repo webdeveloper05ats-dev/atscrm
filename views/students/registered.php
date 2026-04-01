@@ -265,9 +265,13 @@ function payStatusBadgeStud($type){
                         <option value="completed" <?= $status==='completed' ? 'selected' : '' ?>>Completed</option>
                     </select>
                 </div>
-                <div style="display:flex; gap:8px;">
-                    <button class="btn btn-primary"><i class="fas fa-filter"></i> Apply</button>
-                    <a href="index.php?page=students/registered" class="btn" style="background:#f3f4f6;"><i class="fas fa-undo"></i> Reset</a>
+                <div class="crm-icon-actions">
+                    <button type="submit" class="crm-icon-btn is-primary" data-modern-tooltip="Apply filters" aria-label="Apply filters">
+                        <i class="fas fa-filter"></i>
+                    </button>
+                    <a href="index.php?page=students/registered" class="crm-icon-btn is-muted" data-modern-tooltip="Reset filters" aria-label="Reset filters">
+                        <i class="fas fa-rotate-left"></i>
+                    </a>
                 </div>
             </div>
         </form>

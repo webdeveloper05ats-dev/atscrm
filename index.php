@@ -83,7 +83,8 @@ $rawPages = [
     'reports/export_internship'   // ⭐ ADD THIS
     ,
     'reports/export_student_schedule',
-    'reports/export_student_overall'
+    'reports/export_student_overall',
+    'students/course_certificate'
 ];
 
 if ($page === 'leads/import' && isset($_GET['download']) && $_GET['download'] === 'template') {

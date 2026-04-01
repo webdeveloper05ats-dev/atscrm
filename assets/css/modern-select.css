@@ -40,6 +40,10 @@
   box-shadow: 0 0 0 4px rgba(233, 30, 99, .12);
 }
 
+.crm-modal .ms-select.open {
+  z-index: 30;
+}
+
 .ms-trigger::after {
   content: "";
   position: absolute;

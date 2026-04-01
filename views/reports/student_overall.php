@@ -82,8 +82,14 @@ if ($registrationId > 0) {
                 </select>
             </div>
             <div class="sor-filter-actions">
-                <button class="btn btn-primary">Load Report</button>
-                <a href="index.php?page=reports/student_overall" class="btn" style="background:#f3f4f6;">Reset</a>
+                <div class="crm-icon-actions">
+                    <button type="submit" class="crm-icon-btn is-primary" data-modern-tooltip="Load report" aria-label="Load report">
+                        <i class="fas fa-filter"></i>
+                    </button>
+                    <a href="index.php?page=reports/student_overall" class="crm-icon-btn is-muted" data-modern-tooltip="Reset filters" aria-label="Reset filters">
+                        <i class="fas fa-rotate-left"></i>
+                    </a>
+                </div>
             </div>
         </div>
     </form>
@@ -106,8 +112,14 @@ if ($registrationId > 0) {
                     <div class="sor-meta"><?= studentReportH($student['registration_no'] ?: '-') ?> | <?= studentReportH($student['program_name'] ?: '-') ?> | <?= studentReportH($student['assigned_staff_name'] ?: '-') ?></div>
                 </div>
                 <div class="sor-actions">
-                    <a href="index.php?page=reports/export_student_overall&registration_id=<?= (int) $student['id'] ?>" class="btn btn-primary">Download CSV</a>
-                    <button type="button" class="btn" style="background:#f3f4f6;" onclick="window.print()">Print</button>
+                    <div class="crm-icon-actions">
+                        <a href="index.php?page=reports/export_student_overall&registration_id=<?= (int) $student['id'] ?>" class="crm-icon-btn is-success" data-modern-tooltip="Download CSV" aria-label="Download CSV">
+                            <i class="fas fa-file-csv"></i>
+                        </a>
+                        <button type="button" class="crm-icon-btn is-muted" onclick="window.print()" data-modern-tooltip="Print report" aria-label="Print report">
+                            <i class="fas fa-print"></i>
+                        </button>
+                    </div>
                 </div>
             </div>
 

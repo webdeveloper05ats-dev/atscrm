@@ -86,6 +86,7 @@ try {
 }
 
 $tableReady = assessmentTableExists($pdo);
+$csrfToken = generateCSRF();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_assessment'])) {
     if (!$tableReady) {
@@ -93,6 +94,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_assessment'])) {
         redirect('index.php?page=assessment');
     } else {
         try {
+            $token = $_POST['csrf_token'] ?? '';
+            if (!verifyCSRF($token)) {
+                throw new RuntimeException('Invalid CSRF token. Please try again.');
+            }
+
             $registrationId = (int) ($_POST['registration_id'] ?? 0);
             $mark1 = assessmentToNull($_POST['assessment_1'] ?? '');
             $mark2 = assessmentToNull($_POST['assessment_2'] ?? '');
@@ -128,42 +134,80 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_assessment'])) {
                 throw new RuntimeException('Student not found or access denied.');
             }
 
-            $sql = "
-                INSERT INTO assessment (
-                    registration_id,
-                    branch_id,
-                    staff_user_id,
-                    assessment_1,
-                    assessment_2,
-                    assessment_3,
-                    average_marks
-                ) VALUES (?, ?, ?, ?, ?, ?, ?)
-                ON DUPLICATE KEY UPDATE
-                    branch_id = VALUES(branch_id),
-                    staff_user_id = VALUES(staff_user_id),
-                    assessment_1 = VALUES(assessment_1),
-                    assessment_2 = VALUES(assessment_2),
-                    assessment_3 = VALUES(assessment_3),
-                    average_marks = VALUES(average_marks)
-            ";
+            $pdo->beginTransaction();
 
-            $st = $pdo->prepare($sql);
-            $st->execute([
-                $registrationId,
-                (int) $studentRow['branch_id'],
-                $userId,
-                $mark1,
-                $mark2,
-                $mark3,
-                $average,
-            ]);
+            $findSql = "
+                SELECT id
+                FROM assessment
+                WHERE registration_id = ?
+                ORDER BY id DESC
+                LIMIT 1
+            ";
+            $find = $pdo->prepare($findSql);
+            $find->execute([$registrationId]);
+            $existingId = (int) ($find->fetchColumn() ?: 0);
+
+            if ($existingId > 0) {
+                $updateSql = "
+                    UPDATE assessment
+                    SET branch_id = ?,
+                        staff_user_id = ?,
+                        assessment_1 = ?,
+                        assessment_2 = ?,
+                        assessment_3 = ?,
+                        average_marks = ?,
+                        updated_at = NOW()
+                    WHERE id = ?
+                    LIMIT 1
+                ";
+                $update = $pdo->prepare($updateSql);
+                $update->execute([
+                    (int) $studentRow['branch_id'],
+                    $userId,
+                    $mark1,
+                    $mark2,
+                    $mark3,
+                    $average,
+                    $existingId,
+                ]);
+            } else {
+                $insertSql = "
+                    INSERT INTO assessment (
+                        registration_id,
+                        branch_id,
+                        staff_user_id,
+                        assessment_1,
+                        assessment_2,
+                        assessment_3,
+                        average_marks
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?)
+                ";
+                $insert = $pdo->prepare($insertSql);
+                $insert->execute([
+                    $registrationId,
+                    (int) $studentRow['branch_id'],
+                    $userId,
+                    $mark1,
+                    $mark2,
+                    $mark3,
+                    $average,
+                ]);
+            }
+
+            $pdo->commit();
 
             setFlash('success', 'Assessment marks saved successfully.');
             redirect('index.php?page=assessment');
         } catch (InvalidArgumentException $e) {
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
             setFlash('error', $e->getMessage());
             redirect('index.php?page=assessment');
         } catch (Exception $e) {
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
             setFlash('error', $e->getMessage());
             redirect('index.php?page=assessment');
         }
@@ -230,7 +274,16 @@ try {
             a.average_marks
         FROM registrations r
         INNER JOIN registration_courses rc ON rc.registration_id = r.id
-        LEFT JOIN assessment a ON a.registration_id = r.id
+        LEFT JOIN (
+            SELECT a1.*
+            FROM assessment a1
+            INNER JOIN (
+                SELECT registration_id, MAX(id) AS latest_id
+                FROM assessment
+                GROUP BY registration_id
+            ) latest_assessment
+                ON latest_assessment.latest_id = a1.id
+        ) a ON a.registration_id = r.id
         WHERE " . implode(' AND ', $where) . "
         ORDER BY r.id DESC
     ";
@@ -355,6 +408,7 @@ try {
                                 </td>
                                 <td class="text-center">
                                     <form method="POST" id="<?= h($formId) ?>" class="assessment-row-form" novalidate>
+                                        <input type="hidden" name="csrf_token" value="<?= h($csrfToken) ?>">
                                         <input type="hidden" name="registration_id" value="<?= (int) $r['id'] ?>">
                                         <button
                                             type="submit"
@@ -944,6 +998,11 @@ document.addEventListener('submit', function (e) {
         return;
     }
 
+    if (form.dataset.assessmentConfirmed === '1') {
+        delete form.dataset.assessmentConfirmed;
+        return;
+    }
+
     e.preventDefault();
 
     const formId = form.getAttribute('id');
@@ -1002,14 +1061,34 @@ document.addEventListener('submit', function (e) {
             confirmButtonColor: '#e91e63'
         }).then(function (result) {
             if (result.isConfirmed) {
-                form.submit();
+                submitAssessmentForm(form);
             }
         });
         return;
     }
 
-    form.submit();
+    submitAssessmentForm(form);
 });
+
+function submitAssessmentForm(form) {
+    const submitButton = form.querySelector('button[name="save_assessment"]');
+    form.dataset.assessmentConfirmed = '1';
+
+    if (typeof form.requestSubmit === 'function' && submitButton) {
+        form.requestSubmit(submitButton);
+        return;
+    }
+
+    if (submitButton && !form.querySelector('input[name="save_assessment"]')) {
+        const hiddenSubmit = document.createElement('input');
+        hiddenSubmit.type = 'hidden';
+        hiddenSubmit.name = 'save_assessment';
+        hiddenSubmit.value = submitButton.value || '1';
+        form.appendChild(hiddenSubmit);
+    }
+
+    HTMLFormElement.prototype.submit.call(form);
+}
 
 document.addEventListener('mouseover', function (e) {
     const target = e.target.closest('[data-modern-tooltip]');

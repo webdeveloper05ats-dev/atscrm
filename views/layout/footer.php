@@ -42,6 +42,137 @@ if (!defined('APP_NAME')) {
 <script src="assets/js/modern-select.js"></script>
 <script src="assets/js/modern-datepicker.js"></script>
 
+<script>
+(function () {
+    let tooltipEl = null;
+    let activeTarget = null;
+
+    function getTooltipText(el) {
+        return (el.getAttribute('data-modern-tooltip') || el.getAttribute('data-tooltip') || el.getAttribute('aria-label') || '').trim();
+    }
+
+    function ensureTooltip() {
+        if (tooltipEl) return tooltipEl;
+        tooltipEl = document.createElement('div');
+        tooltipEl.className = 'floating-ui-tooltip';
+        tooltipEl.setAttribute('data-placement', 'top');
+        tooltipEl.innerHTML = '<div class="floating-ui-tooltip__bubble"></div><div class="floating-ui-tooltip__arrow"></div>';
+        document.body.appendChild(tooltipEl);
+        return tooltipEl;
+    }
+
+    function positionTooltip(el) {
+        const tooltip = ensureTooltip();
+        const bubble = tooltip.querySelector('.floating-ui-tooltip__bubble');
+        const text = getTooltipText(el);
+        if (!bubble || !text) return;
+
+        bubble.textContent = text;
+        tooltip.classList.add('is-visible');
+
+        const gap = 10;
+        const rect = el.getBoundingClientRect();
+        const tipRect = tooltip.getBoundingClientRect();
+        const vw = window.innerWidth || document.documentElement.clientWidth || 0;
+        const vh = window.innerHeight || document.documentElement.clientHeight || 0;
+
+        let placement = 'top';
+        let top = rect.top - tipRect.height - gap;
+
+        if (top < 8) {
+            placement = 'bottom';
+            top = rect.bottom + gap;
+        }
+
+        if (top + tipRect.height > vh - 8) {
+            top = Math.max(8, vh - tipRect.height - 8);
+        }
+
+        let left = rect.left + (rect.width / 2) - (tipRect.width / 2);
+        left = Math.max(8, Math.min(left, vw - tipRect.width - 8));
+
+        tooltip.setAttribute('data-placement', placement);
+        tooltip.style.left = left + 'px';
+        tooltip.style.top = top + 'px';
+    }
+
+    function showTooltip(el) {
+        if (!el) return;
+        if (!getTooltipText(el)) return;
+        activeTarget = el;
+        positionTooltip(el);
+    }
+
+    function hideTooltip(el) {
+        if (el && activeTarget && el !== activeTarget) return;
+        if (!tooltipEl) return;
+        activeTarget = null;
+        tooltipEl.classList.remove('is-visible');
+    }
+
+    function normalizeTitle(el) {
+        if (!el || el.dataset.tooltipReady === '1') return;
+        const title = (el.getAttribute('title') || '').trim();
+        if (title && !el.getAttribute('data-tooltip') && !el.getAttribute('data-modern-tooltip')) {
+            el.setAttribute('data-tooltip', title);
+        }
+        if ((el.getAttribute('data-tooltip') || el.getAttribute('data-modern-tooltip')) && !el.getAttribute('aria-label')) {
+            el.setAttribute('aria-label', getTooltipText(el));
+        }
+        if (title) {
+            el.removeAttribute('title');
+        }
+        el.dataset.tooltipReady = '1';
+    }
+
+    function bindTooltip(el) {
+        if (!el || el.dataset.floatingTooltipBound === '1') return;
+        normalizeTitle(el);
+        if (!getTooltipText(el)) return;
+
+        el.dataset.floatingTooltipBound = '1';
+        el.addEventListener('mouseenter', function () { showTooltip(el); });
+        el.addEventListener('mouseleave', function () { hideTooltip(el); });
+        el.addEventListener('focus', function () { showTooltip(el); });
+        el.addEventListener('blur', function () { hideTooltip(el); });
+    }
+
+    function initTooltips(root) {
+        const scope = root || document;
+        const selector = '[data-tooltip], [data-modern-tooltip], .ui-tooltip, .tooltip, [title]';
+        scope.querySelectorAll(selector).forEach(bindTooltip);
+        if (scope.matches && scope.matches(selector)) {
+            bindTooltip(scope);
+        }
+    }
+
+    window.initializeFloatingTooltips = initTooltips;
+
+    document.addEventListener('DOMContentLoaded', function () {
+        initTooltips(document);
+
+        const observer = new MutationObserver(function (mutations) {
+            mutations.forEach(function (mutation) {
+                mutation.addedNodes.forEach(function (node) {
+                    if (!node || node.nodeType !== 1) return;
+                    initTooltips(node);
+                });
+            });
+        });
+
+        observer.observe(document.body, { childList: true, subtree: true });
+    });
+
+    window.addEventListener('scroll', function () {
+        if (activeTarget) positionTooltip(activeTarget);
+    }, true);
+
+    window.addEventListener('resize', function () {
+        if (activeTarget) positionTooltip(activeTarget);
+    });
+})();
+</script>
+
 <!-- ============================= -->
 <!-- Flash Messages -->
 <!-- ============================= -->

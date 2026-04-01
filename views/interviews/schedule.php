@@ -324,8 +324,14 @@ if ($tableReady) {
                     </select>
                 </div>
                 <div class="hrsch-filter-actions">
-                    <button class="btn btn-primary">Apply</button>
-                    <a href="index.php?page=interviews/schedule" class="btn" style="background:#f3f4f6;">Reset</a>
+                    <div class="crm-icon-actions">
+                        <button type="submit" class="crm-icon-btn is-primary" data-modern-tooltip="Apply filters" aria-label="Apply filters">
+                            <i class="fas fa-filter"></i>
+                        </button>
+                        <a href="index.php?page=interviews/schedule" class="crm-icon-btn is-muted" data-modern-tooltip="Reset filters" aria-label="Reset filters">
+                            <i class="fas fa-rotate-left"></i>
+                        </a>
+                    </div>
                 </div>
             </div>
         </form>
@@ -378,15 +384,15 @@ if ($tableReady) {
                                     <div class="hrsch-sub">By <?= interviewWorkflowH($r['staff_name'] ?: '-') ?></div>
                                 </td>
                                 <td>
-                                    <div class="hrsch-actions">
-                                        <button type="button" class="btn btn-primary hrsch-view-btn" data-registration-id="<?= (int) $r['registration_id'] ?>">
-                                            View Details
+                                    <div class="hrsch-actions crm-icon-actions">
+                                        <button type="button" class="crm-icon-btn is-primary hrsch-view-btn" data-registration-id="<?= (int) $r['registration_id'] ?>" data-modern-tooltip="View details" aria-label="View details">
+                                            <i class="fas fa-eye"></i>
                                         </button>
-                                        <a href="index.php?page=interviews/placement&registration_id=<?= (int) $r['registration_id'] ?>" class="btn hrsch-placement-btn">
-                                            Placement
+                                        <a href="index.php?page=interviews/placement&registration_id=<?= (int) $r['registration_id'] ?>" class="crm-icon-btn is-warning" data-modern-tooltip="Open placement" aria-label="Open placement">
+                                            <i class="fas fa-briefcase"></i>
                                         </a>
-                                        <a href="index.php?page=reports/student_overall&registration_id=<?= (int) $r['registration_id'] ?>" class="btn" style="background:#f8fafc;border:1px solid #cbd5e1;color:#334155;">
-                                            Overall Report
+                                        <a href="index.php?page=reports/student_overall&registration_id=<?= (int) $r['registration_id'] ?>" class="crm-icon-btn is-muted" data-modern-tooltip="Open overall report" aria-label="Open overall report">
+                                            <i class="fas fa-chart-line"></i>
                                         </a>
                                     </div>
                                 </td>
