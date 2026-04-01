@@ -19,7 +19,7 @@ function remember_is_https(): bool {
     return false;
 }
 
-function remember_cookie_set(string $selector, string $validator, int $days = 14): void {
+function remember_cookie_set(string $selector, string $validator, int $days = 30): void {
     $value  = $selector . ':' . $validator;
     $expire = time() + ($days * 86400);
 
@@ -50,7 +50,7 @@ function remember_validator(): string {
     return bin2hex(random_bytes(32)); // 64 chars
 }
 
-function remember_issue(PDO $pdo, int $userId, int $days = 14): void {
+function remember_issue(PDO $pdo, int $userId, int $days = 30): void {
     $selector  = remember_selector();
     $validator = remember_validator();
     $hash      = password_hash($validator, PASSWORD_DEFAULT);
@@ -132,7 +132,7 @@ function remember_consume(PDO $pdo): ?array {
     }
 
     // ✅ rotate token on successful auto-login
-    remember_issue($pdo, (int)$user['id'], 14);
+    remember_issue($pdo, (int)$user['id'], 30);
 
     return $user;
 }

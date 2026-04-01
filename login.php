@@ -68,7 +68,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         // Remember Me
         if (!empty($_POST['remember'])) {
-            remember_issue($pdo, (int)$user['id'], 14);
+            remember_issue($pdo, (int)$user['id'], 30);
         } else {
             remember_revoke($pdo, (int)$user['id']);
         }
