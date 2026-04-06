@@ -2124,10 +2124,11 @@ color:#6b7280;
 margin-top:2px;
 }
 .fu-table-title{
-margin:0 0 12px;
+margin:0;
 font-size:15px;
 font-weight:900;
 color:#374151;
+line-height:1.2;
 }
 .followup-tabs-wrap{
 padding:14px 14px 0;
@@ -2153,7 +2154,7 @@ margin-bottom:12px;
 .followup-records-left{
 display:flex;
 align-items:center;
-gap:10px;
+gap:12px;
 flex-wrap:nowrap;
 }
 .followup-table-controls,
@@ -2167,6 +2168,7 @@ align-items:center;
 justify-content:flex-end;
 gap:12px;
 flex-wrap:nowrap;
+margin:0;
 }
 .followup-table-footer{
 width:100%;
@@ -2186,6 +2188,7 @@ align-items:center;
 gap:8px;
 margin:0;
 line-height:1;
+min-height:38px;
 }
 .followup-table-controls .dt-buttons{
 display:none !important;
@@ -2203,6 +2206,9 @@ align-items:center;
 gap:8px;
 white-space:nowrap;
 margin:0;
+}
+.followup-table-controls .dataTables_filter{
+margin:0 !important;
 }
 .followup-table-controls .dataTables_filter input{
 min-width:220px;
@@ -2629,10 +2635,6 @@ title="Reset Filter">
 <div class="followup-records-head">
   <div class="followup-records-left">
     <h3 class="fu-table-title">Follow-up Records</h3>
-    <span class="followup-records-meta">
-      <i class="fas fa-database"></i>
-      <?= (int)count($followups) ?> in <?= h(ucfirst($tab)) ?>
-    </span>
   </div>
   <div id="followupTableControls" class="followup-table-controls"></div>
 </div>
