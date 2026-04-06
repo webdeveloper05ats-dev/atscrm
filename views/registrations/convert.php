@@ -290,6 +290,8 @@ if (isset($_POST['save_registration'])) {
             }
 
             // IMPORTANT FIX: preserve existing registration no on edit
+            $previousRegistrationStatus = strtolower(trim((string) ($existingReg['registration_status'] ?? 'draft')));
+
             if ($regIdPost > 0) {
                 $registration_no = regToNull($existingReg['registration_no'] ?? '') ?: $registration_no;
             }
@@ -536,8 +538,46 @@ if (isset($_POST['save_registration'])) {
 
             $pdo->commit();
 
+            $mailWarning = '';
+            if ($registration_status === 'active' && $previousRegistrationStatus !== 'active') {
+                $registrationDate = $joined_on ?: date('Y-m-d');
+                $studentDisplayName = trim((string) $student_name);
+                $parentDisplayName = trim((string) $parent_name) !== '' ? trim((string) $parent_name) : 'Parent';
+                $recipients = [
+                    ['email' => $email, 'name' => $studentDisplayName],
+                    ['email' => $parent_email, 'name' => $parentDisplayName],
+                ];
+                $subject = 'Registration completed for ' . ($studentDisplayName !== '' ? $studentDisplayName : 'student');
+                $htmlBody = '
+                    <p>Dear Student and Parent,</p>
+                    <p>The registration has been completed successfully.</p>
+                    <p><strong>Student:</strong> ' . h($studentDisplayName) . '<br>
+                    <strong>Registration No:</strong> ' . h($registration_no) . '<br>
+                    <strong>Program:</strong> ' . h((string) $program_name) . '<br>
+                    <strong>Batch:</strong> ' . h((string) $batch_name) . '<br>
+                    <strong>Joined On:</strong> ' . h($registrationDate) . '</p>
+                    <p>Please keep this email for your records.</p>
+                    <p>Regards,<br>' . h(APP_NAME) . '</p>';
+                $textBody = "Dear Student and Parent,\n\n"
+                    . "The registration has been completed successfully.\n"
+                    . "Student: {$studentDisplayName}\n"
+                    . "Registration No: {$registration_no}\n"
+                    . "Program: {$program_name}\n"
+                    . "Batch: {$batch_name}\n"
+                    . "Joined On: {$registrationDate}\n\n"
+                    . "Regards,\n" . APP_NAME;
+                $mailError = null;
+                if (!crmSendEmail($recipients, $subject, $htmlBody, $textBody, $mailError)) {
+                    $mailWarning = ' Registration completed, but email delivery failed';
+                    if ($mailError) {
+                        $mailWarning .= ': ' . $mailError;
+                    }
+                    $mailWarning .= '.';
+                }
+            }
+
             if ($registration_status === 'active') {
-                $success = "Registration confirmed successfully!";
+                $success = "Registration confirmed successfully!" . $mailWarning;
                 $redirectUrl = "index.php?page=registrations/list";
             } else {
                 $success = "Registration saved for later successfully!";

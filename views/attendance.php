@@ -55,10 +55,14 @@ function fetchAttendanceStudent(PDO $pdo, int $registrationId, int $userId, int 
             r.enquiry_snapshot_name,
             r.enquiry_snapshot_phone,
             r.enquiry_snapshot_email,
+            COALESCE(rp.parent_name, e.father_name) AS parent_name,
+            " . crmBuildParentEmailFallbackSelect($pdo, 'rp', 'e') . " AS parent_email,
             r.program_name,
             r.batch_name
         FROM registrations r
         LEFT JOIN registration_courses rc ON rc.registration_id = r.id
+        LEFT JOIN registration_profiles rp ON rp.registration_id = r.id
+        LEFT JOIN enquiries e ON e.id = r.enquiry_id
         WHERE r.id = ?
           AND r.reg_type = 'course'
           AND r.registration_status IN ('active','completed')
@@ -384,6 +388,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax_save_attendance'
             $absentInformedBy !== '' ? $absentInformedBy : null,
             $userId > 0 ? $userId : null
         ]);
+
+        if ($status === 'Absent') {
+            $studentDisplayName = trim((string) ($student['enquiry_snapshot_name'] ?? 'Student'));
+            $parentDisplayName = trim((string) ($student['parent_name'] ?? '')) !== '' ? trim((string) ($student['parent_name'] ?? '')) : 'Parent';
+            $recipients = [
+                ['email' => $student['enquiry_snapshot_email'] ?? '', 'name' => $studentDisplayName],
+                ['email' => $student['parent_email'] ?? '', 'name' => $parentDisplayName],
+            ];
+            $absenceReasonText = $absentReason !== '' ? $absentReason : 'Not provided';
+            $informedByText = $absentInformedBy !== '' ? $absentInformedBy : 'Not provided';
+            $htmlBody = '
+                <p>Dear Student and Parent,</p>
+                <p>This is to inform you that the student was marked absent.</p>
+                <p><strong>Student:</strong> ' . h($studentDisplayName) . '<br>
+                <strong>Registration No:</strong> ' . h((string) ($student['registration_no'] ?? '')) . '<br>
+                <strong>Program:</strong> ' . h((string) ($student['program_name'] ?? '')) . '<br>
+                <strong>Date:</strong> ' . h($date) . '<br>
+                <strong>Informed:</strong> ' . h(strtoupper($absentInformed) === 'YES' ? 'Yes' : 'No') . '<br>
+                <strong>Reason:</strong> ' . h($absenceReasonText) . '<br>
+                <strong>Informed By:</strong> ' . h($informedByText) . '</p>
+                <p>Regards,<br>' . h(APP_NAME) . '</p>';
+            $textBody = "Dear Student and Parent,\n\n"
+                . "This is to inform you that the student was marked absent.\n"
+                . "Student: {$studentDisplayName}\n"
+                . "Registration No: " . (string) ($student['registration_no'] ?? '') . "\n"
+                . "Program: " . (string) ($student['program_name'] ?? '') . "\n"
+                . "Date: {$date}\n"
+                . "Informed: " . (strtoupper($absentInformed) === 'YES' ? 'Yes' : 'No') . "\n"
+                . "Reason: {$absenceReasonText}\n"
+                . "Informed By: {$informedByText}\n\n"
+                . "Regards,\n" . APP_NAME;
+            crmSendEmail($recipients, 'Absence notification for ' . $studentDisplayName, $htmlBody, $textBody);
+        }
 
         responseJson('success', 'Attendance saved successfully.');
     } catch (Exception $e) {

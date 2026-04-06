@@ -1,0 +1,11 @@
+[2026-04-06 10:32:11] Failed mail "Absence notification for Sridharshan" to sridharshany.2001@gmail.com: SMTP Error: Could not connect to SMTP host.
+[2026-04-06 10:34:22] Failed mail "ATS CRM SMTP Test" to sgssk63@gmail.com: SMTP Error: Could not connect to SMTP host.
+[2026-04-06 10:36:02] Sent mail "ATS CRM SMTP Test" to sgssk63@gmail.com via primary (smtp.gmail.com:465, smtps)
+[2026-04-06 10:37:15] Sent mail "Absence notification for Joseph" to joseph@gmail.com via primary (smtp.gmail.com:465, smtps)
+[2026-04-06 10:37:59] Sent mail "Assessment marks updated for Sridharshan" to sridharshany.2001@gmail.com via primary (smtp.gmail.com:465, smtps)
+[2026-04-06 10:38:57] Sent mail "Mock interview marks updated for Sridharshan" to sridharshany.2001@gmail.com via primary (smtp.gmail.com:465, smtps)
+[2026-04-06 10:40:58] Sent mail "ATS CRM Multi Recipient Test" to sgssk63@gmail.com via primary (smtp.gmail.com:465, smtps)
+[2026-04-06 10:51:53] Sent mail "Assessment marks updated for Sridharshan" to sridharshany.2001@gmail.com via primary (smtp.gmail.com:465, smtps)
+[2026-04-06 11:00:08] Sent mail "Payment received for Sridharshan" to sridharshany.2001@gmail.com via primary (smtp.gmail.com:465, smtps)
+[2026-04-06 11:09:49] Sent mail "Assessment marks updated for Sridharshan" to sridharshany.2001@gmail.com via primary (smtp.gmail.com:465, smtps)
+[2026-04-06 11:09:52] Sent mail "Assessment marks updated for Sridharshan" to sriveprus@gmail.com via primary (smtp.gmail.com:465, smtps)

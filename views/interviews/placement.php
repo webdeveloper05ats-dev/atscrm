@@ -32,12 +32,17 @@ function placementWorkflowCanAccessRegistration(PDO $pdo, int $registrationId, i
             r.branch_id,
             r.registration_no,
             r.enquiry_snapshot_name,
+            r.enquiry_snapshot_email,
             r.program_name,
+            COALESCE(rp.parent_name, e.father_name) AS parent_name,
+            " . crmBuildParentEmailFallbackSelect($pdo, 'rp', 'e') . " AS parent_email,
             shi.id AS hr_workflow_id,
             shi.interview_status,
             shi.company_name
         FROM registrations r
         INNER JOIN student_hr_interviews shi ON shi.registration_id = r.id
+        LEFT JOIN registration_profiles rp ON rp.registration_id = r.id
+        LEFT JOIN enquiries e ON e.id = r.enquiry_id
         WHERE r.id = ?
           AND r.reg_type = 'course'
     ";
@@ -65,11 +70,17 @@ function placementWorkflowCanAccessInterview(PDO $pdo, int $interviewId, int $br
     $sql = "
         SELECT
             pi.*,
+            pi.registration_id,
             r.registration_no,
             r.enquiry_snapshot_name,
-            r.program_name
+            r.enquiry_snapshot_email,
+            r.program_name,
+            COALESCE(rp.parent_name, e.father_name) AS parent_name,
+            " . crmBuildParentEmailFallbackSelect($pdo, 'rp', 'e') . " AS parent_email
         FROM placement_interviews pi
         INNER JOIN registrations r ON r.id = pi.registration_id
+        LEFT JOIN registration_profiles rp ON rp.registration_id = r.id
+        LEFT JOIN enquiries e ON e.id = r.enquiry_id
         WHERE pi.id = ?
           AND r.reg_type = 'course'
     ";
@@ -289,6 +300,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_placement_interv
             ]);
 
             $pdo->commit();
+
+            $studentDisplayName = trim((string) ($studentRow['enquiry_snapshot_name'] ?? 'Student'));
+            $interviewTimeText = $interviewTime !== '' ? $interviewTime : 'Not specified';
+            $recipients = [
+                ['email' => $studentRow['enquiry_snapshot_email'] ?? '', 'name' => $studentDisplayName],
+                ['email' => $studentRow['parent_email'] ?? '', 'name' => trim((string) ($studentRow['parent_name'] ?? 'Parent'))],
+            ];
+            $htmlBody = '
+                <p>Dear Student and Parent,</p>
+                <p>An interview has been scheduled/updated for the student.</p>
+                <p><strong>Student:</strong> ' . placementWorkflowH($studentDisplayName) . '<br>
+                <strong>Registration No:</strong> ' . placementWorkflowH((string) ($studentRow['registration_no'] ?? '')) . '<br>
+                <strong>Company:</strong> ' . placementWorkflowH($companyName) . '<br>
+                <strong>Date:</strong> ' . placementWorkflowH($interviewDate) . '<br>
+                <strong>Time:</strong> ' . placementWorkflowH($interviewTimeText) . '<br>
+                <strong>Mode:</strong> ' . placementWorkflowH($interviewMode) . '<br>
+                <strong>Status:</strong> ' . placementWorkflowH(ucwords(str_replace('_', ' ', $status))) . '<br>
+                <strong>Remarks:</strong> ' . placementWorkflowH($remarks !== '' ? $remarks : 'Not provided') . '</p>
+                <p>Regards,<br>' . placementWorkflowH(APP_NAME) . '</p>';
+            $textBody = "Dear Student and Parent,\n\n"
+                . "An interview has been scheduled/updated for the student.\n"
+                . "Student: {$studentDisplayName}\n"
+                . "Registration No: " . (string) ($studentRow['registration_no'] ?? '') . "\n"
+                . "Company: {$companyName}\n"
+                . "Date: {$interviewDate}\n"
+                . "Time: {$interviewTimeText}\n"
+                . "Mode: {$interviewMode}\n"
+                . "Status: " . ucwords(str_replace('_', ' ', $status)) . "\n"
+                . "Remarks: " . ($remarks !== '' ? $remarks : 'Not provided') . "\n\n"
+                . "Regards,\n" . APP_NAME;
+            crmSendEmail($recipients, 'Interview scheduled for ' . $studentDisplayName, $htmlBody, $textBody);
+
             setFlash('success', 'Interview added successfully.');
             redirect('index.php?page=interviews/placement');
         } catch (Exception $e) {
@@ -364,6 +407,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_placement_inte
             ]);
 
             $pdo->commit();
+
+            $studentDisplayName = trim((string) ($interviewRow['enquiry_snapshot_name'] ?? 'Student'));
+            $recipients = [
+                ['email' => $interviewRow['enquiry_snapshot_email'] ?? '', 'name' => $studentDisplayName],
+                ['email' => $interviewRow['parent_email'] ?? '', 'name' => trim((string) ($interviewRow['parent_name'] ?? 'Parent'))],
+            ];
+            $htmlBody = '
+                <p>Dear Student and Parent,</p>
+                <p>The interview status has been updated.</p>
+                <p><strong>Student:</strong> ' . placementWorkflowH($studentDisplayName) . '<br>
+                <strong>Registration No:</strong> ' . placementWorkflowH((string) ($interviewRow['registration_no'] ?? '')) . '<br>
+                <strong>Company:</strong> ' . placementWorkflowH((string) ($interviewRow['company_name'] ?? '')) . '<br>
+                <strong>Date:</strong> ' . placementWorkflowH((string) ($interviewRow['interview_date'] ?? '')) . '<br>
+                <strong>Status:</strong> ' . placementWorkflowH(ucwords(str_replace('_', ' ', $status))) . '<br>
+                <strong>Remarks:</strong> ' . placementWorkflowH($remarks !== '' ? $remarks : 'Not provided') . '</p>
+                <p>Regards,<br>' . placementWorkflowH(APP_NAME) . '</p>';
+            $textBody = "Dear Student and Parent,\n\n"
+                . "The interview status has been updated.\n"
+                . "Student: {$studentDisplayName}\n"
+                . "Registration No: " . (string) ($interviewRow['registration_no'] ?? '') . "\n"
+                . "Company: " . (string) ($interviewRow['company_name'] ?? '') . "\n"
+                . "Date: " . (string) ($interviewRow['interview_date'] ?? '') . "\n"
+                . "Status: " . ucwords(str_replace('_', ' ', $status)) . "\n"
+                . "Remarks: " . ($remarks !== '' ? $remarks : 'Not provided') . "\n\n"
+                . "Regards,\n" . APP_NAME;
+            crmSendEmail($recipients, 'Interview status updated for ' . $studentDisplayName, $htmlBody, $textBody);
+
             setFlash('success', 'Interview updated successfully.');
             redirect('index.php?page=interviews/placement');
         } catch (Exception $e) {
