@@ -147,6 +147,34 @@ if ($leadId > 0) {
     }
 }
 
+// ---------- Reserve Enquiry Number For Current Form ----------
+$reservedEnquiryNo = '';
+if (empty($error) && $userId > 0 && $branchId > 0) {
+    $sessionReserved = $_SESSION['enquiry_reserved_no'] ?? null;
+    $hasValidReservedNo = is_array($sessionReserved)
+        && (int)($sessionReserved['user_id'] ?? 0) === $userId
+        && (int)($sessionReserved['branch_id'] ?? 0) === $branchId
+        && !empty($sessionReserved['enquiry_no']);
+
+    if (!$hasValidReservedNo) {
+        try {
+            $_SESSION['enquiry_reserved_no'] = [
+                'enquiry_no' => generateEnquiryNo($pdo),
+                'user_id' => $userId,
+                'branch_id' => $branchId,
+                'reserved_at' => date('Y-m-d H:i:s'),
+            ];
+            $hasValidReservedNo = true;
+        } catch (Exception $e) {
+            $hasValidReservedNo = false;
+        }
+    }
+
+    if ($hasValidReservedNo) {
+        $reservedEnquiryNo = (string)($_SESSION['enquiry_reserved_no']['enquiry_no'] ?? '');
+    }
+}
+
 // ---------- Front Office Dropdown ----------
 $frontOfficeUsers = [];
 try {
@@ -287,8 +315,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_enquiry']) && em
 
                 $pdo->beginTransaction();
 
-                // ✅ UNIQUE NUMBER (SAFE)
-                $enquiry_no = generateEnquiryNo($pdo);
+                // Use the same number shown in the form; fallback if reservation is missing.
+                $enquiry_no = (string)($_SESSION['enquiry_reserved_no']['enquiry_no'] ?? '');
+                if ($enquiry_no === '') {
+                    $enquiry_no = generateEnquiryNo($pdo);
+                }
 
                 // handled_by fallback
                 if ($handledBy <= 0) {
@@ -375,6 +406,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_enquiry']) && em
                 }
 
                 $pdo->commit();
+                unset($_SESSION['enquiry_reserved_no']);
 
                 $success = "Enquiry saved successfully!";
 
@@ -390,8 +422,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_enquiry']) && em
     }
 }
 
-$defaultEnqNo = '';
-try { $defaultEnqNo = generateEnquiryNo($pdo); } catch (Exception $e) { $defaultEnqNo=''; }
+$defaultEnqNo = ($reservedEnquiryNo !== '') ? $reservedEnquiryNo : 'AUTO-GENERATED ON SAVE';
 
 // ---------- Prefill Values ----------
 $prefill = [
@@ -901,7 +932,7 @@ if (window.Swal && Swal.fire) {
 
         <div class="form-group">
           <label>Enquiry No</label>
-          <input type="text" name="enquiry_no" readonly value="<?= htmlspecialchars($_POST['enquiry_no'] ?? $defaultEnqNo) ?>">
+          <input type="text" name="enquiry_no" readonly value="<?= htmlspecialchars($defaultEnqNo) ?>">
           <span class="hint">Auto generated and locked for consistency.</span>
         </div>
 
@@ -938,7 +969,7 @@ if (window.Swal && Swal.fire) {
 
         <div class="form-group">
           <label>DOB <span class="hint" style="display:inline;margin-left:6px;">(DD-MM-YYYY)</span></label>
-          <input type="date" name="dob" value="<?= htmlspecialchars($_POST['dob'] ?? '') ?>" max="<?= h(date('Y-m-d')) ?>" title="Type DOB in DD-MM-YYYY or use calendar">
+          <input type="date" name="dob" value="<?= htmlspecialchars($_POST['dob'] ?? '') ?>" max="<?= htmlspecialchars(date('Y-m-d')) ?>" title="Type DOB in DD-MM-YYYY or use calendar">
         </div>
 
         <div class="form-group">
