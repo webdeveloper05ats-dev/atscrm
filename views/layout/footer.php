@@ -44,6 +44,232 @@ if (!defined('APP_NAME')) {
 
 <script>
 (function () {
+    function normalizeStatusKey(text) {
+        return String(text || '').trim().toLowerCase().replace(/\s+/g, '-');
+    }
+
+    function applyUniversalStatusBadges(root) {
+        const scope = root || document;
+        const candidates = scope.querySelectorAll('.status-badge, .status-pill, .badge-status, [data-status]');
+
+        candidates.forEach(function (el) {
+            if (!el || el.dataset.crmStatusReady === '1') return;
+
+            const raw = el.getAttribute('data-status') || el.textContent || '';
+            const key = normalizeStatusKey(raw);
+            if (!key) return;
+
+            el.classList.add('crm-status-badge', 'is-' + key);
+            el.dataset.crmStatusReady = '1';
+        });
+    }
+
+    function applyUniversalPageHeaders(root) {
+        const scope = root || document;
+
+        const heads = scope.querySelectorAll('.dashboard-header, .role-page-head, .enq-page-head, .page-header, .menu-page-head');
+        heads.forEach(function (el) {
+            if (!el || el.dataset.crmHeadReady === '1') return;
+            el.classList.add('crm-page-head');
+            el.dataset.crmHeadReady = '1';
+        });
+
+        const titles = scope.querySelectorAll('.page-title, .enq-page-title, .dashboard-header h2, .role-page-head h2');
+        titles.forEach(function (el) {
+            if (!el || el.dataset.crmTitleReady === '1') return;
+            el.classList.add('crm-page-title');
+            el.dataset.crmTitleReady = '1';
+        });
+
+        const metas = scope.querySelectorAll('.header-stats, .role-total-badge, .menu-total-badge');
+        metas.forEach(function (el) {
+            if (!el || el.dataset.crmMetaReady === '1') return;
+            el.classList.add('crm-page-meta');
+            el.dataset.crmMetaReady = '1';
+        });
+    }
+
+    function normalizeDataTableToolbars(root) {
+        const scope = root || document;
+        const wrappers = scope.matches && scope.matches('.dataTables_wrapper')
+            ? [scope]
+            : Array.from(scope.querySelectorAll('.dataTables_wrapper'));
+
+        wrappers.forEach(function (wrapper) {
+            if (!wrapper || wrapper.dataset.crmDtToolbarReady === '1') return;
+
+            const top = wrapper.querySelector('.crm-table-header, .dt-top');
+            const bottom = wrapper.querySelector('.crm-table-footer, .dt-bottom');
+
+            if (top) top.classList.add('crm-table-header');
+            if (bottom) bottom.classList.add('crm-table-footer');
+
+            wrapper.dataset.crmDtToolbarReady = '1';
+        });
+    }
+
+    function bindObserver() {
+        const observer = new MutationObserver(function (mutations) {
+            mutations.forEach(function (mutation) {
+                mutation.addedNodes.forEach(function (node) {
+                    if (!node || node.nodeType !== 1) return;
+                    normalizeDataTableToolbars(node);
+                });
+            });
+        });
+        observer.observe(document.body, { childList: true, subtree: true });
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        applyUniversalStatusBadges(document);
+        applyUniversalPageHeaders(document);
+        normalizeDataTableToolbars(document);
+        bindObserver();
+    });
+
+    const observer = new MutationObserver(function (mutations) {
+        mutations.forEach(function (mutation) {
+            mutation.addedNodes.forEach(function (node) {
+                if (!node || node.nodeType !== 1) return;
+                applyUniversalStatusBadges(node);
+                applyUniversalPageHeaders(node);
+            });
+        });
+    });
+
+    document.addEventListener('DOMContentLoaded', function () {
+        observer.observe(document.body, { childList: true, subtree: true });
+    });
+})();
+</script>
+
+<script>
+(function () {
+    function applyModernSearchUI(root) {
+        const scope = root || document;
+        const inputs = scope.querySelectorAll('input[name="q"], .dataTables_filter input[type="search"]');
+
+        inputs.forEach(function (input) {
+            if (!input || input.dataset.modernSearchReady === '1') return;
+            if (input.closest('.sidebar')) return; // Explicitly skip sidebar search
+
+            if (input.matches('.dataTables_filter input[type="search"]')) {
+                const filterWrap = input.closest('.dataTables_filter');
+                if (filterWrap) filterWrap.classList.add('crm-modern-filter');
+            }
+
+            const inExistingSearchField = input.closest('.search-field');
+
+            if (inExistingSearchField) {
+                inExistingSearchField.classList.add('crm-modern-search');
+                const existingIcon = inExistingSearchField.querySelector('.search-field-icon, .crm-modern-search-icon');
+                if (existingIcon) {
+                    existingIcon.classList.add('crm-modern-search-icon');
+                } else {
+                    const icon = document.createElement('i');
+                    icon.className = 'fas fa-search crm-modern-search-icon';
+                    inExistingSearchField.insertBefore(icon, input);
+                }
+                input.dataset.modernSearchReady = '1';
+                return;
+            }
+
+            const wrap = document.createElement('div');
+            wrap.className = 'crm-modern-search';
+
+            const icon = document.createElement('i');
+            icon.className = 'fas fa-search crm-modern-search-icon';
+
+            const parent = input.parentNode;
+            if (!parent) return;
+
+            parent.insertBefore(wrap, input);
+            wrap.appendChild(icon);
+            wrap.appendChild(input);
+
+            input.dataset.modernSearchReady = '1';
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        applyModernSearchUI(document);
+
+        const observer = new MutationObserver(function (mutations) {
+            mutations.forEach(function (mutation) {
+                mutation.addedNodes.forEach(function (node) {
+                    if (!node || node.nodeType !== 1) return;
+                    applyModernSearchUI(node);
+                });
+            });
+        });
+
+        observer.observe(document.body, { childList: true, subtree: true });
+    });
+})();
+</script>
+
+<script>
+(function () {
+    function resolveActionTone(el) {
+        const classList = el.classList;
+        if (classList.contains('apply')) return 'is-apply';
+        if (classList.contains('reset')) return 'is-reset';
+        if (classList.contains('add')) return 'is-add';
+        if (classList.contains('import') || classList.contains('export') || classList.contains('download-report')) return 'is-export';
+        if (classList.contains('view')) return 'is-view';
+        if (classList.contains('edit')) return 'is-edit';
+        if (classList.contains('convert')) return 'is-convert';
+        if (classList.contains('payment')) return 'is-payment';
+        if (classList.contains('idcard')) return 'is-idcard';
+        if (classList.contains('delete') || classList.contains('btn-danger')) return 'is-delete';
+        if (classList.contains('done')) return 'is-done';
+        return 'is-default';
+    }
+
+    function isIconOnly(el) {
+        const text = (el.textContent || '').replace(/\s+/g, ' ').trim();
+        const hasIcon = !!el.querySelector('i');
+        return hasIcon && text.length <= 2;
+    }
+
+    function applyUniversalActionButtons(root) {
+        const scope = root || document;
+        const selector = '.action-btn, .btn-icon-only, .ssr-action-btn, .intern-action-btn, .iso-report-action-btn';
+
+        scope.querySelectorAll(selector).forEach(function (el) {
+            if (!el || el.dataset.universalActionReady === '1') return;
+            if (el.closest('.sidebar')) return;
+
+            const tone = resolveActionTone(el);
+            el.classList.add('crm-action-btn', tone);
+
+            if (isIconOnly(el) || el.classList.contains('btn-icon-only')) {
+                el.classList.add('crm-action-icon');
+            }
+
+            el.dataset.universalActionReady = '1';
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        applyUniversalActionButtons(document);
+
+        const observer = new MutationObserver(function (mutations) {
+            mutations.forEach(function (mutation) {
+                mutation.addedNodes.forEach(function (node) {
+                    if (!node || node.nodeType !== 1) return;
+                    applyUniversalActionButtons(node);
+                });
+            });
+        });
+
+        observer.observe(document.body, { childList: true, subtree: true });
+    });
+})();
+</script>
+
+<script>
+(function () {
     let tooltipEl = null;
     let activeTarget = null;
 
@@ -177,14 +403,52 @@ if (!defined('APP_NAME')) {
 <!-- Flash Messages -->
 <!-- ============================= -->
 
+<script>
+(function () {
+    function getToastColors(icon) {
+        if (icon === 'success') return { bg: '#ecfdf3', border: '#86efac', color: '#166534' };
+        if (icon === 'error') return { bg: '#fef2f2', border: '#fca5a5', color: '#991b1b' };
+        if (icon === 'warning') return { bg: '#fff7ed', border: '#fdba74', color: '#9a3412' };
+        return { bg: '#eff6ff', border: '#93c5fd', color: '#1e3a8a' };
+    }
+
+    window.crmToast = function (opts) {
+        const options = opts || {};
+        const icon = options.icon || 'info';
+        const title = options.title || '';
+        const text = options.text || '';
+        const colors = getToastColors(icon);
+
+        return Swal.fire({
+            toast: options.toast !== false,
+            position: options.position || 'top-end',
+            showConfirmButton: options.showConfirmButton || false,
+            timer: options.timer || 2800,
+            timerProgressBar: options.timerProgressBar !== false,
+            icon: icon,
+            title: title,
+            text: text,
+            confirmButtonColor: '#e91e63',
+            customClass: { popup: 'crm-swal-popup' },
+            background: colors.bg,
+            color: colors.color,
+            didOpen: function (popup) {
+                popup.style.border = '1px solid ' + colors.border;
+                popup.style.borderRadius = '12px';
+                popup.style.boxShadow = '0 10px 24px rgba(15,23,42,.14)';
+            }
+        });
+    };
+})();
+</script>
+
 <?php if (function_exists('getFlash') && ($success = getFlash('success'))): ?>
 <script>
 document.addEventListener("DOMContentLoaded", function(){
-    Swal.fire({
+    crmToast({
         icon: 'success',
         title: 'Success',
-        text: <?= json_encode($success) ?>,
-        confirmButtonColor: '#e91e63'
+        text: <?= json_encode($success) ?>
     });
 });
 </script>
@@ -193,11 +457,10 @@ document.addEventListener("DOMContentLoaded", function(){
 <?php if (function_exists('getFlash') && ($error = getFlash('error'))): ?>
 <script>
 document.addEventListener("DOMContentLoaded", function(){
-    Swal.fire({
+    crmToast({
         icon: 'error',
         title: 'Error',
-        text: <?= json_encode($error) ?>,
-        confirmButtonColor: '#e91e63'
+        text: <?= json_encode($error) ?>
     });
 });
 </script>

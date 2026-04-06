@@ -222,9 +222,12 @@ $baseUrl="index.php?page=leads/list&q=$q&status=$status&assigned_to=$assigned";
         <input type="hidden" name="page" value="leads/list">
         
         <div class="filter-grid">
-            <div class="filter-item">
+            <div class="filter-item search-item">
                 <label><i class="fas fa-search"></i> Search</label>
-                <input type="text" name="q" value="<?=h($q)?>" placeholder="Name or phone...">
+                <div class="search-field">
+                    <i class="fas fa-search search-field-icon" aria-hidden="true"></i>
+                    <input type="text" name="q" value="<?=h($q)?>" placeholder="Name or phone...">
+                </div>
             </div>
             
             <div class="filter-item">

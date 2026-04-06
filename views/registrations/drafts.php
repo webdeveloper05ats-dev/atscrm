@@ -190,9 +190,9 @@ $rows=$stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
     .draft-card .card-header {
-        background: linear-gradient(135deg, #e91e63 0%, #ff5f8f 100%);
-        color: #fff;
-        border: none;
+        background: var(--light);
+        color: var(--dark);
+        border-bottom: 1px solid var(--border);
         padding: 16px 20px;
         font-size: 1rem;
         font-weight: 600;
@@ -223,13 +223,7 @@ $rows=$stmt->fetchAll(PDO::FETCH_ASSOC);
         margin-left: auto;
     }
 
-    #datatableControls .dt-top {
-        display: inline-flex;
-        align-items: center;
-        justify-content: flex-end;
-        gap: 8px;
-        flex-wrap: wrap;
-    }
+    #datatableControls .dt-top { width: 100%; }
 
     .draft-card .card-header small {
         font-weight: 400;
@@ -312,70 +306,7 @@ $rows=$stmt->fetchAll(PDO::FETCH_ASSOC);
         transition: 0.2s ease;
     }
 
-    #draftsTableArea .dataTables_length,
-    #draftsTableArea .dataTables_filter,
-    #draftsTableArea .dt-buttons {
-        margin: 0;
-        display: inline-flex;
-        align-items: center;
-    }
-
-    #draftsTableArea .dataTables_length label,
-    #draftsTableArea .dataTables_filter label {
-        margin: 0;
-        font-size: .82rem;
-        color: #6b7280;
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-    }
-
-    #draftsTableArea .dataTables_length select,
-    #draftsTableArea .dataTables_filter input {
-        border: 1px solid #f1d7e6;
-        border-radius: 10px;
-        min-height: 34px;
-        padding: 6px 10px;
-        font-size: .82rem;
-        background: #fff;
-        outline: none;
-    }
-
-    #draftsTableArea .dataTables_filter input {
-        min-width: 190px;
-        width: 240px;
-        max-width: 100%;
-    }
-
-    #draftsTableArea .dataTables_info {
-        font-size: .82rem;
-        color: #6b7280;
-        margin: 0;
-        float: none !important;
-    }
-
-    #draftsTableArea .dataTables_paginate {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        margin-left: auto;
-        float: none !important;
-    }
-
-    #draftsTableArea .dataTables_paginate .paginate_button {
-        border: 1px solid #f3cadd !important;
-        border-radius: 9px !important;
-        padding: 5px 10px !important;
-        font-size: .82rem;
-        color: #be185d !important;
-        background: #fff !important;
-    }
-
-    #draftsTableArea .dataTables_paginate .paginate_button.current {
-        background: #e91e63 !important;
-        border-color: #e91e63 !important;
-        color: #fff !important;
-    }
+    /* Use universal DataTable styles from assets/css/style.css */
 
     .draft-reg-no {
         font-weight: 700;
@@ -778,7 +709,7 @@ document.addEventListener("DOMContentLoaded", function(){
                 emptyTable: "No draft registrations found"
             },
             dom:
-                "<'dt-top'lfB>" +
+                "<'dt-top'lf>" +
                 "rt" +
                 "<'dt-bottom'ip>"
         });

@@ -592,12 +592,12 @@ if ($batchId > 0) {
             <div class="filter-item filter-actions">
                 <label class="actions-label">Actions</label>
                 <div class="import-actions-row">
-                    <button class="btn-filter" id="uploadLeadsBtn" type="submit">
-                        <i class="fas fa-upload"></i> Upload Leads
+                    <button class="btn-icon-only apply" id="uploadLeadsBtn" type="submit" title="Upload Leads" aria-label="Upload Leads">
+                        <i class="fas fa-upload"></i>
                     </button>
 
-                    <a href="index.php?page=leads/import&download=template" class="btn-reset">
-                        <i class="fas fa-download"></i> Download CSV Template
+                    <a href="index.php?page=leads/import&download=template" class="btn-icon-only reset" title="Download CSV Template" aria-label="Download CSV Template">
+                        <i class="fas fa-download"></i>
                     </a>
                 </div>
             </div>
@@ -725,8 +725,8 @@ if ($batchId > 0) {
                     </div>
 
                     <div style="align-self:flex-end;">
-                        <button class="btn-filter" type="submit">
-                            <i class="fas fa-user-check"></i> Assign Selected
+                        <button class="btn-icon-only apply" type="submit" title="Assign Selected" aria-label="Assign Selected">
+                            <i class="fas fa-user-check"></i>
                         </button>
                     </div>
                     </div>
@@ -1330,7 +1330,9 @@ if ($batchId > 0) {
 
                 if (uploadLeadsBtn) {
                     uploadLeadsBtn.disabled = true;
-                    uploadLeadsBtn.innerHTML = "<i class='fas fa-spinner fa-spin'></i> Uploading...";
+                    uploadLeadsBtn.setAttribute('title', 'Uploading...');
+                    uploadLeadsBtn.setAttribute('aria-label', 'Uploading...');
+                    uploadLeadsBtn.innerHTML = "<i class='fas fa-spinner fa-spin'></i>";
                 }
             });
         }
