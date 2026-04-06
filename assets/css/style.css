@@ -71,6 +71,55 @@ font-family:"Font Awesome 6 Free","Font Awesome 6 Brands" !important;
 --font-xxl:22px;
 --font-stat:32px;
 
+/* 11. Typography scale */
+--type-12:12px;
+--type-13:13px;
+--type-14:14px;
+--type-16:16px;
+--type-18:18px;
+--type-20:20px;
+--type-24:24px;
+--line-tight:1.2;
+--line-base:1.5;
+--line-relaxed:1.65;
+
+/* 12. Spacing scale */
+--space-1:4px;
+--space-2:8px;
+--space-3:12px;
+--space-4:16px;
+--space-5:20px;
+--space-6:24px;
+--space-7:32px;
+
+/* 13. Breakpoints */
+--bp-sm:576px;
+--bp-md:768px;
+--bp-lg:992px;
+--bp-xl:1200px;
+
+/* 14. Semantic color tokens */
+--color-bg:#fff7fa;
+--color-surface:#ffffff;
+--color-surface-soft:#fff4fa;
+--color-border:#f3c6d3;
+--color-text:#333333;
+--color-text-muted:#777777;
+--color-focus:#e91e63;
+--color-success:#2e7d32;
+--color-warning:#f59e0b;
+--color-danger:#dc2626;
+--color-info:#2563eb;
+
+}
+
+/* 14. Backward-compatible aliases */
+:root{
+--bg-light:var(--color-bg);
+--white:var(--color-surface);
+--border:var(--color-border);
+--text-dark:var(--color-text);
+--text-light:var(--color-text-muted);
 }
 
 /* ==========================================
@@ -207,6 +256,311 @@ color:#475569;
 }
 
 /* ==========================================
+UNIVERSAL ACTION BUTTONS
+========================================== */
+.crm-action-btn{
+display:inline-flex !important;
+align-items:center !important;
+justify-content:center !important;
+gap:6px;
+min-height:34px;
+padding:7px 10px !important;
+border:none !important;
+border-radius:9px !important;
+text-decoration:none !important;
+cursor:pointer;
+font-size:12px !important;
+font-weight:600;
+line-height:1 !important;
+transition:transform .18s ease,box-shadow .18s ease,background-color .18s ease,color .18s ease !important;
+box-shadow:0 6px 14px rgba(15,23,42,.10) !important;
+}
+
+.crm-action-btn:hover,
+.crm-action-btn:focus-visible{
+transform:translateY(-1px);
+outline:none;
+}
+
+.crm-action-btn.crm-action-icon{
+width:34px !important;
+min-width:34px !important;
+padding:0 !important;
+}
+
+.crm-action-btn.crm-action-icon i{
+font-size:12px;
+}
+
+.crm-action-btn.is-default{
+background:#e2e8f0 !important;
+color:#334155 !important;
+}
+
+.crm-action-btn.is-apply{
+background:linear-gradient(135deg,#ff4d8d,#e91e63) !important;
+color:#fff !important;
+}
+
+.crm-action-btn.is-reset{
+background:#64748b !important;
+color:#fff !important;
+}
+
+.crm-action-btn.is-add{
+background:#15803d !important;
+color:#fff !important;
+}
+
+.crm-action-btn.is-export{
+background:#0f766e !important;
+color:#fff !important;
+}
+
+.crm-action-btn.is-view{
+background:#2563eb !important;
+color:#fff !important;
+}
+
+.crm-action-btn.is-edit{
+background:#e91e63 !important;
+color:#fff !important;
+}
+
+.crm-action-btn.is-convert{
+background:#f59e0b !important;
+color:#fff !important;
+}
+
+.crm-action-btn.is-payment{
+background:#f97316 !important;
+color:#fff !important;
+}
+
+.crm-action-btn.is-idcard{
+background:#7c3aed !important;
+color:#fff !important;
+}
+
+.crm-action-btn.is-delete{
+background:#dc2626 !important;
+color:#fff !important;
+}
+
+.crm-action-btn.is-done{
+background:#2e7d32 !important;
+color:#fff !important;
+opacity:.92;
+}
+
+/* ==========================================
+UNIVERSAL STATUS BADGES (6)
+========================================== */
+.crm-status-badge{
+display:inline-flex;
+align-items:center;
+justify-content:center;
+gap:6px;
+padding:4px 10px;
+border-radius:999px;
+border:1px solid transparent;
+font-size:11px;
+font-weight:800;
+letter-spacing:.2px;
+line-height:1;
+text-transform:capitalize;
+white-space:nowrap;
+}
+
+.crm-status-badge.is-new,
+.crm-status-badge.is-active,
+.crm-status-badge.is-open{
+background:#eff6ff;
+border-color:#bfdbfe;
+color:#1d4ed8;
+}
+
+.crm-status-badge.is-contacted,
+.crm-status-badge.is-progress,
+.crm-status-badge.is-pending{
+background:#fff7ed;
+border-color:#fdba74;
+color:#c2410c;
+}
+
+.crm-status-badge.is-qualified,
+.crm-status-badge.is-scheduled{
+background:#f5f3ff;
+border-color:#c4b5fd;
+color:#6d28d9;
+}
+
+.crm-status-badge.is-converted,
+.crm-status-badge.is-completed,
+.crm-status-badge.is-success{
+background:#ecfdf3;
+border-color:#86efac;
+color:#15803d;
+}
+
+.crm-status-badge.is-closed,
+.crm-status-badge.is-inactive,
+.crm-status-badge.is-cancelled,
+.crm-status-badge.is-rejected{
+background:#f8fafc;
+border-color:#cbd5e1;
+color:#475569;
+}
+
+/* ==========================================
+UNIVERSAL PAGE HEADER BLOCK (7)
+========================================== */
+.crm-page-head{
+display:flex;
+align-items:center;
+justify-content:space-between;
+gap:12px;
+flex-wrap:wrap;
+margin-bottom:14px;
+}
+
+.crm-page-title{
+margin:0;
+font-size:28px;
+line-height:1.2;
+font-weight:800;
+color:#1f2937;
+display:inline-flex;
+align-items:center;
+gap:10px;
+}
+
+.crm-page-meta{
+display:inline-flex;
+align-items:center;
+gap:8px;
+padding:8px 12px;
+border-radius:999px;
+border:1px solid #f1d6e3;
+background:#fff;
+box-shadow:0 6px 16px rgba(17,24,39,.06);
+font-size:13px;
+font-weight:700;
+color:#be185d;
+}
+
+/* ==========================================
+UNIVERSAL ALERTS / TOAST LOOK
+========================================== */
+.alert,
+.alert-success,
+.alert-error,
+.alert-warning,
+.alert-info,
+.alert-danger{
+position:relative;
+margin:0 0 14px 0;
+padding:11px 13px;
+border-radius:12px !important;
+border:1px solid transparent;
+font-size:13px;
+font-weight:600;
+line-height:1.4;
+box-shadow:0 8px 18px rgba(15,23,42,.06);
+}
+
+.alert-success{
+background:#ecfdf3 !important;
+border-color:#86efac !important;
+color:#166534 !important;
+}
+
+.alert-error,
+.alert-danger{
+background:#fef2f2 !important;
+border-color:#fca5a5 !important;
+color:#991b1b !important;
+}
+
+.alert-warning{
+background:#fff7ed !important;
+border-color:#fdba74 !important;
+color:#9a3412 !important;
+}
+
+.alert-info{
+background:#eff6ff !important;
+border-color:#93c5fd !important;
+color:#1e3a8a !important;
+}
+
+/* ==========================================
+GLOBAL MODERN SEARCH (EXCEPT SIDEBAR)
+========================================== */
+.crm-modern-search{
+position:relative;
+width:100%;
+}
+
+.crm-modern-search-icon{
+position:absolute;
+left:12px;
+top:50%;
+transform:translateY(-50%);
+color:#a0a7b3;
+font-size:12px;
+line-height:1;
+pointer-events:none;
+transition:color .2s ease;
+z-index:2;
+}
+
+.crm-modern-search > input[name="q"]{
+width:100%;
+border-radius:999px !important;
+padding:10px 14px 10px 36px !important;
+border:1px solid #e2e8f0 !important;
+background:linear-gradient(180deg,#ffffff 0%,#f9fafc 100%) !important;
+box-shadow:0 4px 12px rgba(15,23,42,.05) !important;
+transition:border-color .2s ease,box-shadow .2s ease,background-color .2s ease !important;
+}
+
+.crm-modern-search > input[name="q"]::placeholder{
+color:#9aa3af;
+}
+
+.crm-modern-search > input[name="q"]:hover,
+.crm-modern-search > input[type="search"]:hover{
+border-color:#d4dbe6 !important;
+box-shadow:0 6px 14px rgba(15,23,42,.08) !important;
+}
+
+.crm-modern-search > input[name="q"]:focus,
+.crm-modern-search > input[type="search"]:focus{
+outline:none;
+border-color:var(--primary) !important;
+box-shadow:0 0 0 4px rgba(233,30,99,.12),0 10px 22px rgba(233,30,99,.14) !important;
+}
+
+.crm-modern-search:focus-within .crm-modern-search-icon{
+color:var(--primary);
+}
+
+.crm-modern-search > input[type="search"]{
+width:100%;
+border-radius:999px !important;
+padding:10px 14px 10px 36px !important;
+border:1px solid #e2e8f0 !important;
+background:linear-gradient(180deg,#ffffff 0%,#f9fafc 100%) !important;
+box-shadow:0 4px 12px rgba(15,23,42,.05) !important;
+transition:border-color .2s ease,box-shadow .2s ease,background-color .2s ease !important;
+}
+
+.crm-modern-search > input[type="search"]::placeholder{
+color:#9aa3af !important;
+}
+
+/* ==========================================
 4. PAGE BASE
 ========================================== */
 
@@ -220,7 +574,17 @@ body{
 font-size:var(--font-base);
 background:var(--bg-light);
 color:var(--text-dark);
+line-height:var(--line-base);
 }
+
+/* 11. Global type rhythm */
+h1{ font-size:var(--type-24); line-height:var(--line-tight); }
+h2{ font-size:var(--type-20); line-height:var(--line-tight); }
+h3{ font-size:var(--type-18); line-height:var(--line-tight); }
+h4{ font-size:var(--type-16); line-height:var(--line-base); }
+h5,h6{ font-size:var(--type-14); line-height:var(--line-base); }
+p,li,td,th,input,select,textarea,button{ font-size:var(--type-14); }
+small,.text-sm{ font-size:var(--type-12); }
 
 /* ==========================================
 5. LAYOUT
@@ -245,7 +609,7 @@ width:calc(100% - 78px);
 
 .main-content{
 width:100%;
-padding:26px;
+padding:var(--space-6);
 }
 
 /* ==========================================
@@ -612,8 +976,8 @@ font-weight:800;
 .card{
 background:#fff;
 border-radius:16px;
-padding:18px 20px;
-margin-bottom:18px;
+padding:var(--space-5);
+margin-bottom:var(--space-5);
 box-shadow:0 10px 26px rgba(233,30,99,0.08);
 border:1px solid rgba(233,30,99,0.10);
 }
@@ -707,10 +1071,10 @@ font-weight:800;
 ========================================== */
 
 .form-group{
-margin-bottom:15px;
+margin-bottom:var(--space-4);
 display:flex;
 flex-direction:column;
-gap:6px;
+gap:var(--space-2);
 }
 
 label{
@@ -734,6 +1098,7 @@ outline:none;
 box-shadow:0 0 0 3px rgba(233,30,99,0.12);
 }
 
+
 /* ==========================================
 15. DASHBOARD GRID
 ========================================== */
@@ -741,13 +1106,56 @@ box-shadow:0 0 0 3px rgba(233,30,99,0.12);
 .dashboard-grid{
 display:grid;
 grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
-gap:16px;
-margin-top:16px;
+gap:var(--space-4);
+margin-top:var(--space-4);
 }
 
 .stat-card{
 text-align:center;
-padding:26px 18px;
+padding:var(--space-6) var(--space-5);
+}
+
+/* 15. Accessibility baseline */
+::selection{
+background:rgba(233,30,99,.18);
+color:#1f2937;
+}
+
+:where(a,button,input,select,textarea,[role="button"],[tabindex]):focus-visible{
+outline:2px solid var(--color-focus);
+outline-offset:2px;
+}
+
+:where(button,[role="button"],.btn,.action-btn,.btn-icon-only,.crm-action-btn){
+min-height:36px;
+}
+
+.sr-only{
+position:absolute !important;
+width:1px !important;
+height:1px !important;
+padding:0 !important;
+margin:-1px !important;
+overflow:hidden !important;
+clip:rect(0,0,0,0) !important;
+white-space:nowrap !important;
+border:0 !important;
+}
+
+:where([aria-disabled="true"],[disabled]){
+cursor:not-allowed;
+opacity:.7;
+}
+
+@media (prefers-reduced-motion: reduce){
+*,
+*::before,
+*::after{
+animation-duration:.01ms !important;
+animation-iteration-count:1 !important;
+transition-duration:.01ms !important;
+scroll-behavior:auto !important;
+}
 }
 
 .stat-card h3{
@@ -922,7 +1330,8 @@ background:#dc3545;
 DATATABLE HEADER LAYOUT
 ====================================================== */
 
-.crm-table-header{
+.crm-table-header,
+.dt-top{
 display:flex;
 justify-content:space-between;
 align-items:center;
@@ -931,11 +1340,70 @@ gap:15px;
 margin-bottom:15px;
 }
 
+/* 13. Universal responsive behavior rules */
+@media (max-width: 992px){
+.main-content{
+padding:var(--space-4);
+}
+
+.card{
+padding:var(--space-4);
+}
+
+.filter-grid,
+.table-header-flex,
+.crm-table-header,
+.dt-top{
+gap:var(--space-3);
+}
+}
+
+@media (max-width: 768px){
+.filter-grid{
+display:flex;
+flex-direction:column;
+}
+
+.filter-actions{
+width:100%;
+justify-content:stretch;
+}
+
+.filter-actions :where(.btn,.btn-icon-only,.crm-action-btn){
+flex:1;
+}
+
+.crm-table-header,
+.dt-top,
+.crm-table-footer,
+.dt-bottom{
+flex-direction:column;
+align-items:stretch;
+}
+
+.dataTables_filter input{
+width:100% !important;
+min-width:0 !important;
+}
+}
+
+@media (max-width: 576px){
+.main-content{
+padding:var(--space-3);
+}
+
+.card{
+padding:var(--space-3);
+border-radius:12px;
+}
+}
+
 /* ======================================================
 SHOW ENTRIES
 ====================================================== */
 
-.crm-table-header .dataTables_length{
+.crm-table-header .dataTables_length,
+.dt-top .dataTables_length{
 display:flex !important;
 align-items:center;
 gap:6px;
@@ -943,13 +1411,15 @@ font-size:13px;
 white-space:nowrap;
 }
 
-.crm-table-header .dataTables_length label{
+.crm-table-header .dataTables_length label,
+.dt-top .dataTables_length label{
 display:flex;
 align-items:center;
 gap:6px;
 }
 
-.crm-table-header .dataTables_length select{
+.crm-table-header .dataTables_length select,
+.dt-top .dataTables_length select{
 padding:6px 10px;
 border:1px solid #e6c9d7;
 border-radius:6px;
@@ -963,13 +1433,15 @@ outline:none;
 SEARCH BOX
 ====================================================== */
 
-.crm-table-header .dataTables_filter{
+.crm-table-header .dataTables_filter,
+.dt-top .dataTables_filter{
 position:relative !important;
 display:flex !important;
 align-items:center !important;
 }
 
-.crm-table-header .dataTables_filter input{
+.crm-table-header .dataTables_filter input,
+.dt-top .dataTables_filter input{
 padding:10px 14px 10px 38px !important;
 border:1px solid #e6c9d7 !important;
 border-radius:25px !important;
@@ -980,12 +1452,14 @@ outline:none !important;
 transition:all .2s ease !important;
 }
 
-.crm-table-header .dataTables_filter input:focus{
+.crm-table-header .dataTables_filter input:focus,
+.dt-top .dataTables_filter input:focus{
 border-color:#e91e63 !important;
 box-shadow:0 0 0 3px rgba(233,30,99,.12) !important;
 }
 
-.crm-table-header .dataTables_filter::before{
+.crm-table-header .dataTables_filter::before,
+.dt-top .dataTables_filter::before{
 content:"\f002";
 font-family:"Font Awesome 6 Free";
 font-weight:900;
@@ -995,6 +1469,11 @@ top:50%;
 transform:translateY(-50%);
 font-size:12px;
 color:#999;
+}
+
+.crm-table-header .dataTables_filter.crm-modern-filter::before,
+.dt-top .dataTables_filter.crm-modern-filter::before{
+content:none !important;
 }
 
 
@@ -1026,7 +1505,8 @@ box-shadow:none !important;
 TABLE FOOTER
 ====================================================== */
 
-.crm-table-footer{
+.crm-table-footer,
+.dt-bottom{
 display:flex;
 justify-content:space-between;
 align-items:center;
@@ -1054,6 +1534,13 @@ PAGINATION
 display:flex;
 gap:6px;
 }
+
+.crm-table-header .dataTables_length{ order:1; }
+.crm-table-header .dataTables_filter{ order:2; margin-left:auto; }
+.crm-table-header .dt-buttons{ order:3; }
+.dt-top .dataTables_length{ order:1; }
+.dt-top .dataTables_filter{ order:2; margin-left:auto; }
+.dt-top .dt-buttons{ order:3; }
 
 .dataTables_wrapper .dataTables_paginate .paginate_button{
 padding:6px 12px !important;
@@ -1087,7 +1574,8 @@ min-width:600px;
 
 /* Header stack */
 
-.crm-table-header{
+.crm-table-header,
+.dt-top{
 flex-direction:column;
 align-items:stretch;
 gap:12px;
@@ -1095,23 +1583,27 @@ gap:12px;
 
 /* Show entries */
 
-.crm-table-header .dataTables_length{
+.crm-table-header .dataTables_length,
+.dt-top .dataTables_length{
 justify-content:center;
 }
 
 /* Search */
 
-.crm-table-header .dataTables_filter{
+.crm-table-header .dataTables_filter,
+.dt-top .dataTables_filter{
 width:100%;
 }
 
-.crm-table-header .dataTables_filter input{
+.crm-table-header .dataTables_filter input,
+.dt-top .dataTables_filter input{
 width:100% !important;
 }
 
 /* Export */
 
-.crm-table-header .dt-buttons{
+.crm-table-header .dt-buttons,
+.dt-top .dt-buttons{
 width:100%;
 }
 
@@ -1122,7 +1614,8 @@ text-align:center;
 
 /* Footer */
 
-.crm-table-footer{
+.crm-table-footer,
+.dt-bottom{
 flex-direction:column;
 align-items:center;
 gap:8px;
@@ -1733,6 +2226,59 @@ display:block;
 font-size:28px;
 margin-bottom:10px;
 color:#d39ab7;
+}
+
+/* ==========================================
+UNIVERSAL EMPTY + LOADING STATES
+========================================== */
+.no-data,
+.empty-note,
+.dataTables_wrapper td.dataTables_empty,
+.crm-empty-state{
+text-align:center !important;
+padding:20px 16px !important;
+border-radius:12px;
+color:#64748b;
+font-size:13px;
+font-weight:600;
+line-height:1.5;
+background:linear-gradient(180deg,#fff 0%,#f8fafc 100%);
+border:1px dashed #e2e8f0;
+}
+
+.no-data i,
+.crm-empty-state i{
+display:block;
+font-size:22px;
+margin-bottom:8px;
+color:#94a3b8;
+}
+
+.crm-loading{
+display:inline-flex;
+align-items:center;
+justify-content:center;
+gap:10px;
+padding:12px 14px;
+border:1px solid #f1d6e3;
+border-radius:12px;
+background:#fff7fb;
+color:#6b7280;
+font-weight:700;
+font-size:12px;
+}
+
+.crm-spinner{
+width:16px;
+height:16px;
+border-radius:50%;
+border:2px solid #f7c6da;
+border-top-color:#e91e63;
+animation:crmSpin .8s linear infinite;
+}
+
+@keyframes crmSpin{
+to{ transform:rotate(360deg); }
 }
 
 @media (max-width: 1400px){
