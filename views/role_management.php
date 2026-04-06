@@ -348,7 +348,10 @@ confirmButtonColor:'#e91e63'
 
     <div class="crm-card">
       <div class="crm-card-header">
-        <h3><i class="fas fa-list" style="margin-right: 8px;"></i> Roles List</h3>
+        <div class="role-table-title">
+          Roles List
+          <span class="role-table-count"><?= (int)$total ?></span>
+        </div>
         <div id="rolesTableControls" class="roles-table-controls"></div>
       </div>
         
@@ -388,10 +391,10 @@ confirmButtonColor:'#e91e63'
 </td>
                 <td>
                   <div class="atsrm-role-ui-actions">
-                    <a class="crm-btn crm-edit" href="index.php?page=role_management&edit=<?= $r['id'] ?>" data-tooltip="Edit role">
+                    <a class="action-btn edit" href="index.php?page=role_management&edit=<?= $r['id'] ?>" data-tooltip="Edit role">
                       <i class="fas fa-pen"></i>
                     </a>
-                    <a class="crm-btn crm-delete delete-role" data-id="<?= $r['id'] ?>" data-tooltip="Delete role" >
+                    <a class="action-btn delete delete-role" data-id="<?= $r['id'] ?>" data-tooltip="Delete role" >
                       <i class="fas fa-trash"></i>
   </a>
                   </div>
