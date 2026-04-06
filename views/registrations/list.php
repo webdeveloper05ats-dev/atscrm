@@ -298,11 +298,11 @@ if ($isAjax) {
             </div>
             <div class="pro-info-card">
               <span class="label">Final Fee</span>
-              <span class="value">₹ <?= h(number_format((float) ($reg['final_fee'] ?? 0), 2)) ?></span>
+              <span class="value">? <?= h(number_format((float) ($reg['final_fee'] ?? 0), 2)) ?></span>
             </div>
             <div class="pro-info-card">
               <span class="label">Balance</span>
-              <span class="value">₹ <?= h(number_format((float) ($reg['balance_amount'] ?? 0), 2)) ?></span>
+              <span class="value">? <?= h(number_format((float) ($reg['balance_amount'] ?? 0), 2)) ?></span>
             </div>
           </div>
 
@@ -388,7 +388,7 @@ if ($isAjax) {
                       <span class="pro-mini-badge history-mini-badge"><?= h(ucfirst($f['followup_type'] ?? '-')) ?></span>
                     </div>
                     <div class="pro-timeline-sub">
-                      Status: <?= h(ucfirst($f['status'] ?? 'pending')) ?> • By: <?= h($f['created_by_name'] ?? '-') ?>
+                      Status: <?= h(ucfirst($f['status'] ?? 'pending')) ?> � By: <?= h($f['created_by_name'] ?? '-') ?>
                     </div>
                     <?php if (!empty($f['notes'])): ?>
                       <div class="pro-timeline-note"><?= nl2br(h($f['notes'])) ?></div>
@@ -432,7 +432,7 @@ if ($isAjax) {
                         <div class="history-pay-date"><?= h($p['payment_date']) ?></div>
                         <div class="history-pay-receipt"><?= h($p['receipt_no'] ?: '-') ?></div>
                       </td>
-                      <td>₹ <?= h(number_format((float) $p['amount'], 2)) ?></td>
+                      <td>? <?= h(number_format((float) $p['amount'], 2)) ?></td>
                       <td><?= h($p['payment_mode']) ?></td>
                       <td><?= h($p['payment_type']) ?></td>
                       <td class="history-pay-status-cell">
@@ -549,15 +549,15 @@ if ($isAjax) {
           </div>
           <div class="pro-pay-card pm-fee">
             <span class="label"><i class="fas fa-coins"></i> Final Fee</span>
-            <span class="value">₹ <?= h(number_format($finalFee, 2)) ?></span>
+            <span class="value">? <?= h(number_format($finalFee, 2)) ?></span>
           </div>
           <div class="pro-pay-card pm-paid">
             <span class="label"><i class="fas fa-wallet"></i> Paid</span>
-            <span class="value">₹ <?= h(number_format($paidAmt, 2)) ?></span>
+            <span class="value">? <?= h(number_format($paidAmt, 2)) ?></span>
           </div>
           <div class="pro-pay-card highlight pm-balance">
             <span class="label"><i class="fas fa-hourglass-half"></i> Balance</span>
-            <span class="value">₹ <?= h(number_format($balance, 2)) ?></span>
+            <span class="value">? <?= h(number_format($balance, 2)) ?></span>
           </div>
         </div>
 
@@ -670,7 +670,7 @@ if ($isAjax) {
                         <div class="pay-history-date"><?= h($p['payment_date']) ?></div>
                         <div class="pay-history-receipt"><?= h($p['receipt_no'] ?: '-') ?></div>
                       </td>
-                      <td>₹ <?= h(number_format((float) $p['amount'], 2)) ?></td>
+                      <td>? <?= h(number_format((float) $p['amount'], 2)) ?></td>
                       <td><?= h($p['payment_mode']) ?></td>
                       <td><?= h($p['payment_type']) ?></td>
                       <td class="pay-history-status-cell">
@@ -1687,6 +1687,33 @@ function payStatusBadgeList($type)
     gap:6px;
   }
 }
+
+/* =====================================================
+GLOBAL TYPOGRAPHY STYLECSS SYNC
+font-family + font-size + font-weight only
+===================================================== */
+:where(body,button,input,select,textarea,label,span,p,h1,h2,h3,h4,h5,h6,a,div){
+  font-family:'Poppins',sans-serif !important;
+}
+:where(h1,.h1,.page-title,.crm-page-title,.dashboard-header h2){font-size:clamp(2rem, 2.5vw, 2.4rem) !important;font-weight:700 !important;}
+:where(h2,.h2,.section-title){font-size:clamp(1.6rem, 2vw, 2rem) !important;font-weight:600 !important;}
+:where(h3,.h3,.card-header,.table-title){font-size:clamp(1.3rem, 1.6vw, 1.5rem) !important;font-weight:600 !important;}
+:where(h4,.h4){font-size:1.2rem !important;font-weight:500 !important;}
+:where(h5,.h5){font-size:1rem !important;font-weight:500 !important;}
+:where(h6,.h6){font-size:0.9rem !important;font-weight:500 !important;}
+:where(body){font-size:1rem !important;}
+:where(p,.text-body,li,td,.text-muted,.help-text,.form-text,.small,small,.secondary-text){font-size:0.95rem !important;font-weight:400 !important;}
+:where(.small,small,.text-muted,.help-text,.form-text,.att-sub,.crm-note){font-size:0.85rem !important;font-weight:400 !important;}
+:where(label,.form-label){font-size:0.85rem !important;font-weight:500 !important;}
+:where(input,select,textarea,.form-control,.form-select){font-size:0.95rem !important;font-weight:400 !important;}
+:where(input::placeholder,textarea::placeholder){font-weight:400 !important;}
+:where(button,.btn,.dt-button,.crm-action-btn,.crm-icon-btn,.btn-icon-only,.action-btn,.targets-btn-icon,.iso-report-btn,.iso-report-action-btn){font-size:0.9rem !important;font-weight:600 !important;}
+:where(.btn[data-mobile-label],.btn-icon-only[data-mobile-label],.action-btn[data-mobile-label],.crm-icon-btn[data-mobile-label],.targets-btn-icon[data-mobile-label],.iso-report-icon-btn[data-mobile-label],.iso-report-action-btn[data-mobile-label])::after{font-size:0.75rem !important;font-weight:600 !important;}
+:where(.table th,.crm-table th,.dataTables_wrapper th,th){font-size:0.75rem !important;font-weight:600 !important;}
+:where(.table td,.dataTables_wrapper tbody td){font-size:0.9rem !important;}
+:where(.dataTables_wrapper .dataTables_info){font-size:0.85rem !important;font-weight:400 !important;}
+:where(.dataTables_wrapper .paginate_button){font-size:0.9rem !important;font-weight:600 !important;}
+:where(.badge,.status-badge,.crm-status-badge,.status-pill,.badge-status,[data-status],.tooltip,.ui-tooltip,.floating-ui-tooltip__bubble){font-weight:600 !important;}
 </style>
 
 <h2 style="display:none;">Registrations List</h2>
@@ -1829,9 +1856,9 @@ function payStatusBadgeList($type)
                   </td>
 
                   <td>
-                    <div class="primary-text">₹ <?= h(number_format((float) ($r['final_fee'] ?? 0), 2)) ?></div>
-                    <div class="secondary-text">Paid: ₹ <?= h(number_format((float) ($r['paid_amount'] ?? 0), 2)) ?></div>
-                    <div class="secondary-text">Bal: ₹ <?= h(number_format((float) ($r['balance_amount'] ?? 0), 2)) ?></div>
+                    <div class="primary-text">? <?= h(number_format((float) ($r['final_fee'] ?? 0), 2)) ?></div>
+                    <div class="secondary-text">Paid: ? <?= h(number_format((float) ($r['paid_amount'] ?? 0), 2)) ?></div>
+                    <div class="secondary-text">Bal: ? <?= h(number_format((float) ($r['balance_amount'] ?? 0), 2)) ?></div>
                   </td>
 
                   <td>
@@ -1894,7 +1921,7 @@ function payStatusBadgeList($type)
       <div class="crm-modal-title" id="crmModalTitle">
         <i class="fas fa-layer-group"></i> Details
       </div>
-      <button type="button" class="crm-modal-close" onclick="closeCrmModal()">×</button>
+      <button type="button" class="crm-modal-close" onclick="closeCrmModal()">�</button>
     </div>
     <div class="crm-modal-body" id="crmModalBody">
       <div class="empty-note">Loading...</div>

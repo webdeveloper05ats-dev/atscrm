@@ -525,6 +525,33 @@ if ($paymentId <= 0) {
     font-size:10px !important;
   }
 }
+
+/* =====================================================
+GLOBAL TYPOGRAPHY STYLECSS SYNC
+font-family + font-size + font-weight only
+===================================================== */
+:where(body,button,input,select,textarea,label,span,p,h1,h2,h3,h4,h5,h6,a,div){
+  font-family:'Poppins',sans-serif !important;
+}
+:where(h1,.h1,.page-title,.crm-page-title,.dashboard-header h2){font-size:clamp(2rem, 2.5vw, 2.4rem) !important;font-weight:700 !important;}
+:where(h2,.h2,.section-title){font-size:clamp(1.6rem, 2vw, 2rem) !important;font-weight:600 !important;}
+:where(h3,.h3,.card-header,.table-title){font-size:clamp(1.3rem, 1.6vw, 1.5rem) !important;font-weight:600 !important;}
+:where(h4,.h4){font-size:1.2rem !important;font-weight:500 !important;}
+:where(h5,.h5){font-size:1rem !important;font-weight:500 !important;}
+:where(h6,.h6){font-size:0.9rem !important;font-weight:500 !important;}
+:where(body){font-size:1rem !important;}
+:where(p,.text-body,li,td,.text-muted,.help-text,.form-text,.small,small,.secondary-text){font-size:0.95rem !important;font-weight:400 !important;}
+:where(.small,small,.text-muted,.help-text,.form-text,.att-sub,.crm-note){font-size:0.85rem !important;font-weight:400 !important;}
+:where(label,.form-label){font-size:0.85rem !important;font-weight:500 !important;}
+:where(input,select,textarea,.form-control,.form-select){font-size:0.95rem !important;font-weight:400 !important;}
+:where(input::placeholder,textarea::placeholder){font-weight:400 !important;}
+:where(button,.btn,.dt-button,.crm-action-btn,.crm-icon-btn,.btn-icon-only,.action-btn,.targets-btn-icon,.iso-report-btn,.iso-report-action-btn){font-size:0.9rem !important;font-weight:600 !important;}
+:where(.btn[data-mobile-label],.btn-icon-only[data-mobile-label],.action-btn[data-mobile-label],.crm-icon-btn[data-mobile-label],.targets-btn-icon[data-mobile-label],.iso-report-icon-btn[data-mobile-label],.iso-report-action-btn[data-mobile-label])::after{font-size:0.75rem !important;font-weight:600 !important;}
+:where(.table th,.crm-table th,.dataTables_wrapper th,th){font-size:0.75rem !important;font-weight:600 !important;}
+:where(.table td,.dataTables_wrapper tbody td){font-size:0.9rem !important;}
+:where(.dataTables_wrapper .dataTables_info){font-size:0.85rem !important;font-weight:400 !important;}
+:where(.dataTables_wrapper .paginate_button){font-size:0.9rem !important;font-weight:600 !important;}
+:where(.badge,.status-badge,.crm-status-badge,.status-pill,.badge-status,[data-status],.tooltip,.ui-tooltip,.floating-ui-tooltip__bubble){font-weight:600 !important;}
 </style>
 
 <div class="receipt-page">
@@ -637,7 +664,7 @@ if ($paymentId <= 0) {
             <div class="receipt-box-title">Payment Details</div>
             <div class="receipt-row">
               <div class="receipt-label">Amount Received</div>
-              <div class="receipt-value">₹ <?= h(number_format($paymentAmount, 2)) ?></div>
+              <div class="receipt-value">? <?= h(number_format($paymentAmount, 2)) ?></div>
             </div>
             <div class="receipt-row">
               <div class="receipt-label">Payment Mode</div>
@@ -657,7 +684,7 @@ if ($paymentId <= 0) {
             </div>
             <div class="receipt-row">
               <div class="receipt-label">Balance Amount</div>
-              <div class="receipt-value">₹ <?= h(number_format($balanceAmount, 2)) ?></div>
+              <div class="receipt-value">? <?= h(number_format($balanceAmount, 2)) ?></div>
             </div>
           </div>
 
@@ -665,28 +692,28 @@ if ($paymentId <= 0) {
             <div class="receipt-box-title">Fee Summary</div>
             <div class="receipt-row">
               <div class="receipt-label">Total Fee</div>
-              <div class="receipt-value">₹ <?= h(number_format((float)($payment['total_fee'] ?? 0), 2)) ?></div>
+              <div class="receipt-value">? <?= h(number_format((float)($payment['total_fee'] ?? 0), 2)) ?></div>
             </div>
             <div class="receipt-row">
               <div class="receipt-label">Discount</div>
-              <div class="receipt-value">₹ <?= h(number_format((float)($payment['discount_amount'] ?? 0), 2)) ?></div>
+              <div class="receipt-value">? <?= h(number_format((float)($payment['discount_amount'] ?? 0), 2)) ?></div>
             </div>
             <div class="receipt-row">
               <div class="receipt-label">Final Fee</div>
-              <div class="receipt-value">₹ <?= h(number_format($finalFee, 2)) ?></div>
+              <div class="receipt-value">? <?= h(number_format($finalFee, 2)) ?></div>
             </div>
             <div class="receipt-row">
               <div class="receipt-label">Total Paid</div>
-              <div class="receipt-value">₹ <?= h(number_format($paidAmount, 2)) ?></div>
+              <div class="receipt-value">? <?= h(number_format($paidAmount, 2)) ?></div>
             </div>
             <div class="receipt-row">
               <div class="receipt-label">Balance</div>
-              <div class="receipt-value">₹ <?= h(number_format($balanceAmount, 2)) ?></div>
+              <div class="receipt-value">? <?= h(number_format($balanceAmount, 2)) ?></div>
             </div>
           </div>
 
           <div class="receipt-box full print-hide-box" style="text-align:center;background:#fff7fb;">
-            <div class="money-big">₹ <?= h(number_format($paymentAmount, 2)) ?></div>
+            <div class="money-big">? <?= h(number_format($paymentAmount, 2)) ?></div>
             <div class="money-sub">Received from the student toward the above registration.</div>
           </div>
 
