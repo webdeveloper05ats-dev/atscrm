@@ -107,6 +107,37 @@
   letter-spacing: .2px;
 }
 
+.role-table-title {
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  border-bottom: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #3f2a36;
+  font-size: 1.02rem;
+  font-weight: 800;
+  letter-spacing: .2px;
+  white-space: nowrap;
+}
+
+.role-table-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  height: 28px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid #f3d2e1;
+  background: #fff;
+  color: #be185d;
+  font-size: .74rem;
+  font-weight: 700;
+  box-shadow: none;
+}
+
 .atsrm-role-ui-header {
   font-size: 1rem;
   font-weight: 700;
@@ -342,13 +373,17 @@
   width: 100%;
 }
 
-.roles-table-controls .dt-top{
-    justify-content: end;
-    gap:12px;
-    margin-bottom: 2px;
+.roles-table-controls .dt-top,
+.roles-table-controls .crm-table-header{
+    justify-content: flex-end;
+    gap: 12px;
+    margin: 0 !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
 }
 
-#rolesTableFooter .dt-bottom{
+#rolesTableFooter .dt-bottom,
+#rolesTableFooter .crm-table-footer{
     justify-content: space-between;
     gap: 12px;
 }
@@ -359,34 +394,39 @@
   border-top: 1px solid #f3dbe7;
 }
 
-.dataTables_length label,
-.dataTables_filter label {
-  margin: 0;
-  font-size: .78rem;
-  color: #7b6472;
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  font-weight: 600;
+/* Keep only minor sizing for this page; universal DataTable styles come from assets/css/style.css */
+#rolesTableControls .dataTables_filter input { min-width: 220px; }
+
+/* Force universal modern search appearance in role management table toolbar */
+#rolesTableControls .crm-modern-search > input[type="search"] {
+  min-width: 220px;
+  width: 260px !important;
+  border-radius: 999px !important;
 }
 
-.dataTables_length select,
-.dataTables_filter input {
-  border: 1px solid #eecfe0;
-  border-radius: 9px;
-  min-height: 34px;
-  padding: 6px 10px;
-  font-size: .82rem;
-  color: #4d3a45;
-  background: #fff;
+/* Exact toolbar bug fix: Show entries + Search alignment */
+#rolesTableControls .dataTables_length,
+#rolesTableControls .dataTables_filter {
+  display: inline-flex !important;
+  align-items: center !important;
+  margin: 0 !important;
 }
 
-.dataTables_filter input { min-width: 200px; }
-.dataTables_length select:focus,
-.dataTables_filter input:focus {
-  outline: none;
-  border-color: #e91e63;
-  box-shadow: 0 0 0 3px rgba(233,30,99,.12);
+#rolesTableControls .dataTables_length label,
+#rolesTableControls .dataTables_filter label {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  margin: 0 !important;
+  white-space: nowrap !important;
+  line-height: 1 !important;
+}
+
+#rolesTableControls .dataTables_length select,
+#rolesTableControls .dataTables_filter input[type="search"] {
+  min-height: 36px !important;
+  height: 36px !important;
+  margin: 0 !important;
 }
 
 .dt-buttons .buttons-csv {
@@ -431,6 +471,11 @@
 .dataTables_paginate .paginate_button.disabled {
   opacity: .5;
   cursor: not-allowed !important;
+}
+
+/* Universal action button sizing for role table */
+.atsrm-role-ui-actions .action-btn {
+  margin-right: 0;
 }
 
 /* remove datatable inner vertical scroll area */
