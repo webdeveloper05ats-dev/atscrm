@@ -620,16 +620,20 @@ function payBadgeIntern($status)
         transform:translateY(-1px);
     }
 
-    .intern-view-btn{
-        background:#eef5ff;
-        color:#1565c0;
-        border-color:#d6e7ff;
+    .intern-action-btn.intern-view-btn,
+    .intern-action-btn.intern-view-btn.crm-action-btn{
+        background:#2563eb !important;
+        color:#fff !important;
+        border-color:#2563eb !important;
+        box-shadow:0 8px 16px rgba(37,99,235,.18) !important;
     }
 
-    .intern-manage-btn{
-        background:linear-gradient(135deg,#ff4d8d,#e91e63);
-        color:#fff;
-        box-shadow:0 8px 16px rgba(233,30,99,.18);
+    .intern-action-btn.intern-manage-btn,
+    .intern-action-btn.intern-manage-btn.crm-action-btn{
+        background:linear-gradient(135deg,#ff4d8d,#e91e63) !important;
+        color:#fff !important;
+        border-color:#e91e63 !important;
+        box-shadow:0 8px 16px rgba(233,30,99,.18) !important;
     }
 
     .intern-pay-badge{
@@ -709,9 +713,12 @@ gap:8px;
 flex-wrap:wrap;
 }
 
-.intern-view-btn{
-background:#e8f4fd;
-color:#1565c0;
+.intern-action-btn.intern-view-btn,
+.intern-action-btn.intern-view-btn.crm-action-btn{
+background:#2563eb !important;
+color:#fff !important;
+border-color:#2563eb !important;
+box-shadow:0 8px 16px rgba(37,99,235,.18) !important;
 }
 
 .intern-view-grid{
@@ -783,6 +790,52 @@ grid-column:1/-1;
 
   .intern-table-wrap{
     padding:0;
+  }
+
+  .intern-action-wrap{
+    display:flex;
+    flex-wrap:wrap;
+    justify-content:flex-end;
+    gap:6px;
+  }
+
+  .intern-action-btn{
+    width:auto !important;
+    min-width:56px !important;
+    height:auto !important;
+    min-height:38px !important;
+    padding:6px 8px !important;
+    display:inline-flex !important;
+    flex-direction:column !important;
+    align-items:center !important;
+    justify-content:center !important;
+    gap:3px !important;
+    border-radius:10px !important;
+  }
+
+  .intern-action-btn[data-mobile-label]::before{
+    content:none !important;
+    display:none !important;
+  }
+
+  .intern-action-btn[data-mobile-label]::after{
+    content:attr(data-mobile-label) !important;
+    position:static !important;
+    display:block !important;
+    opacity:1 !important;
+    visibility:visible !important;
+    transform:none !important;
+    background:none !important;
+    border:0 !important;
+    box-shadow:none !important;
+    padding:0 !important;
+    margin:0 !important;
+    font-size:10px !important;
+    line-height:1.1 !important;
+    font-weight:700 !important;
+    letter-spacing:.1px !important;
+    color:currentColor !important;
+    white-space:nowrap !important;
   }
 }
 </style>
@@ -915,7 +968,7 @@ grid-column:1/-1;
 
                         <td class="text-center">
                             <div class="intern-action-wrap">
-                                <button type="button" class="intern-action-btn intern-view-btn viewInternBtn" title="View Internship"
+                                <button type="button" class="intern-action-btn intern-view-btn viewInternBtn" title="View Internship" data-mobile-label="View"
                                     data-name="<?= h($r['enquiry_snapshot_name']) ?>"
                                     data-regno="<?= h($r['registration_no']) ?>"
                                     data-phone="<?= h(visibleStudentContactValue($r['enquiry_snapshot_phone'] ?? '')) ?>"
@@ -933,7 +986,7 @@ grid-column:1/-1;
                                     <i class="fas fa-eye"></i>
                                 </button>
 
-                                <button type="button" class="intern-action-btn intern-manage-btn manageInternBtn" title="Manage Internship" data-id="<?= (int) $r['id'] ?>"
+                                <button type="button" class="intern-action-btn intern-manage-btn manageInternBtn" title="Manage Internship" data-id="<?= (int) $r['id'] ?>" data-mobile-label="Manage"
                                     data-name="<?= h($r['enquiry_snapshot_name']) ?>"
                                     data-start="<?= h($r['internship_start_date']) ?>"
                                     data-end="<?= h($r['internship_end_date']) ?>"
