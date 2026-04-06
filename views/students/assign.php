@@ -740,6 +740,32 @@ LEFT JOIN users guide_u ON guide_u.id = COALESCE(rc.guide_staff_id, ri.guide_sta
         .stu-table-wrap{
             padding:0;
         }
+
+        /* Mobile card row fix: keep Assign Staff control compact and stable */
+        #assignStudentsTable tbody td:nth-child(7) .crm-card-value,
+        #assignStudentsTable tbody td[data-label="Assign Staff"] .crm-card-value{
+            max-width:100% !important;
+            width:100% !important;
+        }
+
+        .stu-assign-form{
+            width:100%;
+            display:grid;
+            grid-template-columns:1fr;
+            gap:8px;
+            align-items:stretch;
+            justify-items:stretch;
+            padding:8px;
+        }
+
+        .stu-assign-form .stu-assign-main,
+        .stu-assign-form .stu-assign-mini,
+        .stu-assign-form .stu-save-btn{
+            width:100% !important;
+            min-width:0 !important;
+            flex:1 1 auto !important;
+            margin:0 !important;
+        }
     }
 </style>
 
@@ -845,7 +871,7 @@ LEFT JOIN users guide_u ON guide_u.id = COALESCE(rc.guide_staff_id, ri.guide_sta
                                     <input type="hidden" name="assign_student" value="1">
                                     <input type="hidden" name="registration_id" value="<?= (int) $r['id'] ?>">
 
-                                    <select name="staff_id" class="stu-assign-main" data-modern-select="on" title="<?= h($r['assigned_staff'] ?: 'Select Staff') ?>" required>
+                                    <select name="staff_id" class="stu-assign-main" data-modern-select="off" title="<?= h($r['assigned_staff'] ?: 'Select Staff') ?>" required>
                                         <option value="">Select Staff</option>
                                         <?php foreach ($staffUsers as $s): ?>
                                             <option value="<?= (int) $s['id'] ?>" <?= ((int) $r['guide_staff_id'] === (int) $s['id']) ? 'selected' : '' ?>>
@@ -855,7 +881,7 @@ LEFT JOIN users guide_u ON guide_u.id = COALESCE(rc.guide_staff_id, ri.guide_sta
                                     </select>
 
                                     <?php if (($r['reg_type'] ?? '') === 'internship'): ?>
-                                        <select name="internship_days" class="stu-assign-mini" data-modern-select="on" required>
+                                        <select name="internship_days" class="stu-assign-mini" data-modern-select="off" required>
                                             <option value="">Days</option>
                                             <option value="7" <?= ((int) $r['internship_days'] === 7) ? 'selected' : '' ?>>7 Days</option>
                                             <option value="15" <?= ((int) $r['internship_days'] === 15) ? 'selected' : '' ?>>15 Days</option>
@@ -863,7 +889,7 @@ LEFT JOIN users guide_u ON guide_u.id = COALESCE(rc.guide_staff_id, ri.guide_sta
                                             <option value="30" <?= ((int) $r['internship_days'] === 30) ? 'selected' : '' ?>>30 Days</option>
                                         </select>
 
-                                        <select name="internship_batch" class="stu-assign-mini" data-modern-select="on" required>
+                                        <select name="internship_batch" class="stu-assign-mini" data-modern-select="off" required>
                                             <option value="">Batch</option>
                                             <option value="Morning" <?= (($r['internship_batch'] ?? '') === 'Morning') ? 'selected' : '' ?>>Morning</option>
                                             <option value="Evening" <?= (($r['internship_batch'] ?? '') === 'Evening') ? 'selected' : '' ?>>Evening</option>

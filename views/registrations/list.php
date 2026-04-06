@@ -414,7 +414,7 @@ if ($isAjax) {
             <div class="empty-note">No payments added yet.</div>
           <?php else: ?>
             <div class="pro-table-scroll history-table-scroll">
-              <table class="pro-mini-table history-mini-table">
+              <table class="pro-mini-table history-mini-table no-mobile-cards">
                 <thead>
                   <tr>
                     <th>Date / Receipt</th>
@@ -652,7 +652,7 @@ if ($isAjax) {
             <div class="empty-note">No payments added yet.</div>
           <?php else: ?>
             <div class="pro-table-scroll">
-              <table class="pro-mini-table">
+              <table class="pro-mini-table no-mobile-cards">
                 <thead>
                   <tr>
                     <th>Date / Receipt</th>
@@ -1415,7 +1415,7 @@ function payStatusBadgeList($type)
   margin-left:auto !important;
 }
 
-@media (max-width: 768px){
+@media (max-width: 1024px){
   .leads-dashboard{
     padding:8px;
   }
@@ -1459,18 +1459,50 @@ function payStatusBadgeList($type)
   }
 
   .filter-actions{
-    display:flex !important;
+    display:grid !important;
+    grid-template-columns:repeat(2, minmax(0, 1fr));
     justify-content:stretch !important;
     gap:10px !important;
-    flex-wrap:wrap !important;
+    width:100%;
   }
 
   .filter-actions .btn-icon-only{
-    flex:1 1 calc(50% - 5px);
-    width:auto !important;
+    width:100% !important;
     min-width:0;
-    height:42px;
+    height:auto;
+    min-height:40px;
+    padding:6px 8px !important;
     border-radius:10px;
+    display:inline-flex !important;
+    flex-direction:column !important;
+    align-items:center !important;
+    justify-content:center !important;
+    gap:3px !important;
+  }
+
+  .filter-actions .btn-icon-only[data-mobile-label]::before{
+    content:none !important;
+    display:none !important;
+  }
+
+  .filter-actions .btn-icon-only[data-mobile-label]::after{
+    content:attr(data-mobile-label) !important;
+    position:static !important;
+    display:block !important;
+    opacity:1 !important;
+    visibility:visible !important;
+    transform:none !important;
+    background:none !important;
+    border:0 !important;
+    box-shadow:none !important;
+    padding:0 !important;
+    margin:0 !important;
+    font-size:10px !important;
+    line-height:1.1 !important;
+    font-weight:700 !important;
+    letter-spacing:.1px !important;
+    color:currentColor !important;
+    white-space:nowrap !important;
   }
 
   .table-container{
@@ -1491,6 +1523,45 @@ function payStatusBadgeList($type)
 
   .action-buttons{
     flex-wrap:wrap;
+  }
+
+  .action-buttons .action-btn{
+    width:auto !important;
+    min-width:56px !important;
+    height:auto !important;
+    min-height:38px !important;
+    padding:6px 8px !important;
+    display:inline-flex !important;
+    flex-direction:column !important;
+    align-items:center !important;
+    justify-content:center !important;
+    gap:3px !important;
+    border-radius:10px !important;
+  }
+
+  .action-buttons .action-btn[data-mobile-label]::before{
+    content:none !important;
+    display:none !important;
+  }
+
+  .action-buttons .action-btn[data-mobile-label]::after{
+    content:attr(data-mobile-label) !important;
+    position:static !important;
+    display:block !important;
+    opacity:1 !important;
+    visibility:visible !important;
+    transform:none !important;
+    background:none !important;
+    border:0 !important;
+    box-shadow:none !important;
+    padding:0 !important;
+    margin:0 !important;
+    font-size:10px !important;
+    line-height:1.1 !important;
+    font-weight:700 !important;
+    letter-spacing:.1px !important;
+    color:currentColor !important;
+    white-space:nowrap !important;
   }
 
   .table-header-flex{
@@ -1641,10 +1712,10 @@ function payStatusBadgeList($type)
         </div>
 
         <div class="filter-actions">
-          <button type="submit" class="btn-icon-only apply" title="Apply filters">
+          <button type="submit" class="btn-icon-only apply" title="Apply filters" data-mobile-label="Apply">
             <i class="fas fa-filter"></i>
           </button>
-          <a href="index.php?page=registrations/list" class="btn-icon-only reset" title="Reset filters">
+          <a href="index.php?page=registrations/list" class="btn-icon-only reset" title="Reset filters" data-mobile-label="Reset">
             <i class="fas fa-undo-alt"></i>
           </a>
         </div>
@@ -1709,21 +1780,25 @@ function payStatusBadgeList($type)
                   <td>
                     <div class="action-buttons">
                       <button type="button" class="action-btn view" onclick="openHistoryModal(<?= (int) $r['id'] ?>)"
+                        data-mobile-label="View"
                         title="View History">
                         <i class="fas fa-eye"></i>
                       </button>
 
                       <a class="action-btn edit" href="index.php?page=registrations/convert & reg_id=<?= (int) $r['id'] ?>"
+                        data-mobile-label="Edit"
                         title="Edit Registration">
                         <i class="fas fa-pen"></i>
                       </a>
 
                       <button type="button" class="action-btn payment" onclick="openPaymentModal(<?= (int) $r['id'] ?>)"
+                        data-mobile-label="Payment"
                         title="Add Payment">
                         <i class="fas fa-wallet"></i>
                       </button>
 
                       <button type="button" class="action-btn idcard" onclick="openIdCardModal(<?= (int) $r['id'] ?>)"
+                        data-mobile-label="ID Card"
                         title="Generate ID Card">
                         <i class="fas fa-id-card"></i>
                       </button>
@@ -1733,6 +1808,7 @@ function payStatusBadgeList($type)
                           <input type="hidden" name="csrf_token" value="<?= h(generateCSRF()) ?>">
                           <input type="hidden" name="reg_id" value="<?= (int) $r['id'] ?>">
                           <button type="submit" name="delete_registration" class="action-btn delete"
+                            data-mobile-label="Delete"
                             title="Delete Registration">
                             <i class="fas fa-trash-alt"></i>
                           </button>

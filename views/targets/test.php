@@ -962,7 +962,7 @@ Modern SaaS UI - Product Ready
 
             <div class="iso-report-card-body">
                 <div class="iso-report-table-wrap">
-                    <table class="iso-report-table">
+                    <table class="iso-report-table no-mobile-cards">
                         <thead>
                             <tr>
                                 <th data-tooltip="Serial number">#</th>

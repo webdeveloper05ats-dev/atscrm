@@ -985,7 +985,7 @@ function studentProfileReportMark($value): string
             <div class="tab-panel">
                 <h3 class="panel-title">Payment History</h3>
                 <div class="payment-table-wrap">
-                    <table class="report-table">
+                    <table class="report-table no-mobile-cards">
 
                         <thead>
                             <tr>
@@ -1218,7 +1218,7 @@ function studentProfileReportMark($value): string
                 <?php else: ?>
                     <h3 class="panel-title">Placement Interview History</h3>
                     <div class="payment-table-wrap">
-                        <table class="report-table">
+                        <table class="report-table no-mobile-cards">
                             <thead>
                                 <tr>
                                     <th>Company</th>

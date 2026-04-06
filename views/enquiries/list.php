@@ -383,8 +383,10 @@ $baseUrl = "index.php?page=enquiries/list"
           <td class="id-col">#<?= (int)$r['id'] ?></td>
 
           <td>
-            <div class="lead-name"><?= h($r['enquiry_no'] ?: ('ENQ-' . $r['id'])) ?></div>
-            <div class="lead-interest"><?= h($r['enquiry_date'] ?: date('Y-m-d', strtotime($r['created_at'] ?? 'now'))) ?></div>
+            <div class="enquiry-meta">
+              <div class="lead-name"><?= h($r['enquiry_no'] ?: ('ENQ-' . $r['id'])) ?></div>
+              <div class="lead-interest"><?= h($r['enquiry_date'] ?: date('Y-m-d', strtotime($r['created_at'] ?? 'now'))) ?></div>
+            </div>
           </td>
 
           <td>
@@ -441,6 +443,110 @@ $baseUrl = "index.php?page=enquiries/list"
   justify-content:space-between;
   gap:12px;
   flex-wrap:wrap;
+}
+
+@media (max-width: 768px){
+  .filter-actions{
+    display:grid !important;
+    grid-template-columns:repeat(3, minmax(0, 1fr));
+    align-items:stretch;
+    gap:8px;
+    width:100%;
+  }
+
+  .filter-actions .btn-icon-only{
+    width:100% !important;
+    min-width:0 !important;
+    height:auto !important;
+    min-height:40px !important;
+    padding:6px 8px !important;
+    display:inline-flex !important;
+    flex-direction:column !important;
+    align-items:center !important;
+    justify-content:center !important;
+    gap:3px !important;
+  }
+
+  .filter-actions .btn-icon-only[data-mobile-label]::before{
+    content:none !important;
+    display:none !important;
+  }
+
+  .filter-actions .btn-icon-only[data-mobile-label]::after{
+    content:attr(data-mobile-label) !important;
+    position:static !important;
+    display:block !important;
+    opacity:1 !important;
+    visibility:visible !important;
+    transform:none !important;
+    background:none !important;
+    border:0 !important;
+    box-shadow:none !important;
+    padding:0 !important;
+    margin:0 !important;
+    font-size:10px !important;
+    line-height:1.1 !important;
+    font-weight:700 !important;
+    letter-spacing:.1px !important;
+    color:currentColor !important;
+    white-space:nowrap !important;
+  }
+
+  /* Mobile card readability: keep right-side values stacked and clean */
+  #enquiriesTable tbody td{
+    align-items:flex-start !important;
+  }
+
+  #enquiriesTable tbody td .lead-name,
+  #enquiriesTable tbody td .lead-interest,
+  #enquiriesTable tbody td .contact-phone,
+  #enquiriesTable tbody td .contact-email{
+    display:block;
+    width:100%;
+    text-align:right;
+    line-height:1.3;
+  }
+
+  #enquiriesTable tbody td .contact-email{
+    margin-top:4px;
+    overflow-wrap:anywhere;
+    word-break:break-word;
+  }
+
+  #enquiriesTable tbody td .contact-phone i,
+  #enquiriesTable tbody td .contact-email i{
+    margin-right:6px;
+  }
+
+  /* ENQUIRY row: label stays left, value block stays right in 2 lines */
+  #enquiriesTable tbody td:nth-child(2) .enquiry-meta,
+  #enquiriesTable tbody td[data-label="Enquiry"] .enquiry-meta{
+    margin-left:auto;
+    width:auto;
+    max-width:58%;
+  }
+
+  #enquiriesTable tbody td:nth-child(2) .enquiry-meta .lead-name,
+  #enquiriesTable tbody td[data-label="Enquiry"] .enquiry-meta .lead-name{
+    display:block;
+    width:100%;
+    text-align:right;
+    white-space:nowrap;
+    word-break:normal;
+    overflow-wrap:normal;
+    line-height:1.25;
+  }
+
+  #enquiriesTable tbody td:nth-child(2) .enquiry-meta .lead-interest,
+  #enquiriesTable tbody td[data-label="Enquiry"] .enquiry-meta .lead-interest{
+    display:block;
+    width:100%;
+    text-align:right;
+    white-space:nowrap;
+    font-size:12px;
+    color:#7b8794;
+    line-height:1.25;
+  }
 }
 </style>
 

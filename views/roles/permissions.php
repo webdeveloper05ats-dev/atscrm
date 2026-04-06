@@ -74,7 +74,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <form method="POST">
 <input type="hidden" name="role_id" value="<?= $selectedRoleId ?>">
 
-<table border="1" cellpadding="8" cellspacing="0" width="100%">
+<table class="no-mobile-cards" border="1" cellpadding="8" cellspacing="0" width="100%">
     <tr style="background:#f2f2f2;">
         <th>Menu</th>
         <th>View</th>

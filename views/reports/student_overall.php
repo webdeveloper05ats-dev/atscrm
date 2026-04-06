@@ -170,7 +170,7 @@ if ($registrationId > 0) {
             <div class="sor-panel" style="margin-top:16px;">
                 <div class="sor-panel-title">Placement Interview History</div>
                 <div class="table-responsive">
-                    <table class="table sor-table">
+                    <table class="table sor-table no-mobile-cards">
                         <thead><tr><th>Company</th><th>Date</th><th>Mode</th><th>Status</th><th>Remarks</th></tr></thead>
                         <tbody>
                             <?php if (empty($academicData['placement_history'])): ?>

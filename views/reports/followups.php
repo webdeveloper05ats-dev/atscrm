@@ -18,7 +18,7 @@ $reportId = (int)($_GET['report_id'] ?? 0);
 
 <input type="hidden" name="report_id" value="<?= $reportId ?>">
 
-<table class="table table-bordered">
+<table class="table table-bordered no-mobile-cards">
 <thead>
 <tr>
 <th>Name</th>

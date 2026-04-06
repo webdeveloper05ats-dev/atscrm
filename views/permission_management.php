@@ -583,9 +583,27 @@ exit;
   to { transform: rotate(360deg); }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 1200px) {
   .perm-layout {
     grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  .perm-sidebar-card {
+    position: static;
+    top: auto;
+    margin-bottom: 0;
+  }
+  .perm-card-body {
+    padding: 12px;
+  }
+}
+
+@media (max-width: 1024px) {
+  .perm-layout {
+    grid-template-columns: 1fr;
+  }
+  .perm-card {
+    overflow: visible;
   }
   .perm-sidebar-card {
     position: static;
@@ -593,6 +611,93 @@ exit;
   }
   .perm-role-select {
     max-width: 100%;
+  }
+  .perm-toolbar-wrap {
+    overflow-x: hidden;
+  }
+  .perm-toolbar {
+    min-width: 0;
+    flex-wrap: wrap;
+    align-items: stretch;
+  }
+  .perm-toolbar-left,
+  .perm-toolbar-right {
+    width: 100%;
+    min-width: 0;
+    flex-wrap: wrap;
+  }
+  .perm-search,
+  .perm-filter {
+    width: 100%;
+    min-width: 0;
+    flex: 1 1 100%;
+  }
+  .perm-toolbar-right button {
+    flex: 1 1 calc(50% - 8px);
+    min-width: 0;
+  }
+  .perm-table-wrap {
+    max-height: none;
+    overflow-x: auto;
+    overflow-y: visible;
+  }
+  .perm-table-wrap {
+    border: none;
+    overflow: visible;
+    max-height: none;
+  }
+  .perm-table {
+    width: 100%;
+    min-width: 0;
+    border-collapse: separate;
+    border-spacing: 0;
+    table-layout: auto;
+  }
+  .perm-table thead {
+    display: none;
+  }
+  .perm-table tbody {
+    display: block;
+  }
+  .perm-table tr {
+    display: block;
+    background: #fff;
+    border: 1px solid var(--perm-border);
+    border-radius: 10px;
+    margin-bottom: 10px;
+    overflow: hidden;
+  }
+  .perm-table td {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    width: 100%;
+    border-bottom: 1px solid #f7e2eb;
+    padding: 10px 12px;
+  }
+  .perm-table td:last-child {
+    border-bottom: none;
+  }
+  .perm-table td.perm-menu-col {
+    display: block;
+    padding-bottom: 8px;
+  }
+  .perm-table td.perm-perm-cell::before {
+    content: attr(data-label);
+    font-size: 12px;
+    font-weight: 700;
+    color: #6b7280;
+    letter-spacing: .2px;
+  }
+  .permission-page {
+    position: static;
+    justify-content: center;
+    background: transparent;
+  }
+  .permission-page .perm-btn-primary {
+    width: 100%;
+    min-width: 0;
   }
   .perm-table th,
   .perm-table td {
@@ -608,12 +713,47 @@ exit;
   .perm-toolbar {
     gap: 6px;
   }
-  .perm-filter {
-    min-width: 116px;
+  .perm-filter,
+  .perm-search {
+    min-width: 0 !important;
   }
-  .perm-search { min-width: 170px; }
+  .perm-toolbar-right button {
+    flex: 1 1 100%;
+  }
+  .perm-switch {
+    width: 36px;
+    height: 20px;
+  }
+  .perm-slider:before {
+    width: 16px;
+    height: 16px;
+  }
+  .perm-switch input:checked + .perm-slider:before {
+    transform: translateX(16px);
+  }
+  .perm-child {
+    padding-left: 22px !important;
+  }
+  .perm-child::before {
+    left: 10px;
+  }
   .perm-menu-slug {
     display: none;
+  }
+}
+
+@media (max-width: 576px) {
+  .perm-card-body {
+    padding: 12px;
+  }
+  .perm-main-meta {
+    gap: 6px;
+  }
+  .perm-toolbar-right button {
+    flex: 1 1 100%;
+  }
+  .perm-table {
+    min-width: 0;
   }
 }
 </style>
@@ -629,7 +769,7 @@ exit;
 
 <div class="perm-card-body">
 
-<select id="role_select" class="perm-role-select">
+<select id="role_select" class="perm-role-select" data-modern-select="on">
 
 <option value="">Select Role</option>
 
@@ -673,13 +813,13 @@ exit;
 <div class="perm-toolbar permission-actions">
 <div class="perm-toolbar-left">
 <input type="text" id="perm_search" class="perm-search" placeholder="Search menu or slug...">
-<select id="perm_filter" class="perm-filter">
+<select id="perm_filter" class="perm-filter" data-modern-select="off">
 <option value="all">All Rows</option>
 <option value="main">Main Menus</option>
 <option value="sub">Sub Menus</option>
 <option value="enabled">Only Enabled</option>
 </select>
-<select id="perm_density" class="perm-filter">
+<select id="perm_density" class="perm-filter" data-modern-select="off">
 <option value="comfortable">Comfortable</option>
 <option value="compact">Compact</option>
 </select>
@@ -716,7 +856,7 @@ exit;
 
 <tr class="perm-parent-row" data-menu-id="<?= (int)$parent['id'] ?>">
 
-<td>
+<td class="perm-menu-col">
 
 <div class="perm-menu-cell perm-parent-cell">
 <span class="perm-row-type">Main Menu</span>
@@ -728,7 +868,7 @@ exit;
 
 <?php foreach(['view','add','edit','delete'] as $p): ?>
 
-<td class="perm-center">
+<td class="perm-center perm-perm-cell" data-label="<?= strtoupper($p) ?>">
 
 <label class="perm-switch">
 
@@ -753,7 +893,7 @@ data-perm="<?= $p ?>">
 
 <tr class="perm-child-row" data-menu-id="<?= (int)$child['id'] ?>" data-parent-id="<?= (int)$parent['id'] ?>">
 
-<td class="perm-child">
+<td class="perm-child perm-menu-col">
 
 <div class="perm-menu-cell perm-child-cell">
 <span class="perm-row-type">Sub Menu</span>
@@ -765,7 +905,7 @@ data-perm="<?= $p ?>">
 
 <?php foreach(['view','add','edit','delete'] as $p): ?>
 
-<td class="perm-center">
+<td class="perm-center perm-perm-cell" data-label="<?= strtoupper($p) ?>">
 
 <label class="perm-switch">
 

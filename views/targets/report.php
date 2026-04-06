@@ -2385,7 +2385,7 @@ grid-template-columns:1fr;
 
             <div class="iso-report-card-body">
                 <div class="iso-report-table-wrap">
-                    <table class="iso-report-table" id="targetsReportTable">
+                    <table class="iso-report-table no-mobile-cards" id="targetsReportTable">
                         <colgroup>
                             <col class="rank-col">
                             <col class="user-col">
@@ -2657,7 +2657,7 @@ grid-template-columns:1fr;
                             Monthly History
                         </div>
                         <div class="iso-report-history-wrap">
-                            <table class="iso-report-mini-table">
+                            <table class="iso-report-mini-table no-mobile-cards">
                                 <thead>
                                     <tr>
                                         <th>Period</th>
@@ -2682,7 +2682,7 @@ grid-template-columns:1fr;
                             Current Month Collections
                         </div>
                         <div class="iso-report-collection-wrap">
-                            <table class="iso-report-mini-table iso-report-collection-table">
+                            <table class="iso-report-mini-table iso-report-collection-table no-mobile-cards">
                                 <thead>
                                     <tr>
                                         <th class="col-date">Date</th>

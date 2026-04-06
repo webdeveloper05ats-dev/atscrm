@@ -327,7 +327,7 @@ PERSONAL INFORMATION
 
 <h3 class="section-title">Personal Information</h3>
 
-<table class="student-profile-table">
+<table class="student-profile-table no-mobile-cards">
 
 <tr>
 <td>Gender</td>
@@ -382,7 +382,7 @@ COURSE / INTERNSHIP
 
 <h3 class="section-title">Course / Internship Information</h3>
 
-<table class="student-profile-table">
+<table class="student-profile-table no-mobile-cards">
 
 <tr>
 <td>Course Type</td>
@@ -417,7 +417,7 @@ FEE SUMMARY
 
 <h3 class="section-title">Fee Summary</h3>
 
-<table class="student-profile-table">
+<table class="student-profile-table no-mobile-cards">
 
 <tr>
 <td>Total Fee</td>
@@ -457,7 +457,7 @@ PAYMENT HISTORY
 
 <h3 class="section-title">Payment History</h3>
 
-<table class="student-profile-table">
+<table class="student-profile-table no-mobile-cards">
 
 <thead>
 

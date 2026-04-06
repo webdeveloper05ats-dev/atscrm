@@ -235,7 +235,7 @@ No payments recorded yet.
 
 <div class="pro-table-scroll">
 
-<table class="pro-mini-table">
+<table class="pro-mini-table no-mobile-cards">
 
 <thead>
 <tr>
