@@ -33,22 +33,22 @@ responsive:true,
 scrollX:true,
 
 dom:
-options.export === false
-? "<\"crm-table-header\"lf>" +
+options.export === true
+? "<\"crm-table-header\"lfB>" +
   "rt" +
   "<\"crm-table-footer\"ip>"
-: "<\"crm-table-header\"lfB>" +
+: "<\"crm-table-header\"lf>" +
   "rt" +
   "<\"crm-table-footer\"ip>",
 
 buttons:
-options.export === false
-? []
-: [{
+options.export === true
+? [{
 extend:'csvHtml5',
 text:'Export CSV',
 className:'crm-export-btn'
-}],
+}]
+: [],
 
 language:{
 search:"",
@@ -58,8 +58,9 @@ emptyTable: inferredEmptyText || "No records found."
 
 };
 
-settings = {...settings, ...options};
-settings.language = {...settings.language, ...(options.language || {})};
+const { language: optionLanguage = {}, ...optionRest } = options;
+settings = { ...settings, ...optionRest };
+settings.language = { ...settings.language, ...optionLanguage };
 
 return $table.DataTable(settings);
 
