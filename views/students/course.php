@@ -171,6 +171,8 @@ try {
                         $studentName = $row['student_name'] ?: $row['enquiry_snapshot_name'] ?: '-';
                         $certificateIssuedAt = trim((string) ($row['internship_certificate_issued_at'] ?? ''));
                         $certificateStatus = strtolower(trim((string) ($row['internship_certificate_status'] ?? 'not_given')));
+                        $certificateSnapshotExists = crmCourseCertificateSnapshotExists((int) $row['id']);
+                        $certificateIsViewOnly = $certificateSnapshotExists;
                         ?>
                         <tr>
                             <td>
@@ -194,8 +196,8 @@ try {
                                 </span>
                             </td>
                             <td>
-                                <span class="status-pill <?= $certificateStatus === 'given' ? 'status-success' : 'status-muted' ?>">
-                                    <?= h($certificateStatus === 'given' ? 'Issued' : 'Not Issued') ?>
+                                <span class="status-pill <?= $certificateIsViewOnly || $certificateStatus === 'given' ? 'status-success' : 'status-muted' ?>">
+                                    <?= h($certificateIsViewOnly || $certificateStatus === 'given' ? 'Issued' : 'Not Issued') ?>
                                 </span>
                                 <div class="handlink-sub">
                                     <?= h($certificateIssuedAt !== '' && $certificateIssuedAt !== '0000-00-00 00:00:00' ? $certificateIssuedAt : '-') ?>
@@ -210,16 +212,28 @@ try {
                                         aria-label="View student details">
                                         <i class="fas fa-eye"></i>
                                     </a>
-                                    <button
-                                        type="button"
-                                        class="crm-icon-btn is-success js-open-certificate-modal"
-                                        data-registration-id="<?= (int) $row['id'] ?>"
-                                        data-student-name="<?= h($studentName) ?>"
-                                        data-registration-no="<?= h($row['registration_no'] ?: ('REG-' . $row['id'])) ?>"
-                                        data-modern-tooltip="<?= h($certificateStatus === 'given' ? 'Open certificate' : 'Generate certificate') ?>"
-                                        aria-label="<?= h($certificateStatus === 'given' ? 'Open certificate' : 'Generate certificate') ?>">
-                                        <i class="fas fa-certificate"></i>
-                                    </button>
+                                    <?php if ($certificateIsViewOnly): ?>
+                                        <a
+                                            href="index.php?page=students/course_certificate&id=<?= (int) $row['id'] ?>"
+                                            target="_blank"
+                                            rel="noopener"
+                                            class="crm-icon-btn is-success"
+                                            data-modern-tooltip="Open certificate"
+                                            aria-label="Open certificate">
+                                            <i class="fas fa-certificate"></i>
+                                        </a>
+                                    <?php else: ?>
+                                        <button
+                                            type="button"
+                                            class="crm-icon-btn is-success js-open-certificate-modal"
+                                            data-registration-id="<?= (int) $row['id'] ?>"
+                                            data-student-name="<?= h($studentName) ?>"
+                                            data-registration-no="<?= h($row['registration_no'] ?: ('REG-' . $row['id'])) ?>"
+                                            data-modern-tooltip="Generate certificate"
+                                            aria-label="Generate certificate">
+                                            <i class="fas fa-certificate"></i>
+                                        </button>
+                                    <?php endif; ?>
                                 </div>
                             </td>
                         </tr>
@@ -858,4 +872,5 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 });
+
 </script>

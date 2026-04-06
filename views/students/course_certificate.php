@@ -63,11 +63,12 @@ if ($id <= 0) {
     return;
 }
 
+$existingSnapshot = crmLoadCourseCertificateSnapshot($id);
 $submittedRemark = '';
 $submittedHrName = '';
 $uploadedSignaturePath = '';
 
-if ($requestMethod === 'POST') {
+if ($requestMethod === 'POST' && $existingSnapshot === null) {
     if (!verifyCSRF($_POST['csrf_token'] ?? '')) {
         echo 'Invalid CSRF token.';
         return;
@@ -111,10 +112,13 @@ $sql = "
         COALESCE(rp.student_name, r.enquiry_snapshot_name) AS student_name,
         rp.college_name,
         rp.qualification,
+        COALESCE(rp.parent_name, e.father_name) AS parent_name,
+        " . crmBuildParentEmailFallbackSelect($pdo, 'rp', 'e') . " AS parent_email,
         shi.sent_to_hr_at
     FROM registrations r
     INNER JOIN student_hr_interviews shi ON shi.registration_id = r.id
     LEFT JOIN registration_profiles rp ON rp.registration_id = r.id
+    LEFT JOIN enquiries e ON e.id = r.enquiry_id
     WHERE r.id = ?
       AND r.reg_type = 'course'
       AND r.payment_status = 'paid'
@@ -153,30 +157,6 @@ try {
     $mockAverage = null;
 }
 
-$issuedAt = trim((string) ($student['internship_certificate_issued_at'] ?? ''));
-if ($issuedAt === '' || $issuedAt === '0000-00-00 00:00:00') {
-    $issuedAt = date('Y-m-d H:i:s');
-    try {
-        $upd = $pdo->prepare("
-            UPDATE registrations
-            SET registration_status = 'completed',
-                internship_completion_status = 'completed',
-                internship_certificate_status = 'given',
-                internship_certificate_issued_at = ?,
-                updated_at = NOW()
-            WHERE id = ?
-              AND reg_type = 'course'
-            LIMIT 1
-        ");
-        $upd->execute([$issuedAt, $id]);
-        $student['registration_status'] = 'completed';
-        $student['internship_completion_status'] = 'completed';
-        $student['internship_certificate_status'] = 'given';
-        $student['internship_certificate_issued_at'] = $issuedAt;
-    } catch (Exception $e) {
-    }
-}
-
 $performanceNumbers = [];
 if ($assessmentAverage !== null && $assessmentAverage !== false && is_numeric($assessmentAverage)) {
     $performanceNumbers[] = (float) $assessmentAverage;
@@ -200,15 +180,108 @@ if ($submittedRemark !== '') {
     $performanceRemark = $submittedRemark;
 }
 
-$startDate = trim((string) ($student['joined_on'] ?? ''));
-$startDateText = $startDate !== '' ? date('d.m.Y', strtotime($startDate)) : date('d.m.Y', strtotime($issuedAt));
-$endDateText = date('d.m.Y', strtotime($issuedAt));
-$studentName = strtoupper(trim((string) ($student['student_name'] ?? '-')));
-$programName = strtoupper(trim((string) ($student['program_name'] ?? '-')));
-$certificateNo = 'UCSPL8024103156';
-$hrName = $submittedHrName !== ''
-    ? $submittedHrName
-    : (string) ($_SESSION['full_name'] ?? $_SESSION['name'] ?? $_SESSION['username'] ?? 'Human Resource');
+$snapshot = $existingSnapshot;
+if ($snapshot === null) {
+    if ($requestMethod !== 'POST') {
+        echo 'Certificate has not been generated yet.';
+        return;
+    }
+
+    $issuedAt = trim((string) ($student['internship_certificate_issued_at'] ?? ''));
+    if ($issuedAt === '' || $issuedAt === '0000-00-00 00:00:00') {
+        $issuedAt = date('Y-m-d H:i:s');
+    }
+
+    try {
+        $upd = $pdo->prepare("
+            UPDATE registrations
+            SET registration_status = 'completed',
+                internship_completion_status = 'completed',
+                internship_certificate_status = 'given',
+                internship_certificate_issued_at = ?,
+                updated_at = NOW()
+            WHERE id = ?
+              AND reg_type = 'course'
+            LIMIT 1
+        ");
+        $upd->execute([$issuedAt, $id]);
+    } catch (Exception $e) {
+    }
+
+    $student['registration_status'] = 'completed';
+    $student['internship_completion_status'] = 'completed';
+    $student['internship_certificate_status'] = 'given';
+    $student['internship_certificate_issued_at'] = $issuedAt;
+
+    $startDate = trim((string) ($student['joined_on'] ?? ''));
+    $startDateText = $startDate !== '' ? date('d.m.Y', strtotime($startDate)) : date('d.m.Y', strtotime($issuedAt));
+    $endDateText = date('d.m.Y', strtotime($issuedAt));
+    $studentName = strtoupper(trim((string) ($student['student_name'] ?? '-')));
+    $programName = strtoupper(trim((string) ($student['program_name'] ?? '-')));
+    $hrName = $submittedHrName !== ''
+        ? $submittedHrName
+        : (string) ($_SESSION['full_name'] ?? $_SESSION['name'] ?? $_SESSION['username'] ?? 'Human Resource');
+    $certificateNo = 'ATS-COURSE-' . str_pad((string) $id, 6, '0', STR_PAD_LEFT);
+
+    $snapshot = [
+        'certificate_no' => $certificateNo,
+        'issued_at' => $issuedAt,
+        'student_name' => $studentName,
+        'student_name_raw' => (string) ($student['student_name'] ?? ''),
+        'program_name' => $programName,
+        'program_name_raw' => (string) ($student['program_name'] ?? ''),
+        'start_date_text' => $startDateText,
+        'end_date_text' => $endDateText,
+        'performance_remark' => $performanceRemark,
+        'hr_name' => $hrName,
+        'signature_path' => $uploadedSignaturePath,
+        'registration_no' => (string) ($student['registration_no'] ?? ''),
+        'student_email' => (string) ($student['enquiry_snapshot_email'] ?? ''),
+        'parent_name' => (string) ($student['parent_name'] ?? ''),
+        'parent_email' => (string) ($student['parent_email'] ?? ''),
+        'overall_score' => $overallScore,
+    ];
+
+    if (!crmSaveCourseCertificateSnapshot($id, $snapshot)) {
+        echo 'Failed to store certificate snapshot.';
+        return;
+    }
+
+    $studentDisplayName = trim((string) ($snapshot['student_name_raw'] ?? 'Student'));
+    $certificateUrl = BASE_URL . 'index.php?page=students/course_certificate&id=' . $id;
+    $recipients = [
+        ['email' => $snapshot['student_email'] ?? '', 'name' => $studentDisplayName],
+        ['email' => $snapshot['parent_email'] ?? '', 'name' => trim((string) ($snapshot['parent_name'] ?? 'Parent'))],
+    ];
+    $htmlBody = '
+        <p>Dear Student and Parent,</p>
+        <p>The course completion certificate has been generated successfully.</p>
+        <p><strong>Student:</strong> ' . h($studentDisplayName) . '<br>
+        <strong>Registration No:</strong> ' . h((string) ($snapshot['registration_no'] ?? '')) . '<br>
+        <strong>Program:</strong> ' . h((string) ($snapshot['program_name_raw'] ?? '')) . '<br>
+        <strong>Issued At:</strong> ' . h((string) ($snapshot['issued_at'] ?? '')) . '<br>
+        <strong>Certificate Link:</strong> <a href="' . h($certificateUrl) . '">' . h($certificateUrl) . '</a></p>
+        <p>Regards,<br>' . h(APP_NAME) . '</p>';
+    $textBody = "Dear Student and Parent,\n\n"
+        . "The course completion certificate has been generated successfully.\n"
+        . "Student: {$studentDisplayName}\n"
+        . "Registration No: " . (string) ($snapshot['registration_no'] ?? '') . "\n"
+        . "Program: " . (string) ($snapshot['program_name_raw'] ?? '') . "\n"
+        . "Issued At: " . (string) ($snapshot['issued_at'] ?? '') . "\n"
+        . "Certificate Link: {$certificateUrl}\n\n"
+        . "Regards,\n" . APP_NAME;
+    crmSendEmail($recipients, 'Course certificate generated for ' . $studentDisplayName, $htmlBody, $textBody);
+}
+
+$issuedAt = (string) ($snapshot['issued_at'] ?? '');
+$startDateText = (string) ($snapshot['start_date_text'] ?? '');
+$endDateText = (string) ($snapshot['end_date_text'] ?? '');
+$studentName = (string) ($snapshot['student_name'] ?? '-');
+$programName = (string) ($snapshot['program_name'] ?? '-');
+$certificateNo = (string) ($snapshot['certificate_no'] ?? '');
+$hrName = (string) ($snapshot['hr_name'] ?? 'Human Resource');
+$performanceRemark = (string) ($snapshot['performance_remark'] ?? 'Satisfactory');
+$uploadedSignaturePath = (string) ($snapshot['signature_path'] ?? '');
 ?>
 <!doctype html>
 <html lang="en">

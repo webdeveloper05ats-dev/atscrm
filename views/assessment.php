@@ -110,9 +110,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_assessment'])) {
             }
 
             $studentSql = "
-                SELECT r.id, r.branch_id
+                SELECT
+                    r.id,
+                    r.branch_id,
+                    r.registration_no,
+                    r.enquiry_snapshot_name,
+                    r.enquiry_snapshot_email,
+                    r.program_name,
+                    COALESCE(rp.parent_name, e.father_name) AS parent_name,
+                    " . crmBuildParentEmailFallbackSelect($pdo, 'rp', 'e') . " AS parent_email
                 FROM registrations r
                 INNER JOIN registration_courses rc ON rc.registration_id = r.id
+                LEFT JOIN registration_profiles rp ON rp.registration_id = r.id
+                LEFT JOIN enquiries e ON e.id = r.enquiry_id
                 WHERE r.id = ?
                   AND rc.guide_staff_id = ?
                   AND r.reg_type = 'course'
@@ -121,7 +131,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_assessment'])) {
             $studentParams = [$registrationId, $userId];
 
             if ($canAllBranches !== 1 && $branchId > 0) {
-                $studentSql .= " AND branch_id = ?";
+                $studentSql .= " AND r.branch_id = ?";
                 $studentParams[] = $branchId;
             }
 
@@ -196,7 +206,44 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_assessment'])) {
 
             $pdo->commit();
 
-            setFlash('success', 'Assessment marks saved successfully.');
+            $studentDisplayName = trim((string) ($studentRow['enquiry_snapshot_name'] ?? 'Student'));
+            $parentDisplayName = trim((string) ($studentRow['parent_name'] ?? '')) !== '' ? trim((string) ($studentRow['parent_name'] ?? '')) : 'Parent';
+            $recipients = [
+                ['email' => $studentRow['enquiry_snapshot_email'] ?? '', 'name' => $studentDisplayName],
+                ['email' => $studentRow['parent_email'] ?? '', 'name' => $parentDisplayName],
+            ];
+            $htmlBody = '
+                <p>Dear Student and Parent,</p>
+                <p>The assessment marks for the course student have been updated.</p>
+                <p><strong>Student:</strong> ' . h($studentDisplayName) . '<br>
+                <strong>Registration No:</strong> ' . h((string) ($studentRow['registration_no'] ?? '')) . '<br>
+                <strong>Program:</strong> ' . h((string) ($studentRow['program_name'] ?? '')) . '<br>
+                <strong>Assessment 1:</strong> ' . h($mark1 !== null ? number_format((float) $mark1, 2, '.', '') : '-') . '<br>
+                <strong>Assessment 2:</strong> ' . h($mark2 !== null ? number_format((float) $mark2, 2, '.', '') : '-') . '<br>
+                <strong>Assessment 3:</strong> ' . h($mark3 !== null ? number_format((float) $mark3, 2, '.', '') : '-') . '<br>
+                <strong>Average:</strong> ' . h($average !== null ? number_format((float) $average, 2, '.', '') : '-') . '</p>
+                <p>Regards,<br>' . h(APP_NAME) . '</p>';
+            $textBody = "Dear Student and Parent,\n\n"
+                . "The assessment marks for the course student have been updated.\n"
+                . "Student: {$studentDisplayName}\n"
+                . "Registration No: " . (string) ($studentRow['registration_no'] ?? '') . "\n"
+                . "Program: " . (string) ($studentRow['program_name'] ?? '') . "\n"
+                . "Assessment 1: " . ($mark1 !== null ? number_format((float) $mark1, 2, '.', '') : '-') . "\n"
+                . "Assessment 2: " . ($mark2 !== null ? number_format((float) $mark2, 2, '.', '') : '-') . "\n"
+                . "Assessment 3: " . ($mark3 !== null ? number_format((float) $mark3, 2, '.', '') : '-') . "\n"
+                . "Average: " . ($average !== null ? number_format((float) $average, 2, '.', '') : '-') . "\n\n"
+                . "Regards,\n" . APP_NAME;
+            $mailError = null;
+            $mailWarning = '';
+            if (!crmSendEmail($recipients, 'Assessment marks updated for ' . $studentDisplayName, $htmlBody, $textBody, $mailError)) {
+                $mailWarning = ' Email delivery failed';
+                if ($mailError) {
+                    $mailWarning .= ': ' . $mailError;
+                }
+                $mailWarning .= '.';
+            }
+
+            setFlash('success', 'Assessment marks saved successfully.' . $mailWarning);
             redirect('index.php?page=assessment');
         } catch (InvalidArgumentException $e) {
             if ($pdo->inTransaction()) {

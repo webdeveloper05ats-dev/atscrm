@@ -180,9 +180,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_mock_interview']
             }
 
             $studentSql = "
-                SELECT r.id, r.branch_id
+                SELECT
+                    r.id,
+                    r.branch_id,
+                    r.registration_no,
+                    r.enquiry_snapshot_name,
+                    r.enquiry_snapshot_email,
+                    r.program_name,
+                    COALESCE(rp.parent_name, e.father_name) AS parent_name,
+                    " . crmBuildParentEmailFallbackSelect($pdo, 'rp', 'e') . " AS parent_email
                 FROM registrations r
                 INNER JOIN registration_courses rc ON rc.registration_id = r.id
+                LEFT JOIN registration_profiles rp ON rp.registration_id = r.id
+                LEFT JOIN enquiries e ON e.id = r.enquiry_id
                 WHERE r.id = ?
                   AND rc.guide_staff_id = ?
                   AND r.reg_type = 'course'
@@ -191,7 +201,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_mock_interview']
             $studentParams = [$registrationId, $userId];
 
             if ($canAllBranches !== 1 && $branchId > 0) {
-                $studentSql .= " AND branch_id = ?";
+                $studentSql .= " AND r.branch_id = ?";
                 $studentParams[] = $branchId;
             }
 
@@ -231,7 +241,42 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_mock_interview']
                 $mockAverage,
             ]);
 
-            setFlash('success', 'Mock interview marks saved successfully.');
+            $studentDisplayName = trim((string) ($studentRow['enquiry_snapshot_name'] ?? 'Student'));
+            $parentDisplayName = trim((string) ($studentRow['parent_name'] ?? '')) !== '' ? trim((string) ($studentRow['parent_name'] ?? '')) : 'Parent';
+            $recipients = [
+                ['email' => $studentRow['enquiry_snapshot_email'] ?? '', 'name' => $studentDisplayName],
+                ['email' => $studentRow['parent_email'] ?? '', 'name' => $parentDisplayName],
+            ];
+            $htmlBody = '
+                <p>Dear Student and Parent,</p>
+                <p>The mock interview marks for the course student have been updated.</p>
+                <p><strong>Student:</strong> ' . h($studentDisplayName) . '<br>
+                <strong>Registration No:</strong> ' . h((string) ($studentRow['registration_no'] ?? '')) . '<br>
+                <strong>Program:</strong> ' . h((string) ($studentRow['program_name'] ?? '')) . '<br>
+                <strong>Theoretical Marks:</strong> ' . h($theoreticalMarks !== null ? number_format((float) $theoreticalMarks, 2, '.', '') : '-') . '<br>
+                <strong>Machine Task Marks:</strong> ' . h($machineTaskMarks !== null ? number_format((float) $machineTaskMarks, 2, '.', '') : '-') . '<br>
+                <strong>Mock Average:</strong> ' . h($mockAverage !== null ? number_format((float) $mockAverage, 2, '.', '') : '-') . '</p>
+                <p>Regards,<br>' . h(APP_NAME) . '</p>';
+            $textBody = "Dear Student and Parent,\n\n"
+                . "The mock interview marks for the course student have been updated.\n"
+                . "Student: {$studentDisplayName}\n"
+                . "Registration No: " . (string) ($studentRow['registration_no'] ?? '') . "\n"
+                . "Program: " . (string) ($studentRow['program_name'] ?? '') . "\n"
+                . "Theoretical Marks: " . ($theoreticalMarks !== null ? number_format((float) $theoreticalMarks, 2, '.', '') : '-') . "\n"
+                . "Machine Task Marks: " . ($machineTaskMarks !== null ? number_format((float) $machineTaskMarks, 2, '.', '') : '-') . "\n"
+                . "Mock Average: " . ($mockAverage !== null ? number_format((float) $mockAverage, 2, '.', '') : '-') . "\n\n"
+                . "Regards,\n" . APP_NAME;
+            $mailError = null;
+            $mailWarning = '';
+            if (!crmSendEmail($recipients, 'Mock interview marks updated for ' . $studentDisplayName, $htmlBody, $textBody, $mailError)) {
+                $mailWarning = ' Email delivery failed';
+                if ($mailError) {
+                    $mailWarning .= ': ' . $mailError;
+                }
+                $mailWarning .= '.';
+            }
+
+            setFlash('success', 'Mock interview marks saved successfully.' . $mailWarning);
             redirect('index.php?page=mock_interview');
         } catch (InvalidArgumentException $e) {
             setFlash('error', $e->getMessage());

@@ -958,16 +958,28 @@ if (isset($_POST['delete_registration'])) {
       try {
         if ($canAllBranches !== 1 && $branchId > 0) {
           $st = $pdo->prepare("
-                        SELECT *
+                        SELECT
+                            r.*,
+                            COALESCE(rp.parent_name, e.father_name) AS parent_name,
+                            " . crmBuildParentEmailFallbackSelect($pdo, 'rp', 'e') . " AS parent_email
                         FROM registrations
+                        r
+                        LEFT JOIN registration_profiles rp ON rp.registration_id = r.id
+                        LEFT JOIN enquiries e ON e.id = r.enquiry_id
                         WHERE id=? AND branch_id=? AND registration_status IN ('active','completed')
                         LIMIT 1
                     ");
           $st->execute([$regId, $branchId]);
         } else {
           $st = $pdo->prepare("
-                        SELECT *
+                        SELECT
+                            r.*,
+                            COALESCE(rp.parent_name, e.father_name) AS parent_name,
+                            " . crmBuildParentEmailFallbackSelect($pdo, 'rp', 'e') . " AS parent_email
                         FROM registrations
+                        r
+                        LEFT JOIN registration_profiles rp ON rp.registration_id = r.id
+                        LEFT JOIN enquiries e ON e.id = r.enquiry_id
                         WHERE id=? AND registration_status IN ('active','completed')
                         LIMIT 1
                     ");
@@ -1094,8 +1106,58 @@ if (isset($_POST['add_payment'])) {
 
         recalcRegistrationPaymentsSummary($pdo, $regId);
 
+        $summarySt = $pdo->prepare("SELECT paid_amount, balance_amount, payment_status FROM registrations WHERE id = ? LIMIT 1");
+        $summarySt->execute([$regId]);
+        $updatedPaymentSummary = $summarySt->fetch(PDO::FETCH_ASSOC) ?: [];
+
         $pdo->commit();
-        setFlash('success', 'Payment saved successfully! Receipt No: ' . $receiptNo);
+
+        $studentDisplayName = trim((string) ($reg['enquiry_snapshot_name'] ?? 'Student'));
+        $parentDisplayName = trim((string) ($reg['parent_name'] ?? '')) !== '' ? trim((string) ($reg['parent_name'] ?? '')) : 'Parent';
+        $recipients = [
+          ['email' => $reg['enquiry_snapshot_email'] ?? '', 'name' => $studentDisplayName],
+          ['email' => $reg['parent_email'] ?? '', 'name' => $parentDisplayName],
+        ];
+        $htmlBody = '
+                <p>Dear Student and Parent,</p>
+                <p>A payment has been recorded for the registration.</p>
+                <p><strong>Student:</strong> ' . h($studentDisplayName) . '<br>
+                <strong>Registration No:</strong> ' . h((string) ($reg['registration_no'] ?? '')) . '<br>
+                <strong>Program:</strong> ' . h((string) ($reg['program_name'] ?? '')) . '<br>
+                <strong>Amount:</strong> ' . h(number_format((float) $amount, 2, '.', '')) . '<br>
+                <strong>Payment Date:</strong> ' . h((string) $payment_date) . '<br>
+                <strong>Payment Mode:</strong> ' . h((string) $payment_mode) . '<br>
+                <strong>Payment Type:</strong> ' . h((string) $payment_type) . '<br>
+                <strong>Receipt No:</strong> ' . h($receiptNo) . '<br>
+                <strong>Total Paid:</strong> ' . h(number_format((float) ($updatedPaymentSummary['paid_amount'] ?? 0), 2, '.', '')) . '<br>
+                <strong>Balance:</strong> ' . h(number_format((float) ($updatedPaymentSummary['balance_amount'] ?? 0), 2, '.', '')) . '<br>
+                <strong>Payment Status:</strong> ' . h(ucfirst((string) ($updatedPaymentSummary['payment_status'] ?? ''))) . '</p>
+                <p>Regards,<br>' . h(APP_NAME) . '</p>';
+        $textBody = "Dear Student and Parent,\n\n"
+          . "A payment has been recorded for the registration.\n"
+          . "Student: {$studentDisplayName}\n"
+          . "Registration No: " . (string) ($reg['registration_no'] ?? '') . "\n"
+          . "Program: " . (string) ($reg['program_name'] ?? '') . "\n"
+          . "Amount: " . number_format((float) $amount, 2, '.', '') . "\n"
+          . "Payment Date: " . (string) $payment_date . "\n"
+          . "Payment Mode: " . (string) $payment_mode . "\n"
+          . "Payment Type: " . (string) $payment_type . "\n"
+          . "Receipt No: {$receiptNo}\n"
+          . "Total Paid: " . number_format((float) ($updatedPaymentSummary['paid_amount'] ?? 0), 2, '.', '') . "\n"
+          . "Balance: " . number_format((float) ($updatedPaymentSummary['balance_amount'] ?? 0), 2, '.', '') . "\n"
+          . "Payment Status: " . ucfirst((string) ($updatedPaymentSummary['payment_status'] ?? '')) . "\n\n"
+          . "Regards,\n" . APP_NAME;
+        $mailError = null;
+        $mailWarning = '';
+        if (!crmSendEmail($recipients, 'Payment received for ' . $studentDisplayName, $htmlBody, $textBody, $mailError)) {
+          $mailWarning = ' Email delivery failed';
+          if ($mailError) {
+            $mailWarning .= ': ' . $mailError;
+          }
+          $mailWarning .= '.';
+        }
+
+        setFlash('success', 'Payment saved successfully! Receipt No: ' . $receiptNo . $mailWarning);
         redirect($returnUrl);
       } catch (Exception $e) {
         if ($pdo->inTransaction())

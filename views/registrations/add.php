@@ -244,6 +244,8 @@ if (isset($_POST['save_registration'])) {
             $regIdPost = (int)($_POST['reg_id'] ?? 0);
 
             $existingReg = null;
+            $previousRegistrationStatus = 'draft';
+
             if ($regIdPost > 0) {
                 if ($canAllBranches !== 1 && $branchId > 0) {
                     $st = $pdo->prepare("
@@ -267,6 +269,8 @@ if (isset($_POST['save_registration'])) {
                 if (!$existingReg) {
                     throw new Exception("Manual registration not found for update.");
                 }
+
+                $previousRegistrationStatus = strtolower(trim((string) ($existingReg['registration_status'] ?? 'draft')));
             }
 
             $registration_no      = regToNull($_POST['registration_no'] ?? '');
@@ -532,6 +536,7 @@ if (isset($_POST['save_registration'])) {
                         parent_name=?,
                         parent_phone=?,
                         parent_occupation=?,
+                        parent_email=?,
                         emergency_contact=?,
                         aadhaar_no=?,
                         remarks=?,
@@ -549,6 +554,7 @@ if (isset($_POST['save_registration'])) {
                     $parent_name,
                     $parent_phone,
                     $parent_occupation,
+                    $parent_email,
                     $emergency_contact,
                     $aadhaar_no,
                     $remarks,
@@ -568,6 +574,7 @@ if (isset($_POST['save_registration'])) {
                         parent_name,
                         parent_phone,
                         parent_occupation,
+                        parent_email,
                         emergency_contact,
                         aadhaar_no,
                         remarks,
@@ -589,6 +596,7 @@ if (isset($_POST['save_registration'])) {
                     $parent_name,
                     $parent_phone,
                     $parent_occupation,
+                    $parent_email,
                     $emergency_contact,
                     $aadhaar_no,
                     $remarks
@@ -597,8 +605,46 @@ if (isset($_POST['save_registration'])) {
 
             $pdo->commit();
 
+            $mailWarning = '';
+            if ($registration_status === 'active' && $previousRegistrationStatus !== 'active') {
+                $registrationDate = $joined_on ?: date('Y-m-d');
+                $studentDisplayName = trim((string) $student_name);
+                $parentDisplayName = trim((string) $parent_name) !== '' ? trim((string) $parent_name) : 'Parent';
+                $recipients = [
+                    ['email' => $email, 'name' => $studentDisplayName],
+                    ['email' => $parent_email, 'name' => $parentDisplayName],
+                ];
+                $subject = 'Registration completed for ' . ($studentDisplayName !== '' ? $studentDisplayName : 'student');
+                $htmlBody = '
+                    <p>Dear Student and Parent,</p>
+                    <p>The registration has been completed successfully.</p>
+                    <p><strong>Student:</strong> ' . h($studentDisplayName) . '<br>
+                    <strong>Registration No:</strong> ' . h($registration_no) . '<br>
+                    <strong>Program:</strong> ' . h((string) $program_name) . '<br>
+                    <strong>Batch:</strong> ' . h((string) $batch_name) . '<br>
+                    <strong>Joined On:</strong> ' . h($registrationDate) . '</p>
+                    <p>Please keep this email for your records.</p>
+                    <p>Regards,<br>' . h(APP_NAME) . '</p>';
+                $textBody = "Dear Student and Parent,\n\n"
+                    . "The registration has been completed successfully.\n"
+                    . "Student: {$studentDisplayName}\n"
+                    . "Registration No: {$registration_no}\n"
+                    . "Program: {$program_name}\n"
+                    . "Batch: {$batch_name}\n"
+                    . "Joined On: {$registrationDate}\n\n"
+                    . "Regards,\n" . APP_NAME;
+                $mailError = null;
+                if (!crmSendEmail($recipients, $subject, $htmlBody, $textBody, $mailError)) {
+                    $mailWarning = ' Registration completed, but email delivery failed';
+                    if ($mailError) {
+                        $mailWarning .= ': ' . $mailError;
+                    }
+                    $mailWarning .= '.';
+                }
+            }
+
             if ($registration_status === 'active') {
-                $success = "Registration confirmed successfully!";
+                $success = "Registration confirmed successfully!" . $mailWarning;
                 ?>
                 <script>
                 if (window.Swal && Swal.fire) {
