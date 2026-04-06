@@ -158,7 +158,9 @@ div{
             align-items:center;
             padding:28px;
             position:relative;
-            overflow:hidden;
+            overflow-x:hidden;
+            overflow-y:auto;
+            -webkit-overflow-scrolling:touch;
             background:
                 radial-gradient(820px 420px at 12% 14%, rgba(255,196,222,.72) 0%, transparent 58%),
                 radial-gradient(760px 420px at 88% 10%, rgba(255,210,229,.8) 0%, transparent 55%),
@@ -232,13 +234,13 @@ div{
         .auth-header h4{
             margin:4px 0 6px;
             font-weight:800;
-            font-size:28px;
+            font-size:clamp(1.6rem, 2vw, 2rem);
             line-height:1.08;
             letter-spacing:-.02em;
         }
         .auth-header p{
             margin:0;
-            font-size:14px;
+            font-size:0.95rem;
             line-height:1.6;
             color:rgba(255,255,255,.92);
             max-width:380px;
@@ -252,7 +254,7 @@ div{
             border-radius:999px;
             background:rgba(255,255,255,.16);
             border:1px solid rgba(255,255,255,.18);
-            font-size:11px;
+            font-size:0.75rem;
             font-weight:800;
             letter-spacing:.12em;
             text-transform:uppercase;
@@ -288,14 +290,14 @@ div{
         }
         .auth-point strong{
             display:block;
-            font-size:13px;
+            font-size:0.9rem;
             font-weight:700;
             color:#fff;
             margin-bottom:2px;
         }
         .auth-point span{
             display:block;
-            font-size:12px;
+            font-size:0.85rem;
             line-height:1.5;
             color:rgba(255,255,255,.86);
         }
@@ -310,12 +312,12 @@ div{
             font-weight:800;
             color:var(--ats-ink);
             margin-bottom:6px;
-            font-size:34px;
+            font-size:clamp(2rem, 2.5vw, 2.4rem);
             letter-spacing:-.03em;
         }
         .auth-sub{
             color:var(--ats-muted);
-            font-size:14px;
+            font-size:0.95rem;
             margin-bottom:24px;
             line-height:1.6;
         }
@@ -351,7 +353,7 @@ div{
         .auth-input{
             flex:1; min-width:0;
             border:0; outline:none;
-            font-size:15px;
+            font-size:0.95rem;
             color:var(--ats-text);
             background:transparent;
         }
@@ -364,7 +366,7 @@ div{
             color: var(--ats-pink);
             cursor: pointer;
             padding: 0 6px;
-            font-size: 16px;
+            font-size: 0.9rem;
             opacity: 0.72;
             transition: opacity 0.2s ease;
         }
@@ -380,7 +382,8 @@ div{
             justify-content:space-between;
             align-items:center;
             margin: 14px 0 20px;
-            font-size:13px;
+            font-size:0.85rem;
+            flex-wrap:nowrap;
         }
         .auth-links a{ color:var(--ats-ink); text-decoration:none; font-weight:700; }
         .auth-links a:hover{ text-decoration:underline; cursor:pointer; }
@@ -392,7 +395,7 @@ div{
             background: linear-gradient(135deg, var(--ats-pink-dark) 0%, var(--ats-pink) 45%, #ff79b7 100%);
             color:#fff;
             font-weight:800;
-            font-size:16px;
+            font-size:0.95rem;
             cursor:pointer;
             box-shadow: 0 18px 34px rgba(233,30,99,.24);
             transition:.2s ease;
@@ -403,8 +406,8 @@ div{
         }
         .auth-footer{
             padding:18px 0 0;
-            text-align:left;
-            font-size:12px;
+            text-align:right;
+            font-size:0.85rem;
             color:var(--ats-muted);
             border-top:1px solid #f3f4f6;
             margin-top:22px;
@@ -418,7 +421,7 @@ div{
             box-shadow: 0 30px 80px rgba(0,0,0,.25); display:none; z-index:9999; overflow:hidden;
         }
         .ats-modal-header{ padding:14px 16px; background:#fff0f6; display:flex; justify-content:space-between; align-items:center; }
-        .ats-modal-header h5{ margin:0; font-weight:800; font-size:16px; }
+        .ats-modal-header h5{ margin:0; font-weight:800; font-size:1rem; }
         .ats-close{ border:0; background:transparent; font-size:22px; line-height:1; cursor:pointer; }
         .ats-modal-body{ padding:16px; }
         .ats-modal-footer{ padding: 0 16px 16px; display:flex; justify-content:flex-end; gap:10px; }
@@ -436,42 +439,300 @@ div{
                 padding:28px 24px;
             }
             .auth-header h4{
-                font-size:24px;
+                font-size:clamp(1.6rem, 2vw, 2rem);
             }
             .auth-body{
                 padding:28px 24px 22px;
             }
             .auth-title{
-                font-size:30px;
+                font-size:clamp(2rem, 2.5vw, 2.4rem);
+            }
+            .auth-points{
+                display:none;
+            }
+            .auth-wrap{
+                align-items:center;
+                overflow-y:hidden;
+            }
+            .auth-footer{
+                margin-top:10px;
+                padding-top:12px;
+            }
+        }
+        @media (max-width: 767.98px){
+            .auth-wrap{
+                align-items:center;
+                padding:14px;
+            }
+            .auth-card{
+                max-width:100%;
+                border-radius:20px;
+                box-shadow:0 18px 48px rgba(44, 26, 39, 0.12);
+            }
+            .auth-header{
+                padding:18px 16px;
+                gap:14px;
+            }
+            .auth-brand{
+                gap:10px;
+            }
+            .auth-logo{
+                width:46px;
+                height:46px;
+                border-radius:12px;
+                flex:0 0 46px;
+                padding:6px;
+            }
+            .auth-header h4{
+                font-size:1.3rem;
+                line-height:1.16;
+            }
+            .auth-header p{
+                font-size:0.95rem;
+                line-height:1.5;
+                max-width:none;
+            }
+            .auth-kicker{
+                font-size:0.75rem;
+                letter-spacing:.08em;
+                padding:7px 10px;
+            }
+            .auth-points{
+                display:none;
+            }
+            .auth-body{
+                padding:20px 16px 16px;
+            }
+            .auth-title{
+                font-size:clamp(2rem, 2.5vw, 2.4rem);
+                margin-bottom:4px;
+            }
+            .auth-sub{
+                font-size:0.95rem;
+                margin-bottom:18px;
+            }
+            .auth-field{
+                padding:11px 12px;
+                border-radius:14px;
+                gap:10px;
+            }
+            .auth-icon{
+                width:36px;
+                height:36px;
+                border-radius:12px;
+                flex:0 0 36px;
+            }
+            .auth-input{
+                font-size:0.95rem;
+            }
+            .password-toggle{
+                font-size:0.9rem;
+            }
+            .auth-links{
+                margin:12px 0 16px;
+            }
+            .auth-btn{
+                height:48px;
+                border-radius:14px;
+                font-size:0.95rem;
+            }
+            .auth-footer{
+                margin-top:0;
+                padding:12px 16px 16px;
+                font-size:0.75rem;
+                border-top:1px solid #f3f4f6;
             }
         }
         @media (max-width: 575.98px){
             .auth-wrap{
-                padding:16px;
+                padding:8px;
+                overflow-y:hidden;
             }
             .auth-card{
-                border-radius:22px;
+                border-radius:16px;
             }
             .auth-header{
-                padding:22px 18px;
+                padding:14px 14px;
+                gap:10px;
             }
             .auth-body{
-                padding:22px 18px 18px;
+                padding:14px 14px 12px;
             }
             .auth-title{
-                font-size:28px;
+                font-size:clamp(2rem, 2.5vw, 2.4rem);
+                line-height:1;
             }
             .auth-links{
-                gap:10px;
-                align-items:flex-start;
-                flex-direction:column;
+                gap:8px;
+                align-items:center;
+                justify-content:space-between;
+                flex-direction:row;
+                flex-wrap:nowrap;
             }
+            .auth-footer{
+                text-align:center;
+                margin-top:0;
+                padding:8px 14px 10px;
+                font-size:0.75rem;
+            }
+            .auth-header h4{ font-size:1.3rem; line-height:1.2; margin:0 0 2px; }
+            .auth-header p{ font-size:0.85rem; line-height:1.35; }
+            .auth-kicker{ font-size:0.75rem; padding:6px 9px; }
+            .auth-logo{ width:40px; height:40px; flex:0 0 40px; }
+            .auth-sub{ margin-bottom:12px; font-size:0.95rem; line-height:1.4; }
+            .form-group{ margin-bottom:10px; }
+            .auth-field{ padding:8px 10px; border-radius:12px; }
+            .auth-icon{ width:32px; height:32px; flex:0 0 32px; border-radius:10px; }
+            .auth-input{ font-size:0.95rem; }
+            .auth-links{ margin:8px 0 10px; font-size:0.85rem; }
+            .auth-btn{ height:46px; border-radius:12px; font-size:0.95rem; }
         }
-        @media (max-height: 720px){
-            .auth-wrap{ align-items:flex-start; padding-top:22px; padding-bottom:22px; }
+        @media (max-width: 575.98px) and (max-height: 700px){
+            .auth-wrap{ padding:6px; align-items:flex-start; }
+            .auth-header{ padding:12px; }
+            .auth-body{ padding:12px 12px 10px; }
+            .auth-sub{ margin-bottom:10px; }
+            .form-group{ margin-bottom:8px; }
+            .auth-links{ margin:6px 0 8px; }
+            .auth-btn{ height:44px; }
+            .auth-footer{ padding:6px 12px 8px; }
+        }
+        @media (max-height: 720px) and (max-width: 767.98px){
+            .auth-wrap{ align-items:flex-start; padding-top:14px; padding-bottom:14px; }
             .auth-card{ min-height:auto; }
+            .auth-points{ display:none; }
         }
-    </style>
+    
+
+/* =====================================================
+TYPOGRAPHY SYNC WITH assets/css/style.css
+===================================================== */
+:where(body,button,input,select,textarea,label,span,p,h1,h2,h3,h4,h5,h6,a,div){
+  font-family:'Poppins',sans-serif !important;
+}
+
+:where(h1,.h1,.page-title,.crm-page-title){
+  font-size:clamp(2rem, 2.5vw, 2.4rem) !important;
+}
+
+:where(h2,.h2,.section-title){
+  font-size:clamp(1.6rem, 2vw, 2rem) !important;
+}
+
+:where(h3,.h3,.card-header,.table-title){
+  font-size:clamp(1.3rem, 1.6vw, 1.5rem) !important;
+}
+
+:where(h4,.h4){
+  font-size:1.2rem !important;
+}
+
+:where(h5,.h5){
+  font-size:1rem !important;
+}
+
+:where(h6,.h6){
+  font-size:0.9rem !important;
+}
+
+:where(body){
+  font-size:1rem !important;
+}
+
+:where(p,.text-body,li){
+  font-size:0.95rem !important;
+}
+
+:where(small,.small,.text-muted,.help-text,.form-text,.att-sub,.crm-note){
+  font-size:0.85rem !important;
+}
+
+:where(label,.form-label,th,.table thead th,.dataTables_wrapper .dataTables_length label,.dataTables_wrapper .dataTables_filter label){
+  font-size:0.85rem !important;
+}
+
+:where(input,select,textarea,.form-control,.form-select,.dataTables_wrapper .dataTables_filter input,.dataTables_wrapper .dataTables_length select){
+  font-size:0.95rem !important;
+}
+
+:where(button,.btn,.dt-button,.crm-action-btn,.crm-icon-btn,.btn-icon-only,.action-btn,.targets-btn-icon,.iso-report-btn,.iso-report-action-btn){
+  font-size:0.9rem !important;
+}
+
+:where(.btn[data-mobile-label],.btn-icon-only[data-mobile-label],.action-btn[data-mobile-label],.crm-icon-btn[data-mobile-label],.targets-btn-icon[data-mobile-label],.iso-report-icon-btn[data-mobile-label],.iso-report-action-btn[data-mobile-label])::after{
+  font-size:0.75rem !important;
+}
+
+:where(.table th,.crm-table th,.dataTables_wrapper th){
+  font-size:0.75rem !important;
+}
+
+:where(td,.table td,.dataTables_wrapper tbody td){
+  font-size:0.9rem !important;
+}
+
+:where(.dataTables_wrapper .dataTables_info){
+  font-size:0.85rem !important;
+}
+
+:where(.dataTables_wrapper .paginate_button){
+  font-size:0.9rem !important;
+}
+/* =====================================================
+FONT-WEIGHT STANDARDIZATION
+===================================================== */
+:where(h1,.h1,.page-title,.crm-page-title,.dashboard-header h2){
+  font-weight:700 !important;
+}
+
+:where(h2,.h2){
+  font-weight:600 !important;
+}
+
+:where(h3,.h3,.card-header,.table-title){
+  font-weight:600 !important;
+}
+
+:where(h4,.h4){
+  font-weight:500 !important;
+}
+
+:where(h5,.h5){
+  font-weight:500 !important;
+}
+
+:where(h6,.h6){
+  font-weight:500 !important;
+}
+
+:where(th,.table thead th,.crm-table th,.dataTables_wrapper th){
+  font-weight:600 !important;
+}
+
+:where(p,li,td,.text-body,.text-muted,.help-text,.form-text,.small,small,.secondary-text){
+  font-weight:400 !important;
+}
+
+:where(label,.form-label){
+  font-weight:500 !important;
+}
+
+:where(input,select,textarea,.form-control,.form-select){
+  font-weight:400 !important;
+}
+
+:where(input::placeholder,textarea::placeholder){
+  font-weight:400 !important;
+}
+
+:where(button,.btn,.dt-button,.crm-action-btn,.crm-icon-btn,.btn-icon-only,.action-btn,.targets-btn-icon,.iso-report-btn,.iso-report-action-btn){
+  font-weight:600 !important;
+}
+
+:where(.badge,.status-badge,.crm-status-badge,.status-pill,.badge-status,[data-status],.tooltip,.ui-tooltip,.floating-ui-tooltip__bubble){
+  font-weight:600 !important;
+}
+</style>
 </head>
 <body>
 
@@ -526,7 +787,7 @@ div{
                 <input type="password" style="display:none">
 
                 <div class="form-group">
-                    <label class="mb-1" style="font-weight:700;font-size:13px;">Email</label>
+                    <label class="mb-1" style="font-weight:700;font-size:0.85rem;">Email</label>
                     <div class="auth-field">
                         <div class="auth-icon"><i class="fa fa-envelope"></i></div>
                         <input type="text" name="email" class="auth-input"
@@ -537,7 +798,7 @@ div{
                 </div>
 
                 <div class="form-group">
-                    <label class="mb-1" style="font-weight:700;font-size:13px;">Password</label>
+                    <label class="mb-1" style="font-weight:700;font-size:0.85rem;">Password</label>
                     <div class="auth-field">
                         <div class="auth-icon"><i class="fa fa-lock"></i></div>
                         <input type="password" name="password" id="passwordInput" class="auth-input"
@@ -581,12 +842,12 @@ div{
     </div>
 
     <div class="ats-modal-body">
-        <div style="font-size:13px;color:#6b7280;margin-bottom:10px;">
+        <div style="font-size:0.85rem;color:#6b7280;margin-bottom:10px;">
             Enter your registered email. We'll generate a new password and send it to you.
         </div>
 
         <div class="form-group">
-            <label class="mb-1" style="font-weight:700;font-size:13px;">Email</label>
+            <label class="mb-1" style="font-weight:700;font-size:0.85rem;">Email</label>
             <input type="email" id="fp_email" class="form-control"
                    style="border-radius:12px;height:44px;"
                    placeholder="name@company.com" />
@@ -649,7 +910,7 @@ document.addEventListener('DOMContentLoaded', function() {
     msg.style.display = 'block';
     msg.className = 'alert ' + (ok ? 'alert-success' : 'alert-danger');
     msg.style.borderRadius = '12px';
-    msg.style.fontSize = '13px';
+    msg.style.fontSize = '0.85rem';
     msg.style.whiteSpace = 'pre-wrap';
     msg.innerHTML = text;
   }
@@ -701,3 +962,5 @@ document.addEventListener('DOMContentLoaded', function() {
 
 </body>
 </html>
+
+

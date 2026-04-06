@@ -129,3 +129,132 @@ HIDE SHOW ENTRIES
 .dataTables_length{
 display:none;
 }
+/* =====================================================
+TYPOGRAPHY SYNC WITH assets/css/style.css
+===================================================== */
+:where(body,button,input,select,textarea,label,span,p,h1,h2,h3,h4,h5,h6,a,div){
+  font-family:'Poppins',sans-serif !important;
+}
+
+:where(h1,.h1,.page-title,.crm-page-title){
+  font-size:clamp(2rem, 2.5vw, 2.4rem) !important;
+}
+
+:where(h2,.h2,.section-title){
+  font-size:clamp(1.6rem, 2vw, 2rem) !important;
+}
+
+:where(h3,.h3,.card-header,.table-title){
+  font-size:clamp(1.3rem, 1.6vw, 1.5rem) !important;
+}
+
+:where(h4,.h4){
+  font-size:1.2rem !important;
+}
+
+:where(h5,.h5){
+  font-size:1rem !important;
+}
+
+:where(h6,.h6){
+  font-size:0.9rem !important;
+}
+
+:where(body){
+  font-size:1rem !important;
+}
+
+:where(p,.text-body,li){
+  font-size:0.95rem !important;
+}
+
+:where(small,.small,.text-muted,.help-text,.form-text,.att-sub,.crm-note){
+  font-size:0.85rem !important;
+}
+
+:where(label,.form-label,th,.table thead th,.dataTables_wrapper .dataTables_length label,.dataTables_wrapper .dataTables_filter label){
+  font-size:0.85rem !important;
+}
+
+:where(input,select,textarea,.form-control,.form-select,.dataTables_wrapper .dataTables_filter input,.dataTables_wrapper .dataTables_length select){
+  font-size:0.95rem !important;
+}
+
+:where(button,.btn,.dt-button,.crm-action-btn,.crm-icon-btn,.btn-icon-only,.action-btn,.targets-btn-icon,.iso-report-btn,.iso-report-action-btn){
+  font-size:0.9rem !important;
+}
+
+:where(.btn[data-mobile-label],.btn-icon-only[data-mobile-label],.action-btn[data-mobile-label],.crm-icon-btn[data-mobile-label],.targets-btn-icon[data-mobile-label],.iso-report-icon-btn[data-mobile-label],.iso-report-action-btn[data-mobile-label])::after{
+  font-size:0.75rem !important;
+}
+
+:where(.table th,.crm-table th,.dataTables_wrapper th){
+  font-size:0.75rem !important;
+}
+
+:where(td,.table td,.dataTables_wrapper tbody td){
+  font-size:0.9rem !important;
+}
+
+:where(.dataTables_wrapper .dataTables_info){
+  font-size:0.85rem !important;
+}
+
+:where(.dataTables_wrapper .paginate_button){
+  font-size:0.9rem !important;
+}
+
+/* =====================================================
+FONT-WEIGHT STANDARDIZATION
+===================================================== */
+:where(h1,.h1,.page-title,.crm-page-title,.dashboard-header h2){
+  font-weight:700 !important;
+}
+
+:where(h2,.h2){
+  font-weight:600 !important;
+}
+
+:where(h3,.h3,.card-header,.table-title){
+  font-weight:600 !important;
+}
+
+:where(h4,.h4){
+  font-weight:500 !important;
+}
+
+:where(h5,.h5){
+  font-weight:500 !important;
+}
+
+:where(h6,.h6){
+  font-weight:500 !important;
+}
+
+:where(th,.table thead th,.crm-table th,.dataTables_wrapper th){
+  font-weight:600 !important;
+}
+
+:where(p,li,td,.text-body,.text-muted,.help-text,.form-text,.small,small,.secondary-text){
+  font-weight:400 !important;
+}
+
+:where(label,.form-label){
+  font-weight:500 !important;
+}
+
+:where(input,select,textarea,.form-control,.form-select){
+  font-weight:400 !important;
+}
+
+:where(input::placeholder,textarea::placeholder){
+  font-weight:400 !important;
+}
+
+:where(button,.btn,.dt-button,.crm-action-btn,.crm-icon-btn,.btn-icon-only,.action-btn,.targets-btn-icon,.iso-report-btn,.iso-report-action-btn){
+  font-weight:600 !important;
+}
+
+:where(.badge,.status-badge,.crm-status-badge,.status-pill,.badge-status,[data-status],.tooltip,.ui-tooltip,.floating-ui-tooltip__bubble){
+  font-weight:600 !important;
+}
