@@ -275,6 +275,7 @@ if (!defined('APP_NAME')) {
     function detectTouchDevice() {
         return !!(
             window.matchMedia('(hover: none), (pointer: coarse)').matches ||
+            window.matchMedia('(any-pointer: coarse)').matches ||
             ('ontouchstart' in window) ||
             (navigator.maxTouchPoints && navigator.maxTouchPoints > 0)
         );
@@ -371,6 +372,8 @@ if (!defined('APP_NAME')) {
         if (el.classList.contains('menu-toggle')) return false;
         if (
             el.classList.contains('btn-icon-only') ||
+            el.classList.contains('btn-icon') ||
+            el.classList.contains('btn-add-payment') ||
             el.classList.contains('action-btn') ||
             el.classList.contains('crm-icon-btn') ||
             el.classList.contains('sa-icon-btn') ||
@@ -416,9 +419,10 @@ if (!defined('APP_NAME')) {
     }
 
     function applyMobileActionLabels(root) {
-        if (!isTouchDevice) return;
+        const compactViewport = window.matchMedia('(max-width: 1024px)').matches;
+        if (!isTouchDevice && !compactViewport) return;
         const scope = root || document;
-        const selector = '[data-tooltip], [data-modern-tooltip], [aria-label], .btn-icon-only, .action-btn, .crm-icon-btn, .sa-icon-btn, .source-icon, .ui-tooltip, .tooltip';
+        const selector = '[data-tooltip], [data-modern-tooltip], [aria-label], .btn-icon-only, .btn-icon, .btn-add-payment, .action-btn, .crm-icon-btn, .sa-icon-btn, .source-icon, .ui-tooltip, .tooltip';
         const nodes = scope.matches && scope.matches(selector) ? [scope] : Array.from(scope.querySelectorAll(selector));
 
         nodes.forEach(function (el) {
@@ -1203,9 +1207,9 @@ $('#followupForm').submit(function(e){
         observer.observe(document.body, { childList: true, subtree: true });
 
         window.addEventListener('resize', function () {
-            isTouchDevice = detectTouchDevice();
-            document.documentElement.classList.toggle('touch-ui', isTouchDevice);
-            applyMobileActionLabels(document);
+            if (typeof window.initializeFloatingTooltips === 'function') {
+                window.initializeFloatingTooltips(document);
+            }
         });
     });
 })();

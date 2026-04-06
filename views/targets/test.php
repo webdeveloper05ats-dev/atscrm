@@ -418,7 +418,7 @@ Modern SaaS UI - Product Ready
     padding:26px;
     box-shadow:var(--shadow-md);
     border:1px solid var(--border);
-    font-family:"Inter","Segoe UI",sans-serif;
+    font-family:'Poppins',sans-serif;
     color:#333;
     font-weight:600;
 }

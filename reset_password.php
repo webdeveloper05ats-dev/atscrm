@@ -119,7 +119,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             --ats-text:#111827;
             --ats-muted:#6b7280;
         }
-        html,body{height:100%;margin:0;font-family:"Segoe UI",Tahoma,sans-serif;background:var(--ats-bg);}
+        html,body{height:100%;margin:0;font-family:'Poppins',sans-serif;background:var(--ats-bg);}
         .wrap{
             min-height:100%;
             display:flex;

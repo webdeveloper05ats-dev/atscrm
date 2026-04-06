@@ -7,7 +7,7 @@ require_once __DIR__ . '/_student_report_helpers.php';
 
 if (!in_array(($_SESSION['role_name'] ?? ''), ['Staff', 'Super Admin'], true)) {
     http_response_code(403);
-    echo "<div style='padding:20px;font-family:Segoe UI,sans-serif'><h2 style='margin:0 0 8px;color:#e91e63'>Access Denied</h2><p style='margin:0;color:#666'>This page is available only for staff users.</p></div>";
+    echo "<div style='padding:20px;font-family:Poppins,sans-serif'><h2 style='margin:0 0 8px;color:#e91e63'>Access Denied</h2><p style='margin:0;color:#666'>This page is available only for staff users.</p></div>";
     return;
 }
 
@@ -172,10 +172,10 @@ $students = $st->fetchAll(PDO::FETCH_ASSOC) ?: [];
                     </select>
                 </div>
                 <div class="filter-actions">
-                    <button class="btn-icon-only apply" data-modern-tooltip="Apply filters" aria-label="Apply filters">
+                    <button class="btn-icon-only apply" data-mobile-label="Apply" data-modern-tooltip="Apply filters" aria-label="Apply filters">
                         <i class="fas fa-filter"></i>
                     </button>
-                    <a href="index.php?page=reports/student_schedule" class="btn-icon-only reset" data-modern-tooltip="Reset filters" aria-label="Reset filters">
+                    <a href="index.php?page=reports/student_schedule" class="btn-icon-only reset" data-mobile-label="Reset" data-modern-tooltip="Reset filters" aria-label="Reset filters">
                         <i class="fas fa-undo-alt"></i>
                     </a>
                 </div>
@@ -237,6 +237,7 @@ $students = $st->fetchAll(PDO::FETCH_ASSOC) ?: [];
                                     <a
                                         href="index.php?page=reports/student_profile&id=<?= (int) $row['id'] ?>"
                                         class="ssr-action-btn ssr-action-view"
+                                        data-mobile-label="View"
                                         data-modern-tooltip="View Full Details"
                                         aria-label="View Full Details">
                                         <i class="fas fa-eye"></i>
@@ -244,6 +245,7 @@ $students = $st->fetchAll(PDO::FETCH_ASSOC) ?: [];
                                     <a
                                         href="index.php?page=reports/student_profile&id=<?= (int) $row['id'] ?>&print=1"
                                         class="ssr-action-btn ssr-action-download"
+                                        data-mobile-label="Download"
                                         data-modern-tooltip="Download Full Report"
                                         aria-label="Download Full Report"
                                         target="_blank"
@@ -510,12 +512,30 @@ $students = $st->fetchAll(PDO::FETCH_ASSOC) ?: [];
         justify-content: center;
         text-decoration: none;
         transition: .15s ease;
+        color:#fff;
+        box-shadow:0 8px 18px rgba(15,23,42,.18);
     }
 
-    .ssr-action-view { background:#e8f2ff; color:#1d4ed8; }
-    .ssr-action-view:hover { background:#dbeafe; }
-    .ssr-action-download { background:#fff5e8; color:#c2410c; }
-    .ssr-action-download:hover { background:#ffedd5; }
+    .ssr-action-view {
+        background:#2563eb !important;
+        color:#fff !important;
+        border:1px solid #2563eb !important;
+    }
+    .ssr-action-view:hover {
+        background:#1d4ed8 !important;
+        color:#fff !important;
+        border-color:#1d4ed8 !important;
+    }
+    .ssr-action-download {
+        background:#15803d !important;
+        color:#fff !important;
+        border:1px solid #15803d !important;
+    }
+    .ssr-action-download:hover {
+        background:#166534 !important;
+        color:#fff !important;
+        border-color:#166534 !important;
+    }
 
     .dataTables_wrapper .dt-top,
     .dataTables_wrapper .dt-bottom {
@@ -650,6 +670,42 @@ $students = $st->fetchAll(PDO::FETCH_ASSOC) ?: [];
         .dashboard-header h2 { font-size: 24px; }
         .filter-grid { grid-template-columns: 1fr; }
         .filter-actions { justify-content: flex-start; }
+        .filter-actions .btn-icon-only[data-mobile-label]{
+            width:auto !important;
+            min-width:64px !important;
+            height:auto !important;
+            min-height:40px !important;
+            padding:6px 8px !important;
+            display:inline-flex !important;
+            flex-direction:column !important;
+            align-items:center !important;
+            justify-content:center !important;
+            gap:3px !important;
+            border-radius:10px !important;
+        }
+        .filter-actions .btn-icon-only[data-mobile-label]::before{
+            content:none !important;
+            display:none !important;
+        }
+        .filter-actions .btn-icon-only[data-mobile-label]::after{
+            content:attr(data-mobile-label) !important;
+            position:static !important;
+            display:block !important;
+            opacity:1 !important;
+            visibility:visible !important;
+            transform:none !important;
+            background:none !important;
+            border:0 !important;
+            box-shadow:none !important;
+            padding:0 !important;
+            margin:0 !important;
+            font-size:10px !important;
+            line-height:1.1 !important;
+            font-weight:700 !important;
+            letter-spacing:.1px !important;
+            color:currentColor !important;
+            white-space:nowrap !important;
+        }
         #datatableControls { width:100%; margin-left:0; }
         #datatableControls .dt-top,
         .dataTables_wrapper .dt-bottom { justify-content:flex-start; }
@@ -658,6 +714,92 @@ $students = $st->fetchAll(PDO::FETCH_ASSOC) ?: [];
         .dataTables_wrapper .dataTables_length { width:100%; }
         .dataTables_wrapper .dataTables_filter label { width:100%; }
         .dataTables_wrapper .dataTables_filter input { width:100% !important; min-width:0; }
+
+        .ssr-action-btn[data-mobile-label]{
+            width:auto !important;
+            min-width:64px !important;
+            height:auto !important;
+            min-height:40px !important;
+            padding:6px 8px !important;
+            display:inline-flex !important;
+            flex-direction:column !important;
+            align-items:center !important;
+            justify-content:center !important;
+            gap:3px !important;
+            border-radius:10px !important;
+        }
+
+        .ssr-action-btn[data-mobile-label]::before{
+            content:none !important;
+            display:none !important;
+        }
+
+        .ssr-action-btn[data-mobile-label]::after{
+            content:attr(data-mobile-label) !important;
+            position:static !important;
+            display:block !important;
+            opacity:1 !important;
+            visibility:visible !important;
+            transform:none !important;
+            background:none !important;
+            border:0 !important;
+            box-shadow:none !important;
+            padding:0 !important;
+            margin:0 !important;
+            font-size:10px !important;
+            line-height:1.1 !important;
+            font-weight:700 !important;
+            letter-spacing:.1px !important;
+            color:currentColor !important;
+            white-space:nowrap !important;
+        }
+    }
+
+    @media (hover: none), (pointer: coarse), (any-pointer: coarse) {
+        .ssr-action-btn[data-mobile-label]{
+            width:auto !important;
+            min-width:64px !important;
+            height:auto !important;
+            min-height:40px !important;
+            padding:6px 8px !important;
+            display:inline-flex !important;
+            flex-direction:column !important;
+            align-items:center !important;
+            justify-content:center !important;
+            gap:3px !important;
+            border-radius:10px !important;
+        }
+
+        .ssr-action-btn[data-mobile-label]::before{
+            content:none !important;
+            display:none !important;
+        }
+
+        .ssr-action-btn[data-mobile-label]::after{
+            content:attr(data-mobile-label) !important;
+            position:static !important;
+            display:block !important;
+            opacity:1 !important;
+            visibility:visible !important;
+            transform:none !important;
+            background:none !important;
+            border:0 !important;
+            box-shadow:none !important;
+            padding:0 !important;
+            margin:0 !important;
+            font-size:10px !important;
+            line-height:1.1 !important;
+            font-weight:700 !important;
+            letter-spacing:.1px !important;
+            color:currentColor !important;
+            white-space:nowrap !important;
+        }
+
+        .modern-tooltip{
+            display:none !important;
+            opacity:0 !important;
+            visibility:hidden !important;
+        }
     }
 
     @media print {
@@ -665,11 +807,49 @@ $students = $st->fetchAll(PDO::FETCH_ASSOC) ?: [];
         .content,.main-content { padding:0 !important; }
         .card { box-shadow:none !important; border:none !important; }
     }
+
+    /* Final lock: keep project solid action style in all layouts */
+    .ssr-action-btn.ssr-action-view,
+    .ssr-action-btn.ssr-action-view:link,
+    .ssr-action-btn.ssr-action-view:visited{
+        background: #2563eb !important;
+        background-image: none !important;
+        border: 1px solid #2563eb !important;
+        color: #fff !important;
+        box-shadow: 0 8px 18px rgba(37,99,235,.24) !important;
+    }
+
+    .ssr-action-btn.ssr-action-view:hover,
+    .ssr-action-btn.ssr-action-view:focus-visible{
+        background: #1d4ed8 !important;
+        border-color: #1d4ed8 !important;
+        color: #fff !important;
+    }
+
+    .ssr-action-btn.ssr-action-download,
+    .ssr-action-btn.ssr-action-download:link,
+    .ssr-action-btn.ssr-action-download:visited{
+        background: #15803d !important;
+        background-image: none !important;
+        border: 1px solid #15803d !important;
+        color: #fff !important;
+        box-shadow: 0 8px 18px rgba(21,128,61,.24) !important;
+    }
+
+    .ssr-action-btn.ssr-action-download:hover,
+    .ssr-action-btn.ssr-action-download:focus-visible{
+        background: #166534 !important;
+        border-color: #166534 !important;
+        color: #fff !important;
+    }
 </style>
 
 <script>
 let modernTooltipEl = null;
 let modernTooltipTarget = null;
+const isTouchLikeDevice = window.matchMedia('(hover: none), (pointer: coarse), (any-pointer: coarse)').matches
+    || ('ontouchstart' in window)
+    || (navigator.maxTouchPoints && navigator.maxTouchPoints > 0);
 
 function ensureModernTooltip() {
     if (modernTooltipEl) return modernTooltipEl;
@@ -703,6 +883,7 @@ function positionModernTooltip(target) {
 }
 
 function showModernTooltip(target) {
+    if (isTouchLikeDevice) return;
     const text = (target.getAttribute('data-modern-tooltip') || '').trim();
     if (!text) return;
     const tip = ensureModernTooltip();
@@ -740,6 +921,7 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 document.addEventListener('mouseover', function (e) {
+    if (isTouchLikeDevice) return;
     const target = e.target.closest('[data-modern-tooltip]');
     if (!target) {
         hideModernTooltip();
@@ -749,6 +931,7 @@ document.addEventListener('mouseover', function (e) {
 });
 
 document.addEventListener('mouseout', function (e) {
+    if (isTouchLikeDevice) return;
     const from = e.target.closest('[data-modern-tooltip]');
     if (!from) return;
     const to = e.relatedTarget ? e.relatedTarget.closest('[data-modern-tooltip]') : null;
@@ -758,12 +941,14 @@ document.addEventListener('mouseout', function (e) {
 });
 
 document.addEventListener('focusin', function (e) {
+    if (isTouchLikeDevice) return;
     const target = e.target.closest('[data-modern-tooltip]');
     if (!target) return;
     showModernTooltip(target);
 });
 
 document.addEventListener('focusout', function (e) {
+    if (isTouchLikeDevice) return;
     const target = e.target.closest('[data-modern-tooltip]');
     if (!target) return;
     hideModernTooltip();

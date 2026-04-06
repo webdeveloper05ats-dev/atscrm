@@ -628,6 +628,78 @@ height:320px;
     height:260px;
   }
 }
+
+@media (max-width: 1024px){
+  .crm-icon-actions .crm-icon-btn[data-mobile-label]{
+    width:auto !important;
+    min-width:64px !important;
+    height:auto !important;
+    min-height:40px !important;
+    padding:6px 8px !important;
+    display:inline-flex !important;
+    flex-direction:column !important;
+    align-items:center !important;
+    justify-content:center !important;
+    gap:3px !important;
+    border-radius:10px !important;
+  }
+
+  .crm-icon-actions .crm-icon-btn[data-mobile-label]::after{
+    content:attr(data-mobile-label) !important;
+    position:static !important;
+    display:block !important;
+    opacity:1 !important;
+    visibility:visible !important;
+    transform:none !important;
+    background:none !important;
+    border:0 !important;
+    box-shadow:none !important;
+    padding:0 !important;
+    margin:0 !important;
+    font-size:10px !important;
+    line-height:1.1 !important;
+    font-weight:700 !important;
+    letter-spacing:.1px !important;
+    color:currentColor !important;
+    white-space:nowrap !important;
+  }
+}
+
+@media (hover: none), (pointer: coarse){
+  .crm-icon-actions .crm-icon-btn[data-mobile-label]{
+    width:auto !important;
+    min-width:64px !important;
+    height:auto !important;
+    min-height:40px !important;
+    padding:6px 8px !important;
+    display:inline-flex !important;
+    flex-direction:column !important;
+    align-items:center !important;
+    justify-content:center !important;
+    gap:3px !important;
+    border-radius:10px !important;
+  }
+
+  .crm-icon-actions .crm-icon-btn[data-mobile-label]::after{
+    content:attr(data-mobile-label) !important;
+    position:static !important;
+    display:block !important;
+    opacity:1 !important;
+    visibility:visible !important;
+    transform:none !important;
+    background:none !important;
+    border:0 !important;
+    box-shadow:none !important;
+    padding:0 !important;
+    margin:0 !important;
+    font-size:10px !important;
+    line-height:1.1 !important;
+    font-weight:700 !important;
+    letter-spacing:.1px !important;
+    color:currentColor !important;
+    white-space:nowrap !important;
+  }
+}
 </style>
 
 <div class="target-shell">
@@ -680,10 +752,10 @@ height:320px;
         </div>
         <div class="toolbar-actions">
           <div class="crm-icon-actions">
-            <button type="submit" class="crm-icon-btn is-primary" data-modern-tooltip="Apply filters" aria-label="Apply filters">
+            <button type="submit" class="crm-icon-btn is-primary" data-mobile-label="Apply" data-modern-tooltip="Apply filters" aria-label="Apply filters">
               <i class="fas fa-filter"></i>
             </button>
-            <a href="index.php?page=targets/my-target" class="crm-icon-btn is-muted" data-modern-tooltip="Reset filters" aria-label="Reset filters">
+            <a href="index.php?page=targets/my-target" class="crm-icon-btn is-muted" data-mobile-label="Reset" data-modern-tooltip="Reset filters" aria-label="Reset filters">
               <i class="fas fa-rotate-left"></i>
             </a>
           </div>

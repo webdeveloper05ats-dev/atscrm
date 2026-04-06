@@ -785,7 +785,7 @@ $isEditMode = !empty($registration['id']);
     --transition-all: all 0.2s ease;
     
     /* Typography */
-    --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --font-sans: 'Poppins', sans-serif;
 }
 
 /* ========================================

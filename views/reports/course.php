@@ -412,6 +412,31 @@ background:#2e7d32;
 background:#25672a;
 }
 
+.course-name{
+font-weight:700;
+color:#24324a;
+}
+
+.course-reg,
+.course-phone,
+.course-program-batch,
+.course-program-date{
+font-size:12px;
+color:#616b7c;
+line-height:1.35;
+}
+
+.course-program-name{
+font-weight:700;
+color:#24324a;
+}
+
+.course-fees{
+display:flex;
+flex-direction:column;
+gap:2px;
+}
+
 @media(max-width:900px){
 .filter-grid{
 flex-direction:column;
@@ -426,6 +451,84 @@ margin-left:0;
 .filter-actions a{
 flex:1;
 text-align:center;
+}
+
+.filter-actions .btn-icon-only[data-mobile-label]{
+width:auto !important;
+min-width:64px !important;
+height:auto !important;
+min-height:40px !important;
+padding:6px 8px !important;
+display:inline-flex !important;
+flex-direction:column !important;
+align-items:center !important;
+justify-content:center !important;
+gap:3px !important;
+border-radius:10px !important;
+}
+
+.filter-actions .btn-icon-only[data-mobile-label]::before{
+content:none !important;
+display:none !important;
+}
+
+.filter-actions .btn-icon-only[data-mobile-label]::after{
+content:attr(data-mobile-label) !important;
+position:static !important;
+display:block !important;
+opacity:1 !important;
+visibility:visible !important;
+transform:none !important;
+background:none !important;
+border:0 !important;
+box-shadow:none !important;
+padding:0 !important;
+margin:0 !important;
+font-size:10px !important;
+line-height:1.1 !important;
+font-weight:700 !important;
+letter-spacing:.1px !important;
+color:currentColor !important;
+white-space:nowrap !important;
+}
+
+#usersTable.crm-table tbody td[data-label="Action"] .action-group .action-btn[data-mobile-label]{
+width:auto !important;
+min-width:56px !important;
+height:auto !important;
+min-height:38px !important;
+padding:6px 8px !important;
+display:inline-flex !important;
+flex-direction:column !important;
+align-items:center !important;
+justify-content:center !important;
+gap:3px !important;
+border-radius:10px !important;
+}
+
+#usersTable.crm-table tbody td[data-label="Action"] .action-group .action-btn[data-mobile-label]::before{
+content:none !important;
+display:none !important;
+}
+
+#usersTable.crm-table tbody td[data-label="Action"] .action-group .action-btn[data-mobile-label]::after{
+content:attr(data-mobile-label) !important;
+position:static !important;
+display:block !important;
+opacity:1 !important;
+visibility:visible !important;
+transform:none !important;
+background:none !important;
+border:0 !important;
+box-shadow:none !important;
+padding:0 !important;
+margin:0 !important;
+font-size:10px !important;
+line-height:1.1 !important;
+font-weight:700 !important;
+letter-spacing:.1px !important;
+color:currentColor !important;
+white-space:nowrap !important;
 }
 }
 
@@ -443,6 +546,191 @@ width:100%;
 
 .dt-top .dataTables_filter input{
 width:100%;
+}
+}
+
+@media (max-width:1024px){
+#usersTable.crm-table{
+width:100% !important;
+table-layout:fixed !important;
+border-collapse:separate !important;
+border-spacing:0 !important;
+}
+
+#usersTable.crm-table thead{
+display:none !important;
+}
+
+#usersTable.crm-table tbody{
+display:block !important;
+width:100% !important;
+}
+
+#usersTable.crm-table tbody tr{
+display:block !important;
+background:#fff !important;
+border:1px solid #f0d6e2 !important;
+border-radius:12px !important;
+margin:0 0 12px 0 !important;
+overflow:hidden !important;
+}
+
+#usersTable.crm-table tbody td{
+display:flex !important;
+align-items:flex-start !important;
+justify-content:space-between !important;
+gap:10px !important;
+width:100% !important;
+padding:10px 12px !important;
+border-bottom:1px solid #f4e5ec !important;
+white-space:normal !important;
+word-break:normal !important;
+overflow-wrap:normal !important;
+text-align:right !important;
+}
+
+#usersTable.crm-table tbody td:last-child{
+border-bottom:none !important;
+}
+
+#usersTable.crm-table tbody td::before{
+content:attr(data-label) !important;
+display:block !important;
+flex:0 0 38% !important;
+max-width:38% !important;
+font-size:11px !important;
+line-height:1.35 !important;
+font-weight:700 !important;
+letter-spacing:.25px !important;
+text-transform:uppercase !important;
+color:#7a6772 !important;
+text-align:left !important;
+}
+
+#usersTable.crm-table tbody td .crm-card-value{
+margin-left:auto !important;
+display:flex !important;
+flex-direction:column !important;
+align-items:flex-end !important;
+justify-content:center !important;
+gap:2px !important;
+min-width:0 !important;
+max-width:62% !important;
+text-align:right !important;
+line-height:1.32 !important;
+}
+
+#usersTable.crm-table tbody td .crm-card-value,
+#usersTable.crm-table tbody td .crm-card-value *{
+word-break:keep-all !important;
+overflow-wrap:break-word !important;
+white-space:normal !important;
+}
+
+#usersTable.crm-table tbody td[data-label="S.No"] .crm-card-value,
+#usersTable.crm-table tbody td[data-label="ID"] .crm-card-value{
+font-weight:700 !important;
+}
+
+#usersTable.crm-table tbody td[data-label="Student Details"] .course-reg{
+white-space:nowrap !important;
+letter-spacing:.1px !important;
+}
+
+#usersTable.crm-table tbody td[data-label="Action"] .crm-card-value{
+display:flex !important;
+flex-direction:row !important;
+justify-content:flex-end !important;
+align-items:center !important;
+gap:8px !important;
+max-width:58% !important;
+}
+
+#usersTable.crm-table tbody td[data-label="Action"] .action-group{
+display:inline-flex !important;
+align-items:center !important;
+gap:8px !important;
+justify-content:flex-end !important;
+}
+
+#usersTable.crm-table tbody td[data-label="Action"] .action-group .action-btn[data-mobile-label]{
+width:auto !important;
+min-width:56px !important;
+height:auto !important;
+min-height:38px !important;
+padding:6px 8px !important;
+display:inline-flex !important;
+flex-direction:column !important;
+align-items:center !important;
+justify-content:center !important;
+gap:3px !important;
+border-radius:10px !important;
+}
+
+#usersTable.crm-table tbody td[data-label="Action"] .action-group .action-btn[data-mobile-label]::before{
+content:none !important;
+display:none !important;
+}
+
+#usersTable.crm-table tbody td[data-label="Action"] .action-group .action-btn[data-mobile-label]::after{
+content:attr(data-mobile-label) !important;
+position:static !important;
+display:block !important;
+opacity:1 !important;
+visibility:visible !important;
+transform:none !important;
+background:none !important;
+border:0 !important;
+box-shadow:none !important;
+padding:0 !important;
+margin:0 !important;
+font-size:10px !important;
+line-height:1.1 !important;
+font-weight:700 !important;
+letter-spacing:.1px !important;
+color:currentColor !important;
+white-space:nowrap !important;
+}
+}
+
+@media (hover: none), (pointer: coarse), (any-pointer: coarse){
+.filter-actions .btn-icon-only[data-mobile-label]{
+width:auto !important;
+min-width:64px !important;
+height:auto !important;
+min-height:40px !important;
+padding:6px 8px !important;
+display:inline-flex !important;
+flex-direction:column !important;
+align-items:center !important;
+justify-content:center !important;
+gap:3px !important;
+border-radius:10px !important;
+}
+
+.filter-actions .btn-icon-only[data-mobile-label]::before{
+content:none !important;
+display:none !important;
+}
+
+.filter-actions .btn-icon-only[data-mobile-label]::after{
+content:attr(data-mobile-label) !important;
+position:static !important;
+display:block !important;
+opacity:1 !important;
+visibility:visible !important;
+transform:none !important;
+background:none !important;
+border:0 !important;
+box-shadow:none !important;
+padding:0 !important;
+margin:0 !important;
+font-size:10px !important;
+line-height:1.1 !important;
+font-weight:700 !important;
+letter-spacing:.1px !important;
+color:currentColor !important;
+white-space:nowrap !important;
 }
 }
 
@@ -516,15 +804,15 @@ WHERE program_name IS NOT NULL
 <?php endif; ?>
 
 <div class="filter-actions">
-<button type="submit" class="btn-icon-only apply" title="Apply filters">
+<button type="submit" class="btn-icon-only apply" title="Apply filters" data-mobile-label="Apply">
 <i class="fas fa-filter"></i>
 </button>
 
-<a href="index.php?page=reports/course" class="btn-icon-only reset" title="Reset filters">
+<a href="index.php?page=reports/course" class="btn-icon-only reset" title="Reset filters" data-mobile-label="Reset">
 <i class="fas fa-undo-alt"></i>
 </a>
 
-<a id="exportReport" class="btn-icon-only export" title="Export report">
+<a id="exportReport" class="btn-icon-only export" title="Export report" data-mobile-label="Export">
 <i class="fas fa-file-excel"></i>
 </a>
 </div>
@@ -596,6 +884,23 @@ dom:
 "<'dt-top'lf>" +
 "rt" +
 "<'dt-bottom'ip>",
+createdRow:function(row){
+const labels=['S.No','Student Details','Program','Fees','Status','Action'];
+const cells=row.querySelectorAll('td');
+cells.forEach(function(td,idx){
+td.setAttribute('data-label', labels[idx] || ('Column ' + (idx + 1)));
+});
+},
+drawCallback:function(){
+const labels=['S.No','Student Details','Program','Fees','Status','Action'];
+document.querySelectorAll('#usersTable tbody tr').forEach(function(tr){
+tr.querySelectorAll('td').forEach(function(td,idx){
+if(!td.getAttribute('data-label')){
+td.setAttribute('data-label', labels[idx] || ('Column ' + (idx + 1)));
+}
+});
+});
+},
 
 ajax:{
 url:'index.php?page=reports/ajax_course&ajax=1',

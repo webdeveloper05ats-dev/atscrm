@@ -177,6 +177,76 @@ flex:1;
 text-align:center;
 }
 
+.filter-actions .btn-icon-only[data-mobile-label]{
+width:auto !important;
+min-width:64px !important;
+height:auto !important;
+min-height:40px !important;
+padding:6px 8px !important;
+display:inline-flex !important;
+flex-direction:column !important;
+align-items:center !important;
+justify-content:center !important;
+gap:3px !important;
+border-radius:10px !important;
+}
+
+.filter-actions .btn-icon-only[data-mobile-label]::after{
+content:attr(data-mobile-label) !important;
+position:static !important;
+display:block !important;
+opacity:1 !important;
+visibility:visible !important;
+transform:none !important;
+background:none !important;
+border:0 !important;
+box-shadow:none !important;
+padding:0 !important;
+margin:0 !important;
+font-size:10px !important;
+line-height:1.1 !important;
+font-weight:700 !important;
+letter-spacing:.1px !important;
+color:currentColor !important;
+white-space:nowrap !important;
+}
+
+}
+
+@media (hover: none), (pointer: coarse){
+.filter-actions .btn-icon-only[data-mobile-label]{
+width:auto !important;
+min-width:64px !important;
+height:auto !important;
+min-height:40px !important;
+padding:6px 8px !important;
+display:inline-flex !important;
+flex-direction:column !important;
+align-items:center !important;
+justify-content:center !important;
+gap:3px !important;
+border-radius:10px !important;
+}
+
+.filter-actions .btn-icon-only[data-mobile-label]::after{
+content:attr(data-mobile-label) !important;
+position:static !important;
+display:block !important;
+opacity:1 !important;
+visibility:visible !important;
+transform:none !important;
+background:none !important;
+border:0 !important;
+box-shadow:none !important;
+padding:0 !important;
+margin:0 !important;
+font-size:10px !important;
+line-height:1.1 !important;
+font-weight:700 !important;
+letter-spacing:.1px !important;
+color:currentColor !important;
+white-space:nowrap !important;
+}
 }
 
 /* ===============================
@@ -554,15 +624,15 @@ FILTER FORM
 
 <div class="filter-actions">
 
-<button type="submit" class="btn-icon-only apply" title="Apply filters">
+<button type="submit" class="btn-icon-only apply" title="Apply filters" data-mobile-label="Apply">
 <i class="fas fa-filter"></i>
 </button>
 
-<a href="index.php?page=reports/internship" class="btn-icon-only reset" title="Reset filters">
+<a href="index.php?page=reports/internship" class="btn-icon-only reset" title="Reset filters" data-mobile-label="Reset">
 <i class="fas fa-undo-alt"></i>
 </a>
 
-<a id="exportReport" class="btn-icon-only export" title="Export report">
+<a id="exportReport" class="btn-icon-only export" title="Export report" data-mobile-label="Export">
 <i class="fas fa-file-excel"></i>
 </a>
 

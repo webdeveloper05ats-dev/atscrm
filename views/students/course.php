@@ -16,7 +16,7 @@ if (!function_exists('h')) {
 
 if (($_SESSION['role_name'] ?? '') !== 'HR') {
     http_response_code(403);
-    echo "<div style='padding:20px;font-family:Segoe UI,sans-serif'>
+    echo "<div style='padding:20px;font-family:Poppins,sans-serif'>
             <h2 style='margin:0 0 8px;color:#e91e63'>Access Denied</h2>
             <p style='margin:0;color:#666'>This page is available only for HR users.</p>
           </div>";

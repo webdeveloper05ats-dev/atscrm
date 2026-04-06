@@ -679,6 +679,20 @@ color:#fff;
 
 .iso-report-icon-btn i{
 font-size:14px;
+font-weight:900;
+line-height:1;
+display:block;
+color:currentColor;
+}
+
+.iso-report-export-btn{
+background:linear-gradient(135deg,#22a06b 0%,#15803d 100%);
+border-color:rgba(21,128,61,.18);
+box-shadow:0 10px 22px rgba(21,128,61,.28);
+}
+
+.iso-report-export-btn:hover{
+box-shadow:0 14px 28px rgba(21,128,61,.34);
 }
 
 .iso-report-btn-primary {
@@ -1030,6 +1044,13 @@ color:#fff;
 border-color:rgba(232,62,140,.16);
 }
 
+.iso-report-action-btn i{
+font-weight:900;
+line-height:1;
+display:block;
+color:currentColor;
+}
+
 .iso-report-table td.user-cell,
 .iso-report-table td.role-cell,
 .iso-report-table td.progress-cell,
@@ -1368,6 +1389,98 @@ min-width: 100%;
 [data-tooltip]::before,
 [data-tooltip]::after {
 display: none;
+}
+
+.iso-report-icon-btn[data-mobile-label],
+.iso-report-action-btn[data-mobile-label]{
+width:auto !important;
+min-width:64px !important;
+height:auto !important;
+min-height:40px !important;
+padding:6px 8px !important;
+display:inline-flex !important;
+flex-direction:column !important;
+align-items:center !important;
+justify-content:center !important;
+text-align:center !important;
+gap:3px !important;
+border-radius:10px !important;
+}
+
+.iso-report-icon-btn[data-mobile-label]::before,
+.iso-report-action-btn[data-mobile-label]::before{
+content:none !important;
+display:none !important;
+}
+
+.iso-report-icon-btn[data-mobile-label]::after,
+.iso-report-action-btn[data-mobile-label]::after{
+content:attr(data-mobile-label) !important;
+position:static !important;
+display:block !important;
+width:100% !important;
+text-align:center !important;
+opacity:1 !important;
+visibility:visible !important;
+transform:none !important;
+background:none !important;
+border:0 !important;
+box-shadow:none !important;
+padding:0 !important;
+margin:0 !important;
+font-size:10px !important;
+line-height:1.1 !important;
+font-weight:700 !important;
+letter-spacing:.1px !important;
+color:currentColor !important;
+white-space:nowrap !important;
+}
+}
+
+@media (max-width: 1024px){
+.iso-report-icon-btn[data-mobile-label],
+.iso-report-action-btn[data-mobile-label]{
+width:auto !important;
+min-width:64px !important;
+height:auto !important;
+min-height:40px !important;
+padding:6px 8px !important;
+display:inline-flex !important;
+flex-direction:column !important;
+align-items:center !important;
+justify-content:center !important;
+text-align:center !important;
+gap:3px !important;
+border-radius:10px !important;
+}
+
+.iso-report-icon-btn[data-mobile-label]::before,
+.iso-report-action-btn[data-mobile-label]::before{
+content:none !important;
+display:none !important;
+}
+
+.iso-report-icon-btn[data-mobile-label]::after,
+.iso-report-action-btn[data-mobile-label]::after{
+content:attr(data-mobile-label) !important;
+position:static !important;
+display:block !important;
+width:100% !important;
+text-align:center !important;
+opacity:1 !important;
+visibility:visible !important;
+transform:none !important;
+background:none !important;
+border:0 !important;
+box-shadow:none !important;
+padding:0 !important;
+margin:0 !important;
+font-size:10px !important;
+line-height:1.1 !important;
+font-weight:700 !important;
+letter-spacing:.1px !important;
+color:currentColor !important;
+white-space:nowrap !important;
 }
 }
 
@@ -2164,21 +2277,23 @@ grid-template-columns:1fr;
 
 <a href="index.php?page=targets/setup"
    class="iso-report-btn iso-report-icon-btn"
+   data-mobile-label="Setup"
    data-tooltip="Setup Target">
    <i class="fas fa-bullseye"></i>
 </a>
 
 <a href="index.php?page=targets/list"
    class="iso-report-btn iso-report-icon-btn"
+   data-mobile-label="List"
    data-tooltip="Target List">
    <i class="fas fa-list"></i>
 </a>
 
 <a href="index.php?page=targets/export&year=<?= (int)$fYear ?>&month=<?= (int)$fMonth ?>&user_id=<?= (int)$fUserId ?>&role_id=<?= (int)$fRoleId ?>&search=<?= urlencode($search) ?>"
-   class="iso-report-btn iso-report-btn-outline"
+   class="iso-report-btn iso-report-icon-btn iso-report-export-btn"
+   data-mobile-label="Export"
    data-tooltip="Export summary for filtered users">
    <i class="fas fa-file-export"></i>
-   Export Summary
 </a>
 
 </div>
@@ -2328,6 +2443,7 @@ grid-template-columns:1fr;
                         <div>
 <button type="submit"
         class="iso-report-btn iso-report-icon-btn iso-report-filter-btn"
+        data-mobile-label="Apply"
         data-tooltip="Load Report">
     <i class="fas fa-filter"></i>
 </button>
@@ -2336,6 +2452,7 @@ grid-template-columns:1fr;
                         <div>
 <a href="index.php?page=targets/report"
    class="iso-report-btn iso-report-icon-btn iso-report-filter-btn"
+   data-mobile-label="Reset"
    data-tooltip="Reset Filters">
    <i class="fas fa-undo"></i>
 </a>
@@ -2507,6 +2624,7 @@ grid-template-columns:1fr;
                                                     type="button"
                                                     class="iso-report-action-btn js-view-report"
                                                     data-user-id="<?= (int)($row['user_id'] ?? 0) ?>"
+                                                    data-mobile-label="View"
                                                     data-tooltip="View detailed performance">
                                                     <i class="fas fa-eye"></i>
                                                 </button>

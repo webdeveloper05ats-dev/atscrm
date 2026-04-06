@@ -85,7 +85,7 @@ $payments = $stmt->fetchAll(PDO::FETCH_ASSOC);
     box-shadow: 0 24px 52px rgba(236, 72, 153, 0.08);
     max-width: 1180px;
     margin: 30px auto;
-    font-family: 'Poppins', 'Segoe UI', sans-serif;
+    font-family: 'Poppins', sans-serif;
     color: #342431;
     line-height: 1.6;
 }
@@ -267,6 +267,24 @@ h2 {
     .student-profile-table td {
         padding: 12px 14px;
         font-size: 14px;
+    }
+
+    .student-profile-table tr{
+        display:grid;
+        grid-template-columns:minmax(132px, 42%) minmax(0, 58%);
+    }
+
+    .student-profile-table tr td:first-child{
+        white-space:nowrap;
+        font-weight:700;
+        color:#7d103f;
+        padding-right:10px;
+    }
+
+    .student-profile-table tr td:last-child{
+        text-align:left;
+        word-break:break-word;
+        overflow-wrap:anywhere;
     }
 
     h2 { font-size: 24px; }

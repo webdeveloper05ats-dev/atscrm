@@ -828,10 +828,10 @@ if (!empty($rows)) {
                     <input type="date" name="date_to" value="<?= h($dateTo) ?>">
                 </div>
                 <div class="filter-actions">
-                    <button type="submit" class="btn-icon-only apply" data-modern-tooltip="Apply filters" aria-label="Apply filters">
+                    <button type="submit" class="btn-icon-only apply" data-mobile-label="Apply" data-modern-tooltip="Apply filters" aria-label="Apply filters">
                         <i class="fas fa-filter"></i>
                     </button>
-                    <a href="index.php?page=attendance" class="btn-icon-only reset" data-modern-tooltip="Reset filters" aria-label="Reset filters">
+                    <a href="index.php?page=attendance" class="btn-icon-only reset" data-mobile-label="Reset" data-modern-tooltip="Reset filters" aria-label="Reset filters">
                         <i class="fas fa-undo-alt"></i>
                     </a>
                 </div>
@@ -902,12 +902,15 @@ if (!empty($rows)) {
                         <td class="text-center">
                             <button type="button" class="att-icon-btn"
                                 onclick="openAttendanceCalendar(<?= (int) $r['id'] ?>, '<?= h($r['enquiry_snapshot_name']) ?>')"
+                                data-mobile-label="Calendar"
                                 data-modern-tooltip="Attendance Calendar"
                                 aria-label="Attendance Calendar">
                                 <i class="fas fa-calendar-check"></i>
+                                <span class="mobile-action-label">Calendar</span>
                             </button>
-                            <a href="index.php?page=reports/student_schedule&registration_id=<?= (int) $r['id'] ?>" class="att-icon-btn att-icon-btn-report" data-modern-tooltip="Student Schedule Report" aria-label="Student Schedule Report">
+                            <a href="index.php?page=reports/student_schedule&registration_id=<?= (int) $r['id'] ?>" class="att-icon-btn att-icon-btn-report" data-mobile-label="Report" data-modern-tooltip="Student Schedule Report" aria-label="Student Schedule Report">
                                 <i class="fas fa-file-alt"></i>
+                                <span class="mobile-action-label">Report</span>
                             </a>
                         </td>
                     </tr>
@@ -1132,11 +1135,14 @@ if (!empty($rows)) {
         align-items: center;
         justify-content: center;
         cursor: pointer;
-        background: #ffeaf3;
-        color: var(--primary-dark);
+        background: linear-gradient(135deg, #ff4d8d, #e91e63);
+        color: #fff;
+        box-shadow: 0 8px 18px rgba(233, 30, 99, .24);
+        transition: transform .15s ease, box-shadow .15s ease, background-color .15s ease;
     }
     .att-icon-btn:hover {
-        background: #ffd3e5;
+        transform: translateY(-1px);
+        box-shadow: 0 10px 20px rgba(233, 30, 99, .30);
     }
     .att-icon-btn-report {
         display:inline-flex;
@@ -1144,9 +1150,17 @@ if (!empty($rows)) {
         justify-content:center;
         text-decoration:none;
         margin-left:6px;
-        background:#fff0f6;
-        color:var(--primary-dark);
+        background:#2563eb;
+        color:#fff;
+        box-shadow: 0 8px 18px rgba(37, 99, 235, .24);
     }
+    .att-icon-btn-report:hover {
+        background:#1d4ed8;
+        color:#fff;
+        transform: translateY(-1px);
+        box-shadow: 0 10px 20px rgba(37, 99, 235, .30);
+    }
+    .att-icon-btn .mobile-action-label { display:none; }
     #datatableControls {
         width: auto;
         margin-left: 0;
@@ -1458,6 +1472,13 @@ if (!empty($rows)) {
         border-bottom: 1px solid rgba(255, 255, 255, .14);
         transform: translateX(-50%) rotate(45deg);
     }
+    @media (hover: none), (pointer: coarse), (any-pointer: coarse) {
+        .modern-tooltip {
+            display: none !important;
+            opacity: 0 !important;
+            visibility: hidden !important;
+        }
+    }
     @keyframes attSpin {
         to { transform:rotate(360deg); }
     }
@@ -1482,12 +1503,127 @@ if (!empty($rows)) {
         .dataTables_wrapper .dataTables_length { width:100%; }
         .dataTables_wrapper .dataTables_filter label { width:100%; }
         .dataTables_wrapper .dataTables_filter input { width:100% !important; }
+
+        .att-icon-btn{
+            width:auto !important;
+            min-width:64px !important;
+            height:auto !important;
+            min-height:40px !important;
+            padding:6px 8px !important;
+            flex-direction:column !important;
+            gap:3px !important;
+            border-radius:10px !important;
+        }
+
+        .att-icon-btn .mobile-action-label{
+            display:block !important;
+            font-size:10px !important;
+            line-height:1.1 !important;
+            font-weight:700 !important;
+            letter-spacing:.1px !important;
+            color:currentColor !important;
+            white-space:nowrap !important;
+        }
+
+        .filter-actions .btn-icon-only[data-mobile-label]{
+            width:auto !important;
+            min-width:64px !important;
+            height:auto !important;
+            min-height:40px !important;
+            padding:6px 8px !important;
+            display:inline-flex !important;
+            flex-direction:column !important;
+            align-items:center !important;
+            justify-content:center !important;
+            gap:3px !important;
+            border-radius:10px !important;
+        }
+
+        .filter-actions .btn-icon-only[data-mobile-label]::after{
+            content:attr(data-mobile-label) !important;
+            position:static !important;
+            display:block !important;
+            opacity:1 !important;
+            visibility:visible !important;
+            transform:none !important;
+            background:none !important;
+            border:0 !important;
+            box-shadow:none !important;
+            padding:0 !important;
+            margin:0 !important;
+            font-size:10px !important;
+            line-height:1.1 !important;
+            font-weight:700 !important;
+            letter-spacing:.1px !important;
+            color:currentColor !important;
+            white-space:nowrap !important;
+        }
+    }
+
+    @media (hover: none), (pointer: coarse){
+        .att-icon-btn{
+            width:auto !important;
+            min-width:64px !important;
+            height:auto !important;
+            min-height:40px !important;
+            padding:6px 8px !important;
+            flex-direction:column !important;
+            gap:3px !important;
+            border-radius:10px !important;
+        }
+
+        .att-icon-btn .mobile-action-label{
+            display:block !important;
+            font-size:10px !important;
+            line-height:1.1 !important;
+            font-weight:700 !important;
+            letter-spacing:.1px !important;
+            color:currentColor !important;
+            white-space:nowrap !important;
+        }
+
+        .filter-actions .btn-icon-only[data-mobile-label]{
+            width:auto !important;
+            min-width:64px !important;
+            height:auto !important;
+            min-height:40px !important;
+            padding:6px 8px !important;
+            display:inline-flex !important;
+            flex-direction:column !important;
+            align-items:center !important;
+            justify-content:center !important;
+            gap:3px !important;
+            border-radius:10px !important;
+        }
+
+        .filter-actions .btn-icon-only[data-mobile-label]::after{
+            content:attr(data-mobile-label) !important;
+            position:static !important;
+            display:block !important;
+            opacity:1 !important;
+            visibility:visible !important;
+            transform:none !important;
+            background:none !important;
+            border:0 !important;
+            box-shadow:none !important;
+            padding:0 !important;
+            margin:0 !important;
+            font-size:10px !important;
+            line-height:1.1 !important;
+            font-weight:700 !important;
+            letter-spacing:.1px !important;
+            color:currentColor !important;
+            white-space:nowrap !important;
+        }
     }
 </style>
 
 <script>
     let modernTooltipEl = null;
     let modernTooltipTarget = null;
+    const isTouchLikeDevice = window.matchMedia('(hover: none), (pointer: coarse), (any-pointer: coarse)').matches
+        || ('ontouchstart' in window)
+        || (navigator.maxTouchPoints && navigator.maxTouchPoints > 0);
 
     function ensureModernTooltip() {
         if (modernTooltipEl) return modernTooltipEl;
@@ -1521,6 +1657,7 @@ if (!empty($rows)) {
     }
 
     function showModernTooltip(target) {
+        if (isTouchLikeDevice) return;
         const text = (target.getAttribute('data-modern-tooltip') || '').trim();
         if (!text) return;
         const tip = ensureModernTooltip();
@@ -1561,6 +1698,7 @@ if (!empty($rows)) {
     });
 
     document.addEventListener('mouseover', function (e) {
+        if (isTouchLikeDevice) return;
         const target = e.target.closest('[data-modern-tooltip]');
         if (!target) {
             hideModernTooltip();
@@ -1570,6 +1708,7 @@ if (!empty($rows)) {
     });
 
     document.addEventListener('mouseout', function (e) {
+        if (isTouchLikeDevice) return;
         const from = e.target.closest('[data-modern-tooltip]');
         if (!from) return;
         const to = e.relatedTarget ? e.relatedTarget.closest('[data-modern-tooltip]') : null;
@@ -1579,12 +1718,14 @@ if (!empty($rows)) {
     });
 
     document.addEventListener('focusin', function (e) {
+        if (isTouchLikeDevice) return;
         const target = e.target.closest('[data-modern-tooltip]');
         if (!target) return;
         showModernTooltip(target);
     });
 
     document.addEventListener('focusout', function (e) {
+        if (isTouchLikeDevice) return;
         const target = e.target.closest('[data-modern-tooltip]');
         if (!target) return;
         hideModernTooltip();
