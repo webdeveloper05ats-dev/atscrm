@@ -139,6 +139,83 @@ if (!function_exists('canDeleteRegistrationRecord')) {
     return $isCompleted && $isPaid && $isCertIssued;
   }
 }
+if (!function_exists('buildPaymentReceiptAttachmentHtml')) {
+  function buildPaymentReceiptAttachmentHtml(array $context): string
+  {
+    $orgName = (string) ($context['org_name'] ?? APP_NAME);
+    $studentName = (string) ($context['student_name'] ?? '-');
+    $registrationNo = (string) ($context['registration_no'] ?? '-');
+    $programName = (string) ($context['program_name'] ?? '-');
+    $receiptNo = (string) ($context['receipt_no'] ?? '-');
+    $paymentDate = (string) ($context['payment_date'] ?? '-');
+    $paymentMode = (string) ($context['payment_mode'] ?? '-');
+    $paymentType = (string) ($context['payment_type'] ?? '-');
+    $amount = (float) ($context['amount'] ?? 0);
+    $paidAmount = (float) ($context['paid_amount'] ?? 0);
+    $balanceAmount = (float) ($context['balance_amount'] ?? 0);
+    $paymentStatus = (string) ($context['payment_status'] ?? '-');
+    $referenceNo = (string) ($context['reference_no'] ?? '-');
+    $collectedBy = (string) ($context['collected_by'] ?? '-');
+    $ownerName = (string) ($context['owner_name'] ?? '-');
+
+    return '<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Payment Receipt</title>
+  <style>
+    body{font-family:Arial,sans-serif;color:#111827;background:#fff;margin:24px;}
+    .card{max-width:780px;margin:0 auto;border:1px solid #e5e7eb;border-radius:16px;overflow:hidden;}
+    .head{background:#fdf2f8;padding:20px 24px;border-bottom:1px solid #fbcfe8;}
+    .title{font-size:24px;font-weight:700;color:#be185d;margin:0 0 6px;}
+    .sub{font-size:13px;color:#6b7280;}
+    .body{padding:24px;}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+    .box{border:1px solid #e5e7eb;border-radius:12px;padding:14px;}
+    .box h3{margin:0 0 12px;font-size:15px;color:#be185d;}
+    .row{display:flex;justify-content:space-between;gap:16px;padding:6px 0;border-bottom:1px solid #f3f4f6;}
+    .row:last-child{border-bottom:none;}
+    .label{font-weight:600;color:#6b7280;}
+    .value{font-weight:700;color:#111827;text-align:right;}
+    .full{grid-column:1 / -1;}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="head">
+      <div class="title">' . h($orgName) . ' Payment Receipt</div>
+      <div class="sub">Receipt No: <b>' . h($receiptNo) . '</b> | Payment Date: <b>' . h($paymentDate) . '</b></div>
+    </div>
+    <div class="body">
+      <div class="grid">
+        <div class="box">
+          <h3>Student Details</h3>
+          <div class="row"><div class="label">Student</div><div class="value">' . h($studentName) . '</div></div>
+          <div class="row"><div class="label">Registration No</div><div class="value">' . h($registrationNo) . '</div></div>
+          <div class="row"><div class="label">Program</div><div class="value">' . h($programName) . '</div></div>
+        </div>
+        <div class="box">
+          <h3>Payment Details</h3>
+          <div class="row"><div class="label">Amount</div><div class="value">Rs ' . h(number_format($amount, 2)) . '</div></div>
+          <div class="row"><div class="label">Mode</div><div class="value">' . h($paymentMode) . '</div></div>
+          <div class="row"><div class="label">Type</div><div class="value">' . h(ucfirst($paymentType)) . '</div></div>
+          <div class="row"><div class="label">Reference No</div><div class="value">' . h($referenceNo) . '</div></div>
+        </div>
+        <div class="box full">
+          <h3>Fee Summary</h3>
+          <div class="row"><div class="label">Total Paid</div><div class="value">Rs ' . h(number_format($paidAmount, 2)) . '</div></div>
+          <div class="row"><div class="label">Balance</div><div class="value">Rs ' . h(number_format($balanceAmount, 2)) . '</div></div>
+          <div class="row"><div class="label">Payment Status</div><div class="value">' . h(ucfirst($paymentStatus)) . '</div></div>
+          <div class="row"><div class="label">Collected By</div><div class="value">' . h($collectedBy) . '</div></div>
+          <div class="row"><div class="label">Owner</div><div class="value">' . h($ownerName) . '</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>';
+  }
+}
 
 /* =========================================================
    Session / Scope
@@ -1037,17 +1114,41 @@ if (isset($_POST['add_payment'])) {
       try {
         if ($canAllBranches !== 1 && $branchId > 0) {
           $st = $pdo->prepare("
-                        SELECT *
-                        FROM registrations
-                        WHERE id=? AND branch_id=? AND registration_status IN ('active','completed')
+                        SELECT
+                            r.*,
+                            COALESCE(rp.parent_name, e.father_name) AS parent_name,
+                            " . crmBuildParentEmailFallbackSelect($pdo, 'rp', 'e') . " AS parent_email,
+                            owner.name AS owner_name,
+                            owner.email AS owner_email,
+                            guide.name AS guide_name,
+                            guide.email AS guide_email
+                        FROM registrations r
+                        LEFT JOIN registration_profiles rp ON rp.registration_id = r.id
+                        LEFT JOIN enquiries e ON e.id = r.enquiry_id
+                        LEFT JOIN users owner ON owner.id = r.assigned_to
+                        LEFT JOIN registration_courses rc ON rc.registration_id = r.id
+                        LEFT JOIN users guide ON guide.id = rc.guide_staff_id
+                        WHERE r.id=? AND r.branch_id=? AND r.registration_status IN ('active','completed')
                         LIMIT 1
                     ");
           $st->execute([$regId, $branchId]);
         } else {
           $st = $pdo->prepare("
-                        SELECT *
-                        FROM registrations
-                        WHERE id=? AND registration_status IN ('active','completed')
+                        SELECT
+                            r.*,
+                            COALESCE(rp.parent_name, e.father_name) AS parent_name,
+                            " . crmBuildParentEmailFallbackSelect($pdo, 'rp', 'e') . " AS parent_email,
+                            owner.name AS owner_name,
+                            owner.email AS owner_email,
+                            guide.name AS guide_name,
+                            guide.email AS guide_email
+                        FROM registrations r
+                        LEFT JOIN registration_profiles rp ON rp.registration_id = r.id
+                        LEFT JOIN enquiries e ON e.id = r.enquiry_id
+                        LEFT JOIN users owner ON owner.id = r.assigned_to
+                        LEFT JOIN registration_courses rc ON rc.registration_id = r.id
+                        LEFT JOIN users guide ON guide.id = rc.guide_staff_id
+                        WHERE r.id=? AND r.registration_status IN ('active','completed')
                         LIMIT 1
                     ");
           $st->execute([$regId]);
@@ -1103,6 +1204,7 @@ if (isset($_POST['add_payment'])) {
           $approval_status,
           $remarksPay
         ]);
+        $paymentId = (int) $pdo->lastInsertId();
 
         recalcRegistrationPaymentsSummary($pdo, $regId);
 
@@ -1114,9 +1216,12 @@ if (isset($_POST['add_payment'])) {
 
         $studentDisplayName = trim((string) ($reg['enquiry_snapshot_name'] ?? 'Student'));
         $parentDisplayName = trim((string) ($reg['parent_name'] ?? '')) !== '' ? trim((string) ($reg['parent_name'] ?? '')) : 'Parent';
+        $teacherDisplayName = trim((string) ($reg['guide_name'] ?? '')) !== '' ? trim((string) ($reg['guide_name'] ?? '')) : trim((string) ($reg['owner_name'] ?? ''));
         $recipients = [
           ['email' => $reg['enquiry_snapshot_email'] ?? '', 'name' => $studentDisplayName],
           ['email' => $reg['parent_email'] ?? '', 'name' => $parentDisplayName],
+          ['email' => $reg['guide_email'] ?? '', 'name' => $teacherDisplayName],
+          ['email' => $reg['owner_email'] ?? '', 'name' => trim((string) ($reg['owner_name'] ?? ''))],
         ];
         $htmlBody = '
                 <p>Dear Student and Parent,</p>
@@ -1132,6 +1237,7 @@ if (isset($_POST['add_payment'])) {
                 <strong>Total Paid:</strong> ' . h(number_format((float) ($updatedPaymentSummary['paid_amount'] ?? 0), 2, '.', '')) . '<br>
                 <strong>Balance:</strong> ' . h(number_format((float) ($updatedPaymentSummary['balance_amount'] ?? 0), 2, '.', '')) . '<br>
                 <strong>Payment Status:</strong> ' . h(ucfirst((string) ($updatedPaymentSummary['payment_status'] ?? ''))) . '</p>
+                <p>The receipt copy is attached with this email.</p>
                 <p>Regards,<br>' . h(APP_NAME) . '</p>';
         $textBody = "Dear Student and Parent,\n\n"
           . "A payment has been recorded for the registration.\n"
@@ -1145,11 +1251,34 @@ if (isset($_POST['add_payment'])) {
           . "Receipt No: {$receiptNo}\n"
           . "Total Paid: " . number_format((float) ($updatedPaymentSummary['paid_amount'] ?? 0), 2, '.', '') . "\n"
           . "Balance: " . number_format((float) ($updatedPaymentSummary['balance_amount'] ?? 0), 2, '.', '') . "\n"
-          . "Payment Status: " . ucfirst((string) ($updatedPaymentSummary['payment_status'] ?? '')) . "\n\n"
+          . "Payment Status: " . ucfirst((string) ($updatedPaymentSummary['payment_status'] ?? '')) . "\n"
+          . "The receipt copy is attached with this email.\n\n"
           . "Regards,\n" . APP_NAME;
+        $receiptAttachmentHtml = buildPaymentReceiptAttachmentHtml([
+          'org_name' => APP_NAME,
+          'student_name' => $studentDisplayName,
+          'registration_no' => (string) ($reg['registration_no'] ?? ''),
+          'program_name' => (string) ($reg['program_name'] ?? ''),
+          'receipt_no' => $receiptNo,
+          'payment_date' => (string) $payment_date,
+          'payment_mode' => (string) $payment_mode,
+          'payment_type' => (string) $payment_type,
+          'amount' => (float) $amount,
+          'paid_amount' => (float) ($updatedPaymentSummary['paid_amount'] ?? 0),
+          'balance_amount' => (float) ($updatedPaymentSummary['balance_amount'] ?? 0),
+          'payment_status' => (string) ($updatedPaymentSummary['payment_status'] ?? ''),
+          'reference_no' => (string) ($reference_no ?? ''),
+          'collected_by' => (string) ($_SESSION['full_name'] ?? $_SESSION['name'] ?? $_SESSION['username'] ?? 'Staff'),
+          'owner_name' => (string) ($reg['owner_name'] ?? ''),
+        ]);
+        $attachments = [[
+          'filename' => preg_replace('/[^A-Za-z0-9_-]/', '_', $receiptNo) . '.html',
+          'content' => $receiptAttachmentHtml,
+          'mime_type' => 'text/html; charset=UTF-8',
+        ]];
         $mailError = null;
         $mailWarning = '';
-        if (!crmSendEmail($recipients, 'Payment received for ' . $studentDisplayName, $htmlBody, $textBody, $mailError)) {
+        if (!crmSendEmail($recipients, 'Payment received for ' . $studentDisplayName, $htmlBody, $textBody, $mailError, $attachments)) {
           $mailWarning = ' Email delivery failed';
           if ($mailError) {
             $mailWarning .= ': ' . $mailError;

@@ -606,7 +606,10 @@ if (isset($_POST['save_registration'])) {
             $pdo->commit();
 
             $mailWarning = '';
-            if ($registration_status === 'active' && $previousRegistrationStatus !== 'active') {
+            $isNewRegistration = $regIdPost <= 0;
+            $isFreshActivation = $registration_status === 'active' && $previousRegistrationStatus !== 'active';
+
+            if ($isNewRegistration || $isFreshActivation) {
                 $registrationDate = $joined_on ?: date('Y-m-d');
                 $studentDisplayName = trim((string) $student_name);
                 $parentDisplayName = trim((string) $parent_name) !== '' ? trim((string) $parent_name) : 'Parent';
@@ -614,28 +617,35 @@ if (isset($_POST['save_registration'])) {
                     ['email' => $email, 'name' => $studentDisplayName],
                     ['email' => $parent_email, 'name' => $parentDisplayName],
                 ];
-                $subject = 'Registration completed for ' . ($studentDisplayName !== '' ? $studentDisplayName : 'student');
+                $statusLabel = $registration_status === 'active' ? 'confirmed' : 'saved';
+                $statusCopy = $registration_status === 'active'
+                    ? 'The registration has been completed successfully.'
+                    : 'A new registration has been created successfully and is currently saved as draft.';
+                $subject = ($registration_status === 'active' ? 'Registration completed for ' : 'New registration created for ')
+                    . ($studentDisplayName !== '' ? $studentDisplayName : 'student');
                 $htmlBody = '
                     <p>Dear Student and Parent,</p>
-                    <p>The registration has been completed successfully.</p>
+                    <p>' . h($statusCopy) . '</p>
                     <p><strong>Student:</strong> ' . h($studentDisplayName) . '<br>
                     <strong>Registration No:</strong> ' . h($registration_no) . '<br>
+                    <strong>Status:</strong> ' . h(ucfirst($statusLabel)) . '<br>
                     <strong>Program:</strong> ' . h((string) $program_name) . '<br>
                     <strong>Batch:</strong> ' . h((string) $batch_name) . '<br>
                     <strong>Joined On:</strong> ' . h($registrationDate) . '</p>
                     <p>Please keep this email for your records.</p>
                     <p>Regards,<br>' . h(APP_NAME) . '</p>';
                 $textBody = "Dear Student and Parent,\n\n"
-                    . "The registration has been completed successfully.\n"
+                    . $statusCopy . "\n"
                     . "Student: {$studentDisplayName}\n"
                     . "Registration No: {$registration_no}\n"
+                    . "Status: " . ucfirst($statusLabel) . "\n"
                     . "Program: {$program_name}\n"
                     . "Batch: {$batch_name}\n"
                     . "Joined On: {$registrationDate}\n\n"
                     . "Regards,\n" . APP_NAME;
                 $mailError = null;
                 if (!crmSendEmail($recipients, $subject, $htmlBody, $textBody, $mailError)) {
-                    $mailWarning = ' Registration completed, but email delivery failed';
+                    $mailWarning = ' Registration saved, but email delivery failed';
                     if ($mailError) {
                         $mailWarning .= ': ' . $mailError;
                     }

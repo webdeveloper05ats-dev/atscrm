@@ -360,7 +360,297 @@ function crmBuildSmtpAttempts(): array
     return $attempts;
 }
 
-function crmSendEmail(array $recipients, string $subject, string $htmlBody, string $textBody = '', ?string &$errorMessage = null): bool
+function crmEmailPreviewText(string $htmlBody): string
+{
+    $plain = trim(strip_tags(str_replace(['<br>', '<br/>', '<br />'], "\n", $htmlBody)));
+    $plain = preg_replace('/\s+/', ' ', $plain ?? '');
+    $plain = trim((string) $plain);
+
+    if ($plain === '') {
+        return APP_NAME . ' update';
+    }
+
+    return function_exists('mb_substr')
+        ? mb_substr($plain, 0, 140)
+        : substr($plain, 0, 140);
+}
+
+function crmWrapEmailHtml(string $subject, string $htmlBody): string
+{
+    if (stripos($htmlBody, '<html') !== false) {
+        return $htmlBody;
+    }
+
+    $appName = htmlspecialchars((string) APP_NAME, ENT_QUOTES, 'UTF-8');
+    $safeSubject = htmlspecialchars($subject, ENT_QUOTES, 'UTF-8');
+    $previewText = htmlspecialchars(crmEmailPreviewText($htmlBody), ENT_QUOTES, 'UTF-8');
+    $year = date('Y');
+
+    return '<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="x-apple-disable-message-reformatting">
+    <title>' . $safeSubject . '</title>
+    <style>
+        body{
+            margin:0;
+            padding:0;
+            background:#fff7fa;
+            color:#333333;
+            font-family:Poppins,Segoe UI,Arial,sans-serif;
+            -webkit-font-smoothing:antialiased;
+        }
+        table{
+            border-collapse:collapse;
+            border-spacing:0;
+        }
+        img{
+            border:0;
+            outline:none;
+            text-decoration:none;
+            max-width:100%;
+        }
+        .crm-email-shell{
+            width:100%;
+            background:
+                radial-gradient(circle at top left, rgba(233,30,99,0.12), transparent 24%),
+                radial-gradient(circle at top right, rgba(233,30,99,0.08), transparent 22%),
+                #fff7fa;
+            padding:32px 12px;
+        }
+        .crm-email-card{
+            width:100%;
+            max-width:680px;
+            margin:0 auto;
+            background:#ffffff;
+            border:1px solid #f3c6d3;
+            border-radius:24px;
+            overflow:hidden;
+            box-shadow:0 18px 42px rgba(233,30,99,0.10);
+        }
+        .crm-email-hero{
+            padding:30px 32px 24px;
+            background:
+                linear-gradient(135deg, rgba(233,30,99,0.16), rgba(255,255,255,0.96)),
+                linear-gradient(180deg, #ffffff 0%, #fff3f8 100%);
+            border-bottom:1px solid #f7d7e4;
+        }
+        .crm-email-kicker{
+            display:inline-block;
+            margin:0 0 14px;
+            padding:7px 12px;
+            border-radius:999px;
+            background:#ffffff;
+            border:1px solid rgba(233,30,99,0.18);
+            color:#c2185b;
+            font-size:11px;
+            font-weight:800;
+            letter-spacing:0.08em;
+            text-transform:uppercase;
+        }
+        .crm-email-brand{
+            margin:0 0 8px;
+            color:#e91e63;
+            font-size:28px;
+            font-weight:800;
+            line-height:1.15;
+        }
+        .crm-email-subject{
+            margin:0;
+            color:#2f1c28;
+            font-size:22px;
+            font-weight:800;
+            line-height:1.3;
+        }
+        .crm-email-copy{
+            margin:12px 0 0;
+            color:#6f6170;
+            font-size:13px;
+            line-height:1.7;
+        }
+        .crm-email-body{
+            padding:28px 32px 12px;
+            font-size:14px;
+            line-height:1.75;
+            color:#334155;
+        }
+        .crm-email-body h1,
+        .crm-email-body h2,
+        .crm-email-body h3,
+        .crm-email-body h4{
+            margin:0 0 12px;
+            color:#2f1c28;
+            line-height:1.3;
+        }
+        .crm-email-body p{
+            margin:0 0 14px;
+        }
+        .crm-email-body ul,
+        .crm-email-body ol{
+            margin:0 0 16px;
+            padding-left:20px;
+        }
+        .crm-email-body li{
+            margin-bottom:8px;
+        }
+        .crm-email-body strong{
+            color:#2f1c28;
+        }
+        .crm-email-body a{
+            color:#c2185b;
+            font-weight:700;
+            text-decoration:none;
+        }
+        .crm-email-body table{
+            width:100%;
+            margin:18px 0;
+            overflow:hidden;
+            border:1px solid #f3d6e1;
+            border-radius:16px;
+            background:#ffffff;
+        }
+        .crm-email-body th{
+            padding:12px 14px;
+            background:#fff1f6;
+            color:#7a294c;
+            font-size:12px;
+            font-weight:800;
+            letter-spacing:0.04em;
+            text-transform:uppercase;
+            text-align:left;
+            border-bottom:1px solid #f3d6e1;
+        }
+        .crm-email-body td{
+            padding:12px 14px;
+            color:#475569;
+            border-bottom:1px solid #f8e4ec;
+        }
+        .crm-email-body tr:last-child td{
+            border-bottom:none;
+        }
+        .crm-email-body blockquote{
+            margin:18px 0;
+            padding:14px 16px;
+            border-left:4px solid #e91e63;
+            background:#fff5f9;
+            color:#5b4b58;
+            border-radius:0 14px 14px 0;
+        }
+        .crm-email-panel,
+        .crm-email-note{
+            margin:18px 0;
+            padding:16px 18px;
+            border-radius:18px;
+            border:1px solid #f3d6e1;
+            background:linear-gradient(180deg,#ffffff 0%,#fff8fb 100%);
+        }
+        .crm-email-highlight{
+            margin:18px 0;
+            padding:18px 20px;
+            border-radius:20px;
+            background:linear-gradient(135deg,#fff0f6,#ffffff);
+            border:1px solid #f3c6d3;
+            box-shadow:0 10px 24px rgba(233,30,99,0.08);
+        }
+        .crm-email-badge{
+            display:inline-block;
+            margin:0 8px 8px 0;
+            padding:6px 10px;
+            border-radius:999px;
+            background:#fff0f5;
+            border:1px solid #f4c9d7;
+            color:#be185d;
+            font-size:11px;
+            font-weight:800;
+            letter-spacing:0.03em;
+            text-transform:uppercase;
+        }
+        .crm-email-button{
+            display:inline-block;
+            margin:10px 0 14px;
+            padding:12px 20px;
+            border-radius:999px;
+            background:linear-gradient(135deg,#ff4d8d,#e91e63);
+            color:#ffffff !important;
+            font-size:13px;
+            font-weight:800;
+            text-decoration:none;
+            box-shadow:0 14px 26px rgba(233,30,99,0.22);
+        }
+        .crm-email-meta{
+            margin:18px 0;
+            padding:14px 16px;
+            border-radius:16px;
+            background:#f8fafc;
+            border:1px solid #e5e7eb;
+            color:#64748b;
+            font-size:12px;
+            line-height:1.7;
+        }
+        .crm-email-divider{
+            height:1px;
+            margin:22px 0;
+            background:linear-gradient(90deg,rgba(233,30,99,0),rgba(233,30,99,0.18),rgba(233,30,99,0));
+        }
+        .crm-email-footer{
+            padding:0 32px 30px;
+            color:#7b8190;
+            font-size:12px;
+            line-height:1.7;
+        }
+        .crm-email-footer-card{
+            padding:16px 18px;
+            border-radius:18px;
+            background:#fff8fb;
+            border:1px solid #f3d6e1;
+        }
+        @media only screen and (max-width: 640px){
+            .crm-email-shell{
+                padding:18px 8px;
+            }
+            .crm-email-hero,
+            .crm-email-body,
+            .crm-email-footer{
+                padding-left:20px !important;
+                padding-right:20px !important;
+            }
+            .crm-email-brand{
+                font-size:24px;
+            }
+            .crm-email-subject{
+                font-size:20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div style="display:none;max-height:0;overflow:hidden;opacity:0;mso-hide:all;">' . $previewText . '</div>
+    <div class="crm-email-shell">
+        <div class="crm-email-card">
+            <div class="crm-email-hero">
+                <div class="crm-email-kicker">ATS CRM Notification</div>
+                <div class="crm-email-brand">' . $appName . '</div>
+                <h1 class="crm-email-subject">' . $safeSubject . '</h1>
+            </div>
+            <div class="crm-email-body">
+                ' . $htmlBody . '
+            </div>
+            <div class="crm-email-footer">
+                <div class="crm-email-footer-card">
+                    <strong style="color:#2f1c28;">' . $appName . '</strong><br>
+                    Student lifecycle updates, payments, interviews, certificates, and communication in one place.<br>
+                    &copy; ' . $year . ' ' . $appName . '
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>';
+}
+
+function crmSendEmail(array $recipients, string $subject, string $htmlBody, string $textBody = '', ?string &$errorMessage = null, array $attachments = []): bool
 {
     $errorMessage = null;
     $recipients = crmUniqueEmailRecipients($recipients);
@@ -377,6 +667,8 @@ function crmSendEmail(array $recipients, string $subject, string $htmlBody, stri
     }
 
     $failedRecipients = [];
+    $wrappedHtmlBody = crmWrapEmailHtml($subject, $htmlBody);
+    $generatedTextBody = $textBody !== '' ? $textBody : trim(strip_tags(str_replace(['<br>', '<br/>', '<br />'], "\n", $wrappedHtmlBody)));
 
     foreach ($recipients as $recipient) {
         $recipientSent = false;
@@ -406,10 +698,19 @@ function crmSendEmail(array $recipients, string $subject, string $htmlBody, stri
                 ];
                 $mail->setFrom(SMTP_USERNAME, APP_NAME);
                 $mail->addAddress($recipient['email'], $recipient['name']);
+                foreach ($attachments as $attachment) {
+                    $content = (string) ($attachment['content'] ?? '');
+                    $filename = trim((string) ($attachment['filename'] ?? 'attachment.txt'));
+                    $mimeType = trim((string) ($attachment['mime_type'] ?? 'application/octet-stream'));
+                    if ($content === '' || $filename === '') {
+                        continue;
+                    }
+                    $mail->addStringAttachment($content, $filename, \PHPMailer\PHPMailer\PHPMailer::ENCODING_BASE64, $mimeType);
+                }
                 $mail->isHTML(true);
                 $mail->Subject = $subject;
-                $mail->Body = $htmlBody;
-                $mail->AltBody = $textBody !== '' ? $textBody : trim(strip_tags(str_replace(['<br>', '<br/>', '<br />'], "\n", $htmlBody)));
+                $mail->Body = $wrappedHtmlBody;
+                $mail->AltBody = $generatedTextBody;
                 $mail->send();
                 crmLogMailEvent(
                     'Sent mail "' . $subject . '" to ' . $recipient['email']
