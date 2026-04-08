@@ -94,6 +94,7 @@
     });
 
     instance.altInput.addEventListener("blur", function () {
+      if (instance.isOpen) return;
       var ok = applyTypedValue(instance);
       if (!ok) {
         instance.altInput.value = "";
