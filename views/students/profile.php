@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 if (!defined('APP_NAME')) {
     die("Unauthorized access.");
@@ -209,6 +209,9 @@ h2 {
     color: #5f4d5b;
     border-bottom: 1px solid #fbe5ee;
     background: rgba(255, 255, 255, 0.92);
+    white-space: normal;
+    word-break: break-word;
+    overflow-wrap: anywhere;
 }
 
 .student-profile-table tbody tr:nth-child(even) td {
@@ -222,6 +225,8 @@ h2 {
 .student-profile-table tr td:first-child {
     font-weight: 600;
     color: #7d103f;
+    word-break: normal;
+    overflow-wrap: normal;
 }
 
 .student-profile-table td a {
@@ -238,6 +243,24 @@ h2 {
 
 .student-profile-table td a:hover {
     background: #ffe0ec;
+}
+
+.payment-history-table td a.crm-icon-btn{
+    width: 38px;
+    height: 38px;
+    min-height: 38px;
+    padding: 0 !important;
+    border-radius: 12px;
+}
+
+.student-page,
+.profile-card,
+.student-profile-card-block,
+.student-profile-table,
+.student-profile-table tr,
+.student-profile-table td {
+    max-width: 100%;
+    box-sizing: border-box;
 }
 
 @media (max-width: 992px) {
@@ -319,6 +342,244 @@ font-family + font-size + font-weight only
 :where(.dataTables_wrapper .dataTables_info){font-size:0.85rem !important;font-weight:400 !important;}
 :where(.dataTables_wrapper .paginate_button){font-size:0.9rem !important;font-weight:600 !important;}
 :where(.badge,.status-badge,.crm-status-badge,.status-pill,.badge-status,[data-status],.tooltip,.ui-tooltip,.floating-ui-tooltip__bubble){font-weight:600 !important;}
+
+/* ===== GLOBAL BUTTON STANDARDIZATION ===== */
+button,
+.btn,
+.crm-action-btn,
+.btn-filter,
+.btn-reset,
+.btn-add,
+.btn-excel,
+.action-btn,
+.btn-icon-only,
+a.btn,
+input[type="button"],
+input[type="submit"],
+input[type="reset"],
+[role="button"] {
+    font-size: 0.92rem;
+    min-height: 38px;
+    padding: 8px 14px;
+    border-radius: 10px;
+    font-weight: 600;
+}
+
+.btn-icon-only,
+.crm-action-btn,
+.action-btn,
+.btn-sm,
+.btn-xs,
+button.btn-icon,
+a.btn-icon,
+.btn i:only-child,
+button i:only-child {
+    font-size: 0.9rem;
+    min-height: 34px;
+    padding: 8px;
+    border-radius: 10px;
+    font-weight: 600;
+}
+
+/* ===== Student Profile Responsive Fixes ===== */
+.student-page > h2{
+    line-height: 1.15;
+    word-break: break-word;
+}
+
+@media (min-width: 1025px) and (max-width: 1366px){
+    .student-page{
+        max-width: 100%;
+        margin: 20px auto;
+        padding: 24px;
+    }
+    .profile-card{
+        gap: 24px;
+        padding: 24px;
+    }
+    .details-grid{
+        gap: 18px;
+    }
+}
+
+@media (min-width: 768px) and (max-width: 1024px){
+    .student-page{
+        max-width: 100%;
+        margin: 16px auto;
+        padding: 20px;
+        border-radius: 18px;
+    }
+    .student-page > h2{
+        font-size: clamp(1.5rem, 2.4vw, 1.9rem) !important;
+        margin-bottom: 18px;
+    }
+    .profile-card{
+        gap: 18px;
+        padding: 20px;
+        align-items: flex-start;
+    }
+    .profile-left img,
+    .profile-photo{
+        width: 124px;
+        height: 124px;
+    }
+    .profile-right{
+        width: 100%;
+    }
+    .profile-right h3{
+        font-size: clamp(1.35rem, 2.2vw, 1.75rem) !important;
+        margin-bottom: 10px;
+    }
+    .profile-right p{
+        margin: 8px 0;
+    }
+    .details-grid{
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+    .student-profile-card-block{
+        padding: 18px;
+        border-radius: 16px;
+    }
+}
+
+@media (max-width: 767px){
+    .student-page{
+        max-width: 100%;
+        margin: 12px auto;
+        padding: 14px;
+        border-radius: 14px;
+    }
+    .student-page > h2{
+        font-size: clamp(1.35rem, 6.2vw, 1.75rem) !important;
+        margin-bottom: 14px;
+    }
+    .profile-card{
+        padding: 14px;
+        gap: 14px;
+        border-radius: 14px;
+    }
+    .profile-left{
+        width: 100%;
+        display: flex;
+        justify-content: center;
+    }
+    .profile-left img,
+    .profile-photo{
+        width: 108px;
+        height: 108px;
+        border-radius: 14px;
+    }
+    .profile-right{
+        width: 100%;
+        text-align: left;
+    }
+    .profile-right h3{
+        font-size: clamp(1.2rem, 5.6vw, 1.55rem) !important;
+        margin: 0 0 10px;
+    }
+    .profile-right p{
+        font-size: 0.9rem !important;
+        margin: 6px 0;
+        line-height: 1.4;
+        word-break: break-word;
+    }
+    .details-grid{
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+    .student-profile-card-block{
+        padding: 14px;
+        border-radius: 14px;
+    }
+    .section-title{
+        margin-bottom: 10px;
+    }
+    .student-profile-table{
+        border-radius: 12px;
+    }
+    .student-profile-table:not(.payment-history-table) tr{
+        display: grid;
+        grid-template-columns: minmax(120px, 42%) minmax(0, 58%);
+    }
+    .student-profile-table td{
+        padding: 10px 12px !important;
+        font-size: 0.88rem !important;
+    }
+    .student-profile-table:not(.payment-history-table) tr td:first-child{
+        white-space: nowrap;
+    }
+    .student-profile-table:not(.payment-history-table) tr td:last-child{
+        word-break: break-word;
+        overflow-wrap: anywhere;
+    }
+
+    /* Payment History: mobile card rows only */
+    .payment-history-table{
+        border: 0 !important;
+        background: transparent !important;
+    }
+    .payment-history-table thead{
+        display: none !important;
+    }
+    .payment-history-table tbody{
+        display: block;
+    }
+    .payment-history-table tbody tr{
+        display: block !important;
+        border: 1px solid #f9dce8;
+        border-radius: 12px;
+        background: #fff;
+        margin-bottom: 10px;
+        overflow: hidden;
+    }
+    .payment-history-table tbody tr td{
+        display: flex !important;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        width: 100%;
+        border-bottom: 1px solid #fbe5ee;
+        background: #fff;
+        padding: 10px 12px !important;
+    }
+    .payment-history-table tbody tr td:last-child{
+        border-bottom: 0;
+    }
+    .payment-history-table tbody tr td::before{
+        content: attr(data-label);
+        font-weight: 700;
+        color: #7d103f;
+        margin-right: 10px;
+        flex: 0 0 auto;
+    }
+    .payment-history-table tbody tr td a{
+        margin-left: auto;
+    }
+    .payment-history-table tbody tr td[data-label="Amount / Mode"]{
+        align-items: flex-start;
+    }
+    .payment-history-table .amount-mode-stack{
+        margin-left: auto;
+        display: inline-flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 2px;
+        line-height: 1.2;
+    }
+    .payment-history-table .amount-mode-stack .amount-line{
+        font-weight: 600;
+    }
+    .payment-history-table tbody tr td[colspan]{
+        display: block !important;
+        text-align: center;
+        color: #6a5565;
+        font-weight: 600;
+    }
+    .payment-history-table tbody tr td[colspan]::before{
+        content: none;
+    }
+}
 </style>
 
 <div class="student-page">
@@ -466,27 +727,27 @@ FEE SUMMARY
 
 <tr>
 <td>Total Fee</td>
-<td>?<?= number_format((float)$reg['total_fee'],2) ?></td>
+<td>₹<?= number_format((float)$reg['total_fee'],2) ?></td>
 </tr>
 
 <tr>
 <td>Discount</td>
-<td>?<?= number_format((float)$reg['discount_amount'],2) ?></td>
+<td>₹<?= number_format((float)$reg['discount_amount'],2) ?></td>
 </tr>
 
 <tr>
 <td>Final Fee</td>
-<td>?<?= number_format((float)$reg['final_fee'],2) ?></td>
+<td>₹<?= number_format((float)$reg['final_fee'],2) ?></td>
 </tr>
 
 <tr>
 <td>Paid</td>
-<td>?<?= number_format((float)$reg['paid_amount'],2) ?></td>
+<td>₹<?= number_format((float)$reg['paid_amount'],2) ?></td>
 </tr>
 
 <tr>
 <td>Balance</td>
-<td>?<?= number_format((float)$reg['balance_amount'],2) ?></td>
+<td>₹<?= number_format((float)$reg['balance_amount'],2) ?></td>
 </tr>
 
 </table>
@@ -502,14 +763,13 @@ PAYMENT HISTORY
 
 <h3 class="section-title">Payment History</h3>
 
-<table class="student-profile-table no-mobile-cards">
+<table class="student-profile-table no-mobile-cards payment-history-table">
 
 <thead>
 
 <tr>
 <th>Date</th>
-<th>Amount</th>
-<th>Mode</th>
+<th>Amount / Mode</th>
 <th>Reference</th>
 <th>Receipt</th>
 </tr>
@@ -521,7 +781,7 @@ PAYMENT HISTORY
 <?php if(!$payments): ?>
 
 <tr>
-<td colspan="5">No payments yet.</td>
+<td colspan="4">No payments yet.</td>
 </tr>
 
 <?php else: ?>
@@ -530,21 +790,27 @@ PAYMENT HISTORY
 
 <tr>
 
-<td><?= h($p['payment_date']) ?></td>
+<td data-label="Date"><?= h($p['payment_date']) ?></td>
 
-<td>?<?= number_format((float)$p['amount'],2) ?></td>
+<td data-label="Amount / Mode">
+<span class="amount-mode-stack">
+<span class="amount-line">₹<?= number_format((float)$p['amount'],2) ?></span>
+<span class="sub"><?= h($p['payment_mode']) ?></span>
+</span>
+</td>
 
-<td><?= h($p['payment_mode']) ?></td>
+<td data-label="Reference"><?= h($p['reference_no']) ?></td>
 
-<td><?= h($p['reference_no']) ?></td>
-
-<td>
+<td data-label="Receipt">
 
 <a
 href="index.php?page=payments/receipt&payment_id=<?= (int)$p['id'] ?>"
-target="_blank">
-
-Print
+target="_blank"
+title="Print Receipt"
+data-modern-tooltip="Print Receipt"
+aria-label="Print Receipt"
+class="crm-icon-btn is-info">
+<i class="fas fa-print"></i>
 
 </a>
 
@@ -563,3 +829,4 @@ Print
 </div>
 
 </div>
+

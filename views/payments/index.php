@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 // =====================================
 // ATS CRM - Payments Module
 // =====================================
@@ -2443,6 +2443,847 @@ font-family + font-size + font-weight only
 :where(.dataTables_wrapper .dataTables_info){font-size:0.85rem !important;font-weight:400 !important;}
 :where(.dataTables_wrapper .paginate_button){font-size:0.9rem !important;font-weight:600 !important;}
 :where(.badge,.status-badge,.crm-status-badge,.status-pill,.badge-status,[data-status],.tooltip,.ui-tooltip,.floating-ui-tooltip__bubble){font-weight:600 !important;}
+
+/* ===== GLOBAL BUTTON STANDARDIZATION ===== */
+button,
+.btn,
+.crm-action-btn,
+.btn-filter,
+.btn-reset,
+.btn-add,
+.btn-excel,
+.action-btn,
+.btn-icon-only,
+a.btn,
+input[type="button"],
+input[type="submit"],
+input[type="reset"],
+[role="button"] {
+    font-size: 0.92rem;
+    min-height: 38px;
+    padding: 8px 14px;
+    border-radius: 10px;
+    font-weight: 600;
+}
+
+.btn-icon-only,
+.crm-action-btn,
+.action-btn,
+.btn-sm,
+.btn-xs,
+button.btn-icon,
+a.btn-icon,
+.btn i:only-child,
+button i:only-child {
+    font-size: 0.9rem;
+    min-height: 34px;
+    padding: 8px;
+    border-radius: 10px;
+    font-weight: 600;
+}
+
+/* ===== Payments: Assessment-style responsive lock ===== */
+.payments-dashboard .table-header-flex{
+  display:flex !important;
+  align-items:center !important;
+  justify-content:space-between !important;
+  gap:12px !important;
+  width:100% !important;
+}
+.payments-dashboard .table-title{
+  display:inline-flex !important;
+  align-items:center !important;
+  gap:8px !important;
+  font-weight:700 !important;
+}
+
+.payments-dashboard #datatableControls{
+  width:auto !important;
+  margin-left:auto !important;
+  display:flex !important;
+  justify-content:flex-end !important;
+}
+.payments-dashboard #datatableControls .dt-top,
+.payments-dashboard .dataTables_wrapper .dt-top{
+  display:flex !important;
+  align-items:center !important;
+  justify-content:flex-end !important;
+  gap:10px !important;
+  flex-wrap:nowrap !important;
+}
+
+.payments-dashboard .dataTables_wrapper .dataTables_length,
+.payments-dashboard .dataTables_wrapper .dataTables_filter{
+  width:auto !important;
+  margin:0 !important;
+  display:inline-flex !important;
+  align-items:center !important;
+}
+.payments-dashboard .dataTables_wrapper .dataTables_length label,
+.payments-dashboard .dataTables_wrapper .dataTables_filter label{
+  display:inline-flex !important;
+  align-items:center !important;
+  gap:8px !important;
+  margin:0 !important;
+  white-space:nowrap !important;
+}
+.payments-dashboard .dataTables_wrapper .dataTables_filter input{
+  width:220px !important;
+  min-width:220px !important;
+}
+
+.payments-dashboard .filter-actions{
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:flex-end !important;
+  gap:8px !important;
+  flex-wrap:nowrap !important;
+}
+.payments-dashboard .filter-actions .btn-download-all,
+.payments-dashboard .filter-actions .btn-icon-only{
+  min-height:44px !important;
+  height:44px !important;
+  border-radius:10px !important;
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+}
+.payments-dashboard .filter-actions .btn-download-all{
+  min-width:44px !important;
+  padding:0 12px !important;
+}
+.payments-dashboard .filter-actions .btn-icon-only{
+  width:44px !important;
+  min-width:44px !important;
+  padding:0 !important;
+}
+
+.payments-dashboard .pay-action{
+  display:flex !important;
+  align-items:center !important;
+  justify-content:flex-end !important;
+  gap:8px !important;
+  flex-wrap:wrap !important;
+}
+.payments-dashboard .pay-action .btn-add-payment,
+.payments-dashboard .pay-action .btn-icon{
+  min-height:40px !important;
+  height:40px !important;
+  border-radius:10px !important;
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+}
+
+@media (min-width: 1025px) and (max-width: 1366px){
+  .payments-dashboard .filter-grid{
+    grid-template-columns:minmax(220px,1fr) minmax(180px,220px) minmax(180px,220px) auto !important;
+    gap:12px !important;
+  }
+  .payments-dashboard .dataTables_wrapper .dataTables_filter input{
+    width:240px !important;
+    min-width:240px !important;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1024px){
+  .payments-dashboard .table-header-flex{
+    flex-direction:row !important;
+    flex-wrap:nowrap !important;
+  }
+  .payments-dashboard #datatableControls{
+    width:auto !important;
+    margin-left:auto !important;
+    justify-content:flex-end !important;
+  }
+  .payments-dashboard #datatableControls .dt-top,
+  .payments-dashboard .dataTables_wrapper .dt-top{
+    flex-wrap:nowrap !important;
+    justify-content:flex-end !important;
+  }
+  .payments-dashboard .dataTables_wrapper .dataTables_filter input{
+    width:200px !important;
+    min-width:200px !important;
+  }
+
+  .payments-dashboard .filter-grid{
+    grid-template-columns:1fr 1fr !important;
+    gap:12px !important;
+  }
+  .payments-dashboard .filter-actions{
+    width:auto !important;
+    margin-left:auto !important;
+    flex-wrap:nowrap !important;
+  }
+}
+
+@media (min-width: 480px) and (max-width: 767px){
+  .payments-dashboard .table-header-flex{
+    flex-direction:column !important;
+    align-items:flex-start !important;
+    gap:10px !important;
+  }
+  .payments-dashboard .table-title{
+    width:100% !important;
+    white-space:normal !important;
+  }
+  .payments-dashboard #datatableControls{
+    width:100% !important;
+    margin-left:0 !important;
+    justify-content:flex-start !important;
+  }
+  .payments-dashboard #datatableControls .dt-top,
+  .payments-dashboard .dataTables_wrapper .dt-top{
+    width:100% !important;
+    justify-content:flex-start !important;
+    flex-wrap:wrap !important;
+    gap:10px !important;
+  }
+  .payments-dashboard .dataTables_wrapper .dataTables_filter input{
+    width:220px !important;
+    min-width:220px !important;
+  }
+
+  .payments-dashboard .filter-grid{
+    grid-template-columns:1fr !important;
+    gap:10px !important;
+  }
+  .payments-dashboard .filter-actions{
+    width:100% !important;
+    display:flex !important;
+    flex-wrap:wrap !important;
+    justify-content:flex-start !important;
+    gap:8px !important;
+  }
+  .payments-dashboard .filter-actions .btn-download-all,
+  .payments-dashboard .filter-actions .btn-icon-only{
+    width:calc(50% - 4px) !important;
+    min-width:140px !important;
+    max-width:100% !important;
+    flex:0 0 calc(50% - 4px) !important;
+  }
+}
+
+@media (max-width: 479px){
+  .payments-dashboard .table-header-flex{
+    flex-direction:column !important;
+    align-items:flex-start !important;
+    gap:10px !important;
+  }
+  .payments-dashboard .table-title{
+    width:100% !important;
+    white-space:normal !important;
+  }
+  .payments-dashboard #datatableControls{
+    width:100% !important;
+    margin-left:0 !important;
+    justify-content:flex-start !important;
+  }
+  .payments-dashboard #datatableControls .dt-top,
+  .payments-dashboard .dataTables_wrapper .dt-top{
+    width:100% !important;
+    justify-content:flex-start !important;
+    flex-wrap:wrap !important;
+    gap:8px !important;
+  }
+  .payments-dashboard .dataTables_wrapper .dataTables_length,
+  .payments-dashboard .dataTables_wrapper .dataTables_filter{
+    width:100% !important;
+  }
+  .payments-dashboard .dataTables_wrapper .dataTables_length label,
+  .payments-dashboard .dataTables_wrapper .dataTables_filter label{
+    width:100% !important;
+    white-space:nowrap !important;
+  }
+  .payments-dashboard .dataTables_wrapper .dataTables_filter input{
+    width:100% !important;
+    min-width:0 !important;
+  }
+
+  .payments-dashboard .filter-grid{
+    grid-template-columns:1fr !important;
+    gap:10px !important;
+  }
+  .payments-dashboard .filter-actions{
+    width:100% !important;
+    display:grid !important;
+    grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+    gap:8px !important;
+    align-items:stretch !important;
+    justify-content:initial !important;
+  }
+  .payments-dashboard .filter-actions .btn-download-all,
+  .payments-dashboard .filter-actions .btn-icon-only{
+    width:100% !important;
+    min-width:0 !important;
+    max-width:100% !important;
+    flex:0 0 auto !important;
+  }
+}
+
+/* Payments button alignment lock */
+.payments-dashboard .btn-mobile-label{
+  display:none;
+}
+
+.payments-dashboard .filter-actions .btn-download-all .btn-inner,
+.payments-dashboard .filter-actions .btn-icon-only .btn-inner,
+.payments-dashboard .pay-action .btn-add-payment .btn-inner,
+.payments-dashboard .pay-action .btn-icon .btn-inner{
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  gap:6px !important;
+  line-height:1 !important;
+  margin:0 auto !important;
+}
+
+.payments-dashboard .filter-actions .btn-download-all::after,
+.payments-dashboard .filter-actions .btn-icon-only::after,
+.payments-dashboard .pay-action .btn-add-payment::after,
+.payments-dashboard .pay-action .btn-icon::after{
+  content:none !important;
+}
+
+@media (hover: none), (pointer: coarse), (max-width: 1024px){
+  .payments-dashboard .filter-actions .btn-download-all,
+  .payments-dashboard .filter-actions .btn-icon-only{
+    min-height:44px !important;
+    height:44px !important;
+    border-radius:10px !important;
+    padding:0 10px !important;
+  }
+
+  .payments-dashboard .filter-actions .btn-download-all .btn-mobile-label,
+  .payments-dashboard .filter-actions .btn-icon-only .btn-mobile-label{
+    display:inline-block !important;
+    font-size:11px !important;
+    font-weight:700 !important;
+    line-height:1 !important;
+    white-space:nowrap !important;
+  }
+
+  .payments-dashboard .filter-actions .btn-download-all .btn-inner i,
+  .payments-dashboard .filter-actions .btn-icon-only .btn-inner i{
+    font-size:12px !important;
+    line-height:1 !important;
+    width:12px !important;
+    height:12px !important;
+    display:inline-flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+  }
+
+  .payments-dashboard .pay-action .btn-add-payment,
+  .payments-dashboard .pay-action .btn-icon{
+    width:auto !important;
+    min-width:70px !important;
+    height:auto !important;
+    min-height:40px !important;
+    padding:6px 8px !important;
+    border-radius:10px !important;
+    display:inline-flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+  }
+
+  .payments-dashboard .pay-action .btn-add-payment .btn-mobile-label,
+  .payments-dashboard .pay-action .btn-icon .btn-mobile-label{
+    display:inline-block !important;
+    font-size:10px !important;
+    font-weight:700 !important;
+    line-height:1.1 !important;
+    white-space:nowrap !important;
+  }
+}
+
+/* Payments final conflict fix: duplicate labels + clipped card values */
+.payments-dashboard .filter-actions .btn-download-all::before,
+.payments-dashboard .filter-actions .btn-download-all::after,
+.payments-dashboard .filter-actions .btn-download-all[data-mobile-label]::before,
+.payments-dashboard .filter-actions .btn-download-all[data-mobile-label]::after,
+.payments-dashboard .filter-actions .btn-icon-only::before,
+.payments-dashboard .filter-actions .btn-icon-only::after,
+.payments-dashboard .filter-actions .btn-icon-only[data-mobile-label]::before,
+.payments-dashboard .filter-actions .btn-icon-only[data-mobile-label]::after,
+.payments-dashboard .pay-action .btn-add-payment::before,
+.payments-dashboard .pay-action .btn-add-payment::after,
+.payments-dashboard .pay-action .btn-add-payment[data-mobile-label]::before,
+.payments-dashboard .pay-action .btn-add-payment[data-mobile-label]::after,
+.payments-dashboard .pay-action .btn-icon::before,
+.payments-dashboard .pay-action .btn-icon::after,
+.payments-dashboard .pay-action .btn-icon[data-mobile-label]::before,
+.payments-dashboard .pay-action .btn-icon[data-mobile-label]::after{
+  content:none !important;
+  display:none !important;
+}
+
+.payments-dashboard .filter-actions .btn-inner,
+.payments-dashboard .pay-action .btn-inner{
+  position:static !important;
+  transform:none !important;
+}
+
+@media (max-width: 900px){
+  #userTable.crm-table tbody td{
+    overflow:visible !important;
+  }
+
+  #userTable.crm-table tbody td .crm-card-value{
+    min-width:0 !important;
+    max-width:62% !important;
+    width:auto !important;
+    overflow:visible !important;
+    text-align:right !important;
+  }
+
+  #userTable.crm-table tbody td .crm-card-value,
+  #userTable.crm-table tbody td .crm-card-value > *{
+    white-space:normal !important;
+    word-break:break-word !important;
+    overflow-wrap:anywhere !important;
+  }
+
+  #userTable.crm-table tbody td .pay-action{
+    width:100% !important;
+    justify-content:flex-end !important;
+    align-items:center !important;
+    flex-wrap:wrap !important;
+    gap:6px !important;
+  }
+}
+
+@media (max-width: 479px){
+  #userTable.crm-table tbody td::before{
+    flex:0 0 36% !important;
+    max-width:36% !important;
+  }
+  #userTable.crm-table tbody td .crm-card-value{
+    max-width:64% !important;
+  }
+}
+
+/* Payments stable table/card split */
+@media (min-width: 768px){
+  .payments-dashboard .table-container,
+  .payments-dashboard .crm-table-wrapper{
+    width:100% !important;
+    overflow-x:auto !important;
+    overflow-y:visible !important;
+    -webkit-overflow-scrolling:touch !important;
+  }
+
+  #userTable.crm-table{
+    width:100% !important;
+    min-width:980px !important;
+    border-collapse:collapse !important;
+  }
+  #userTable.crm-table thead{
+    display:table-header-group !important;
+  }
+  #userTable.crm-table tbody{
+    display:table-row-group !important;
+    width:auto !important;
+  }
+  #userTable.crm-table tbody tr{
+    display:table-row !important;
+    background:transparent !important;
+    border:0 !important;
+    border-radius:0 !important;
+    margin:0 !important;
+  }
+  #userTable.crm-table tbody td{
+    display:table-cell !important;
+    text-align:left !important;
+    padding:10px 9px !important;
+    border-bottom:1px solid #f0f0f0 !important;
+    white-space:nowrap !important;
+  }
+  #userTable.crm-table tbody td::before{
+    content:none !important;
+    display:none !important;
+  }
+  #userTable.crm-table tbody td .crm-card-value{
+    display:inline !important;
+    max-width:none !important;
+    text-align:inherit !important;
+    white-space:inherit !important;
+  }
+  #userTable.crm-table tbody td .pay-action{
+    width:auto !important;
+    display:inline-flex !important;
+    flex-wrap:nowrap !important;
+    justify-content:flex-end !important;
+    gap:8px !important;
+  }
+}
+
+/* Payments final tablet/laptop fit fix (avoid hidden parts) */
+@media (min-width: 768px) and (max-width: 1366px){
+  .payments-dashboard .filter-grid{
+    grid-template-columns:repeat(2, minmax(0, 1fr)) !important;
+    gap:12px !important;
+  }
+
+  .payments-dashboard .filter-actions{
+    grid-column:1 / -1 !important;
+    width:100% !important;
+    justify-content:flex-start !important;
+    flex-wrap:wrap !important;
+    gap:8px !important;
+  }
+
+  .payments-dashboard .filter-actions .btn-download-all,
+  .payments-dashboard .filter-actions .btn-icon-only{
+    width:auto !important;
+    min-width:44px !important;
+    max-width:100% !important;
+    min-height:40px !important;
+    height:40px !important;
+    padding:0 12px !important;
+  }
+
+  .payments-dashboard .table-header-flex{
+    flex-wrap:wrap !important;
+    align-items:flex-start !important;
+    gap:10px !important;
+  }
+
+  .payments-dashboard #datatableControls{
+    width:100% !important;
+    margin-left:0 !important;
+    justify-content:flex-start !important;
+  }
+
+  .payments-dashboard #datatableControls .dt-top,
+  .payments-dashboard .dataTables_wrapper .dt-top{
+    width:100% !important;
+    justify-content:flex-start !important;
+    flex-wrap:wrap !important;
+    gap:10px !important;
+  }
+
+  .payments-dashboard .dataTables_wrapper .dataTables_length,
+  .payments-dashboard .dataTables_wrapper .dataTables_filter{
+    width:auto !important;
+    max-width:100% !important;
+  }
+
+  .payments-dashboard .dataTables_wrapper .dataTables_filter input{
+    width:240px !important;
+    min-width:0 !important;
+    max-width:100% !important;
+  }
+
+  .payments-dashboard .table-container,
+  .payments-dashboard .crm-table-wrapper{
+    overflow-x:auto !important;
+    overflow-y:visible !important;
+    -webkit-overflow-scrolling:touch !important;
+  }
+
+  #userTable.crm-table{
+    min-width:1040px !important;
+    width:100% !important;
+  }
+}
+
+/* Payments final button consistency (all screens) */
+.payments-dashboard .filter-actions{
+  display:flex !important;
+  flex-wrap:wrap !important;
+  align-items:center !important;
+  justify-content:flex-start !important;
+  gap:8px !important;
+}
+
+.payments-dashboard .filter-actions .btn-download-all,
+.payments-dashboard .filter-actions .btn-icon-only{
+  min-width:112px !important;
+  width:112px !important;
+  min-height:42px !important;
+  height:42px !important;
+  padding:0 10px !important;
+  border-radius:10px !important;
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  font-size:0.9rem !important;
+  font-weight:600 !important;
+  line-height:1 !important;
+}
+
+.payments-dashboard .filter-actions .btn-download-all .btn-inner,
+.payments-dashboard .filter-actions .btn-icon-only .btn-inner{
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  gap:6px !important;
+  margin:0 !important;
+  line-height:1 !important;
+}
+
+.payments-dashboard .filter-actions .btn-download-all[data-mobile-label]::before,
+.payments-dashboard .filter-actions .btn-icon-only[data-mobile-label]::before{
+  content:none !important;
+  display:none !important;
+}
+
+.payments-dashboard .filter-actions .btn-download-all[data-mobile-label]::after,
+.payments-dashboard .filter-actions .btn-icon-only[data-mobile-label]::after{
+  content:attr(data-mobile-label) !important;
+  position:static !important;
+  display:inline-block !important;
+  opacity:1 !important;
+  visibility:visible !important;
+  transform:none !important;
+  margin:0 !important;
+  padding:0 !important;
+  background:none !important;
+  border:0 !important;
+  box-shadow:none !important;
+  color:currentColor !important;
+  font-size:0.82rem !important;
+  font-weight:600 !important;
+  line-height:1 !important;
+  white-space:nowrap !important;
+}
+
+.payments-dashboard .pay-action{
+  display:flex !important;
+  flex-wrap:wrap !important;
+  align-items:center !important;
+  justify-content:flex-end !important;
+  gap:8px !important;
+}
+
+.payments-dashboard .pay-action .btn-add-payment,
+.payments-dashboard .pay-action .btn-icon{
+  min-width:86px !important;
+  width:86px !important;
+  min-height:38px !important;
+  height:38px !important;
+  padding:0 8px !important;
+  border-radius:10px !important;
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  font-size:0.86rem !important;
+  font-weight:600 !important;
+  line-height:1 !important;
+}
+
+.payments-dashboard .pay-action .btn-add-payment .btn-inner,
+.payments-dashboard .pay-action .btn-icon .btn-inner{
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  gap:5px !important;
+  margin:0 !important;
+  line-height:1 !important;
+}
+
+.payments-dashboard .pay-action .btn-add-payment[data-mobile-label]::before,
+.payments-dashboard .pay-action .btn-icon[data-mobile-label]::before{
+  content:none !important;
+  display:none !important;
+}
+
+.payments-dashboard .pay-action .btn-add-payment[data-mobile-label]::after,
+.payments-dashboard .pay-action .btn-icon[data-mobile-label]::after{
+  content:attr(data-mobile-label) !important;
+  position:static !important;
+  display:inline-block !important;
+  opacity:1 !important;
+  visibility:visible !important;
+  transform:none !important;
+  margin:0 !important;
+  padding:0 !important;
+  background:none !important;
+  border:0 !important;
+  box-shadow:none !important;
+  color:currentColor !important;
+  font-size:0.74rem !important;
+  font-weight:600 !important;
+  line-height:1 !important;
+  white-space:nowrap !important;
+}
+
+/* Payments absolute lock: Download / Apply / Reset same size on all screens */
+.payments-dashboard .filter-actions .btn-download-all,
+.payments-dashboard .filter-actions .btn-icon-only,
+.payments-dashboard .filter-actions .btn-icon-only.apply,
+.payments-dashboard .filter-actions .btn-icon-only.reset{
+  width:112px !important;
+  min-width:112px !important;
+  max-width:112px !important;
+  height:52px !important;
+  min-height:52px !important;
+  padding:0 8px !important;
+  border-radius:10px !important;
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  flex-direction:column !important;
+  gap:3px !important;
+  line-height:1 !important;
+  font-size:0.82rem !important;
+  font-weight:600 !important;
+}
+
+.payments-dashboard .filter-actions .btn-download-all .btn-inner,
+.payments-dashboard .filter-actions .btn-icon-only .btn-inner{
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  gap:0 !important;
+  width:100% !important;
+  line-height:1 !important;
+  text-align:center !important;
+}
+
+.payments-dashboard .filter-actions .btn-download-all .btn-inner i,
+.payments-dashboard .filter-actions .btn-icon-only .btn-inner i{
+  font-size:12px !important;
+  line-height:1 !important;
+}
+
+.payments-dashboard .filter-actions .btn-download-all[data-mobile-label]::after,
+.payments-dashboard .filter-actions .btn-icon-only[data-mobile-label]::after{
+  display:block !important;
+  width:100% !important;
+  text-align:center !important;
+  font-size:0.82rem !important;
+  font-weight:600 !important;
+  line-height:1 !important;
+  margin:0 !important;
+}
+
+/* Payments device-independent button sizing */
+.payments-dashboard .filter-actions{
+  display:flex !important;
+  flex-wrap:wrap !important;
+  gap:8px !important;
+}
+
+.payments-dashboard .filter-actions .btn-download-all,
+.payments-dashboard .filter-actions .btn-icon-only,
+.payments-dashboard .filter-actions .btn-icon-only.apply,
+.payments-dashboard .filter-actions .btn-icon-only.reset{
+  flex:0 0 112px !important;
+}
+
+.payments-dashboard .pay-action{
+  display:flex !important;
+  flex-wrap:wrap !important;
+  gap:8px !important;
+}
+
+.payments-dashboard .pay-action .btn-add-payment,
+.payments-dashboard .pay-action .btn-icon{
+  width:86px !important;
+  min-width:86px !important;
+  max-width:86px !important;
+  height:38px !important;
+  min-height:38px !important;
+  padding:0 8px !important;
+  border-radius:10px !important;
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  flex-direction:column !important;
+  gap:2px !important;
+  line-height:1 !important;
+  font-size:0.74rem !important;
+  font-weight:600 !important;
+}
+
+.payments-dashboard .pay-action .btn-add-payment .btn-inner,
+.payments-dashboard .pay-action .btn-icon .btn-inner{
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  width:100% !important;
+  line-height:1 !important;
+  text-align:center !important;
+}
+
+.payments-dashboard .pay-action .btn-add-payment[data-mobile-label]::after,
+.payments-dashboard .pay-action .btn-icon[data-mobile-label]::after{
+  display:block !important;
+  width:100% !important;
+  text-align:center !important;
+  margin:0 !important;
+  line-height:1 !important;
+}
+
+/* Payments: desktop icons only, non-desktop icon + label */
+@media (hover: hover) and (pointer: fine) and (min-width: 1025px){
+  .payments-dashboard .filter-actions .btn-download-all,
+  .payments-dashboard .filter-actions .btn-icon-only{
+    width:44px !important;
+    min-width:44px !important;
+    max-width:44px !important;
+    height:44px !important;
+    min-height:44px !important;
+    padding:0 !important;
+    flex:0 0 44px !important;
+  }
+
+  .payments-dashboard .pay-action .btn-add-payment,
+  .payments-dashboard .pay-action .btn-icon{
+    width:38px !important;
+    min-width:38px !important;
+    max-width:38px !important;
+    height:38px !important;
+    min-height:38px !important;
+    padding:0 !important;
+  }
+
+  .payments-dashboard .filter-actions .btn-download-all::after,
+  .payments-dashboard .filter-actions .btn-icon-only::after,
+  .payments-dashboard .filter-actions .btn-download-all[data-mobile-label]::after,
+  .payments-dashboard .filter-actions .btn-icon-only[data-mobile-label]::after,
+  .payments-dashboard .pay-action .btn-add-payment::after,
+  .payments-dashboard .pay-action .btn-icon::after,
+  .payments-dashboard .pay-action .btn-add-payment[data-mobile-label]::after,
+  .payments-dashboard .pay-action .btn-icon[data-mobile-label]::after{
+    content:none !important;
+    display:none !important;
+  }
+}
+
+@media (max-width: 1024px), (hover: none), (pointer: coarse){
+  .payments-dashboard .filter-actions .btn-download-all,
+  .payments-dashboard .filter-actions .btn-icon-only,
+  .payments-dashboard .filter-actions .btn-icon-only.apply,
+  .payments-dashboard .filter-actions .btn-icon-only.reset{
+    width:112px !important;
+    min-width:112px !important;
+    max-width:112px !important;
+    height:52px !important;
+    min-height:52px !important;
+    padding:0 8px !important;
+  }
+
+  .payments-dashboard .pay-action .btn-add-payment,
+  .payments-dashboard .pay-action .btn-icon{
+    width:86px !important;
+    min-width:86px !important;
+    max-width:86px !important;
+    height:38px !important;
+    min-height:38px !important;
+    padding:0 8px !important;
+  }
+
+  .payments-dashboard .filter-actions .btn-download-all[data-mobile-label]::after,
+  .payments-dashboard .filter-actions .btn-icon-only[data-mobile-label]::after,
+  .payments-dashboard .pay-action .btn-add-payment[data-mobile-label]::after,
+  .payments-dashboard .pay-action .btn-icon[data-mobile-label]::after{
+    content:attr(data-mobile-label) !important;
+    display:block !important;
+  }
+}
 </style>
 
 <div class="payments-dashboard">
@@ -2531,14 +3372,20 @@ font-family + font-size + font-weight only
 <div class="filter-actions">
 <?php if ($canDownloadAll): ?>
 <a href="<?= paymentsH($exportBaseUrl . '&export=all_transactions') ?>" class="btn-download-all" title="Download all filtered payments" data-mobile-label="Download">
+<span class="btn-inner">
 <i class="fas fa-file-excel"></i>
+</span>
 </a>
 <?php endif; ?>
 <button type="submit" class="btn-icon-only apply" title="Apply filters" data-mobile-label="Apply">
+<span class="btn-inner">
 <i class="fas fa-filter"></i>
+</span>
 </button>
 <a href="index.php?page=payments/index" class="btn-icon-only reset" title="Reset filters" data-mobile-label="Reset">
+<span class="btn-inner">
 <i class="fas fa-undo-alt"></i>
+</span>
 </a>
 </div>
 </div>
@@ -2618,7 +3465,9 @@ class="btn-add-payment"
 data-mobile-label="Add"
 data-tooltip="Add payment"
 onclick="openPaymentModal(<?= (int)$p['id'] ?>)">
+<span class="btn-inner">
 <i class="fas fa-plus"></i>
+</span>
 </button>
 <?php endif; ?>
 
@@ -2637,8 +3486,9 @@ target="_blank"
 rel="noopener"
 title="Download Excel"
 data-tooltip="Download Excel">
-
+<span class="btn-inner">
 <i class="fas fa-file-excel"></i>
+</span>
 
 </a>
 <?php endif; ?>
@@ -2649,8 +3499,9 @@ data-mobile-label="View"
 href="index.php?page=students/profile&id=<?= $p['id'] ?>"
 title="Student Profile"
 data-tooltip="Student profile">
-
+<span class="btn-inner">
 <i class="fas fa-eye"></i>
+</span>
 
 </a>
 
@@ -2783,3 +3634,4 @@ document.getElementById("crmModalBody").innerHTML =
 }
 
 </script>
+

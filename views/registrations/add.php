@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 // =====================================
 // Registrations - Add Direct / Walk-in
 // Slug: registrations/add
@@ -1776,6 +1776,44 @@ font-family + font-size + font-weight only
 :where(.dataTables_wrapper .dataTables_info){font-size:0.85rem !important;font-weight:400 !important;}
 :where(.dataTables_wrapper .paginate_button){font-size:0.9rem !important;font-weight:600 !important;}
 :where(.badge,.status-badge,.crm-status-badge,.status-pill,.badge-status,[data-status],.tooltip,.ui-tooltip,.floating-ui-tooltip__bubble){font-weight:600 !important;}
+
+/* ===== GLOBAL BUTTON STANDARDIZATION ===== */
+button,
+.btn,
+.crm-action-btn,
+.btn-filter,
+.btn-reset,
+.btn-add,
+.btn-excel,
+.action-btn,
+.btn-icon-only,
+a.btn,
+input[type="button"],
+input[type="submit"],
+input[type="reset"],
+[role="button"] {
+    font-size: 0.92rem;
+    min-height: 38px;
+    padding: 8px 14px;
+    border-radius: 10px;
+    font-weight: 600;
+}
+
+.btn-icon-only,
+.crm-action-btn,
+.action-btn,
+.btn-sm,
+.btn-xs,
+button.btn-icon,
+a.btn-icon,
+.btn i:only-child,
+button i:only-child {
+    font-size: 0.9rem;
+    min-height: 34px;
+    padding: 8px;
+    border-radius: 10px;
+    font-weight: 600;
+}
 </style>
 
 <!-- Main Application - White & Pink Theme -->
@@ -2762,3 +2800,4 @@ function confirmDeleteReg(e) {
     return false;
 }
 </script>
+

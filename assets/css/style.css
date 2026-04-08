@@ -1,4 +1,4 @@
-/* ==========================================
+﻿/* ==========================================
 ATS CRM
 Modern Pink SaaS Theme
 Professional Stable CSS (Bug Fixed Version)
@@ -3361,4 +3361,197 @@ FONT-WEIGHT STANDARDIZATION
 
 :where(.badge,.status-badge,.crm-status-badge,.status-pill,.badge-status,[data-status],.tooltip,.ui-tooltip,.floating-ui-tooltip__bubble){
   font-weight:600 !important;
+}
+
+/* =====================================================
+GLOBAL BUTTON SYSTEM SYNC
+===================================================== */
+:where(button,.btn,.crm-action-btn,.btn-filter,.btn-reset,.btn-add,.btn-excel,.action-btn,.btn-icon-only,.dt-button,.targets-btn-icon,.iso-report-btn,.iso-report-action-btn){
+  font-size:0.9rem !important;
+  min-height:38px !important;
+  padding:8px 14px !important;
+  border-radius:10px !important;
+  font-weight:600 !important;
+}
+
+:where(.btn-icon-only,.action-btn,.crm-action-btn.crm-action-icon,.crm-icon-btn,.sa-icon-btn,.btn-icon,.btn-add-payment,.att-icon-btn,.source-icon){
+  font-size:0.9rem !important;
+  min-height:34px !important;
+  padding:8px !important;
+  border-radius:10px !important;
+  font-weight:600 !important;
+}
+
+@media (max-width:1024px){
+  :where(button,.btn,.crm-action-btn,.btn-filter,.btn-reset,.btn-add,.btn-excel,.action-btn,.btn-icon-only,.dt-button,.targets-btn-icon,.iso-report-btn,.iso-report-action-btn){
+    font-size:0.9rem !important;
+    min-height:38px !important;
+    padding:8px 14px !important;
+    border-radius:10px !important;
+    font-weight:600 !important;
+  }
+
+  :where(.btn-icon-only,.action-btn,.crm-action-btn.crm-action-icon,.crm-icon-btn,.sa-icon-btn,.btn-icon,.btn-add-payment,.att-icon-btn,.source-icon){
+    font-size:0.9rem !important;
+    min-height:34px !important;
+    padding:8px !important;
+    border-radius:10px !important;
+    font-weight:600 !important;
+  }
+}
+/* ===== GLOBAL BUTTON STANDARDIZATION ===== */
+button,
+.btn,
+.crm-action-btn,
+.btn-filter,
+.btn-reset,
+.btn-add,
+.btn-excel,
+.action-btn,
+.btn-icon-only,
+a.btn,
+input[type="button"],
+input[type="submit"],
+input[type="reset"],
+[role="button"] {
+    font-size: 0.92rem;
+    min-height: 38px;
+    padding: 8px 14px;
+    border-radius: 10px;
+    font-weight: 600;
+}
+
+.btn-icon-only,
+.crm-action-btn,
+.action-btn,
+.btn-sm,
+.btn-xs,
+button.btn-icon,
+a.btn-icon,
+.btn i:only-child,
+button i:only-child {
+    font-size: 0.9rem;
+    min-height: 34px;
+    padding: 8px;
+    border-radius: 10px;
+    font-weight: 600;
+}
+
+@media (max-width: 768px) {
+    .leads-dashboard .filter-actions .btn-icon-only[data-mobile-label],
+    .leads-dashboard .filter-actions button.btn-icon-only[data-mobile-label],
+    .leads-dashboard .filter-actions a.btn-icon-only[data-mobile-label] {
+        box-sizing: border-box !important;
+        width: 100% !important;
+        height: 48px !important;
+        min-height: 48px !important;
+        max-height: 48px !important;
+        margin: 0 !important;
+        padding: 6px 8px !important;
+        display: grid !important;
+        grid-template-rows: 12px 10px !important;
+        align-content: center !important;
+        justify-items: center !important;
+        row-gap: 4px !important;
+        font-size: 0 !important;
+        font-weight: 600 !important;
+        line-height: 1 !important;
+        border-radius: 10px !important;
+        -webkit-appearance: none !important;
+        appearance: none !important;
+    }
+
+    .leads-dashboard .filter-actions .btn-icon-only[data-mobile-label] i {
+        font-size: 11px !important;
+        width: 12px !important;
+        height: 12px !important;
+        line-height: 1 !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        margin: 0 !important;
+    }
+
+    .leads-dashboard .filter-actions .btn-icon-only[data-mobile-label]::after {
+        content: attr(data-mobile-label) !important;
+        display: block !important;
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        position: static !important;
+        transform: none !important;
+        background: none !important;
+        border: 0 !important;
+        box-shadow: none !important;
+        text-align: center !important;
+        white-space: nowrap !important;
+        font-size: 9px !important;
+        line-height: 1 !important;
+        font-weight: 600 !important;
+        letter-spacing: 0 !important;
+        color: currentColor !important;
+    }
+
+    /* Final lock: keep all 4 lead filter buttons perfectly even */
+    .leads-dashboard .filter-form .filter-actions > .btn-icon-only[data-mobile-label],
+    .leads-dashboard .filter-form .filter-actions > a.btn-icon-only[data-mobile-label],
+    .leads-dashboard .filter-form .filter-actions > button.btn-icon-only[data-mobile-label] {
+        width: 100% !important;
+        height: 48px !important;
+        min-height: 48px !important;
+        max-height: 48px !important;
+        box-sizing: border-box !important;
+        margin: 0 !important;
+        padding: 6px 8px !important;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 4px !important;
+        font-size: 0 !important;
+        line-height: 1 !important;
+        font-weight: 600 !important;
+        border-radius: 10px !important;
+        border: 0 !important;
+        text-decoration: none !important;
+        -webkit-appearance: none !important;
+        appearance: none !important;
+    }
+
+    .leads-dashboard .filter-form .filter-actions > .btn-icon-only[data-mobile-label] > i,
+    .leads-dashboard .filter-form .filter-actions > a.btn-icon-only[data-mobile-label] > i,
+    .leads-dashboard .filter-form .filter-actions > button.btn-icon-only[data-mobile-label] > i {
+        display: block !important;
+        width: 11px !important;
+        height: 11px !important;
+        min-width: 11px !important;
+        min-height: 11px !important;
+        font-size: 11px !important;
+        line-height: 11px !important;
+        text-align: center !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    .leads-dashboard .filter-form .filter-actions > .btn-icon-only[data-mobile-label]::after,
+    .leads-dashboard .filter-form .filter-actions > a.btn-icon-only[data-mobile-label]::after,
+    .leads-dashboard .filter-form .filter-actions > button.btn-icon-only[data-mobile-label]::after {
+        content: attr(data-mobile-label) !important;
+        display: block !important;
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        position: static !important;
+        transform: none !important;
+        background: none !important;
+        border: 0 !important;
+        box-shadow: none !important;
+        text-align: center !important;
+        white-space: nowrap !important;
+        font-size: 9px !important;
+        line-height: 9px !important;
+        font-weight: 600 !important;
+        letter-spacing: 0 !important;
+        color: currentColor !important;
+    }
 }

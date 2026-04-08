@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 // =====================================
 // Enquiries - Followups (Tabs + Table + Modal History)
 // Slug: enquiries/followups
@@ -216,14 +216,20 @@ foreach ($rows as $r) {
     echo "<button type='button'
     class='icon-btn btn-view'
     onclick='openHistoryModal(".$r['enquiry_id'].")'>
+    <span class='btn-inner'>
     <i class='fas fa-eye'></i>
+    <span class='btn-mobile-label'>View</span>
+    </span>
     </button>";
 
     // Edit button
     echo "<button type='button'
     class='icon-btn btn-edit'
     onclick='openEditModal(".$r['id'].")'>
+    <span class='btn-inner'>
     <i class='fas fa-pen'></i>
+    <span class='btn-mobile-label'>Edit</span>
+    </span>
     </button>";
 
     // Done button only if not done
@@ -238,8 +244,10 @@ foreach ($rows as $r) {
         <button type='submit'
         name='mark_done'
         class='icon-btn btn-done'>
-
+        <span class='btn-inner'>
         <i class='fas fa-check'></i>
+        <span class='btn-mobile-label'>Done</span>
+        </span>
 
         </button>
 
@@ -2540,6 +2548,399 @@ font-family + font-size + font-weight only
 :where(.dataTables_wrapper .dataTables_info){font-size:0.85rem !important;font-weight:400 !important;}
 :where(.dataTables_wrapper .paginate_button){font-size:0.9rem !important;font-weight:600 !important;}
 :where(.badge,.status-badge,.crm-status-badge,.status-pill,.badge-status,[data-status],.tooltip,.ui-tooltip,.floating-ui-tooltip__bubble){font-weight:600 !important;}
+
+/* ===== GLOBAL BUTTON STANDARDIZATION ===== */
+button,
+.btn,
+.crm-action-btn,
+.btn-filter,
+.btn-reset,
+.btn-add,
+.btn-excel,
+.action-btn,
+.btn-icon-only,
+a.btn,
+input[type="button"],
+input[type="submit"],
+input[type="reset"],
+[role="button"] {
+    font-size: 0.92rem;
+    min-height: 38px;
+    padding: 8px 14px;
+    border-radius: 10px;
+    font-weight: 600;
+}
+
+.btn-icon-only,
+.crm-action-btn,
+.action-btn,
+.btn-sm,
+.btn-xs,
+button.btn-icon,
+a.btn-icon,
+.btn i:only-child,
+button i:only-child {
+    font-size: 0.9rem;
+    min-height: 34px;
+    padding: 8px;
+    border-radius: 10px;
+    font-weight: 600;
+}
+
+/* ===== Followups: Assessment-style responsive behavior ===== */
+.crm-followup-left .btn-mobile-label {
+  display: none;
+}
+
+.crm-followup-left .icon-filter-btn,
+.crm-followup-left .icon-btn {
+  text-decoration: none;
+}
+
+.crm-followup-left .icon-filter-btn .btn-inner,
+.crm-followup-left .icon-btn .btn-inner {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  line-height: 1;
+}
+
+.crm-followup-left .followup-records-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  flex-wrap:nowrap;
+}
+
+.crm-followup-left .followup-records-left{
+  display:flex;
+  align-items:center;
+  flex-wrap:nowrap;
+  min-width:0;
+}
+
+.crm-followup-left .followup-table-controls{
+  margin-left:auto;
+}
+
+.crm-followup-left .followup-table-controls .dt-top{
+  display:flex !important;
+  align-items:center !important;
+  justify-content:flex-end !important;
+  flex-wrap:nowrap !important;
+  gap:10px !important;
+}
+
+.crm-followup-left .followup-table-controls .dataTables_length,
+.crm-followup-left .followup-table-controls .dataTables_filter{
+  width:auto !important;
+}
+
+.crm-followup-left .followup-table-controls .dataTables_length label,
+.crm-followup-left .followup-table-controls .dataTables_filter label{
+  width:auto !important;
+  display:inline-flex !important;
+  align-items:center !important;
+  gap:8px !important;
+  white-space:nowrap !important;
+}
+
+.crm-followup-left .followup-table-controls .dataTables_filter input{
+  width:220px !important;
+  min-width:220px !important;
+}
+
+@media (max-width: 479px){
+  .crm-followup-left .followup-records-head{
+    flex-direction:column !important;
+    align-items:flex-start !important;
+    gap:10px !important;
+  }
+  .crm-followup-left .followup-records-left{
+    width:100% !important;
+  }
+  .crm-followup-left .followup-table-controls{
+    width:100% !important;
+    margin-left:0 !important;
+  }
+  .crm-followup-left .followup-table-controls .dt-top{
+    width:100% !important;
+    justify-content:flex-start !important;
+    align-items:center !important;
+    flex-wrap:wrap !important;
+    gap:8px !important;
+  }
+  .crm-followup-left .followup-table-controls .dataTables_length,
+  .crm-followup-left .followup-table-controls .dataTables_filter{
+    width:100% !important;
+  }
+  .crm-followup-left .followup-table-controls .dataTables_length label,
+  .crm-followup-left .followup-table-controls .dataTables_filter label{
+    width:100% !important;
+    white-space:nowrap !important;
+  }
+  .crm-followup-left .followup-table-controls .dataTables_filter input{
+    width:100% !important;
+    min-width:0 !important;
+  }
+
+  .crm-followup-left .followup-filter-row{
+    flex-direction:column !important;
+    align-items:stretch !important;
+  }
+  .crm-followup-left .filter-field{
+    width:100% !important;
+    min-width:0 !important;
+  }
+  .crm-followup-left .filter-actions{
+    width:100% !important;
+    display:grid !important;
+    grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+    gap:8px !important;
+    align-items:stretch !important;
+  }
+  .crm-followup-left .icon-filter-btn{
+    width:100% !important;
+    min-width:0 !important;
+    height:44px !important;
+    min-height:44px !important;
+    border-radius:10px !important;
+    display:inline-flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+    padding:0 10px !important;
+  }
+  .crm-followup-left .icon-filter-btn .btn-mobile-label{
+    display:inline-block !important;
+    font-size:11px !important;
+    font-weight:700 !important;
+    line-height:1 !important;
+  }
+}
+
+@media (min-width: 480px) and (max-width: 767px){
+  .crm-followup-left .followup-records-head{
+    flex-direction:column !important;
+    align-items:flex-start !important;
+    gap:10px !important;
+  }
+  .crm-followup-left .followup-records-left,
+  .crm-followup-left .followup-table-controls{
+    width:100% !important;
+    margin-left:0 !important;
+  }
+  .crm-followup-left .followup-table-controls .dt-top{
+    width:100% !important;
+    justify-content:flex-start !important;
+    align-items:center !important;
+    flex-wrap:wrap !important;
+    gap:10px !important;
+  }
+  .crm-followup-left .followup-table-controls .dataTables_filter input{
+    width:220px !important;
+    min-width:220px !important;
+  }
+
+  .crm-followup-left .followup-filter-row{
+    flex-direction:column !important;
+    align-items:stretch !important;
+  }
+  .crm-followup-left .filter-field{
+    width:100% !important;
+    min-width:0 !important;
+  }
+  .crm-followup-left .filter-actions{
+    width:100% !important;
+    display:flex !important;
+    flex-wrap:wrap !important;
+    justify-content:flex-start !important;
+    gap:8px !important;
+  }
+  .crm-followup-left .icon-filter-btn{
+    width:calc(50% - 4px) !important;
+    min-width:140px !important;
+    max-width:100% !important;
+    flex:0 0 calc(50% - 4px) !important;
+    height:44px !important;
+    min-height:44px !important;
+    border-radius:10px !important;
+    display:inline-flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+    padding:0 10px !important;
+  }
+  .crm-followup-left .icon-filter-btn .btn-mobile-label{
+    display:inline-block !important;
+    font-size:11px !important;
+    font-weight:700 !important;
+    line-height:1 !important;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1024px){
+  .crm-followup-left .followup-records-head{
+    flex-direction:row !important;
+    align-items:center !important;
+    justify-content:space-between !important;
+    flex-wrap:nowrap !important;
+  }
+  .crm-followup-left .followup-records-left{
+    width:auto !important;
+  }
+  .crm-followup-left .followup-table-controls{
+    width:auto !important;
+    margin-left:auto !important;
+  }
+  .crm-followup-left .followup-table-controls .dt-top{
+    flex-wrap:nowrap !important;
+    align-items:center !important;
+    justify-content:flex-end !important;
+    gap:10px !important;
+  }
+  .crm-followup-left .followup-table-controls .dataTables_length,
+  .crm-followup-left .followup-table-controls .dataTables_filter{
+    width:auto !important;
+  }
+  .crm-followup-left .followup-table-controls .dataTables_filter input{
+    width:200px !important;
+    min-width:200px !important;
+  }
+
+  .crm-followup-left .followup-filter-row{
+    flex-wrap:wrap !important;
+  }
+  .crm-followup-left .filter-actions{
+    width:auto !important;
+    display:inline-flex !important;
+    align-items:center !important;
+    justify-content:flex-end !important;
+    gap:8px !important;
+  }
+  .crm-followup-left .icon-filter-btn{
+    width:140px !important;
+    min-width:140px !important;
+    max-width:140px !important;
+    height:44px !important;
+    min-height:44px !important;
+    display:inline-flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+    padding:0 10px !important;
+  }
+  .crm-followup-left .icon-filter-btn .btn-mobile-label{
+    display:inline-block !important;
+    font-size:11px !important;
+    font-weight:700 !important;
+    line-height:1 !important;
+  }
+}
+
+@media (hover: none), (pointer: coarse), (max-width: 1024px){
+  .crm-followup-left .icon-btn{
+    width:auto !important;
+    min-width:68px !important;
+    height:auto !important;
+    min-height:40px !important;
+    padding:6px 8px !important;
+    border-radius:10px !important;
+    display:inline-flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+  }
+  .crm-followup-left .icon-btn .btn-mobile-label{
+    display:inline-block !important;
+    font-size:10px !important;
+    font-weight:700 !important;
+    line-height:1.1 !important;
+    white-space:nowrap !important;
+  }
+  .crm-followup-left .icon-btn .btn-inner{
+    gap:4px !important;
+  }
+}
+
+/* Followups final alignment lock (tablet/mobile) */
+@media (max-width: 1024px){
+  .crm-followup-left .followup-filter-row{
+    display:grid !important;
+    grid-template-columns:repeat(3,minmax(0,1fr)) auto !important;
+    align-items:end !important;
+    gap:10px !important;
+  }
+  .crm-followup-left .followup-filter-row .filter-field{
+    min-width:0 !important;
+    width:100% !important;
+  }
+  .crm-followup-left .followup-filter-row .filter-actions{
+    width:auto !important;
+    align-self:end !important;
+    justify-content:flex-end !important;
+    flex-wrap:nowrap !important;
+  }
+
+  .crm-followup-left .followup-table-controls .dataTables_length{
+    display:inline-flex !important;
+    align-items:center !important;
+    width:auto !important;
+    white-space:nowrap !important;
+    flex:0 0 auto !important;
+  }
+  .crm-followup-left .followup-table-controls .dataTables_length label{
+    display:inline-flex !important;
+    flex-direction:row !important;
+    align-items:center !important;
+    justify-content:flex-start !important;
+    gap:8px !important;
+    margin:0 !important;
+    white-space:nowrap !important;
+    line-height:1 !important;
+  }
+  .crm-followup-left .followup-table-controls .dataTables_length select{
+    width:auto !important;
+    min-width:82px !important;
+    margin:0 !important;
+    flex:0 0 auto !important;
+  }
+  .crm-followup-left .followup-table-controls .dataTables_filter{
+    width:auto !important;
+    margin:0 !important;
+    flex:0 0 auto !important;
+  }
+
+  .crm-followup-left #usersTable td .icon-btn{
+    width:auto !important;
+    min-width:72px !important;
+    height:auto !important;
+    min-height:38px !important;
+    padding:6px 9px !important;
+    margin:0 4px 4px 0 !important;
+  }
+  .crm-followup-left #usersTable td .icon-btn .btn-inner{
+    display:inline-flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+    gap:4px !important;
+  }
+  .crm-followup-left #usersTable td .icon-btn .btn-mobile-label{
+    display:inline-block !important;
+    font-size:10px !important;
+    font-weight:700 !important;
+    line-height:1.1 !important;
+    white-space:nowrap !important;
+  }
+}
+
+@media (max-width: 767px){
+  .crm-followup-left .followup-filter-row{
+    grid-template-columns:1fr !important;
+  }
+  .crm-followup-left .followup-filter-row .filter-actions{
+    width:100% !important;
+    justify-content:stretch !important;
+  }
+}
 </style>
 
 <div class="fu-page-head">
@@ -2634,16 +3035,20 @@ font-family + font-size + font-weight only
 <button type="submit"
 class="icon-filter-btn apply-btn"
 title="Apply Filter">
-
+<span class="btn-inner">
 <i class="fas fa-search"></i>
+<span class="btn-mobile-label">Apply</span>
+</span>
 
 </button>
 
 <a href="index.php?page=enquiries/followups&tab=<?= h($tab) ?>"
 class="icon-filter-btn reset-btn"
 title="Reset Filter">
-
+<span class="btn-inner">
 <i class="fas fa-rotate-left"></i>
+<span class="btn-mobile-label">Reset</span>
+</span>
 
 </a>
 
@@ -2736,7 +3141,10 @@ $enqNo = $f['enquiry_no'] ?: ('ENQ-'.$f['enquiry_id']);
 class="icon-btn btn-view"
 onclick="openHistoryModal(<?= (int)$f['enquiry_id'] ?>)">
 
+<span class="btn-inner">
 <i class="fas fa-eye"></i>
+<span class="btn-mobile-label">View</span>
+</span>
 
 </button>
 
@@ -2744,7 +3152,10 @@ onclick="openHistoryModal(<?= (int)$f['enquiry_id'] ?>)">
 class="icon-btn btn-edit"
 onclick="openEditModal(<?= (int)$f['id'] ?>)">
 
+<span class="btn-inner">
 <i class="fas fa-pen"></i>
+<span class="btn-mobile-label">Edit</span>
+</span>
 
 </button>
 
@@ -2759,7 +3170,10 @@ onclick="openEditModal(<?= (int)$f['id'] ?>)">
 name="mark_done"
 class="icon-btn btn-done">
 
+<span class="btn-inner">
 <i class="fas fa-check"></i>
+<span class="btn-mobile-label">Done</span>
+</span>
 
 </button>
 
@@ -3723,3 +4137,4 @@ function initFollowupTable() {
     }
 }
 </script>
+

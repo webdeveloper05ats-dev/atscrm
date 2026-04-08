@@ -1,4 +1,4 @@
-.flatpickr-calendar {
+﻿.flatpickr-calendar {
   border: 1px solid #f1c9da;
   border-radius: 14px;
   box-shadow: 0 16px 34px rgba(17, 24, 39, .14);
@@ -282,4 +282,78 @@ FONT-WEIGHT STANDARDIZATION
 
 :where(.badge,.status-badge,.crm-status-badge,.status-pill,.badge-status,[data-status],.tooltip,.ui-tooltip,.floating-ui-tooltip__bubble){
   font-weight:600 !important;
+}
+
+/* =====================================================
+GLOBAL BUTTON SYSTEM SYNC
+===================================================== */
+:where(button,.btn,.crm-action-btn,.btn-filter,.btn-reset,.btn-add,.btn-excel,.action-btn,.btn-icon-only,.dt-button,.targets-btn-icon,.iso-report-btn,.iso-report-action-btn){
+  font-size:0.9rem !important;
+  min-height:38px !important;
+  padding:8px 14px !important;
+  border-radius:10px !important;
+  font-weight:600 !important;
+}
+
+:where(.btn-icon-only,.action-btn,.crm-action-btn.crm-action-icon,.crm-icon-btn,.sa-icon-btn,.btn-icon,.btn-add-payment,.att-icon-btn,.source-icon){
+  font-size:0.9rem !important;
+  min-height:34px !important;
+  padding:8px !important;
+  border-radius:10px !important;
+  font-weight:600 !important;
+}
+
+@media (max-width:1024px){
+  :where(button,.btn,.crm-action-btn,.btn-filter,.btn-reset,.btn-add,.btn-excel,.action-btn,.btn-icon-only,.dt-button,.targets-btn-icon,.iso-report-btn,.iso-report-action-btn){
+    font-size:0.9rem !important;
+    min-height:38px !important;
+    padding:8px 14px !important;
+    border-radius:10px !important;
+    font-weight:600 !important;
+  }
+
+  :where(.btn-icon-only,.action-btn,.crm-action-btn.crm-action-icon,.crm-icon-btn,.sa-icon-btn,.btn-icon,.btn-add-payment,.att-icon-btn,.source-icon){
+    font-size:0.9rem !important;
+    min-height:34px !important;
+    padding:8px !important;
+    border-radius:10px !important;
+    font-weight:600 !important;
+  }
+}
+/* ===== GLOBAL BUTTON STANDARDIZATION ===== */
+button,
+.btn,
+.crm-action-btn,
+.btn-filter,
+.btn-reset,
+.btn-add,
+.btn-excel,
+.action-btn,
+.btn-icon-only,
+a.btn,
+input[type="button"],
+input[type="submit"],
+input[type="reset"],
+[role="button"] {
+    font-size: 0.92rem;
+    min-height: 38px;
+    padding: 8px 14px;
+    border-radius: 10px;
+    font-weight: 600;
+}
+
+.btn-icon-only,
+.crm-action-btn,
+.action-btn,
+.btn-sm,
+.btn-xs,
+button.btn-icon,
+a.btn-icon,
+.btn i:only-child,
+button i:only-child {
+    font-size: 0.9rem;
+    min-height: 34px;
+    padding: 8px;
+    border-radius: 10px;
+    font-weight: 600;
 }

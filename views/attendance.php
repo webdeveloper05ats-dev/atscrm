@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 if (!defined('APP_NAME')) {
     die("Unauthorized access.");
 }
@@ -828,11 +828,17 @@ if (!empty($rows)) {
                     <input type="date" name="date_to" value="<?= h($dateTo) ?>">
                 </div>
                 <div class="filter-actions">
-                    <button type="submit" class="btn-icon-only apply" data-mobile-label="Apply" data-modern-tooltip="Apply filters" aria-label="Apply filters">
-                        <i class="fas fa-filter"></i>
+                    <button type="submit" class="btn-icon-only filter-action-btn apply" title="Apply filters" aria-label="Apply filters">
+                        <span class="btn-inner">
+                            <i class="fas fa-filter"></i>
+                            <span class="btn-mobile-label">Apply</span>
+                        </span>
                     </button>
-                    <a href="index.php?page=attendance" class="btn-icon-only reset" data-mobile-label="Reset" data-modern-tooltip="Reset filters" aria-label="Reset filters">
-                        <i class="fas fa-undo-alt"></i>
+                    <a href="index.php?page=attendance" class="btn-icon-only filter-action-btn reset" title="Reset filters" aria-label="Reset filters">
+                        <span class="btn-inner">
+                            <i class="fas fa-undo-alt"></i>
+                            <span class="btn-mobile-label">Reset</span>
+                        </span>
                     </a>
                 </div>
             </div>
@@ -1068,6 +1074,7 @@ if (!empty($rows)) {
         cursor: pointer;
         transition: .15s ease;
     }
+    .btn-mobile-label { display: none; }
     .btn-icon-only.apply {
         background: var(--primary);
         color: #fff;
@@ -1075,13 +1082,8 @@ if (!empty($rows)) {
     .btn-icon-only.apply:hover {
         background: var(--primary-dark);
     }
-    .btn-icon-only.reset {
-        background: #f1f3f5;
-        color: var(--primary-dark);
-    }
-    .btn-icon-only.reset:hover {
-        background: #e9ecef;
-    }
+    .btn-icon-only.reset { background: #6c757d; color: #fff; }
+    .btn-icon-only.reset:hover { background: #5a6268; }
     .table-container {
         padding: 12px 14px 16px;
     }
@@ -1487,7 +1489,7 @@ if (!empty($rows)) {
         .table-header-flex { flex-wrap: wrap; align-items: flex-start; }
         .dashboard-header h2 { font-size:24px; }
         .filter-grid { grid-template-columns: 1fr; }
-        .filter-actions { justify-content: flex-start; }
+        .filter-actions { width: 100%; justify-content: center !important; }
         .att-student-meta, .att-entry-grid { grid-template-columns:1fr; }
         .att-grid { grid-template-columns:repeat(2, minmax(0, 1fr)); }
         .att-grid-head { display:none; }
@@ -1525,38 +1527,62 @@ if (!empty($rows)) {
             white-space:nowrap !important;
         }
 
-        .filter-actions .btn-icon-only[data-mobile-label]{
-            width:auto !important;
-            min-width:64px !important;
-            height:auto !important;
-            min-height:40px !important;
-            padding:6px 8px !important;
+        .filter-actions .filter-action-btn {
+            width: 140px !important;
+            min-width: 140px !important;
+            max-width: 140px !important;
+            flex: 0 0 140px !important;
+            height: 44px !important;
+            min-height: 44px !important;
+            max-height: 44px !important;
+            padding: 0 10px !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            text-align: center !important;
+            position: relative !important;
+            overflow: hidden !important;
+        }
+        .filter-actions .filter-action-btn .btn-inner{
             display:inline-flex !important;
-            flex-direction:column !important;
             align-items:center !important;
             justify-content:center !important;
-            gap:3px !important;
-            border-radius:10px !important;
-        }
-
-        .filter-actions .btn-icon-only[data-mobile-label]::after{
-            content:attr(data-mobile-label) !important;
-            position:static !important;
-            display:block !important;
-            opacity:1 !important;
-            visibility:visible !important;
-            transform:none !important;
-            background:none !important;
-            border:0 !important;
-            box-shadow:none !important;
-            padding:0 !important;
+            gap:6px !important;
+            position:absolute !important;
+            left:50% !important;
+            top:50% !important;
+            transform:translate(-50%,-50%) !important;
+            width:max-content !important;
             margin:0 !important;
-            font-size:10px !important;
-            line-height:1.1 !important;
+            padding:0 !important;
+            line-height:1 !important;
+            text-align:center !important;
+            font-size:11px !important;
             font-weight:700 !important;
-            letter-spacing:.1px !important;
+            letter-spacing:0 !important;
+        }
+        .filter-actions .filter-action-btn i{
+            display:inline-flex !important;
+            align-items:center !important;
+            justify-content:center !important;
+            width:12px !important;
+            height:12px !important;
+            font-size:12px !important;
+            line-height:1 !important;
+            margin:0 !important;
+            padding:0 !important;
+            text-align:center !important;
+        }
+        .filter-actions .filter-action-btn .btn-mobile-label{
+            display:inline-block !important;
+            font-size:11px !important;
+            line-height:1 !important;
+            font-weight:700 !important;
+            letter-spacing:0 !important;
             color:currentColor !important;
             white-space:nowrap !important;
+            margin:0 !important;
+            padding:0 !important;
         }
     }
 
@@ -1582,38 +1608,169 @@ if (!empty($rows)) {
             white-space:nowrap !important;
         }
 
-        .filter-actions .btn-icon-only[data-mobile-label]{
-            width:auto !important;
-            min-width:64px !important;
-            height:auto !important;
-            min-height:40px !important;
-            padding:6px 8px !important;
-            display:inline-flex !important;
-            flex-direction:column !important;
-            align-items:center !important;
-            justify-content:center !important;
-            gap:3px !important;
-            border-radius:10px !important;
-        }
+        .filter-actions .filter-action-btn{ width:140px !important; min-width:140px !important; max-width:140px !important; flex:0 0 140px !important; height:44px !important; min-height:44px !important; max-height:44px !important; }
+        .filter-actions .filter-action-btn .btn-mobile-label{ display:inline-block !important; font-size:11px !important; line-height:1 !important; font-weight:700 !important; letter-spacing:0 !important; }
+    }
 
-        .filter-actions .btn-icon-only[data-mobile-label]::after{
-            content:attr(data-mobile-label) !important;
-            position:static !important;
-            display:block !important;
-            opacity:1 !important;
-            visibility:visible !important;
-            transform:none !important;
-            background:none !important;
-            border:0 !important;
-            box-shadow:none !important;
-            padding:0 !important;
-            margin:0 !important;
-            font-size:10px !important;
-            line-height:1.1 !important;
-            font-weight:700 !important;
-            letter-spacing:.1px !important;
-            color:currentColor !important;
-            white-space:nowrap !important;
+    /* Datatable Header Responsive Lock */
+    @media (max-width: 479px) {
+        .table-header-flex {
+            flex-direction: column !important;
+            align-items: flex-start !important;
+            gap: 10px !important;
+        }
+        .table-title {
+            width: 100% !important;
+            white-space: normal !important;
+            text-align: left !important;
+        }
+        #datatableControls {
+            width: 100% !important;
+            margin-left: 0 !important;
+            justify-content: flex-start !important;
+        }
+        #datatableControls .dt-top,
+        .dataTables_wrapper .dt-top {
+            width: 100% !important;
+            justify-content: flex-start !important;
+            align-items: center !important;
+            flex-wrap: wrap !important;
+            gap: 8px !important;
+        }
+        .dataTables_wrapper .dataTables_length,
+        .dataTables_wrapper .dataTables_filter {
+            width: 100% !important;
+        }
+        .dataTables_wrapper .dataTables_length label,
+        .dataTables_wrapper .dataTables_filter label {
+            width: 100% !important;
+            display: flex !important;
+            align-items: center !important;
+            gap: 8px !important;
+            white-space: nowrap !important;
+        }
+        .dataTables_wrapper .dataTables_filter input {
+            width: 100% !important;
+            min-width: 0 !important;
+        }
+        .filter-actions {
+            width: 100% !important;
+            display: grid !important;
+            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+            align-items: stretch !important;
+            gap: 8px !important;
+        }
+        .filter-actions .filter-action-btn {
+            width: 100% !important;
+            min-width: 0 !important;
+            max-width: 100% !important;
+            flex: 0 0 auto !important;
+            height: 44px !important;
+            min-height: 44px !important;
+        }
+    }
+
+    @media (min-width: 480px) and (max-width: 767px) {
+        .table-header-flex {
+            flex-direction: column !important;
+            align-items: flex-start !important;
+            gap: 10px !important;
+        }
+        .table-title {
+            width: 100% !important;
+            text-align: left !important;
+            white-space: normal !important;
+        }
+        #datatableControls {
+            width: 100% !important;
+            justify-content: flex-start !important;
+        }
+        #datatableControls .dt-top,
+        .dataTables_wrapper .dt-top {
+            width: 100% !important;
+            justify-content: flex-start !important;
+            align-items: center !important;
+            flex-wrap: wrap !important;
+            gap: 10px !important;
+        }
+        .dataTables_wrapper .dataTables_length label,
+        .dataTables_wrapper .dataTables_filter label {
+            display: inline-flex !important;
+            align-items: center !important;
+            gap: 8px !important;
+            white-space: nowrap !important;
+        }
+        .dataTables_wrapper .dataTables_filter input {
+            width: 220px !important;
+            min-width: 220px !important;
+        }
+        .filter-actions {
+            width: 100% !important;
+            display: flex !important;
+            flex-wrap: wrap !important;
+            align-items: center !important;
+            justify-content: flex-start !important;
+            gap: 8px !important;
+        }
+        .filter-actions .filter-action-btn {
+            width: calc(50% - 4px) !important;
+            min-width: 140px !important;
+            max-width: 100% !important;
+            flex: 0 0 calc(50% - 4px) !important;
+            height: 44px !important;
+            min-height: 44px !important;
+        }
+    }
+
+    @media (min-width: 768px) and (max-width: 1024px) {
+        .table-header-flex {
+            flex-direction: row !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            flex-wrap: nowrap !important;
+        }
+        .table-title {
+            white-space: nowrap !important;
+            text-align: left !important;
+        }
+        #datatableControls {
+            width: auto !important;
+            margin-left: auto !important;
+            justify-content: flex-end !important;
+        }
+        #datatableControls .dt-top,
+        .dataTables_wrapper .dt-top {
+            flex-wrap: nowrap !important;
+            align-items: center !important;
+            justify-content: flex-end !important;
+            gap: 10px !important;
+        }
+        .dataTables_wrapper .dataTables_length label,
+        .dataTables_wrapper .dataTables_filter label {
+            display: inline-flex !important;
+            align-items: center !important;
+            gap: 8px !important;
+            white-space: nowrap !important;
+        }
+        .dataTables_wrapper .dataTables_filter input {
+            width: 200px !important;
+            min-width: 200px !important;
+        }
+        .filter-actions {
+            width: auto !important;
+            display: inline-flex !important;
+            flex-wrap: nowrap !important;
+            align-items: center !important;
+            justify-content: flex-end !important;
+            gap: 8px !important;
+        }
+        .filter-actions .filter-action-btn {
+            width: 140px !important;
+            min-width: 140px !important;
+            max-width: 140px !important;
+            flex: 0 0 140px !important;
+            height: 44px !important;
+            min-height: 44px !important;
         }
     }
 
@@ -1643,6 +1800,44 @@ font-family + font-size + font-weight only
 :where(.dataTables_wrapper .dataTables_info){font-size:0.85rem !important;font-weight:400 !important;}
 :where(.dataTables_wrapper .paginate_button){font-size:0.9rem !important;font-weight:600 !important;}
 :where(.badge,.status-badge,.crm-status-badge,.status-pill,.badge-status,[data-status],.tooltip,.ui-tooltip,.floating-ui-tooltip__bubble){font-weight:600 !important;}
+
+/* ===== GLOBAL BUTTON STANDARDIZATION ===== */
+button,
+.btn,
+.crm-action-btn,
+.btn-filter,
+.btn-reset,
+.btn-add,
+.btn-excel,
+.action-btn,
+.btn-icon-only,
+a.btn,
+input[type="button"],
+input[type="submit"],
+input[type="reset"],
+[role="button"] {
+    font-size: 0.92rem;
+    min-height: 38px;
+    padding: 8px 14px;
+    border-radius: 10px;
+    font-weight: 600;
+}
+
+.btn-icon-only,
+.crm-action-btn,
+.action-btn,
+.btn-sm,
+.btn-xs,
+button.btn-icon,
+a.btn-icon,
+.btn i:only-child,
+button i:only-child {
+    font-size: 0.9rem;
+    min-height: 34px;
+    padding: 8px;
+    border-radius: 10px;
+    font-weight: 600;
+}
 </style>
 
 <script>
@@ -1933,3 +2128,4 @@ font-family + font-size + font-weight only
         }
     });
 </script>
+

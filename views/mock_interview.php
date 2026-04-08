@@ -691,11 +691,17 @@ try {
                     </select>
                 </div>
                 <div class="filter-actions">
-                    <button class="btn-icon-only apply" type="submit" data-modern-tooltip="Apply filters" aria-label="Apply filters">
-                        <i class="fas fa-filter"></i>
+                    <button class="btn-icon-only filter-action-btn apply" type="submit" title="Apply filters" aria-label="Apply filters">
+                        <span class="btn-inner">
+                            <i class="fas fa-filter"></i>
+                            <span class="btn-mobile-label">Apply</span>
+                        </span>
                     </button>
-                    <a href="index.php?page=mock_interview" class="btn-icon-only reset" data-modern-tooltip="Reset filters" aria-label="Reset filters">
-                        <i class="fas fa-undo-alt"></i>
+                    <a href="index.php?page=mock_interview" class="btn-icon-only filter-action-btn reset" title="Reset filters" aria-label="Reset filters">
+                        <span class="btn-inner">
+                            <i class="fas fa-undo-alt"></i>
+                            <span class="btn-mobile-label">Reset</span>
+                        </span>
                     </a>
                 </div>
             </div>
@@ -1396,7 +1402,7 @@ try {
         transform: translateX(-50%) rotate(45deg);
     }
 
-    @media (max-width: 900px) {
+    @media (max-width: 767px) {
         .dashboard-header h2 {
             font-size: 24px;
         }
@@ -1465,6 +1471,365 @@ font-family + font-size + font-weight only
 :where(.dataTables_wrapper .dataTables_info){font-size:0.85rem !important;font-weight:400 !important;}
 :where(.dataTables_wrapper .paginate_button){font-size:0.9rem !important;font-weight:600 !important;}
 :where(.badge,.status-badge,.crm-status-badge,.status-pill,.badge-status,[data-status],.tooltip,.ui-tooltip,.floating-ui-tooltip__bubble){font-weight:600 !important;}
+
+/* ===== GLOBAL BUTTON STANDARDIZATION ===== */
+button,
+.btn,
+.crm-action-btn,
+.btn-filter,
+.btn-reset,
+.btn-add,
+.btn-excel,
+.action-btn,
+.btn-icon-only,
+a.btn,
+input[type="button"],
+input[type="submit"],
+input[type="reset"],
+[role="button"] {
+    font-size: 0.92rem;
+    min-height: 38px;
+    padding: 8px 14px;
+    border-radius: 10px;
+    font-weight: 600;
+}
+
+.btn-icon-only,
+.crm-action-btn,
+.action-btn,
+.btn-sm,
+.btn-xs,
+button.btn-icon,
+a.btn-icon,
+.btn i:only-child,
+button i:only-child {
+    font-size: 0.9rem;
+    min-height: 34px;
+    padding: 8px;
+    border-radius: 10px;
+    font-weight: 600;
+}
+
+/* ===== Mock Interview: Match Assessment Responsive Controls ===== */
+.mock-dashboard .btn-mobile-label { display: none; }
+.mock-dashboard .filter-actions .filter-action-btn.reset { background: #6c757d !important; color: #fff !important; }
+.mock-dashboard .filter-actions .filter-action-btn.reset:hover { background: #5a6268 !important; }
+
+@media (max-width: 479px) {
+  .mock-dashboard .table-header-flex {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 10px !important;
+  }
+  .mock-dashboard .table-title {
+    width: 100% !important;
+    white-space: normal !important;
+    text-align: left !important;
+  }
+  .mock-dashboard #datatableControls {
+    width: 100% !important;
+    margin-left: 0 !important;
+    justify-content: flex-start !important;
+  }
+  .mock-dashboard #datatableControls .dt-top,
+  .mock-dashboard .dataTables_wrapper .dt-top {
+    width: 100% !important;
+    justify-content: flex-start !important;
+    align-items: center !important;
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+  }
+  .mock-dashboard .dataTables_wrapper .dataTables_length,
+  .mock-dashboard .dataTables_wrapper .dataTables_filter {
+    width: 100% !important;
+  }
+  .mock-dashboard .dataTables_wrapper .dataTables_length label,
+  .mock-dashboard .dataTables_wrapper .dataTables_filter label {
+    width: 100% !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    white-space: nowrap !important;
+  }
+  .mock-dashboard .dataTables_wrapper .dataTables_filter input {
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+  .mock-dashboard .filter-actions {
+    width: 100% !important;
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    align-items: stretch !important;
+    gap: 8px !important;
+    justify-content: initial !important;
+  }
+  .mock-dashboard .filter-actions .filter-action-btn {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    height: 44px !important;
+    min-height: 44px !important;
+    padding: 0 10px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+  }
+  .mock-dashboard .filter-actions .filter-action-btn .btn-inner {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 6px !important;
+    margin: 0 auto !important;
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    line-height: 1 !important;
+    letter-spacing: 0 !important;
+  }
+  .mock-dashboard .filter-actions .filter-action-btn i {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 12px !important;
+    height: 12px !important;
+    font-size: 12px !important;
+    line-height: 1 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  .mock-dashboard .filter-actions .filter-action-btn .btn-mobile-label {
+    display: inline-block !important;
+    font-size: 11px !important;
+    line-height: 1 !important;
+    font-weight: 700 !important;
+    letter-spacing: 0 !important;
+    color: currentColor !important;
+    white-space: nowrap !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+}
+
+@media (min-width: 480px) and (max-width: 767px) {
+  .mock-dashboard .table-header-flex {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 10px !important;
+  }
+  .mock-dashboard .table-title {
+    width: 100% !important;
+    text-align: left !important;
+    white-space: normal !important;
+  }
+  .mock-dashboard #datatableControls {
+    width: 100% !important;
+    justify-content: flex-start !important;
+  }
+  .mock-dashboard #datatableControls .dt-top,
+  .mock-dashboard .dataTables_wrapper .dt-top {
+    width: 100% !important;
+    justify-content: flex-start !important;
+    align-items: center !important;
+    flex-wrap: wrap !important;
+    gap: 10px !important;
+  }
+  .mock-dashboard .dataTables_wrapper .dataTables_filter input {
+    width: 220px !important;
+    min-width: 220px !important;
+  }
+  .mock-dashboard .filter-actions {
+    width: 100% !important;
+    display: flex !important;
+    flex-wrap: wrap !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    gap: 8px !important;
+  }
+  .mock-dashboard .filter-actions .filter-action-btn {
+    width: calc(50% - 4px) !important;
+    min-width: 140px !important;
+    max-width: 100% !important;
+    flex: 0 0 calc(50% - 4px) !important;
+    height: 44px !important;
+    min-height: 44px !important;
+    padding: 0 10px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+  }
+  .mock-dashboard .filter-actions .filter-action-btn .btn-inner {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 6px !important;
+    margin: 0 auto !important;
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    line-height: 1 !important;
+  }
+  .mock-dashboard .filter-actions .filter-action-btn .btn-mobile-label { display: inline-block !important; }
+}
+
+@media (min-width: 768px) and (max-width: 1024px) {
+  .mock-dashboard .table-header-flex {
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    flex-wrap: nowrap !important;
+  }
+  .mock-dashboard .table-title {
+    white-space: nowrap !important;
+    text-align: left !important;
+  }
+  .mock-dashboard #datatableControls {
+    width: auto !important;
+    margin-left: auto !important;
+    justify-content: flex-end !important;
+  }
+  .mock-dashboard #datatableControls .dt-top,
+  .mock-dashboard .dataTables_wrapper .dt-top {
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+    gap: 10px !important;
+  }
+  .mock-dashboard .dataTables_wrapper .dataTables_filter input {
+    width: 200px !important;
+    min-width: 200px !important;
+  }
+  .mock-dashboard .dataTables_wrapper .dataTables_filter,
+  .mock-dashboard .dataTables_wrapper .dataTables_length {
+    width: auto !important;
+  }
+  .mock-dashboard .dataTables_wrapper .dataTables_length label,
+  .mock-dashboard .dataTables_wrapper .dataTables_filter label {
+    width: auto !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    white-space: nowrap !important;
+  }
+  .mock-dashboard .filter-actions {
+    width: auto !important;
+    display: inline-flex !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+    gap: 8px !important;
+  }
+  .mock-dashboard .filter-actions .filter-action-btn {
+    width: 140px !important;
+    min-width: 140px !important;
+    max-width: 140px !important;
+    flex: 0 0 140px !important;
+    height: 44px !important;
+    min-height: 44px !important;
+    padding: 0 10px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+  }
+  .mock-dashboard .filter-actions .filter-action-btn .btn-inner {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 6px !important;
+    margin: 0 auto !important;
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    line-height: 1 !important;
+  }
+  .mock-dashboard .filter-actions .filter-action-btn .btn-mobile-label { display: inline-block !important; }
+}
+
+@media (max-width: 1024px) {
+  .mock-dashboard .filter-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .mock-dashboard .filter-actions {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+  .mock-dashboard .filter-actions .filter-action-btn {
+    width: 140px !important;
+    min-width: 140px !important;
+    max-width: 140px !important;
+    flex: 0 0 140px !important;
+    height: 44px !important;
+    min-height: 44px !important;
+    max-height: 44px !important;
+    padding: 0 10px !important;
+    display: inline-flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 6px !important;
+    line-height: 1 !important;
+    text-align: center !important;
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    position: relative !important;
+    overflow: hidden !important;
+  }
+  .mock-dashboard .filter-actions .filter-action-btn .btn-inner {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 6px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    line-height: 1 !important;
+    text-align: center !important;
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    letter-spacing: 0 !important;
+    position: absolute !important;
+    left: 50% !important;
+    top: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    width: max-content !important;
+    max-width: calc(100% - 14px) !important;
+    white-space: nowrap !important;
+  }
+  .mock-dashboard .filter-actions .filter-action-btn i {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 12px !important;
+    height: 12px !important;
+    font-size: 12px !important;
+    line-height: 1 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    transform: none !important;
+  }
+  .mock-dashboard .filter-actions .filter-action-btn .btn-mobile-label {
+    display: inline-block !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    line-height: 1 !important;
+    letter-spacing: 0 !important;
+    color: currentColor !important;
+    white-space: nowrap !important;
+    transform: none !important;
+  }
+}
+
+@media (max-width: 479px) {
+  .mock-dashboard .filter-actions {
+    justify-content: center !important;
+  }
+  .mock-dashboard .filter-actions .filter-action-btn {
+    width: calc(50% - 4px) !important;
+    min-width: 130px !important;
+    max-width: 160px !important;
+    flex: 0 0 calc(50% - 4px) !important;
+  }
+}
 </style>
 
 <script>
@@ -1633,3 +1998,5 @@ window.addEventListener('resize', function () {
     }
 });
 </script>
+
+
