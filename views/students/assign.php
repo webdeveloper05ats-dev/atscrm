@@ -632,16 +632,18 @@ LEFT JOIN users guide_u ON guide_u.id = COALESCE(rc.guide_staff_id, ri.guide_sta
         display:inline-flex;
         align-items:center;
         justify-content:center;
-        gap:6px;
-        padding: 0 16px;
+        width: 38px;
+        min-width: 38px;
+        height: 38px;
+        padding: 0;
         border: none;
         background: linear-gradient(135deg, #ff4d8d, #e91e63);
         color: #fff;
-        font-size: 13px;
+        font-size: 14px;
         font-weight: 800;
         box-shadow: 0 8px 18px rgba(233, 30, 99, 0.18);
         transition: all .2s ease;
-        white-space: nowrap;
+        border-radius: 12px;
     }
 
     .stu-save-btn:hover{
@@ -691,7 +693,6 @@ LEFT JOIN users guide_u ON guide_u.id = COALESCE(rc.guide_staff_id, ri.guide_sta
         .stu-assign-form select,
         .stu-save-btn {
             min-width: unset;
-            width: 100%;
         }
 
         .stu-assign-form .ms-select{
@@ -980,8 +981,14 @@ button i:only-child {
                                         </select>
                                     <?php endif; ?>
 
-                                    <button class="stu-save-btn" type="submit">
-                                        <i class="fas fa-save"></i> Save
+                                    <button
+                                        class="stu-save-btn"
+                                        type="submit"
+                                        data-modern-tooltip="Save assignment"
+                                        data-mobile-label="Save"
+                                        aria-label="Save assignment"
+                                    >
+                                        <i class="fas fa-save"></i>
                                     </button>
                                 </form>
                             </td>
