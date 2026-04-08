@@ -620,16 +620,20 @@ function payBadgeIntern($status)
         transform:translateY(-1px);
     }
 
-    .intern-view-btn{
-        background:#eef5ff;
-        color:#1565c0;
-        border-color:#d6e7ff;
+    .intern-action-btn.intern-view-btn,
+    .intern-action-btn.intern-view-btn.crm-action-btn{
+        background:#2563eb !important;
+        color:#fff !important;
+        border-color:#2563eb !important;
+        box-shadow:0 8px 16px rgba(37,99,235,.18) !important;
     }
 
-    .intern-manage-btn{
-        background:linear-gradient(135deg,#ff4d8d,#e91e63);
-        color:#fff;
-        box-shadow:0 8px 16px rgba(233,30,99,.18);
+    .intern-action-btn.intern-manage-btn,
+    .intern-action-btn.intern-manage-btn.crm-action-btn{
+        background:linear-gradient(135deg,#ff4d8d,#e91e63) !important;
+        color:#fff !important;
+        border-color:#e91e63 !important;
+        box-shadow:0 8px 16px rgba(233,30,99,.18) !important;
     }
 
     .intern-pay-badge{
@@ -709,9 +713,12 @@ gap:8px;
 flex-wrap:wrap;
 }
 
-.intern-view-btn{
-background:#e8f4fd;
-color:#1565c0;
+.intern-action-btn.intern-view-btn,
+.intern-action-btn.intern-view-btn.crm-action-btn{
+background:#2563eb !important;
+color:#fff !important;
+border-color:#2563eb !important;
+box-shadow:0 8px 16px rgba(37,99,235,.18) !important;
 }
 
 .intern-view-grid{
@@ -784,7 +791,80 @@ grid-column:1/-1;
   .intern-table-wrap{
     padding:0;
   }
+
+  .intern-action-wrap{
+    display:flex;
+    flex-wrap:wrap;
+    justify-content:flex-end;
+    gap:6px;
+  }
+
+  .intern-action-btn{
+    width:auto !important;
+    min-width:56px !important;
+    height:auto !important;
+    min-height:38px !important;
+    padding:6px 8px !important;
+    display:inline-flex !important;
+    flex-direction:column !important;
+    align-items:center !important;
+    justify-content:center !important;
+    gap:3px !important;
+    border-radius:10px !important;
+  }
+
+  .intern-action-btn[data-mobile-label]::before{
+    content:none !important;
+    display:none !important;
+  }
+
+  .intern-action-btn[data-mobile-label]::after{
+    content:attr(data-mobile-label) !important;
+    position:static !important;
+    display:block !important;
+    opacity:1 !important;
+    visibility:visible !important;
+    transform:none !important;
+    background:none !important;
+    border:0 !important;
+    box-shadow:none !important;
+    padding:0 !important;
+    margin:0 !important;
+    font-size:10px !important;
+    line-height:1.1 !important;
+    font-weight:700 !important;
+    letter-spacing:.1px !important;
+    color:currentColor !important;
+    white-space:nowrap !important;
+  }
 }
+
+/* =====================================================
+GLOBAL TYPOGRAPHY STYLECSS SYNC
+font-family + font-size + font-weight only
+===================================================== */
+:where(body,button,input,select,textarea,label,span,p,h1,h2,h3,h4,h5,h6,a,div){
+  font-family:'Poppins',sans-serif !important;
+}
+:where(h1,.h1,.page-title,.crm-page-title,.dashboard-header h2){font-size:clamp(2rem, 2.5vw, 2.4rem) !important;font-weight:700 !important;}
+:where(h2,.h2,.section-title){font-size:clamp(1.6rem, 2vw, 2rem) !important;font-weight:600 !important;}
+:where(h3,.h3,.card-header,.table-title){font-size:clamp(1.3rem, 1.6vw, 1.5rem) !important;font-weight:600 !important;}
+:where(h4,.h4){font-size:1.2rem !important;font-weight:500 !important;}
+:where(h5,.h5){font-size:1rem !important;font-weight:500 !important;}
+:where(h6,.h6){font-size:0.9rem !important;font-weight:500 !important;}
+:where(body){font-size:1rem !important;}
+:where(p,.text-body,li,td,.text-muted,.help-text,.form-text,.small,small,.secondary-text){font-size:0.95rem !important;font-weight:400 !important;}
+:where(.small,small,.text-muted,.help-text,.form-text,.att-sub,.crm-note){font-size:0.85rem !important;font-weight:400 !important;}
+:where(label,.form-label){font-size:0.85rem !important;font-weight:500 !important;}
+:where(input,select,textarea,.form-control,.form-select){font-size:0.95rem !important;font-weight:400 !important;}
+:where(input::placeholder,textarea::placeholder){font-weight:400 !important;}
+:where(button,.btn,.dt-button,.crm-action-btn,.crm-icon-btn,.btn-icon-only,.action-btn,.targets-btn-icon,.iso-report-btn,.iso-report-action-btn){font-size:0.9rem !important;font-weight:600 !important;}
+:where(.btn[data-mobile-label],.btn-icon-only[data-mobile-label],.action-btn[data-mobile-label],.crm-icon-btn[data-mobile-label],.targets-btn-icon[data-mobile-label],.iso-report-icon-btn[data-mobile-label],.iso-report-action-btn[data-mobile-label])::after{font-size:0.75rem !important;font-weight:600 !important;}
+:where(.table th,.crm-table th,.dataTables_wrapper th,th){font-size:0.75rem !important;font-weight:600 !important;}
+:where(.table td,.dataTables_wrapper tbody td){font-size:0.9rem !important;}
+:where(.dataTables_wrapper .dataTables_info){font-size:0.85rem !important;font-weight:400 !important;}
+:where(.dataTables_wrapper .paginate_button){font-size:0.9rem !important;font-weight:600 !important;}
+:where(.badge,.status-badge,.crm-status-badge,.status-pill,.badge-status,[data-status],.tooltip,.ui-tooltip,.floating-ui-tooltip__bubble){font-weight:600 !important;}
 </style>
 
 <div class="leads-dashboard">
@@ -915,7 +995,7 @@ grid-column:1/-1;
 
                         <td class="text-center">
                             <div class="intern-action-wrap">
-                                <button type="button" class="intern-action-btn intern-view-btn viewInternBtn" title="View Internship"
+                                <button type="button" class="intern-action-btn intern-view-btn viewInternBtn" title="View Internship" data-mobile-label="View"
                                     data-name="<?= h($r['enquiry_snapshot_name']) ?>"
                                     data-regno="<?= h($r['registration_no']) ?>"
                                     data-phone="<?= h(visibleStudentContactValue($r['enquiry_snapshot_phone'] ?? '')) ?>"
@@ -933,7 +1013,7 @@ grid-column:1/-1;
                                     <i class="fas fa-eye"></i>
                                 </button>
 
-                                <button type="button" class="intern-action-btn intern-manage-btn manageInternBtn" title="Manage Internship" data-id="<?= (int) $r['id'] ?>"
+                                <button type="button" class="intern-action-btn intern-manage-btn manageInternBtn" title="Manage Internship" data-id="<?= (int) $r['id'] ?>" data-mobile-label="Manage"
                                     data-name="<?= h($r['enquiry_snapshot_name']) ?>"
                                     data-start="<?= h($r['internship_start_date']) ?>"
                                     data-end="<?= h($r['internship_end_date']) ?>"

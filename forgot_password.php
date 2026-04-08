@@ -92,7 +92,7 @@ try {
     $safeApp  = htmlspecialchars(APP_NAME, ENT_QUOTES, 'UTF-8');
 
     $mail->Body = "
-        <div style='font-family:Arial,sans-serif;font-size:14px;color:#111;'>
+        <div style='font-family:Poppins,sans-serif;font-size:14px;color:#111;'>
             <h2 style='margin:0 0 10px;'>$safeApp</h2>
             <p>Hi <b>$safeName</b>,</p>
             <p>We received a request to reset your password.</p>

@@ -110,23 +110,30 @@ $sn = 1;
 foreach ($rows as $r) {
     $studentPhone = $isStaffViewer
         ? ''
-        : '<br><small>' . htmlspecialchars((string)($r['enquiry_snapshot_phone'] ?? ''), ENT_QUOTES, 'UTF-8') . '</small>';
+        : '<div class="course-phone">' . htmlspecialchars((string)($r['enquiry_snapshot_phone'] ?? ''), ENT_QUOTES, 'UTF-8') . '</div>';
 
     $student = "
-    <strong>{$r['enquiry_snapshot_name']}</strong><br>
-    <small>{$r['registration_no']}</small>{$studentPhone}
+    <div class='course-student'>
+        <div class='course-name'>" . htmlspecialchars((string)$r['enquiry_snapshot_name'], ENT_QUOTES, 'UTF-8') . "</div>
+        <div class='course-reg'>" . htmlspecialchars((string)$r['registration_no'], ENT_QUOTES, 'UTF-8') . "</div>
+        {$studentPhone}
+    </div>
     ";
 
     $program = "
-    <strong>{$r['program_name']}</strong><br>
-    <small>{$r['batch_name']}</small><br>
-    <small>{$r['joined_on']}</small>
+    <div class='course-program'>
+        <div class='course-program-name'>" . htmlspecialchars((string)$r['program_name'], ENT_QUOTES, 'UTF-8') . "</div>
+        <div class='course-program-batch'>" . htmlspecialchars((string)$r['batch_name'], ENT_QUOTES, 'UTF-8') . "</div>
+        <div class='course-program-date'>" . htmlspecialchars((string)$r['joined_on'], ENT_QUOTES, 'UTF-8') . "</div>
+    </div>
     ";
 
     $fees = "
-    <span class='fee-total'>Total: ₹" . number_format($r['total_fee'], 2) . "</span><br>
-    <span class='fee-paid'>Paid: ₹" . number_format($r['paid_amount'], 2) . "</span><br>
-    <span class='fee-balance'>Balance: ₹" . number_format($r['balance_amount'], 2) . "</span>
+    <div class='course-fees'>
+        <div class='fee-total'>Total: ₹" . number_format((float)$r['total_fee'], 2) . "</div>
+        <div class='fee-paid'>Paid: ₹" . number_format((float)$r['paid_amount'], 2) . "</div>
+        <div class='fee-balance'>Balance: ₹" . number_format((float)$r['balance_amount'], 2) . "</div>
+    </div>
     ";
 
     $statusClass = "status-" . $r['payment_status'];
@@ -138,15 +145,17 @@ foreach ($rows as $r) {
     ";
 
     $action = '
-    <div class="action-group">
+    <div class="action-buttons action-group">
         <a href="index.php?page=reports/student_profile&id=' . $r['id'] . '" 
-        class="action-btn" 
-        title="View Student Profile">
+        class="action-btn view" 
+        title="View Student Profile"
+        data-mobile-label="View">
             <i class="fa fa-eye"></i>
         </a>
         <a href="index.php?page=reports/student_profile&id=' . $r['id'] . '&print=1" 
-        class="action-btn download-report" 
+        class="action-btn download-report export" 
         title="Download Report"
+        data-mobile-label="Download"
         target="_blank"
         rel="noopener">
             <i class="fa fa-download"></i>

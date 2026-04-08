@@ -272,6 +272,16 @@ if (!defined('APP_NAME')) {
 (function () {
     let tooltipEl = null;
     let activeTarget = null;
+    function detectTouchDevice() {
+        return !!(
+            window.matchMedia('(hover: none), (pointer: coarse)').matches ||
+            window.matchMedia('(any-pointer: coarse)').matches ||
+            ('ontouchstart' in window) ||
+            (navigator.maxTouchPoints && navigator.maxTouchPoints > 0)
+        );
+    }
+
+    let isTouchDevice = detectTouchDevice();
 
     function getTooltipText(el) {
         return (el.getAttribute('data-modern-tooltip') || el.getAttribute('data-tooltip') || el.getAttribute('aria-label') || '').trim();
@@ -323,6 +333,7 @@ if (!defined('APP_NAME')) {
     }
 
     function showTooltip(el) {
+        if (isTouchDevice) return;
         if (!el) return;
         if (!getTooltipText(el)) return;
         activeTarget = el;
@@ -342,8 +353,12 @@ if (!defined('APP_NAME')) {
         if (title && !el.getAttribute('data-tooltip') && !el.getAttribute('data-modern-tooltip')) {
             el.setAttribute('data-tooltip', title);
         }
-        if ((el.getAttribute('data-tooltip') || el.getAttribute('data-modern-tooltip')) && !el.getAttribute('aria-label')) {
-            el.setAttribute('aria-label', getTooltipText(el));
+        const tooltipText = getTooltipText(el);
+        if (tooltipText && !el.getAttribute('aria-label')) {
+            el.setAttribute('aria-label', tooltipText);
+        }
+        if (tooltipText && shouldUseMobileLabel(el) && !el.getAttribute('data-mobile-label')) {
+            el.setAttribute('data-mobile-label', tooltipText);
         }
         if (title) {
             el.removeAttribute('title');
@@ -351,16 +366,71 @@ if (!defined('APP_NAME')) {
         el.dataset.tooltipReady = '1';
     }
 
+    function shouldUseMobileLabel(el) {
+        if (!el || !el.classList) return false;
+        if (el.closest('.sidebar')) return false;
+        if (el.classList.contains('menu-toggle')) return false;
+        if (
+            el.classList.contains('btn-icon-only') ||
+            el.classList.contains('btn-icon') ||
+            el.classList.contains('btn-add-payment') ||
+            el.classList.contains('action-btn') ||
+            el.classList.contains('crm-icon-btn') ||
+            el.classList.contains('sa-icon-btn') ||
+            el.classList.contains('source-icon') ||
+            el.classList.contains('ui-tooltip') ||
+            el.classList.contains('tooltip')
+        ) {
+            return true;
+        }
+
+        const text = ((el.textContent || '').replace(/\s+/g, '')).trim();
+        const hasIcon = !!el.querySelector('i, svg');
+        return hasIcon && text.length <= 2;
+    }
+
     function bindTooltip(el) {
         if (!el || el.dataset.floatingTooltipBound === '1') return;
         normalizeTitle(el);
         if (!getTooltipText(el)) return;
+        if (isTouchDevice) {
+            el.dataset.floatingTooltipBound = '1';
+            return;
+        }
 
         el.dataset.floatingTooltipBound = '1';
         el.addEventListener('mouseenter', function () { showTooltip(el); });
         el.addEventListener('mouseleave', function () { hideTooltip(el); });
         el.addEventListener('focus', function () { showTooltip(el); });
         el.addEventListener('blur', function () { hideTooltip(el); });
+    }
+
+    function fallbackLabel(el) {
+        if (el.classList.contains('apply')) return 'Apply';
+        if (el.classList.contains('reset')) return 'Reset';
+        if (el.classList.contains('add')) return 'Add';
+        if (el.classList.contains('import')) return 'Import';
+        if (el.classList.contains('export')) return 'Export';
+        if (el.classList.contains('view')) return 'View';
+        if (el.classList.contains('edit')) return 'Edit';
+        if (el.classList.contains('delete')) return 'Delete';
+        if (el.classList.contains('convert')) return 'Convert';
+        return '';
+    }
+
+    function applyMobileActionLabels(root) {
+        const compactViewport = window.matchMedia('(max-width: 1024px)').matches;
+        if (!isTouchDevice && !compactViewport) return;
+        const scope = root || document;
+        const selector = '[data-tooltip], [data-modern-tooltip], [aria-label], .btn-icon-only, .btn-icon, .btn-add-payment, .action-btn, .crm-icon-btn, .sa-icon-btn, .source-icon, .ui-tooltip, .tooltip';
+        const nodes = scope.matches && scope.matches(selector) ? [scope] : Array.from(scope.querySelectorAll(selector));
+
+        nodes.forEach(function (el) {
+            if (!shouldUseMobileLabel(el)) return;
+            const label = (el.getAttribute('data-mobile-label') || getTooltipText(el) || el.getAttribute('aria-label') || fallbackLabel(el) || '').trim();
+            if (!label) return;
+            el.setAttribute('data-mobile-label', label);
+        });
     }
 
     function initTooltips(root) {
@@ -370,11 +440,13 @@ if (!defined('APP_NAME')) {
         if (scope.matches && scope.matches(selector)) {
             bindTooltip(scope);
         }
+        applyMobileActionLabels(scope);
     }
 
     window.initializeFloatingTooltips = initTooltips;
 
     document.addEventListener('DOMContentLoaded', function () {
+        document.documentElement.classList.toggle('touch-ui', isTouchDevice);
         initTooltips(document);
 
         const observer = new MutationObserver(function (mutations) {
@@ -623,7 +695,7 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   function isMobile() {
-    return window.innerWidth <= 768;
+    return window.innerWidth <= 1024;
   }
 
   function openMobile() {
@@ -1038,6 +1110,109 @@ $('#followupForm').submit(function(e){
 });
 
 });
+</script>
+
+<script>
+(function () {
+    const MOBILE_CARD_BREAKPOINT = 1024;
+
+    function cleanHeaderText(text) {
+        return (text || '')
+            .replace(/\s+/g, ' ')
+            .replace(/[^\x20-\x7E]/g, '')
+            .trim();
+    }
+
+    function resolveHeaders(table) {
+        const directHeaders = table.querySelectorAll('thead th');
+        if (directHeaders.length) {
+            return Array.from(directHeaders).map(function (th) {
+                return cleanHeaderText(th.textContent);
+            });
+        }
+
+        const fallbackRow = table.querySelector('tbody tr');
+        if (!fallbackRow) return [];
+
+        return Array.from(fallbackRow.children).map(function (_, idx) {
+            return 'Column ' + (idx + 1);
+        });
+    }
+
+    function applyMobileCardLabels(root) {
+        if (window.innerWidth > MOBILE_CARD_BREAKPOINT) return;
+
+        const scope = root || document;
+        const selector = '.main-content table:not(.no-mobile-cards):not(.no-card-mobile)';
+        const tables = scope.matches && scope.matches(selector)
+            ? [scope]
+            : Array.from(scope.querySelectorAll(selector));
+
+        tables.forEach(function (table) {
+            if (!table || table.closest('.dataTables_scrollHead, .dataTables_scrollFoot')) return;
+
+            const headers = resolveHeaders(table);
+            if (!headers.length) return;
+
+            table.querySelectorAll('tbody tr').forEach(function (tr) {
+                const cells = tr.querySelectorAll('td');
+                cells.forEach(function (td, idx) {
+                    if (!td.getAttribute('data-label')) {
+                        td.setAttribute('data-label', headers[idx] || ('Column ' + (idx + 1)));
+                    }
+
+                    const hasWrapper = Array.from(td.children).some(function (el) {
+                        return el.classList && el.classList.contains('crm-card-value');
+                    });
+
+                    if (!hasWrapper) {
+                        const valueWrap = document.createElement('div');
+                        valueWrap.className = 'crm-card-value';
+
+                        const nodes = Array.from(td.childNodes);
+                        nodes.forEach(function (node) {
+                            valueWrap.appendChild(node);
+                        });
+
+                        td.appendChild(valueWrap);
+                    }
+                });
+            });
+        });
+    }
+
+    function run() {
+        applyMobileCardLabels(document);
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        run();
+
+        let resizeTimer = null;
+        window.addEventListener('resize', function () {
+            if (resizeTimer) window.clearTimeout(resizeTimer);
+            resizeTimer = window.setTimeout(run, 150);
+        });
+
+        const observer = new MutationObserver(function (mutations) {
+            if (window.innerWidth > MOBILE_CARD_BREAKPOINT) return;
+            mutations.forEach(function (mutation) {
+                mutation.addedNodes.forEach(function (node) {
+                    if (!node || node.nodeType !== 1) return;
+                    applyMobileCardLabels(node);
+                });
+            });
+        });
+
+        observer.observe(document.body, { childList: true, subtree: true });
+
+        window.addEventListener('resize', function () {
+            if (typeof window.initializeFloatingTooltips === 'function') {
+                window.initializeFloatingTooltips(document);
+            }
+        });
+    });
+})();
 </script>
 
 </body>

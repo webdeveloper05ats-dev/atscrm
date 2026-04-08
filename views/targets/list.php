@@ -998,6 +998,46 @@ function buildTargetListUrl(array $overrides = [])
     .filter-actions {
         justify-content: flex-start;
     }
+
+    .filter-actions .targets-btn-icon[data-mobile-label]{
+        width:auto !important;
+        min-width:64px !important;
+        height:auto !important;
+        min-height:40px !important;
+        padding:6px 8px !important;
+        display:inline-flex !important;
+        flex-direction:column !important;
+        align-items:center !important;
+        justify-content:center !important;
+        gap:3px !important;
+        border-radius:10px !important;
+        font-size:13px !important;
+    }
+
+    .filter-actions .targets-btn-icon[data-mobile-label]::before{
+        content:none !important;
+        display:none !important;
+    }
+
+    .filter-actions .targets-btn-icon[data-mobile-label]::after{
+        content:attr(data-mobile-label) !important;
+        position:static !important;
+        display:block !important;
+        opacity:1 !important;
+        visibility:visible !important;
+        transform:none !important;
+        background:none !important;
+        border:0 !important;
+        box-shadow:none !important;
+        padding:0 !important;
+        margin:0 !important;
+        font-size:10px !important;
+        line-height:1.1 !important;
+        font-weight:700 !important;
+        letter-spacing:.1px !important;
+        color:currentColor !important;
+        white-space:nowrap !important;
+    }
     
     .targets-view-grid {
         grid-template-columns: 1fr;
@@ -1032,6 +1072,75 @@ function buildTargetListUrl(array $overrides = [])
         width:100%;
     }
 }
+
+@media (hover: none), (pointer: coarse){
+    .filter-actions .targets-btn-icon[data-mobile-label]{
+        width:auto !important;
+        min-width:64px !important;
+        height:auto !important;
+        min-height:40px !important;
+        padding:6px 8px !important;
+        display:inline-flex !important;
+        flex-direction:column !important;
+        align-items:center !important;
+        justify-content:center !important;
+        gap:3px !important;
+        border-radius:10px !important;
+        font-size:13px !important;
+    }
+
+    .filter-actions .targets-btn-icon[data-mobile-label]::before{
+        content:none !important;
+        display:none !important;
+    }
+
+    .filter-actions .targets-btn-icon[data-mobile-label]::after{
+        content:attr(data-mobile-label) !important;
+        position:static !important;
+        display:block !important;
+        opacity:1 !important;
+        visibility:visible !important;
+        transform:none !important;
+        background:none !important;
+        border:0 !important;
+        box-shadow:none !important;
+        padding:0 !important;
+        margin:0 !important;
+        font-size:10px !important;
+        line-height:1.1 !important;
+        font-weight:700 !important;
+        letter-spacing:.1px !important;
+        color:currentColor !important;
+        white-space:nowrap !important;
+    }
+}
+
+/* =====================================================
+GLOBAL TYPOGRAPHY STYLECSS SYNC
+font-family + font-size + font-weight only
+===================================================== */
+:where(body,button,input,select,textarea,label,span,p,h1,h2,h3,h4,h5,h6,a,div){
+  font-family:'Poppins',sans-serif !important;
+}
+:where(h1,.h1,.page-title,.crm-page-title,.dashboard-header h2){font-size:clamp(2rem, 2.5vw, 2.4rem) !important;font-weight:700 !important;}
+:where(h2,.h2,.section-title){font-size:clamp(1.6rem, 2vw, 2rem) !important;font-weight:600 !important;}
+:where(h3,.h3,.card-header,.table-title){font-size:clamp(1.3rem, 1.6vw, 1.5rem) !important;font-weight:600 !important;}
+:where(h4,.h4){font-size:1.2rem !important;font-weight:500 !important;}
+:where(h5,.h5){font-size:1rem !important;font-weight:500 !important;}
+:where(h6,.h6){font-size:0.9rem !important;font-weight:500 !important;}
+:where(body){font-size:1rem !important;}
+:where(p,.text-body,li,td,.text-muted,.help-text,.form-text,.small,small,.secondary-text){font-size:0.95rem !important;font-weight:400 !important;}
+:where(.small,small,.text-muted,.help-text,.form-text,.att-sub,.crm-note){font-size:0.85rem !important;font-weight:400 !important;}
+:where(label,.form-label){font-size:0.85rem !important;font-weight:500 !important;}
+:where(input,select,textarea,.form-control,.form-select){font-size:0.95rem !important;font-weight:400 !important;}
+:where(input::placeholder,textarea::placeholder){font-weight:400 !important;}
+:where(button,.btn,.dt-button,.crm-action-btn,.crm-icon-btn,.btn-icon-only,.action-btn,.targets-btn-icon,.iso-report-btn,.iso-report-action-btn){font-size:0.9rem !important;font-weight:600 !important;}
+:where(.btn[data-mobile-label],.btn-icon-only[data-mobile-label],.action-btn[data-mobile-label],.crm-icon-btn[data-mobile-label],.targets-btn-icon[data-mobile-label],.iso-report-icon-btn[data-mobile-label],.iso-report-action-btn[data-mobile-label])::after{font-size:0.75rem !important;font-weight:600 !important;}
+:where(.table th,.crm-table th,.dataTables_wrapper th,th){font-size:0.75rem !important;font-weight:600 !important;}
+:where(.table td,.dataTables_wrapper tbody td){font-size:0.9rem !important;}
+:where(.dataTables_wrapper .dataTables_info){font-size:0.85rem !important;font-weight:400 !important;}
+:where(.dataTables_wrapper .paginate_button){font-size:0.9rem !important;font-weight:600 !important;}
+:where(.badge,.status-badge,.crm-status-badge,.status-pill,.badge-status,[data-status],.tooltip,.ui-tooltip,.floating-ui-tooltip__bubble){font-weight:600 !important;}
 </style>
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -1113,10 +1222,10 @@ function buildTargetListUrl(array $overrides = [])
                         </div>
 
                         <div class="filter-actions">
-                            <button type="submit" class="targets-btn-icon" data-tooltip="Apply Filters">
+                            <button type="submit" class="targets-btn-icon" data-tooltip="Apply Filters" data-mobile-label="Apply">
                                 <i class="fas fa-check"></i>
                             </button>
-                            <a href="index.php?page=targets/list" class="targets-btn-icon reset" data-tooltip="Reset Filters">
+                            <a href="index.php?page=targets/list" class="targets-btn-icon reset" data-tooltip="Reset Filters" data-mobile-label="Reset">
                                 <i class="fas fa-undo-alt"></i>
                             </a>
                         </div>
@@ -1185,7 +1294,7 @@ function buildTargetListUrl(array $overrides = [])
                                             <small class="text-muted"><?= h($row['target_year']) ?></small>
                                         </td>
 
-                                        <td class="targets-amount">₹<?= number_format((float)$row['target_amount'], 2) ?></td>
+                                        <td class="targets-amount">?<?= number_format((float)$row['target_amount'], 2) ?></td>
 
                                         <td><?= number_format((float)$row['incentive_percent'], 2) ?>%</td>
 

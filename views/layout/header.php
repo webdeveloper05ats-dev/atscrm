@@ -69,7 +69,13 @@ $hideTopbar = (isset($hideSidebar) && $hideSidebar === true);
             </div>
         </div>
 
-        <a href="<?= BASE_URL ?>logout.php" class="btn btn-primary" style="padding:8px 12px;">
+        <a
+            href="<?= BASE_URL ?>logout.php"
+            class="btn btn-primary"
+            style="padding:8px 12px;"
+            data-modern-tooltip="Logout"
+            data-mobile-label="Logout"
+            aria-label="Logout">
             <i class="fas fa-sign-out-alt"></i>
         </a>
     </div>

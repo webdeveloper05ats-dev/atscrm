@@ -375,11 +375,11 @@ if ($isAjax) {
             </div>
             <div class="pro-info-card">
               <span class="label">Final Fee</span>
-              <span class="value">₹ <?= h(number_format((float) ($reg['final_fee'] ?? 0), 2)) ?></span>
+              <span class="value">? <?= h(number_format((float) ($reg['final_fee'] ?? 0), 2)) ?></span>
             </div>
             <div class="pro-info-card">
               <span class="label">Balance</span>
-              <span class="value">₹ <?= h(number_format((float) ($reg['balance_amount'] ?? 0), 2)) ?></span>
+              <span class="value">? <?= h(number_format((float) ($reg['balance_amount'] ?? 0), 2)) ?></span>
             </div>
           </div>
 
@@ -465,7 +465,7 @@ if ($isAjax) {
                       <span class="pro-mini-badge history-mini-badge"><?= h(ucfirst($f['followup_type'] ?? '-')) ?></span>
                     </div>
                     <div class="pro-timeline-sub">
-                      Status: <?= h(ucfirst($f['status'] ?? 'pending')) ?> • By: <?= h($f['created_by_name'] ?? '-') ?>
+                      Status: <?= h(ucfirst($f['status'] ?? 'pending')) ?> � By: <?= h($f['created_by_name'] ?? '-') ?>
                     </div>
                     <?php if (!empty($f['notes'])): ?>
                       <div class="pro-timeline-note"><?= nl2br(h($f['notes'])) ?></div>
@@ -491,7 +491,7 @@ if ($isAjax) {
             <div class="empty-note">No payments added yet.</div>
           <?php else: ?>
             <div class="pro-table-scroll history-table-scroll">
-              <table class="pro-mini-table history-mini-table">
+              <table class="pro-mini-table history-mini-table no-mobile-cards">
                 <thead>
                   <tr>
                     <th>Date / Receipt</th>
@@ -509,7 +509,7 @@ if ($isAjax) {
                         <div class="history-pay-date"><?= h($p['payment_date']) ?></div>
                         <div class="history-pay-receipt"><?= h($p['receipt_no'] ?: '-') ?></div>
                       </td>
-                      <td>₹ <?= h(number_format((float) $p['amount'], 2)) ?></td>
+                      <td>? <?= h(number_format((float) $p['amount'], 2)) ?></td>
                       <td><?= h($p['payment_mode']) ?></td>
                       <td><?= h($p['payment_type']) ?></td>
                       <td class="history-pay-status-cell">
@@ -626,15 +626,15 @@ if ($isAjax) {
           </div>
           <div class="pro-pay-card pm-fee">
             <span class="label"><i class="fas fa-coins"></i> Final Fee</span>
-            <span class="value">₹ <?= h(number_format($finalFee, 2)) ?></span>
+            <span class="value">? <?= h(number_format($finalFee, 2)) ?></span>
           </div>
           <div class="pro-pay-card pm-paid">
             <span class="label"><i class="fas fa-wallet"></i> Paid</span>
-            <span class="value">₹ <?= h(number_format($paidAmt, 2)) ?></span>
+            <span class="value">? <?= h(number_format($paidAmt, 2)) ?></span>
           </div>
           <div class="pro-pay-card highlight pm-balance">
             <span class="label"><i class="fas fa-hourglass-half"></i> Balance</span>
-            <span class="value">₹ <?= h(number_format($balance, 2)) ?></span>
+            <span class="value">? <?= h(number_format($balance, 2)) ?></span>
           </div>
         </div>
 
@@ -729,7 +729,7 @@ if ($isAjax) {
             <div class="empty-note">No payments added yet.</div>
           <?php else: ?>
             <div class="pro-table-scroll">
-              <table class="pro-mini-table">
+              <table class="pro-mini-table no-mobile-cards">
                 <thead>
                   <tr>
                     <th>Date / Receipt</th>
@@ -747,7 +747,7 @@ if ($isAjax) {
                         <div class="pay-history-date"><?= h($p['payment_date']) ?></div>
                         <div class="pay-history-receipt"><?= h($p['receipt_no'] ?: '-') ?></div>
                       </td>
-                      <td>₹ <?= h(number_format((float) $p['amount'], 2)) ?></td>
+                      <td>? <?= h(number_format((float) $p['amount'], 2)) ?></td>
                       <td><?= h($p['payment_mode']) ?></td>
                       <td><?= h($p['payment_type']) ?></td>
                       <td class="pay-history-status-cell">
@@ -1606,7 +1606,7 @@ function payStatusBadgeList($type)
   margin-left:auto !important;
 }
 
-@media (max-width: 768px){
+@media (max-width: 1024px){
   .leads-dashboard{
     padding:8px;
   }
@@ -1650,18 +1650,50 @@ function payStatusBadgeList($type)
   }
 
   .filter-actions{
-    display:flex !important;
+    display:grid !important;
+    grid-template-columns:repeat(2, minmax(0, 1fr));
     justify-content:stretch !important;
     gap:10px !important;
-    flex-wrap:wrap !important;
+    width:100%;
   }
 
   .filter-actions .btn-icon-only{
-    flex:1 1 calc(50% - 5px);
-    width:auto !important;
+    width:100% !important;
     min-width:0;
-    height:42px;
+    height:auto;
+    min-height:40px;
+    padding:6px 8px !important;
     border-radius:10px;
+    display:inline-flex !important;
+    flex-direction:column !important;
+    align-items:center !important;
+    justify-content:center !important;
+    gap:3px !important;
+  }
+
+  .filter-actions .btn-icon-only[data-mobile-label]::before{
+    content:none !important;
+    display:none !important;
+  }
+
+  .filter-actions .btn-icon-only[data-mobile-label]::after{
+    content:attr(data-mobile-label) !important;
+    position:static !important;
+    display:block !important;
+    opacity:1 !important;
+    visibility:visible !important;
+    transform:none !important;
+    background:none !important;
+    border:0 !important;
+    box-shadow:none !important;
+    padding:0 !important;
+    margin:0 !important;
+    font-size:10px !important;
+    line-height:1.1 !important;
+    font-weight:700 !important;
+    letter-spacing:.1px !important;
+    color:currentColor !important;
+    white-space:nowrap !important;
   }
 
   .table-container{
@@ -1682,6 +1714,45 @@ function payStatusBadgeList($type)
 
   .action-buttons{
     flex-wrap:wrap;
+  }
+
+  .action-buttons .action-btn{
+    width:auto !important;
+    min-width:56px !important;
+    height:auto !important;
+    min-height:38px !important;
+    padding:6px 8px !important;
+    display:inline-flex !important;
+    flex-direction:column !important;
+    align-items:center !important;
+    justify-content:center !important;
+    gap:3px !important;
+    border-radius:10px !important;
+  }
+
+  .action-buttons .action-btn[data-mobile-label]::before{
+    content:none !important;
+    display:none !important;
+  }
+
+  .action-buttons .action-btn[data-mobile-label]::after{
+    content:attr(data-mobile-label) !important;
+    position:static !important;
+    display:block !important;
+    opacity:1 !important;
+    visibility:visible !important;
+    transform:none !important;
+    background:none !important;
+    border:0 !important;
+    box-shadow:none !important;
+    padding:0 !important;
+    margin:0 !important;
+    font-size:10px !important;
+    line-height:1.1 !important;
+    font-weight:700 !important;
+    letter-spacing:.1px !important;
+    color:currentColor !important;
+    white-space:nowrap !important;
   }
 
   .table-header-flex{
@@ -1745,6 +1816,33 @@ function payStatusBadgeList($type)
     gap:6px;
   }
 }
+
+/* =====================================================
+GLOBAL TYPOGRAPHY STYLECSS SYNC
+font-family + font-size + font-weight only
+===================================================== */
+:where(body,button,input,select,textarea,label,span,p,h1,h2,h3,h4,h5,h6,a,div){
+  font-family:'Poppins',sans-serif !important;
+}
+:where(h1,.h1,.page-title,.crm-page-title,.dashboard-header h2){font-size:clamp(2rem, 2.5vw, 2.4rem) !important;font-weight:700 !important;}
+:where(h2,.h2,.section-title){font-size:clamp(1.6rem, 2vw, 2rem) !important;font-weight:600 !important;}
+:where(h3,.h3,.card-header,.table-title){font-size:clamp(1.3rem, 1.6vw, 1.5rem) !important;font-weight:600 !important;}
+:where(h4,.h4){font-size:1.2rem !important;font-weight:500 !important;}
+:where(h5,.h5){font-size:1rem !important;font-weight:500 !important;}
+:where(h6,.h6){font-size:0.9rem !important;font-weight:500 !important;}
+:where(body){font-size:1rem !important;}
+:where(p,.text-body,li,td,.text-muted,.help-text,.form-text,.small,small,.secondary-text){font-size:0.95rem !important;font-weight:400 !important;}
+:where(.small,small,.text-muted,.help-text,.form-text,.att-sub,.crm-note){font-size:0.85rem !important;font-weight:400 !important;}
+:where(label,.form-label){font-size:0.85rem !important;font-weight:500 !important;}
+:where(input,select,textarea,.form-control,.form-select){font-size:0.95rem !important;font-weight:400 !important;}
+:where(input::placeholder,textarea::placeholder){font-weight:400 !important;}
+:where(button,.btn,.dt-button,.crm-action-btn,.crm-icon-btn,.btn-icon-only,.action-btn,.targets-btn-icon,.iso-report-btn,.iso-report-action-btn){font-size:0.9rem !important;font-weight:600 !important;}
+:where(.btn[data-mobile-label],.btn-icon-only[data-mobile-label],.action-btn[data-mobile-label],.crm-icon-btn[data-mobile-label],.targets-btn-icon[data-mobile-label],.iso-report-icon-btn[data-mobile-label],.iso-report-action-btn[data-mobile-label])::after{font-size:0.75rem !important;font-weight:600 !important;}
+:where(.table th,.crm-table th,.dataTables_wrapper th,th){font-size:0.75rem !important;font-weight:600 !important;}
+:where(.table td,.dataTables_wrapper tbody td){font-size:0.9rem !important;}
+:where(.dataTables_wrapper .dataTables_info){font-size:0.85rem !important;font-weight:400 !important;}
+:where(.dataTables_wrapper .paginate_button){font-size:0.9rem !important;font-weight:600 !important;}
+:where(.badge,.status-badge,.crm-status-badge,.status-pill,.badge-status,[data-status],.tooltip,.ui-tooltip,.floating-ui-tooltip__bubble){font-weight:600 !important;}
 </style>
 
 <h2 style="display:none;">Registrations List</h2>
@@ -1832,10 +1930,10 @@ function payStatusBadgeList($type)
         </div>
 
         <div class="filter-actions">
-          <button type="submit" class="btn-icon-only apply" title="Apply filters">
+          <button type="submit" class="btn-icon-only apply" title="Apply filters" data-mobile-label="Apply">
             <i class="fas fa-filter"></i>
           </button>
-          <a href="index.php?page=registrations/list" class="btn-icon-only reset" title="Reset filters">
+          <a href="index.php?page=registrations/list" class="btn-icon-only reset" title="Reset filters" data-mobile-label="Reset">
             <i class="fas fa-undo-alt"></i>
           </a>
         </div>
@@ -1887,9 +1985,9 @@ function payStatusBadgeList($type)
                   </td>
 
                   <td>
-                    <div class="primary-text">₹ <?= h(number_format((float) ($r['final_fee'] ?? 0), 2)) ?></div>
-                    <div class="secondary-text">Paid: ₹ <?= h(number_format((float) ($r['paid_amount'] ?? 0), 2)) ?></div>
-                    <div class="secondary-text">Bal: ₹ <?= h(number_format((float) ($r['balance_amount'] ?? 0), 2)) ?></div>
+                    <div class="primary-text">? <?= h(number_format((float) ($r['final_fee'] ?? 0), 2)) ?></div>
+                    <div class="secondary-text">Paid: ? <?= h(number_format((float) ($r['paid_amount'] ?? 0), 2)) ?></div>
+                    <div class="secondary-text">Bal: ? <?= h(number_format((float) ($r['balance_amount'] ?? 0), 2)) ?></div>
                   </td>
 
                   <td>
@@ -1900,21 +1998,25 @@ function payStatusBadgeList($type)
                   <td>
                     <div class="action-buttons">
                       <button type="button" class="action-btn view" onclick="openHistoryModal(<?= (int) $r['id'] ?>)"
+                        data-mobile-label="View"
                         title="View History">
                         <i class="fas fa-eye"></i>
                       </button>
 
                       <a class="action-btn edit" href="index.php?page=registrations/convert & reg_id=<?= (int) $r['id'] ?>"
+                        data-mobile-label="Edit"
                         title="Edit Registration">
                         <i class="fas fa-pen"></i>
                       </a>
 
                       <button type="button" class="action-btn payment" onclick="openPaymentModal(<?= (int) $r['id'] ?>)"
+                        data-mobile-label="Payment"
                         title="Add Payment">
                         <i class="fas fa-wallet"></i>
                       </button>
 
                       <button type="button" class="action-btn idcard" onclick="openIdCardModal(<?= (int) $r['id'] ?>)"
+                        data-mobile-label="ID Card"
                         title="Generate ID Card">
                         <i class="fas fa-id-card"></i>
                       </button>
@@ -1924,6 +2026,7 @@ function payStatusBadgeList($type)
                           <input type="hidden" name="csrf_token" value="<?= h(generateCSRF()) ?>">
                           <input type="hidden" name="reg_id" value="<?= (int) $r['id'] ?>">
                           <button type="submit" name="delete_registration" class="action-btn delete"
+                            data-mobile-label="Delete"
                             title="Delete Registration">
                             <i class="fas fa-trash-alt"></i>
                           </button>
@@ -1947,7 +2050,7 @@ function payStatusBadgeList($type)
       <div class="crm-modal-title" id="crmModalTitle">
         <i class="fas fa-layer-group"></i> Details
       </div>
-      <button type="button" class="crm-modal-close" onclick="closeCrmModal()">×</button>
+      <button type="button" class="crm-modal-close" onclick="closeCrmModal()">�</button>
     </div>
     <div class="crm-modal-body" id="crmModalBody">
       <div class="empty-note">Loading...</div>

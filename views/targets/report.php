@@ -679,6 +679,20 @@ color:#fff;
 
 .iso-report-icon-btn i{
 font-size:14px;
+font-weight:900;
+line-height:1;
+display:block;
+color:currentColor;
+}
+
+.iso-report-export-btn{
+background:linear-gradient(135deg,#22a06b 0%,#15803d 100%);
+border-color:rgba(21,128,61,.18);
+box-shadow:0 10px 22px rgba(21,128,61,.28);
+}
+
+.iso-report-export-btn:hover{
+box-shadow:0 14px 28px rgba(21,128,61,.34);
 }
 
 .iso-report-btn-primary {
@@ -1030,6 +1044,13 @@ color:#fff;
 border-color:rgba(232,62,140,.16);
 }
 
+.iso-report-action-btn i{
+font-weight:900;
+line-height:1;
+display:block;
+color:currentColor;
+}
+
 .iso-report-table td.user-cell,
 .iso-report-table td.role-cell,
 .iso-report-table td.progress-cell,
@@ -1368,6 +1389,98 @@ min-width: 100%;
 [data-tooltip]::before,
 [data-tooltip]::after {
 display: none;
+}
+
+.iso-report-icon-btn[data-mobile-label],
+.iso-report-action-btn[data-mobile-label]{
+width:auto !important;
+min-width:64px !important;
+height:auto !important;
+min-height:40px !important;
+padding:6px 8px !important;
+display:inline-flex !important;
+flex-direction:column !important;
+align-items:center !important;
+justify-content:center !important;
+text-align:center !important;
+gap:3px !important;
+border-radius:10px !important;
+}
+
+.iso-report-icon-btn[data-mobile-label]::before,
+.iso-report-action-btn[data-mobile-label]::before{
+content:none !important;
+display:none !important;
+}
+
+.iso-report-icon-btn[data-mobile-label]::after,
+.iso-report-action-btn[data-mobile-label]::after{
+content:attr(data-mobile-label) !important;
+position:static !important;
+display:block !important;
+width:100% !important;
+text-align:center !important;
+opacity:1 !important;
+visibility:visible !important;
+transform:none !important;
+background:none !important;
+border:0 !important;
+box-shadow:none !important;
+padding:0 !important;
+margin:0 !important;
+font-size:10px !important;
+line-height:1.1 !important;
+font-weight:700 !important;
+letter-spacing:.1px !important;
+color:currentColor !important;
+white-space:nowrap !important;
+}
+}
+
+@media (max-width: 1024px){
+.iso-report-icon-btn[data-mobile-label],
+.iso-report-action-btn[data-mobile-label]{
+width:auto !important;
+min-width:64px !important;
+height:auto !important;
+min-height:40px !important;
+padding:6px 8px !important;
+display:inline-flex !important;
+flex-direction:column !important;
+align-items:center !important;
+justify-content:center !important;
+text-align:center !important;
+gap:3px !important;
+border-radius:10px !important;
+}
+
+.iso-report-icon-btn[data-mobile-label]::before,
+.iso-report-action-btn[data-mobile-label]::before{
+content:none !important;
+display:none !important;
+}
+
+.iso-report-icon-btn[data-mobile-label]::after,
+.iso-report-action-btn[data-mobile-label]::after{
+content:attr(data-mobile-label) !important;
+position:static !important;
+display:block !important;
+width:100% !important;
+text-align:center !important;
+opacity:1 !important;
+visibility:visible !important;
+transform:none !important;
+background:none !important;
+border:0 !important;
+box-shadow:none !important;
+padding:0 !important;
+margin:0 !important;
+font-size:10px !important;
+line-height:1.1 !important;
+font-weight:700 !important;
+letter-spacing:.1px !important;
+color:currentColor !important;
+white-space:nowrap !important;
 }
 }
 
@@ -2140,6 +2253,33 @@ grid-template-columns:1fr;
 }
 }
 
+
+/* =====================================================
+GLOBAL TYPOGRAPHY STYLECSS SYNC
+font-family + font-size + font-weight only
+===================================================== */
+:where(body,button,input,select,textarea,label,span,p,h1,h2,h3,h4,h5,h6,a,div){
+  font-family:'Poppins',sans-serif !important;
+}
+:where(h1,.h1,.page-title,.crm-page-title,.dashboard-header h2){font-size:clamp(2rem, 2.5vw, 2.4rem) !important;font-weight:700 !important;}
+:where(h2,.h2,.section-title){font-size:clamp(1.6rem, 2vw, 2rem) !important;font-weight:600 !important;}
+:where(h3,.h3,.card-header,.table-title){font-size:clamp(1.3rem, 1.6vw, 1.5rem) !important;font-weight:600 !important;}
+:where(h4,.h4){font-size:1.2rem !important;font-weight:500 !important;}
+:where(h5,.h5){font-size:1rem !important;font-weight:500 !important;}
+:where(h6,.h6){font-size:0.9rem !important;font-weight:500 !important;}
+:where(body){font-size:1rem !important;}
+:where(p,.text-body,li,td,.text-muted,.help-text,.form-text,.small,small,.secondary-text){font-size:0.95rem !important;font-weight:400 !important;}
+:where(.small,small,.text-muted,.help-text,.form-text,.att-sub,.crm-note){font-size:0.85rem !important;font-weight:400 !important;}
+:where(label,.form-label){font-size:0.85rem !important;font-weight:500 !important;}
+:where(input,select,textarea,.form-control,.form-select){font-size:0.95rem !important;font-weight:400 !important;}
+:where(input::placeholder,textarea::placeholder){font-weight:400 !important;}
+:where(button,.btn,.dt-button,.crm-action-btn,.crm-icon-btn,.btn-icon-only,.action-btn,.targets-btn-icon,.iso-report-btn,.iso-report-action-btn){font-size:0.9rem !important;font-weight:600 !important;}
+:where(.btn[data-mobile-label],.btn-icon-only[data-mobile-label],.action-btn[data-mobile-label],.crm-icon-btn[data-mobile-label],.targets-btn-icon[data-mobile-label],.iso-report-icon-btn[data-mobile-label],.iso-report-action-btn[data-mobile-label])::after{font-size:0.75rem !important;font-weight:600 !important;}
+:where(.table th,.crm-table th,.dataTables_wrapper th,th){font-size:0.75rem !important;font-weight:600 !important;}
+:where(.table td,.dataTables_wrapper tbody td){font-size:0.9rem !important;}
+:where(.dataTables_wrapper .dataTables_info){font-size:0.85rem !important;font-weight:400 !important;}
+:where(.dataTables_wrapper .paginate_button){font-size:0.9rem !important;font-weight:600 !important;}
+:where(.badge,.status-badge,.crm-status-badge,.status-pill,.badge-status,[data-status],.tooltip,.ui-tooltip,.floating-ui-tooltip__bubble){font-weight:600 !important;}
 </style>
 <!-- Font Awesome for Icons -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -2164,21 +2304,23 @@ grid-template-columns:1fr;
 
 <a href="index.php?page=targets/setup"
    class="iso-report-btn iso-report-icon-btn"
+   data-mobile-label="Setup"
    data-tooltip="Setup Target">
    <i class="fas fa-bullseye"></i>
 </a>
 
 <a href="index.php?page=targets/list"
    class="iso-report-btn iso-report-icon-btn"
+   data-mobile-label="List"
    data-tooltip="Target List">
    <i class="fas fa-list"></i>
 </a>
 
 <a href="index.php?page=targets/export&year=<?= (int)$fYear ?>&month=<?= (int)$fMonth ?>&user_id=<?= (int)$fUserId ?>&role_id=<?= (int)$fRoleId ?>&search=<?= urlencode($search) ?>"
-   class="iso-report-btn iso-report-btn-outline"
+   class="iso-report-btn iso-report-icon-btn iso-report-export-btn"
+   data-mobile-label="Export"
    data-tooltip="Export summary for filtered users">
    <i class="fas fa-file-export"></i>
-   Export Summary
 </a>
 
 </div>
@@ -2328,6 +2470,7 @@ grid-template-columns:1fr;
                         <div>
 <button type="submit"
         class="iso-report-btn iso-report-icon-btn iso-report-filter-btn"
+        data-mobile-label="Apply"
         data-tooltip="Load Report">
     <i class="fas fa-filter"></i>
 </button>
@@ -2336,6 +2479,7 @@ grid-template-columns:1fr;
                         <div>
 <a href="index.php?page=targets/report"
    class="iso-report-btn iso-report-icon-btn iso-report-filter-btn"
+   data-mobile-label="Reset"
    data-tooltip="Reset Filters">
    <i class="fas fa-undo"></i>
 </a>
@@ -2385,7 +2529,7 @@ grid-template-columns:1fr;
 
             <div class="iso-report-card-body">
                 <div class="iso-report-table-wrap">
-                    <table class="iso-report-table" id="targetsReportTable">
+                    <table class="iso-report-table no-mobile-cards" id="targetsReportTable">
                         <colgroup>
                             <col class="rank-col">
                             <col class="user-col">
@@ -2507,6 +2651,7 @@ grid-template-columns:1fr;
                                                     type="button"
                                                     class="iso-report-action-btn js-view-report"
                                                     data-user-id="<?= (int)($row['user_id'] ?? 0) ?>"
+                                                    data-mobile-label="View"
                                                     data-tooltip="View detailed performance">
                                                     <i class="fas fa-eye"></i>
                                                 </button>
@@ -2657,7 +2802,7 @@ grid-template-columns:1fr;
                             Monthly History
                         </div>
                         <div class="iso-report-history-wrap">
-                            <table class="iso-report-mini-table">
+                            <table class="iso-report-mini-table no-mobile-cards">
                                 <thead>
                                     <tr>
                                         <th>Period</th>
@@ -2682,7 +2827,7 @@ grid-template-columns:1fr;
                             Current Month Collections
                         </div>
                         <div class="iso-report-collection-wrap">
-                            <table class="iso-report-mini-table iso-report-collection-table">
+                            <table class="iso-report-mini-table iso-report-collection-table no-mobile-cards">
                                 <thead>
                                     <tr>
                                         <th class="col-date">Date</th>

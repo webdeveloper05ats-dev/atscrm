@@ -23,7 +23,7 @@ $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         <input type="hidden" name="report_id" value="<?= $reportId ?>">
 
-        <table class="table table-bordered">
+        <table class="table table-bordered no-mobile-cards">
             <thead>
                 <tr>
                     <th>Time Slot</th>

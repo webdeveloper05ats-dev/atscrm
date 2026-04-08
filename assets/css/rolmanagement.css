@@ -490,7 +490,7 @@
   max-height: none !important;
   height: auto !important;
   overflow-y: visible !important;
-  overflow-x: auto !important;
+  overflow-x: visible !important;
   border: none !important;
 }
 
@@ -560,7 +560,7 @@
 .swal2-title { color: #be185d !important; }
 .swal2-styled.swal2-confirm { background: var(--primary) !important; }
 
-@media (max-width: 991px) {
+@media (max-width: 1024px) {
   .atsrm-role-ui-wrap { grid-template-columns: 1fr; }
 }
 
@@ -572,9 +572,366 @@
   .atsrm-role-wrapper { padding: 12px; }
   .atsrm-role-ui-form { grid-template-columns: 1fr; }
   .crm-card-header { flex-direction: column; align-items: stretch; }
-  .roles-table-controls { width: 100%; }
+  .roles-table-controls { width: 100%; padding-left: 0; }
   .roles-table-controls .dt-top,
   #rolesTableFooter .dt-bottom { flex-direction: column !important; align-items: stretch !important; }
-  .dataTables_filter input { width: 100% !important; min-width: 0; }
-  .crm-table { min-width: 680px; }
+  .roles-table-controls .dt-top { flex-wrap: wrap !important; gap: 10px !important; }
+  #rolesTableControls .dataTables_length,
+  #rolesTableControls .dataTables_filter { width: 100%; }
+  #rolesTableControls .dataTables_length label,
+  #rolesTableControls .dataTables_filter label {
+    width: 100%;
+    justify-content: flex-start !important;
+  }
+  #rolesTableControls .dataTables_filter input,
+  #rolesTableControls .dataTables_filter input[type="search"] {
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+  .crm-right .crm-card { overflow: hidden; }
+  .crm-table-wrapper { overflow-x: auto !important; }
+  #usersTable_wrapper .dataTables_scrollBody { overflow-x: visible !important; }
+  .crm-table { min-width: 620px; }
+  #rolesTableFooter .dataTables_paginate {
+    width: 100%;
+    display: flex !important;
+    justify-content: center !important;
+    margin: 0 auto;
+  }
+  #rolesTableFooter .dataTables_info {
+    width: 100%;
+    text-align: left;
+  }
+}
+
+@media (max-width: 576px) {
+  .atsrm-role-wrapper { padding: 10px; }
+  .crm-card-header { padding: 12px; }
+  .crm-table { min-width: 0 !important; }
+  #rolesTableFooter .dt-bottom {
+    align-items: center !important;
+  }
+  #rolesTableFooter .dataTables_info {
+    text-align: center;
+  }
+
+  /* Phone layout: convert role table to stacked cards for stable alignment */
+  .atsrm-role-wrapper .crm-table-wrapper {
+    overflow: visible !important;
+    border: none;
+    box-shadow: none;
+    margin-top: 8px;
+  }
+
+  /* DataTables clone header must be hidden in mobile card mode */
+  .atsrm-role-wrapper #usersTable_wrapper .dataTables_scrollHead {
+    display: none !important;
+  }
+  .atsrm-role-wrapper #usersTable_wrapper .dataTables_scrollBody {
+    overflow: visible !important;
+  }
+
+  .atsrm-role-wrapper #usersTable {
+    width: 100%;
+    min-width: 0 !important;
+    border-collapse: separate;
+    border-spacing: 0;
+    background: transparent;
+  }
+
+  .atsrm-role-wrapper #usersTable thead {
+    display: none;
+  }
+
+  .atsrm-role-wrapper #usersTable tbody {
+    display: block;
+  }
+
+  .atsrm-role-wrapper #usersTable tbody tr {
+    display: block;
+    background: #fff;
+    border: 1px solid #f0d2e1;
+    border-radius: 10px;
+    margin-bottom: 10px;
+    overflow: hidden;
+  }
+
+  .atsrm-role-wrapper #usersTable tbody td {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    width: 100%;
+    border-bottom: 1px solid #f3e4eb !important;
+    padding: 9px 10px !important;
+  }
+
+  .atsrm-role-wrapper #usersTable tbody td:last-child {
+    border-bottom: none !important;
+  }
+
+  .atsrm-role-wrapper #usersTable tbody td::before {
+    font-size: 11px;
+    font-weight: 700;
+    color: #7b6472;
+    text-transform: uppercase;
+    letter-spacing: .25px;
+    flex: 0 0 auto;
+  }
+
+  .atsrm-role-wrapper #usersTable tbody td:nth-child(1)::before { content: "#"; }
+  .atsrm-role-wrapper #usersTable tbody td:nth-child(2)::before { content: "Role"; }
+  .atsrm-role-wrapper #usersTable tbody td:nth-child(3)::before { content: "Dashboard"; }
+  .atsrm-role-wrapper #usersTable tbody td:nth-child(4)::before { content: "Branch"; }
+  .atsrm-role-wrapper #usersTable tbody td:nth-child(5)::before { content: "Status"; }
+  .atsrm-role-wrapper #usersTable tbody td:nth-child(6)::before { content: "Action"; }
+
+  .atsrm-role-wrapper #usersTable tbody td:nth-child(2),
+  .atsrm-role-wrapper #usersTable tbody td:nth-child(3) {
+    align-items: flex-start;
+  }
+
+  .atsrm-role-wrapper #usersTable code {
+    white-space: normal;
+    word-break: break-word;
+  }
+
+  .atsrm-role-wrapper .atsrm-role-ui-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+}
+
+/* Keep role page aligned with global mobile/tablet table behavior */
+@media (max-width: 1024px) {
+  .crm-card-header {
+    display: grid;
+    grid-template-columns: 1fr;
+    align-items: start;
+    gap: 10px;
+  }
+
+  .role-table-title {
+    align-self: start;
+  }
+
+  .roles-table-controls {
+    width: 100%;
+    padding-left: 0;
+  }
+
+  #rolesTableControls .dt-top {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    gap: 10px !important;
+    flex-wrap: nowrap !important;
+  }
+
+  #rolesTableControls .dataTables_length {
+    width: auto !important;
+    margin: 0 !important;
+    flex: 0 0 auto;
+  }
+
+  #rolesTableControls .dataTables_length label {
+    width: auto !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    white-space: nowrap !important;
+    gap: 8px !important;
+  }
+
+  #rolesTableControls .dataTables_filter {
+    width: auto !important;
+    margin: 0 !important;
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  #rolesTableControls .dataTables_filter label {
+    width: 100% !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    white-space: nowrap !important;
+  }
+
+  #rolesTableControls .dataTables_filter input[type="search"] {
+    min-width: 0 !important;
+    width: 100% !important;
+  }
+
+  #rolesTableControls .dt-buttons {
+    display: none !important;
+  }
+
+  #rolesTableFooter .dt-bottom {
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  #rolesTableFooter .dataTables_info {
+    width: 100% !important;
+    text-align: center !important;
+  }
+
+  #rolesTableFooter .dataTables_paginate {
+    width: 100% !important;
+    display: flex !important;
+    justify-content: center !important;
+    margin: 0 auto !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .crm-card-header {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  #rolesTableControls .dt-top {
+    display: grid !important;
+    grid-template-columns: 1fr;
+  }
+
+  #rolesTableControls .dataTables_length,
+  #rolesTableControls .dataTables_length label {
+    width: 100% !important;
+  }
+}
+
+
+/* =====================================================
+TYPOGRAPHY SYNC WITH assets/css/style.css
+===================================================== */
+:where(body,button,input,select,textarea,label,span,p,h1,h2,h3,h4,h5,h6,a,div){
+  font-family:'Poppins',sans-serif !important;
+}
+
+:where(h1,.h1,.page-title,.crm-page-title){
+  font-size:clamp(2rem, 2.5vw, 2.4rem) !important;
+}
+
+:where(h2,.h2,.section-title){
+  font-size:clamp(1.6rem, 2vw, 2rem) !important;
+}
+
+:where(h3,.h3,.card-header,.table-title){
+  font-size:clamp(1.3rem, 1.6vw, 1.5rem) !important;
+}
+
+:where(h4,.h4){
+  font-size:1.2rem !important;
+}
+
+:where(h5,.h5){
+  font-size:1rem !important;
+}
+
+:where(h6,.h6){
+  font-size:0.9rem !important;
+}
+
+:where(body){
+  font-size:1rem !important;
+}
+
+:where(p,.text-body,li){
+  font-size:0.95rem !important;
+}
+
+:where(small,.small,.text-muted,.help-text,.form-text,.att-sub,.crm-note){
+  font-size:0.85rem !important;
+}
+
+:where(label,.form-label,th,.table thead th,.dataTables_wrapper .dataTables_length label,.dataTables_wrapper .dataTables_filter label){
+  font-size:0.85rem !important;
+}
+
+:where(input,select,textarea,.form-control,.form-select,.dataTables_wrapper .dataTables_filter input,.dataTables_wrapper .dataTables_length select){
+  font-size:0.95rem !important;
+}
+
+:where(button,.btn,.dt-button,.crm-action-btn,.crm-icon-btn,.btn-icon-only,.action-btn,.targets-btn-icon,.iso-report-btn,.iso-report-action-btn){
+  font-size:0.9rem !important;
+}
+
+:where(.btn[data-mobile-label],.btn-icon-only[data-mobile-label],.action-btn[data-mobile-label],.crm-icon-btn[data-mobile-label],.targets-btn-icon[data-mobile-label],.iso-report-icon-btn[data-mobile-label],.iso-report-action-btn[data-mobile-label])::after{
+  font-size:0.75rem !important;
+}
+
+:where(.table th,.crm-table th,.dataTables_wrapper th){
+  font-size:0.75rem !important;
+}
+
+:where(td,.table td,.dataTables_wrapper tbody td){
+  font-size:0.9rem !important;
+}
+
+:where(.dataTables_wrapper .dataTables_info){
+  font-size:0.85rem !important;
+}
+
+:where(.dataTables_wrapper .paginate_button){
+  font-size:0.9rem !important;
+}
+
+/* =====================================================
+FONT-WEIGHT STANDARDIZATION
+===================================================== */
+:where(h1,.h1,.page-title,.crm-page-title,.dashboard-header h2){
+  font-weight:700 !important;
+}
+
+:where(h2,.h2){
+  font-weight:600 !important;
+}
+
+:where(h3,.h3,.card-header,.table-title){
+  font-weight:600 !important;
+}
+
+:where(h4,.h4){
+  font-weight:500 !important;
+}
+
+:where(h5,.h5){
+  font-weight:500 !important;
+}
+
+:where(h6,.h6){
+  font-weight:500 !important;
+}
+
+:where(th,.table thead th,.crm-table th,.dataTables_wrapper th){
+  font-weight:600 !important;
+}
+
+:where(p,li,td,.text-body,.text-muted,.help-text,.form-text,.small,small,.secondary-text){
+  font-weight:400 !important;
+}
+
+:where(label,.form-label){
+  font-weight:500 !important;
+}
+
+:where(input,select,textarea,.form-control,.form-select){
+  font-weight:400 !important;
+}
+
+:where(input::placeholder,textarea::placeholder){
+  font-weight:400 !important;
+}
+
+:where(button,.btn,.dt-button,.crm-action-btn,.crm-icon-btn,.btn-icon-only,.action-btn,.targets-btn-icon,.iso-report-btn,.iso-report-action-btn){
+  font-weight:600 !important;
+}
+
+:where(.badge,.status-badge,.crm-status-badge,.status-pill,.badge-status,[data-status],.tooltip,.ui-tooltip,.floating-ui-tooltip__bubble){
+  font-weight:600 !important;
 }

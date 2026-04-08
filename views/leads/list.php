@@ -253,16 +253,16 @@ $baseUrl="index.php?page=leads/list&q=$q&status=$status&assigned_to=$assigned";
             </div>
             
             <div class="filter-actions">
-                <button type="submit" class="btn-icon-only apply" title="Apply filters">
+                <button type="submit" class="btn-icon-only apply" title="Apply filters" data-mobile-label="Apply">
                     <i class="fas fa-filter"></i>
                 </button>
-                <a href="index.php?page=leads/list" class="btn-icon-only reset" title="Reset filters">
+                <a href="index.php?page=leads/list" class="btn-icon-only reset" title="Reset filters" data-mobile-label="Reset">
                     <i class="fas fa-undo-alt"></i>
                 </a>
-                <a href="index.php?page=leads/add" class="btn-icon-only add" title="Add new lead">
+                <a href="index.php?page=leads/add" class="btn-icon-only add" title="Add new lead" data-mobile-label="Add">
                     <i class="fas fa-user-plus"></i>
                 </a>
-                <a href="index.php?page=leads/import" class="btn-icon-only import" title="Excel import">
+                <a href="index.php?page=leads/import" class="btn-icon-only import" title="Excel import" data-mobile-label="Import">
                     <i class="fas fa-file-excel"></i>
                 </a>
             </div>
@@ -396,7 +396,7 @@ $baseUrl="index.php?page=leads/list&q=$q&status=$status&assigned_to=$assigned";
     }
     ?>
 
-    <span class="source-icon" title="<?=h($r['source'])?>">
+    <span class="source-icon" title="<?=h($r['source'])?>" data-mobile-label="<?=h($r['source'])?>">
         <i class="<?=$iconType?> <?=$sourceIcon?>"></i>
     </span>
 </td>
@@ -404,18 +404,18 @@ $baseUrl="index.php?page=leads/list&q=$q&status=$status&assigned_to=$assigned";
                     <td class="actions-col">
                         <div class="action-buttons">
                             <?php if($canEdit): ?>
-                            <a href="index.php?page=leads/add&id=<?=$r['id']?>" class="action-btn edit" title="Edit Lead">
+                            <a href="index.php?page=leads/add&id=<?=$r['id']?>" class="action-btn edit" title="Edit Lead" data-mobile-label="Edit">
                                 <i class="fas fa-pen"></i>
                             </a>
                             <?php endif; ?>
                             
                             <?php if($r['status']=='converted'): ?>
-                            <span class="action-btn done" title="Already Converted">
+                            <span class="action-btn done" title="Already Converted" data-mobile-label="Done">
                                 <i class="fas fa-check"></i>
                             </span>
                             <?php else: ?>
                                 <?php if($canConvert): ?>
-                                <a href="index.php?page=enquiries/add&lead_id=<?=$r['id']?>" class="action-btn convert" title="Convert to Enquiry">
+                                <a href="index.php?page=enquiries/add&lead_id=<?=$r['id']?>" class="action-btn convert" title="Convert to Enquiry" data-mobile-label="Convert">
                                     <i class="fas fa-exchange-alt"></i>
                                 </a>
                                 <?php endif; ?>
@@ -426,7 +426,7 @@ $baseUrl="index.php?page=leads/list&q=$q&status=$status&assigned_to=$assigned";
                                 <input type="hidden" name="csrf_token" value="<?=generateCSRF()?>">
                                 <input type="hidden" name="id" value="<?=$r['id']?>">
                                 <input type="hidden" name="delete_lead" value="1">
-                                <button type="submit" class="action-btn delete" title="Delete Lead">
+                                <button type="submit" class="action-btn delete" title="Delete Lead" data-mobile-label="Delete">
                                     <i class="fas fa-trash"></i>
                                 </button>
                             </form>

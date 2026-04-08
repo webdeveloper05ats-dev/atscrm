@@ -306,10 +306,10 @@ foreach ($rows as $r) {
         ?>
         <div class="modal-head">
             <div>
-                <div class="modal-title"><?= h($enq['enquiry_no'] ?? ('ENQ-'.$enq['id'])) ?> • <?= h($enq['name'] ?? '-') ?></div>
+                <div class="modal-title"><?= h($enq['enquiry_no'] ?? ('ENQ-'.$enq['id'])) ?> � <?= h($enq['name'] ?? '-') ?></div>
                 <div class="muted">
-                    Phone: <?= h($enq['phone'] ?? '-') ?> • 
-                    Email: <?= h($enq['email'] ?? '-') ?> • 
+                    Phone: <?= h($enq['phone'] ?? '-') ?> � 
+                    Email: <?= h($enq['email'] ?? '-') ?> � 
                     Course: <?= h($enq['course_interest'] ?? '-') ?>
                 </div>
             </div>
@@ -341,12 +341,12 @@ foreach ($rows as $r) {
                         <div class="history-top">
                             <div>
                                 <div class="strong">
-                                    <?= h($f['followup_date']) ?> <?= h($f['followup_time'] ?? '') ?> • <?= h($f['followup_type'] ?? '-') ?>
+                                    <?= h($f['followup_date']) ?> <?= h($f['followup_time'] ?? '') ?> � <?= h($f['followup_type'] ?? '-') ?>
                                 </div>
                                 <div class="muted">
                                     By: <?= h($f['created_by_name'] ?? '-') ?>
                                     <?php if (!empty($f['next_followup_date'])): ?>
-                                        • Next: <?= h($f['next_followup_date']) ?> <?= h($f['next_followup_time'] ?? '') ?>
+                                        � Next: <?= h($f['next_followup_date']) ?> <?= h($f['next_followup_time'] ?? '') ?>
                                     <?php endif; ?>
                                 </div>
                             </div>
@@ -383,7 +383,7 @@ foreach ($rows as $r) {
                             <div class="hr"></div>
                             <div class="muted">
                                 Verified By: <?= h($f['verified_by_name'] ?? '-') ?>
-                                <?= !empty($f['verified_at']) ? ' • ' . h($f['verified_at']) : '' ?>
+                                <?= !empty($f['verified_at']) ? ' � ' . h($f['verified_at']) : '' ?>
                             </div>
 
                             <form method="POST" class="verifyForm" style="margin-top:10px;">
@@ -456,7 +456,7 @@ foreach ($rows as $r) {
         <div class="modal-head">
             <div>
                 <div class="modal-title">Edit Follow-up</div>
-                <div class="muted"><?= h($f['enquiry_no'] ?? ('ENQ-'.$f['enquiry_id'])) ?> • <?= h($f['enquiry_name'] ?? '-') ?></div>
+                <div class="muted"><?= h($f['enquiry_no'] ?? ('ENQ-'.$f['enquiry_id'])) ?> � <?= h($f['enquiry_name'] ?? '-') ?></div>
             </div>
         </div>
 
@@ -749,7 +749,7 @@ if (isset($_POST['mark_done'])) {
         $fid     = (int)($_POST['followup_id'] ?? 0);
         $convert = (int)($_POST['convert'] ?? 0);
         $regType = trim($_POST['reg_type'] ?? '');
-        $regMode = trim($_POST['reg_mode'] ?? 'draft'); // 🔥 IMPORTANT
+        $regMode = trim($_POST['reg_mode'] ?? 'draft'); // ?? IMPORTANT
 
         if ($convert !== 1) {
             $error = "Please choose Course or Internship, then select Convert Now or Save Draft.";
@@ -801,14 +801,14 @@ if (isset($_POST['mark_done'])) {
 
                 $pdo->beginTransaction();
 
-                // ✅ MARK FOLLOWUP DONE
+                // ? MARK FOLLOWUP DONE
                 $pdo->prepare("
                     UPDATE enquiry_followups
                     SET status='done', done_at=NOW(), updated_at=NOW()
                     WHERE id=?
                 ")->execute([$fid]);
 
-                // ✅ UPDATE ENQUIRY STATUS
+                // ? UPDATE ENQUIRY STATUS
                 $pdo->prepare("
                     UPDATE enquiries
                     SET status='converted', updated_at=NOW()
@@ -833,7 +833,7 @@ if (isset($_POST['mark_done'])) {
 
                         $regId = $existing;
 
-                        // 🔥 UPDATE STATUS (VERY IMPORTANT)
+                        // ?? UPDATE STATUS (VERY IMPORTANT)
                         $stReg = $pdo->prepare("
                             SELECT registration_no
                             FROM registrations
@@ -886,7 +886,7 @@ if (isset($_POST['mark_done'])) {
 
                     } else {
 
-                        // 🔥 INSERT NEW REGISTRATION
+                        // ?? INSERT NEW REGISTRATION
                         $registrationNo = followupMakeRegistrationNo($pdo);
                         $ins = $pdo->prepare("
                             INSERT INTO registrations
@@ -916,7 +916,7 @@ if (isset($_POST['mark_done'])) {
                             $useBranch,
                             $regType,
                             $sourceType,
-                            $regMode, // 🔥 FIXED
+                            $regMode, // ?? FIXED
                             ($assignedTo > 0 ? $assignedTo : null),
                             $userId,
                             $joinedOn,
@@ -932,7 +932,7 @@ if (isset($_POST['mark_done'])) {
 
                 $pdo->commit();
 
-                // ✅ REDIRECT ONLY IF CONVERT NOW
+                // ? REDIRECT ONLY IF CONVERT NOW
                 if ($regMode === 'active') {
 
                     redirect("index.php?page=registrations/convert&enquiry_id={$enquiryId}&type={$regType}&reg_id={$regId}");
@@ -2513,6 +2513,33 @@ border-color:#e91e63;
   .add-fu-grid{ grid-template-columns:1fr; }
   .add-fu-triple{ grid-template-columns:1fr; }
 }
+
+/* =====================================================
+GLOBAL TYPOGRAPHY STYLECSS SYNC
+font-family + font-size + font-weight only
+===================================================== */
+:where(body,button,input,select,textarea,label,span,p,h1,h2,h3,h4,h5,h6,a,div){
+  font-family:'Poppins',sans-serif !important;
+}
+:where(h1,.h1,.page-title,.crm-page-title,.dashboard-header h2){font-size:clamp(2rem, 2.5vw, 2.4rem) !important;font-weight:700 !important;}
+:where(h2,.h2,.section-title){font-size:clamp(1.6rem, 2vw, 2rem) !important;font-weight:600 !important;}
+:where(h3,.h3,.card-header,.table-title){font-size:clamp(1.3rem, 1.6vw, 1.5rem) !important;font-weight:600 !important;}
+:where(h4,.h4){font-size:1.2rem !important;font-weight:500 !important;}
+:where(h5,.h5){font-size:1rem !important;font-weight:500 !important;}
+:where(h6,.h6){font-size:0.9rem !important;font-weight:500 !important;}
+:where(body){font-size:1rem !important;}
+:where(p,.text-body,li,td,.text-muted,.help-text,.form-text,.small,small,.secondary-text){font-size:0.95rem !important;font-weight:400 !important;}
+:where(.small,small,.text-muted,.help-text,.form-text,.att-sub,.crm-note){font-size:0.85rem !important;font-weight:400 !important;}
+:where(label,.form-label){font-size:0.85rem !important;font-weight:500 !important;}
+:where(input,select,textarea,.form-control,.form-select){font-size:0.95rem !important;font-weight:400 !important;}
+:where(input::placeholder,textarea::placeholder){font-weight:400 !important;}
+:where(button,.btn,.dt-button,.crm-action-btn,.crm-icon-btn,.btn-icon-only,.action-btn,.targets-btn-icon,.iso-report-btn,.iso-report-action-btn){font-size:0.9rem !important;font-weight:600 !important;}
+:where(.btn[data-mobile-label],.btn-icon-only[data-mobile-label],.action-btn[data-mobile-label],.crm-icon-btn[data-mobile-label],.targets-btn-icon[data-mobile-label],.iso-report-icon-btn[data-mobile-label],.iso-report-action-btn[data-mobile-label])::after{font-size:0.75rem !important;font-weight:600 !important;}
+:where(.table th,.crm-table th,.dataTables_wrapper th,th){font-size:0.75rem !important;font-weight:600 !important;}
+:where(.table td,.dataTables_wrapper tbody td){font-size:0.9rem !important;}
+:where(.dataTables_wrapper .dataTables_info){font-size:0.85rem !important;font-weight:400 !important;}
+:where(.dataTables_wrapper .paginate_button){font-size:0.9rem !important;font-weight:600 !important;}
+:where(.badge,.status-badge,.crm-status-badge,.status-pill,.badge-status,[data-status],.tooltip,.ui-tooltip,.floating-ui-tooltip__bubble){font-weight:600 !important;}
 </style>
 
 <div class="fu-page-head">
@@ -2814,7 +2841,7 @@ class="icon-btn btn-done">
                     <div class="sb-ico"><i class="fas fa-bell"></i></div>
                     <div>
                         <div class="sb-title">Scheduled Follow-up</div>
-                        <div class="sb-text" id="scheduleBannerText">—</div>
+                        <div class="sb-text" id="scheduleBannerText">�</div>
                     </div>
                 </div>
                 <button type="button" class="sb-close" onclick="hideScheduleBanner()">
@@ -2961,7 +2988,7 @@ Swal.fire({
 
     <?php if ($uiTab === 'add'): ?>
 
-    // After Follow-up Add → go to list
+    // After Follow-up Add ? go to list
     document.querySelector('.followupTab.active').click();
 
     <?php else: ?>
@@ -3168,7 +3195,7 @@ f.addEventListener('submit', function(e){
 
 e.preventDefault();
 
-// STEP 1 → SELECT TYPE
+// STEP 1 ? SELECT TYPE
 Swal.fire({
 title:'Select Student Type',
 html:`
@@ -3198,7 +3225,7 @@ if(!r.isConfirmed) return;
 
 const type=r.value;
 
-// STEP 2 → CONVERT OR DRAFT
+// STEP 2 ? CONVERT OR DRAFT
 Swal.fire({
 title:'Complete Follow-up',
 text:'Choose where this student should go next.',
@@ -3305,7 +3332,7 @@ return;
             showBanner(`Follow-up scheduled on ${toPretty(chosen)}${t ? ' at ' + t : ''}.`);
             return;
         }
-        showBanner(`⚠ This follow-up date is in the past (${toPretty(chosen)}). Please confirm.`);
+        showBanner(`? This follow-up date is in the past (${toPretty(chosen)}). Please confirm.`);
     }
 
     function fileIcon(name) {
