@@ -91,6 +91,14 @@ if ($page === 'leads/import' && isset($_GET['download']) && $_GET['download'] ==
     $rawPages[] = 'leads/import';
 }
 
+if ($page === 'dailyreports/export' && isset($_GET['action']) && in_array($_GET['action'], ['export','export_xlsx'], true)) {
+    $rawPages[] = 'dailyreports/export';
+}
+
+if ($page === 'dailyreports/view' && isset($_GET['action']) && $_GET['action'] === 'download') {
+    $rawPages[] = 'dailyreports/view';
+}
+
 if (in_array($page, $rawPages, true)) {
     require_once $viewPath;
     exit;

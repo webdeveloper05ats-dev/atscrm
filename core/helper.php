@@ -206,9 +206,16 @@ function crmTableExists(PDO $pdo, string $tableName): bool
     }
 
     try {
-        $st = $pdo->prepare("SHOW TABLES LIKE ?");
+        // SHOW TABLES LIKE with placeholders can be inconsistent across drivers.
+        // information_schema is more reliable for exact table existence checks.
+        $st = $pdo->prepare("
+            SELECT COUNT(*)
+            FROM information_schema.tables
+            WHERE table_schema = DATABASE()
+              AND table_name = ?
+        ");
         $st->execute([$tableName]);
-        $cache[$key] = (bool) $st->fetchColumn();
+        $cache[$key] = ((int) $st->fetchColumn() > 0);
     } catch (Exception $e) {
         $cache[$key] = false;
     }
