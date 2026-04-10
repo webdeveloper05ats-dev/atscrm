@@ -87,20 +87,22 @@ if (!$isSuperAdmin && $branchId > 0) { $where[] = "dm.branch_id = ?"; $params[] 
 
 $sql = "SELECT dm.id, dm.user_id, dm.report_date, dm.report_type, dm.status, dm.created_at,
                u.name AS user_name, COALESCE(r.role_name,'-') AS role_label, COALESCE(b.branch_name,'-') AS branch_name,
-               COALESCE(act.total_collection, hr_act.total_collection, 0) AS total_collection_day,
-               (
-                 SELECT COUNT(*)
-                 FROM enquiry_followups ef
-                 WHERE ef.followup_date = dm.report_date
-                   AND ef.created_by = dm.user_id
-                   AND ef.branch_id = dm.branch_id
-               ) AS total_followups_day
+               COALESCE(act.total_collection, hr_act.total_collection, mk_act.total_collection, 0) AS total_collection_day,
+               COALESCE(efagg.followup_count, 0) AS total_followups_day
         FROM dailyreport_master dm
         LEFT JOIN users u ON u.id = dm.user_id
         LEFT JOIN roles r ON r.id = dm.role_id
         LEFT JOIN branches b ON b.id = dm.branch_id
         LEFT JOIN dailyreport_frontoffice_activity act ON act.master_id = dm.id
         LEFT JOIN dailyreport_hr_activity hr_act ON hr_act.master_id = dm.id
+        LEFT JOIN dailyreport_marketing_activity mk_act ON mk_act.master_id = dm.id
+        LEFT JOIN (
+          SELECT followup_date, created_by, branch_id, COUNT(*) AS followup_count
+          FROM enquiry_followups
+          GROUP BY followup_date, created_by, branch_id
+        ) efagg ON efagg.followup_date = dm.report_date
+              AND efagg.created_by = dm.user_id
+              AND efagg.branch_id = dm.branch_id
         WHERE ".implode(' AND ', $where)."
         ORDER BY dm.report_date DESC, dm.id DESC";
 $st = $pdo->prepare($sql);
