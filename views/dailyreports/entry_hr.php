@@ -470,7 +470,8 @@ $editModeLabel='Read Only'; if($isToday) $editModeLabel=$isEditable?'Editable (T
   </div></div>
 </div>
 <script>
-document.addEventListener('DOMContentLoaded',function(){
+(function(){
+function init(){
   function drAjaxSwap(url){
     const main = document.querySelector('.main-content');
     if(!main){ window.location.href = url; return; }
@@ -919,5 +920,11 @@ document.addEventListener('DOMContentLoaded',function(){
   } else if (typeof Swal !== 'undefined' && drError) {
     Swal.fire({icon:'error',title:'Error',text:drError,confirmButtonColor:'#e91e63'});
   }
-});
+}
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init);
+} else {
+  init();
+}
+})();
 </script>

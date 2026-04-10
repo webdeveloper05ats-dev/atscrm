@@ -692,7 +692,8 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'details') {
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function(){
+(function(){
+function init(){
   function drAjaxSwap(url){
     const main = document.querySelector('.main-content');
     if(!main){ window.location.href = url; return; }
@@ -765,7 +766,7 @@ document.addEventListener('DOMContentLoaded', function(){
       window.location.href = link.href;
       return;
     }
-    const u = new URL(link.href, window.location.origin);
+    const u = new URL(link.href, window.location.href);
     u.searchParams.set('ajax', 'details');
     container.innerHTML = '<div class="drv-card"><div class="drv-body"><div class="drv-blank">Loading report...</div></div></div>';
     fetch(u.toString(), { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
@@ -779,5 +780,11 @@ document.addEventListener('DOMContentLoaded', function(){
         window.location.href = link.href;
       });
   });
-});
+}
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init);
+} else {
+  init();
+}
+})();
 </script>

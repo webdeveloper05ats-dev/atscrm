@@ -806,7 +806,8 @@ if ($doExport) {
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function(){
+(function(){
+function init(){
   function drAjaxSwap(url){
     const main = document.querySelector('.main-content');
     if(!main){ window.location.href = url; return; }
@@ -903,5 +904,11 @@ document.addEventListener('DOMContentLoaded', function(){
   <?php if ($exportValidationMessage !== ''): ?>
   showExportAlert(<?= json_encode($exportValidationMessage) ?>);
   <?php endif; ?>
-});
+}
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init);
+} else {
+  init();
+}
+})();
 </script>

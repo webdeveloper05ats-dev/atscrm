@@ -800,7 +800,8 @@ function mkj($v){ return h(json_encode($v, JSON_UNESCAPED_UNICODE)); }
   </div></div>
 </div>
 <script>
-document.addEventListener('DOMContentLoaded',function(){
+(function(){
+function init(){
   function drAjaxSwap(url){
     const main = document.querySelector('.main-content');
     if(!main){ window.location.href = url; return; }
@@ -1478,5 +1479,11 @@ document.addEventListener('DOMContentLoaded',function(){
   const s=<?= json_encode($drSuccessMessage) ?>, er=<?= json_encode($drErrorMessage) ?>;
   if(typeof Swal!=='undefined' && s) Swal.fire({icon:'success',title:'Success',text:s,confirmButtonColor:'#e91e63'});
   else if(typeof Swal!=='undefined' && er) Swal.fire({icon:'error',title:'Error',text:er,confirmButtonColor:'#e91e63'});
-});
+}
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init);
+} else {
+  init();
+}
+})();
 </script>
