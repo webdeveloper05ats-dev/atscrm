@@ -826,7 +826,8 @@ function init(){
       })
       .catch(function(){ window.location.href = url; });
   }
-  document.addEventListener('change', function(e){
+  const root = document.querySelector('.dr-wrap') || document;
+  root.addEventListener('change', function(e){
     if(!e.target.classList.contains('js-dr-report-date')) return;
     const dt = (e.target.value || '').trim();
     if(!dt) return;
@@ -858,7 +859,7 @@ function init(){
     tr.innerHTML='<td style="border:1px solid #f1d6e3;padding:8px;"><input type="time" class="mk-hour-time-from" value="'+slot.from+'"></td><td style="border:1px solid #f1d6e3;padding:8px;"><input type="time" class="mk-hour-time-to" value="'+slot.to+'"></td><td style="border:1px solid #f1d6e3;padding:8px;"><input class="mk-hour-particulars"></td><td style="border:1px solid #f1d6e3;padding:8px;"><textarea class="mk-hour-activities"></textarea></td><td style="border:1px solid #f1d6e3;padding:8px;"><button type="button" class="dr-btn dr-btn-muted js-del-hour-row" style="height:32px;">Delete</button></td>';
     body.appendChild(tr);
   });
-  document.addEventListener('click',function(e){
+  root.addEventListener('click',function(e){
     if(!e.target.classList.contains('js-del-hour-row')) return;
     const tr=e.target.closest('tr'); if(tr) tr.remove();
   });
@@ -875,7 +876,7 @@ function init(){
     const tr=createCollegeRow();
     body.appendChild(tr); renumberCollegeRows();
   });
-  document.addEventListener('click',function(e){
+  root.addEventListener('click',function(e){
     if(!e.target.classList.contains('js-del-col-row')) return;
     const tr=e.target.closest('tr'); if(tr) tr.remove(); renumberCollegeRows();
   });
@@ -892,11 +893,11 @@ function init(){
     const body=document.getElementById('mkProspectBody'); if(!body) return;
     body.appendChild(createProspectRow()); renumberProspectRows();
   });
-  document.addEventListener('click',function(e){
+  root.addEventListener('click',function(e){
     if(!e.target.classList.contains('js-del-pro-row')) return;
     const tr=e.target.closest('tr'); if(tr) tr.remove(); renumberProspectRows();
   });
-  document.addEventListener('click',function(e){
+  root.addEventListener('click',function(e){
     if(e.target.classList.contains('js-add-followup')){
       const wrap=e.target.closest('td')?.querySelector('.mk-pro-followups');
       if(!wrap) return;
@@ -933,7 +934,7 @@ function init(){
     const body=document.getElementById('mkAmountBody'); if(!body) return;
     body.appendChild(createAmountRow()); renumberAmountRows();
   });
-  document.addEventListener('click',function(e){
+  root.addEventListener('click',function(e){
     if(!e.target.classList.contains('js-del-amt-row')) return;
     const tr=e.target.closest('tr'); if(tr) tr.remove(); renumberAmountRows();
   });
@@ -947,7 +948,7 @@ function init(){
     const body=document.getElementById('mkProgramBody'); if(!body) return;
     body.appendChild(createProgramRow());
   });
-  document.addEventListener('click',function(e){
+  root.addEventListener('click',function(e){
     if(!e.target.classList.contains('js-del-prg-row')) return;
     const tr=e.target.closest('tr'); if(tr) tr.remove();
   });
@@ -959,7 +960,7 @@ function init(){
     const el=tr.querySelector('.mk-prg-pending');
     if(el) el.value=p.toFixed(2);
   }
-  document.addEventListener('input', function(e){
+  root.addEventListener('input', function(e){
     if(!(e.target.classList.contains('mk-prg-amount') || e.target.classList.contains('mk-prg-collection'))) return;
     updateProgramPendingForRow(e.target.closest('tr'));
   });
@@ -973,7 +974,7 @@ function init(){
     const body=document.getElementById('mkArtsCollegeBody'); if(!body) return;
     body.appendChild(createArtsCollegeRow());
   });
-  document.addEventListener('click',function(e){
+  root.addEventListener('click',function(e){
     if(!e.target.classList.contains('js-del-ac-row')) return;
     const tr=e.target.closest('tr'); if(tr) tr.remove();
   });
@@ -986,7 +987,7 @@ function init(){
     const body=document.getElementById('mkArtsPcBody'); if(!body) return;
     body.appendChild(createArtsPcRow());
   });
-  document.addEventListener('click',function(e){
+  root.addEventListener('click',function(e){
     if(!e.target.classList.contains('js-del-apc-row')) return;
     const tr=e.target.closest('tr'); if(tr) tr.remove();
   });
@@ -999,7 +1000,7 @@ function init(){
     const body=document.getElementById('mkEnggCollegeBody'); if(!body) return;
     body.appendChild(createEnggCollegeRow());
   });
-  document.addEventListener('click',function(e){
+  root.addEventListener('click',function(e){
     if(!e.target.classList.contains('js-del-ec-row')) return;
     const tr=e.target.closest('tr'); if(tr) tr.remove();
   });
@@ -1012,7 +1013,7 @@ function init(){
     const body=document.getElementById('mkEnggPcBody'); if(!body) return;
     body.appendChild(createEnggPcRow());
   });
-  document.addEventListener('click',function(e){
+  root.addEventListener('click',function(e){
     if(!e.target.classList.contains('js-del-epc-row')) return;
     const tr=e.target.closest('tr'); if(tr) tr.remove();
   });
@@ -1025,7 +1026,7 @@ function init(){
     const body=document.getElementById('mkPolytechCollegeBody'); if(!body) return;
     body.appendChild(createPolytechCollegeRow());
   });
-  document.addEventListener('click',function(e){
+  root.addEventListener('click',function(e){
     if(!e.target.classList.contains('js-del-pc-row')) return;
     const tr=e.target.closest('tr'); if(tr) tr.remove();
   });

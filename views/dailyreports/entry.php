@@ -419,7 +419,8 @@ if($_SERVER['REQUEST_METHOD']==='POST' && isset($_POST['save_all_report']) && em
       })
       .catch(function(){ window.location.href = url; });
   }
-  document.addEventListener('change', function(e){
+  const root = document.querySelector('.dr-wrap') || document;
+  root.addEventListener('change', function(e){
     if(!e.target.classList.contains('js-dr-report-date')) return;
     const dt = (e.target.value || '').trim();
     if(!dt) return;
@@ -451,7 +452,7 @@ if($_SERVER['REQUEST_METHOD']==='POST' && isset($_POST['save_all_report']) && em
     renumberSerialColumn('collegeBody', 'college_serial_no[]');
     renumberSerialColumn('dbBody', 'db_serial_no[]');
   }
-  document.addEventListener('click',e=>{
+  root.addEventListener('click',e=>{
     const b=e.target.closest('.js-del-row');
     if(b){
       const tr=b.closest('tr');

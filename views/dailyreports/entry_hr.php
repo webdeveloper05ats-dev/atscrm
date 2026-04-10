@@ -496,7 +496,8 @@ function init(){
       })
       .catch(function(){ window.location.href = url; });
   }
-  document.addEventListener('change', function(e){
+  const root = document.querySelector('.dr-wrap') || document;
+  root.addEventListener('change', function(e){
     if(!e.target.classList.contains('js-dr-report-date')) return;
     const dt = (e.target.value || '').trim();
     if(!dt) return;
@@ -551,7 +552,7 @@ function init(){
     tr.innerHTML = '<td><input type=\"time\" class=\"hr-hour-time-from\" value=\"'+slot.from+'\"></td><td><input type=\"time\" class=\"hr-hour-time-to\" value=\"'+slot.to+'\"></td><td><input class=\"hr-hour-particulars\"></td><td><textarea class=\"hr-hour-activities\"></textarea></td><td><button type=\"button\" class=\"dr-mini-btn del js-del-hour-row\">Delete</button></td>';
     body.appendChild(tr);
   });
-  document.addEventListener('click', function(e){
+  root.addEventListener('click', function(e){
     if (!e.target.classList.contains('js-del-hour-row')) return;
     const tr = e.target.closest('tr');
     if (tr) tr.remove();
@@ -764,7 +765,7 @@ function init(){
     fillRow:function(tr,r){ tr.querySelector('.hr-cd-contact_name').value=r.contact_name||''; tr.querySelector('.hr-cd-contact_no').value=r.contact_no||''; tr.querySelector('.hr-cd-college_name').value=r.college_name||''; tr.querySelector('.hr-cd-topic').value=r.topic||''; tr.querySelector('.hr-cd-days_text').value=r.days_text||''; tr.querySelector('.hr-cd-resource_person').value=r.resource_person||''; tr.querySelector('.hr-cd-requirement').value=r.requirement||''; tr.querySelector('.hr-cd-status_text').value=r.status_text||''; }
   });
   renumberInternRows();
-  document.addEventListener('click', function(e){
+  root.addEventListener('click', function(e){
     if (e.target.classList.contains('js-del-intern-row')) {
       const tr = e.target.closest('tr');
       if (tr) tr.remove();

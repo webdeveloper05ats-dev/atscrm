@@ -694,6 +694,7 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'details') {
 <script>
 (function(){
 function init(){
+  const root = document.querySelector('.drv-wrap') || document;
   function drAjaxSwap(url){
     const main = document.querySelector('.main-content');
     if(!main){ window.location.href = url; return; }
@@ -757,7 +758,7 @@ function init(){
     }
   }
 
-  document.addEventListener('click', function(e){
+  root.addEventListener('click', function(e){
     const link = e.target.closest('.js-view-report');
     if (!link) return;
     e.preventDefault();
