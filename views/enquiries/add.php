@@ -112,7 +112,10 @@ $leadRow = null;
 if ($leadId > 0) {
     try {
         $leadSql = "
-            SELECT id, branch_id, name, phone, email, source, course_interest, assigned_to, status
+            SELECT
+                id, branch_id, name, phone, email, source, course_interest,
+                company_college_name, department, lead_year, remarks,
+                assigned_to, status
             FROM leads
             WHERE id = ?
             LIMIT 1
@@ -431,6 +434,11 @@ $prefill = [
     'email' => '',
     'course_interest' => '',
     'handled_by' => 0,
+    'qualification' => '',
+    'college' => '',
+    'year_of_passout' => '',
+    'profession' => '',
+    'remarks' => '',
     'know_about_other' => '',
 ];
 
@@ -440,7 +448,16 @@ if ($leadRow) {
     $prefill['email'] = (string)($leadRow['email'] ?? '');
     $prefill['course_interest'] = (string)($leadRow['course_interest'] ?? '');
     $prefill['handled_by'] = (int)($leadRow['assigned_to'] ?? 0);
+    $prefill['qualification'] = (string)($leadRow['department'] ?? '');
+    $prefill['college'] = (string)($leadRow['company_college_name'] ?? '');
+    $prefill['profession'] = (string)($leadRow['department'] ?? '');
+    $prefill['remarks'] = (string)($leadRow['remarks'] ?? '');
     $prefill['know_about_other'] = (string)($leadRow['source'] ?? '');
+
+    $leadYearRaw = trim((string)($leadRow['lead_year'] ?? ''));
+    if (preg_match('/^\d{4}$/', $leadYearRaw)) {
+        $prefill['year_of_passout'] = $leadYearRaw;
+    }
 }
 
 $techSelected = isset($_POST['technologies']) && is_array($_POST['technologies']) ? $_POST['technologies'] : [];
@@ -449,7 +466,16 @@ $kaSelected   = isset($_POST['know_about']) && is_array($_POST['know_about']) ? 
 
 // If opened from lead and no POST yet, preselect "Other" for source text
 if ($leadRow && empty($_POST)) {
-    $kaSelected = ['Other'];
+    $leadSourceRaw = strtolower(trim((string)($leadRow['source'] ?? '')));
+    $mappedSource = '';
+    if ($leadSourceRaw === 'website') $mappedSource = 'Website';
+    elseif ($leadSourceRaw === 'instagram') $mappedSource = 'Instagram';
+    elseif ($leadSourceRaw === 'facebook') $mappedSource = 'Facebook';
+    elseif ($leadSourceRaw === 'walk-in' || $leadSourceRaw === 'walk in') $mappedSource = 'Walk-in';
+    elseif ($leadSourceRaw === 'reference' || $leadSourceRaw === 'friends' || $leadSourceRaw === 'friend') $mappedSource = 'Friends/Reference';
+    elseif ($leadSourceRaw === 'google' || $leadSourceRaw === 'google ads' || $leadSourceRaw === 'google search') $mappedSource = 'Google Search';
+
+    $kaSelected = ($mappedSource !== '') ? [$mappedSource] : ['Other'];
 }
 ?>
 <link rel="stylesheet" href="<?= BASE_URL ?>assets/css/lead.css">
@@ -1058,7 +1084,7 @@ if (window.Swal && Swal.fire) {
 
         <div class="form-group">
           <label>Profession</label>
-          <input type="text" name="profession" value="<?= htmlspecialchars($_POST['profession'] ?? '') ?>" placeholder="Enter student profession, e.g. Student">
+          <input type="text" name="profession" value="<?= htmlspecialchars($_POST['profession'] ?? $prefill['profession']) ?>" placeholder="Enter student profession, e.g. Student">
         </div>
 
         <div class="form-group">
@@ -1087,12 +1113,12 @@ if (window.Swal && Swal.fire) {
       <div class="form-grid">
         <div class="form-group">
           <label>Qualification</label>
-          <input type="text" name="qualification" value="<?= htmlspecialchars($_POST['qualification'] ?? '') ?>" placeholder="Enter qualification, e.g. BCA">
+          <input type="text" name="qualification" value="<?= htmlspecialchars($_POST['qualification'] ?? $prefill['qualification']) ?>" placeholder="Enter qualification, e.g. BCA">
         </div>
 
         <div class="form-group">
           <label>Year of Passout</label>
-          <input type="number" name="year_of_passout" min="1990" max="2100" value="<?= htmlspecialchars($_POST['year_of_passout'] ?? '') ?>" placeholder="Enter passout year, e.g. 2025">
+          <input type="number" name="year_of_passout" min="1990" max="2100" value="<?= htmlspecialchars($_POST['year_of_passout'] ?? $prefill['year_of_passout']) ?>" placeholder="Enter passout year, e.g. 2025">
         </div>
 
         <div class="form-group">
@@ -1102,7 +1128,7 @@ if (window.Swal && Swal.fire) {
 
         <div class="form-group">
           <label>College</label>
-          <input type="text" name="college" value="<?= htmlspecialchars($_POST['college'] ?? '') ?>" placeholder="Enter college or institution name">
+          <input type="text" name="college" value="<?= htmlspecialchars($_POST['college'] ?? $prefill['college']) ?>" placeholder="Enter college or institution name">
         </div>
 
         <div class="form-group">
@@ -1273,7 +1299,7 @@ if (window.Swal && Swal.fire) {
 
         <div class="form-group full">
           <label>Remarks</label>
-          <textarea name="remarks" rows="4" placeholder="Optional note about this enquiry"><?= htmlspecialchars($_POST['remarks'] ?? '') ?></textarea>
+          <textarea name="remarks" rows="4" placeholder="Optional note about this enquiry"><?= htmlspecialchars($_POST['remarks'] ?? $prefill['remarks']) ?></textarea>
         </div>
 
       </div>

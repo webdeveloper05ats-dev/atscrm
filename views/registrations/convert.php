@@ -652,7 +652,7 @@ $source_type       = $registration['source_type'] ?? 'direct';
 $joined_on         = $registration['joined_on'] ?? date('Y-m-d');
 $program_name      = $registration['program_name'] ?? ($enquiry['course_interest'] ?? '');
 $batch_name        = $registration['batch_name'] ?? '';
-$notes             = $registration['notes'] ?? '';
+$notes             = $registration['notes'] ?? ($enquiry['remarks'] ?? '');
 
 $student_name      = $profile['student_name']
                     ?? $registration['enquiry_snapshot_name']

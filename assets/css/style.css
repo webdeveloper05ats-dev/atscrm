@@ -3555,3 +3555,101 @@ button i:only-child {
         color: currentColor !important;
     }
 }
+
+/* ==========================================
+GLOBAL DESKTOP ICON THEME (PROJECT-WIDE)
+========================================== */
+@media (min-width: 992px) {
+    .topbar a.btn.btn-primary[data-modern-tooltip],
+    .btn-icon-only[class][class],
+    .crm-icon-btn[class][class],
+    .sa-icon-btn[class][class],
+    .btn-icon[class][class],
+    .btn-add-payment[class][class],
+    .stu-save-btn[class][class],
+    .intern-action-btn[class][class],
+    .att-icon-btn[class][class],
+    .source-icon[class][class],
+    .targets-btn-icon[class][class],
+    .iso-report-action-btn[class][class],
+    .iso-report-icon-btn[class][class],
+    .crm-action-btn.crm-action-icon[class],
+    .action-btn[class][class]:has(> i:only-child),
+    .crm-action-btn[class][class]:has(> i:only-child) {
+        width: 46px !important;
+        min-width: 46px !important;
+        height: 46px !important;
+        min-height: 46px !important;
+        padding: 0 !important;
+        border-radius: 12px !important;
+        border: 1px solid #e9c7d6 !important;
+        background: #f8e8ef !important;
+        color: #e91e63 !important;
+        box-shadow: 0 4px 10px rgba(233, 30, 99, 0.08) !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        line-height: 1 !important;
+        text-decoration: none !important;
+        transition: background-color .18s ease, border-color .18s ease, color .18s ease, transform .18s ease, box-shadow .18s ease !important;
+    }
+
+    .topbar a.btn.btn-primary[data-modern-tooltip]:hover,
+    .topbar a.btn.btn-primary[data-modern-tooltip]:focus-visible,
+    .btn-icon-only[class][class]:hover,
+    .btn-icon-only[class][class]:focus-visible,
+    .crm-icon-btn[class][class]:hover,
+    .crm-icon-btn[class][class]:focus-visible,
+    .sa-icon-btn[class][class]:hover,
+    .sa-icon-btn[class][class]:focus-visible,
+    .btn-icon[class][class]:hover,
+    .btn-icon[class][class]:focus-visible,
+    .btn-add-payment[class][class]:hover,
+    .btn-add-payment[class][class]:focus-visible,
+    .stu-save-btn[class][class]:hover,
+    .stu-save-btn[class][class]:focus-visible,
+    .intern-action-btn[class][class]:hover,
+    .intern-action-btn[class][class]:focus-visible,
+    .att-icon-btn[class][class]:hover,
+    .att-icon-btn[class][class]:focus-visible,
+    .source-icon[class][class]:hover,
+    .source-icon[class][class]:focus-visible,
+    .targets-btn-icon[class][class]:hover,
+    .targets-btn-icon[class][class]:focus-visible,
+    .iso-report-action-btn[class][class]:hover,
+    .iso-report-action-btn[class][class]:focus-visible,
+    .iso-report-icon-btn[class][class]:hover,
+    .iso-report-icon-btn[class][class]:focus-visible,
+    .crm-action-btn.crm-action-icon[class]:hover,
+    .crm-action-btn.crm-action-icon[class]:focus-visible,
+    .action-btn[class][class]:has(> i:only-child):hover,
+    .action-btn[class][class]:has(> i:only-child):focus-visible,
+    .crm-action-btn[class][class]:has(> i:only-child):hover,
+    .crm-action-btn[class][class]:has(> i:only-child):focus-visible {
+        background: #f4dfe8 !important;
+        border-color: #e2b9cb !important;
+        color: #d81b60 !important;
+        transform: translateY(-1px) !important;
+        box-shadow: 0 8px 16px rgba(233, 30, 99, 0.14) !important;
+        outline: none !important;
+    }
+
+    .btn-icon-only[class][class] > i,
+    .crm-icon-btn[class][class] > i,
+    .sa-icon-btn[class][class] > i,
+    .btn-icon[class][class] > i,
+    .btn-add-payment[class][class] > i,
+    .stu-save-btn[class][class] > i,
+    .intern-action-btn[class][class] > i,
+    .att-icon-btn[class][class] > i,
+    .source-icon[class][class] > i,
+    .targets-btn-icon[class][class] > i,
+    .iso-report-action-btn[class][class] > i,
+    .iso-report-icon-btn[class][class] > i,
+    .crm-action-btn.crm-action-icon[class] > i,
+    .action-btn[class][class]:has(> i:only-child) > i,
+    .crm-action-btn[class][class]:has(> i:only-child) > i {
+        font-size: 16px !important;
+        line-height: 1 !important;
+    }
+}

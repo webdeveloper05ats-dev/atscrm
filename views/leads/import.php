@@ -43,6 +43,28 @@ if (!function_exists('sheetPick')) {
         return null;
     }
 }
+if (!function_exists('normalizePhone10')) {
+    function normalizePhone10($v): ?string
+    {
+        $digits = preg_replace('/\D+/', '', (string) $v);
+        if ($digits === '') return null;
+        return $digits;
+    }
+}
+if (!function_exists('isValidPhone10')) {
+    function isValidPhone10(?string $phone): bool
+    {
+        if ($phone === null) return false;
+        return (bool) preg_match('/^\d{10}$/', $phone);
+    }
+}
+if (!function_exists('isValidEmailFormat')) {
+    function isValidEmailFormat(?string $email): bool
+    {
+        if ($email === null) return false;
+        return (bool) filter_var($email, FILTER_VALIDATE_EMAIL);
+    }
+}
 
 $success = '';
 $error = '';
@@ -189,7 +211,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['upload_leads'])) {
                         $header = $rowsData[0];
                         $map = [];
                         foreach ($header as $i => $col) {
-                            $map[strtolower(trim((string) $col))] = $i;
+                            $raw = strtolower(trim((string) $col));
+                            if ($raw === '') continue;
+                            $map[$raw] = $i;
+
+                            // Also support headers like "Company / College Name" -> "company_college_name"
+                            $normalized = preg_replace('/[^a-z0-9]+/', '_', $raw);
+                            $normalized = trim((string) $normalized, '_');
+                            if ($normalized !== '') {
+                                $map[$normalized] = $i;
+                            }
                         }
 
                         for ($ri = 1; $ri < count($rowsData); $ri++) {
@@ -209,18 +240,53 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['upload_leads'])) {
                             $totalRows++;
 
                             $name = toNull(sheetPick($row, $map, ['name', 'lead_name', 'student_name']));
-                            $phone = toNull(sheetPick($row, $map, ['phone', 'mobile', 'contact']));
+                            $phone = normalizePhone10(sheetPick($row, $map, ['phone', 'mobile', 'contact', 'phone_number', 'mobile_number']));
                             $email = toNull(sheetPick($row, $map, ['email', 'mail']));
-                            $source = toNull(sheetPick($row, $map, ['source', 'lead_source']));
-                            $course = toNull(sheetPick($row, $map, ['course_interest', 'interest', 'course']));
-                            $companyCollege = toNull(sheetPick($row, $map, ['company_college_name', 'company', 'college', 'college_name']));
+                            $source = toNull(sheetPick($row, $map, ['source', 'lead_source', 'leadsource']));
+                            $course = toNull(sheetPick($row, $map, ['course_interest', 'interest', 'course', 'course_name']));
+                            $companyCollege = toNull(sheetPick($row, $map, ['company_college_name', 'company', 'college', 'college_name', 'company_college']));
                             $department = toNull(sheetPick($row, $map, ['department', 'dept']));
-                            $leadYear = toNull(sheetPick($row, $map, ['lead_year', 'year']));
+                            $leadYear = toNull(sheetPick($row, $map, ['lead_year', 'year', 'passing_year', 'passout_year']));
                             $remarks = toNull(sheetPick($row, $map, ['remarks', 'note', 'notes']));
 
                             if ($name === null) {
                                 $failedRows++;
                                 $rowErrors[] = "Row " . ($ri + 1) . ": Name is required.";
+                                continue;
+                            }
+                            if (!isValidPhone10($phone)) {
+                                $failedRows++;
+                                $rowErrors[] = "Row " . ($ri + 1) . ": Phone must be exactly 10 digits.";
+                                continue;
+                            }
+                            if (!isValidEmailFormat($email)) {
+                                $failedRows++;
+                                $rowErrors[] = "Row " . ($ri + 1) . ": Valid email is required.";
+                                continue;
+                            }
+                            if ($source === null) {
+                                $failedRows++;
+                                $rowErrors[] = "Row " . ($ri + 1) . ": Source is required.";
+                                continue;
+                            }
+                            if ($course === null) {
+                                $failedRows++;
+                                $rowErrors[] = "Row " . ($ri + 1) . ": Course interest is required.";
+                                continue;
+                            }
+                            if ($companyCollege === null) {
+                                $failedRows++;
+                                $rowErrors[] = "Row " . ($ri + 1) . ": Company/College name is required.";
+                                continue;
+                            }
+                            if ($department === null) {
+                                $failedRows++;
+                                $rowErrors[] = "Row " . ($ri + 1) . ": Department is required.";
+                                continue;
+                            }
+                            if ($leadYear === null) {
+                                $failedRows++;
+                                $rowErrors[] = "Row " . ($ri + 1) . ": Lead year is required.";
                                 continue;
                             }
 
