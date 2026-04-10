@@ -807,6 +807,31 @@ if ($doExport) {
 
 <script>
 document.addEventListener('DOMContentLoaded', function(){
+  function drAjaxSwap(url){
+    const main = document.querySelector('.main-content');
+    if(!main){ window.location.href = url; return; }
+    const u = new URL(url, window.location.href);
+    u.searchParams.set('ajax', '1');
+    main.innerHTML = '<div class="dre-card"><div class="dre-body"><div class="dre-note">Loading...</div></div></div>';
+    fetch(u.toString(), { headers: { 'X-Requested-With':'XMLHttpRequest' } })
+      .then(function(r){ return r.text(); })
+      .then(function(html){
+        const tmp = document.createElement('div');
+        tmp.innerHTML = html;
+        main.innerHTML = tmp.innerHTML;
+        const scripts = Array.from(main.querySelectorAll('script'));
+        scripts.forEach(function(old){
+          const s = document.createElement('script');
+          if (old.src) { s.src = old.src; s.async = false; } else { s.textContent = old.textContent; }
+          document.body.appendChild(s);
+          old.remove();
+          setTimeout(function(){ try { s.remove(); } catch(e) {} }, 0);
+        });
+        window.history.replaceState({}, '', url);
+      })
+      .catch(function(){ window.location.href = url; });
+  }
+
   const isLoaded = <?= $isLoaded ? 'true' : 'false' ?>;
   const hasRows = <?= !empty($rows) ? 'true' : 'false' ?>;
   const showExportAlert = function(message){
@@ -832,6 +857,17 @@ document.addEventListener('DOMContentLoaded', function(){
   if (periodEl) {
     periodEl.addEventListener('change', applyPeriodUI);
     applyPeriodUI();
+  }
+
+  const filterForm = document.querySelector('.dre-card form[action="index.php"]');
+  if (filterForm) {
+    filterForm.addEventListener('submit', function(e){
+      e.preventDefault();
+      const fd = new FormData(filterForm);
+      const p = new URLSearchParams();
+      fd.forEach(function(v,k){ p.append(k, v); });
+      drAjaxSwap('index.php?' + p.toString());
+    });
   }
 
   if (typeof crmDataTable === 'function' && document.getElementById('dailyExportTable')) {

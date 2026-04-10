@@ -9,6 +9,10 @@ if ($__drRoleName === 'hr' || ($__drRoleName === 'super admin' && $__drRequested
   require __DIR__ . '/entry_hr.php';
   return;
 }
+if ($__drRoleName === 'marketing' || ($__drRoleName === 'super admin' && $__drRequestedType === 'marketing')) {
+  require __DIR__ . '/entry_marketing.php';
+  return;
+}
 
 function drInt($v){ return max(0, (int)$v); }
 function drDec($v){ return number_format((float)$v, 2, '.', ''); }
@@ -63,6 +67,55 @@ $hourlyRows = [['time_from'=>'09:30','time_to'=>'10:30','particulars'=>'','remar
 $collegeRows = [['serial_no'=>'','contact_name'=>'','designation'=>'','email'=>'','contact_no'=>'','college_name'=>'','location'=>'','status_date'=>$reportDate,'status_text'=>'']];
 $dbRows = [['serial_no'=>'','name'=>'','department'=>'','college'=>'','mobile'=>'','status_date'=>$reportDate,'status_text'=>'']];
 $dbRowsLoadedFromSaved = false;
+
+if (isset($_GET['ajax']) && $_GET['ajax'] === 'fo_college_lookup') {
+  header('Content-Type: application/json; charset=utf-8');
+  if (!$canUseFrontOfficeForm) { echo json_encode(['ok'=>false,'rows'=>[]]); exit; }
+  $q = trim((string)($_GET['q'] ?? ''));
+  if ($q === '') { echo json_encode(['ok'=>true,'rows'=>[]]); exit; }
+  $like = '%'.$q.'%';
+  $stmt = $pdo->prepare("
+    SELECT
+      c.id AS row_id, dm.report_date, c.serial_no, c.contact_name, c.designation, c.email, c.contact_no, c.college_name, c.location,
+      (SELECT status_date FROM dailyreport_frontoffice_college_followup_status s WHERE s.followup_row_id=c.id ORDER BY s.id DESC LIMIT 1) AS status_date,
+      (SELECT status_text FROM dailyreport_frontoffice_college_followup_status s WHERE s.followup_row_id=c.id ORDER BY s.id DESC LIMIT 1) AS status_text
+    FROM dailyreport_frontoffice_college_followup_rows c
+    INNER JOIN dailyreport_master dm ON dm.id = c.master_id
+    WHERE dm.report_type='frontoffice'
+      AND dm.user_id=?
+      AND dm.branch_id=?
+      AND (c.contact_name LIKE ? OR c.college_name LIKE ? OR c.contact_no LIKE ? OR c.location LIKE ?)
+    ORDER BY dm.report_date DESC, c.id DESC
+    LIMIT 30
+  ");
+  $stmt->execute([$userId,$branchId,$like,$like,$like,$like]);
+  echo json_encode(['ok'=>true,'rows'=>$stmt->fetchAll(PDO::FETCH_ASSOC) ?: []], JSON_UNESCAPED_UNICODE);
+  exit;
+}
+if (isset($_GET['ajax']) && $_GET['ajax'] === 'fo_db_lookup') {
+  header('Content-Type: application/json; charset=utf-8');
+  if (!$canUseFrontOfficeForm) { echo json_encode(['ok'=>false,'rows'=>[]]); exit; }
+  $q = trim((string)($_GET['q'] ?? ''));
+  if ($q === '') { echo json_encode(['ok'=>true,'rows'=>[]]); exit; }
+  $like = '%'.$q.'%';
+  $stmt = $pdo->prepare("
+    SELECT
+      d.id AS row_id, dm.report_date, d.serial_no, d.name, d.department, d.college, d.mobile,
+      (SELECT status_date FROM dailyreport_frontoffice_database_followup_status s WHERE s.database_row_id=d.id ORDER BY s.id DESC LIMIT 1) AS status_date,
+      (SELECT status_text FROM dailyreport_frontoffice_database_followup_status s WHERE s.database_row_id=d.id ORDER BY s.id DESC LIMIT 1) AS status_text
+    FROM dailyreport_frontoffice_database_followup_rows d
+    INNER JOIN dailyreport_master dm ON dm.id = d.master_id
+    WHERE dm.report_type='frontoffice'
+      AND dm.user_id=?
+      AND dm.branch_id=?
+      AND (d.name LIKE ? OR d.department LIKE ? OR d.college LIKE ? OR d.mobile LIKE ?)
+    ORDER BY dm.report_date DESC, d.id DESC
+    LIMIT 30
+  ");
+  $stmt->execute([$userId,$branchId,$like,$like,$like,$like]);
+  echo json_encode(['ok'=>true,'rows'=>$stmt->fetchAll(PDO::FETCH_ASSOC) ?: []], JSON_UNESCAPED_UNICODE);
+  exit;
+}
 
 $master = null; $isEditable = false;
 if(empty($missingTables) && $canUseFrontOfficeForm){
@@ -306,7 +359,7 @@ if($_SERVER['REQUEST_METHOD']==='POST' && isset($_POST['save_all_report']) && em
 }
 ?>
 <style>
-.dr-wrap{padding:8px 0}.dr-head{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:14px}.dr-title{margin:0;color:#be185d;font-size:1.5rem;font-weight:800}.dr-note{margin:0;color:#6b7280;font-size:.9rem}.dr-chip{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;border:1px solid #f1d6e3;background:#fff7fb;color:#9d174d;font-size:.82rem;font-weight:700}.dr-alert{border-radius:12px;padding:12px;margin-bottom:12px;border:1px solid transparent}.dr-alert-warn{background:#fff7ed;border-color:#fed7aa;color:#9a3412}.dr-card{background:#fff;border:1px solid #f1d6e3;border-radius:14px;box-shadow:0 8px 18px rgba(0,0,0,.06);overflow:hidden}.dr-card-head{padding:12px 14px;border-bottom:1px solid #f1d6e3;background:#fff4fa;color:#be185d;font-weight:800}.dr-card-body{padding:14px}.dr-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.dr-field label{display:block;font-size:.82rem;color:#6b7280;font-weight:700;margin-bottom:6px}.dr-field input,.dr-field textarea{width:100%;border:1px solid #ecd3df;border-radius:10px;padding:8px 10px}.dr-field textarea{min-height:72px;resize:vertical}.dr-field input[readonly]{background:#f8fafc;color:#64748b}.dr-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}.dr-tab{border:1px solid #f2d3e2;background:#fff;border-radius:10px;padding:8px 12px;font-weight:700;color:#9d174d;cursor:pointer}.dr-tab.active{background:linear-gradient(135deg,#ff4d8d,#e91e63);color:#fff;border-color:#e91e63}.dr-step{display:none}.dr-step.active{display:block}.dr-step-nav{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:12px}.dr-btn{border:none;border-radius:10px;height:38px;padding:0 14px;font-weight:700;cursor:pointer}.dr-btn-primary{background:linear-gradient(135deg,#ff4d8d,#e91e63);color:#fff}.dr-btn-muted{background:#64748b;color:#fff}.dr-btn-success{background:#15803d;color:#fff}.dr-activity-board{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.dr-block{border:1px solid #f1d6e3;border-radius:12px;overflow:hidden;background:#fff}.dr-block-head{background:linear-gradient(135deg,#ff4d8d,#e91e63);color:#fff;font-weight:800;text-align:center;padding:8px 10px;font-size:.95rem}.dr-block-body{padding:12px;display:grid;gap:10px}.dr-table-wrap{overflow:auto}.dr-table{width:100%;border-collapse:collapse}.dr-table th,.dr-table td{border:1px solid #f1d6e3;padding:8px;vertical-align:top}.dr-table th{background:#fff4fa;color:#9d174d;font-size:.82rem}.dr-mini-btn{border:none;background:#e2e8f0;color:#334155;border-radius:8px;padding:6px 8px;font-size:.78rem;font-weight:700;cursor:pointer}.dr-mini-btn.add{background:#dcfce7;color:#166534}.dr-mini-btn.del{background:#fee2e2;color:#991b1b}@media(max-width:1100px){.dr-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.dr-activity-board{grid-template-columns:1fr}}@media(max-width:640px){.dr-grid{grid-template-columns:1fr}}
+.dr-wrap{padding:8px 0}.dr-head{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:14px}.dr-title{margin:0;color:#be185d;font-size:1.5rem;font-weight:800}.dr-note{margin:0;color:#6b7280;font-size:.9rem}.dr-chip{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;border:1px solid #f1d6e3;background:#fff7fb;color:#9d174d;font-size:.82rem;font-weight:700}.dr-alert{border-radius:12px;padding:12px;margin-bottom:12px;border:1px solid transparent}.dr-alert-warn{background:#fff7ed;border-color:#fed7aa;color:#9a3412}.dr-card{background:#fff;border:1px solid #f1d6e3;border-radius:14px;box-shadow:0 8px 18px rgba(0,0,0,.06);overflow:hidden}.dr-card-head{padding:12px 14px;border-bottom:1px solid #f1d6e3;background:#fff4fa;color:#be185d;font-weight:800}.dr-card-body{padding:14px}.dr-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.dr-field label{display:block;font-size:.82rem;color:#6b7280;font-weight:700;margin-bottom:6px}.dr-field input,.dr-field textarea{width:100%;border:1px solid #ecd3df;border-radius:10px;padding:8px 10px}.dr-field textarea{min-height:72px;resize:vertical}.dr-field input[readonly]{background:#f8fafc;color:#64748b}.dr-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}.dr-tab{border:1px solid #f2d3e2;background:#fff;border-radius:10px;padding:8px 12px;font-weight:700;color:#9d174d;cursor:pointer}.dr-tab.active{background:linear-gradient(135deg,#ff4d8d,#e91e63);color:#fff;border-color:#e91e63}.dr-step{display:none}.dr-step.active{display:block}.dr-step-nav{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:12px}.dr-btn{border:none;border-radius:10px;height:38px;padding:0 14px;font-weight:700;cursor:pointer}.dr-btn-primary{background:linear-gradient(135deg,#ff4d8d,#e91e63);color:#fff}.dr-btn-muted{background:#64748b;color:#fff}.dr-btn-success{background:#15803d;color:#fff}.dr-activity-board{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.dr-block{border:1px solid #f1d6e3;border-radius:12px;overflow:hidden;background:#fff}.dr-block-head{background:linear-gradient(135deg,#ff4d8d,#e91e63);color:#fff;font-weight:800;text-align:center;padding:8px 10px;font-size:.95rem}.dr-block-body{padding:12px;display:grid;gap:10px}.dr-table-wrap{overflow:auto}.dr-table{width:100%;border-collapse:collapse}.dr-table th,.dr-table td{border:1px solid #f1d6e3;padding:8px;vertical-align:top}.dr-table th{background:#fff4fa;color:#9d174d;font-size:.82rem}.dr-mini-btn{border:none;background:#e2e8f0;color:#334155;border-radius:8px;padding:6px 8px;font-size:.78rem;font-weight:700;cursor:pointer}.dr-mini-btn.add{background:linear-gradient(135deg,#ff4d8d,#e91e63);color:#fff;height:34px;min-width:140px;display:inline-flex;align-items:center;justify-content:center;padding:0 12px}.dr-mini-btn.del{background:#fee2e2;color:#991b1b}@media(max-width:1100px){.dr-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.dr-activity-board{grid-template-columns:1fr}}@media(max-width:640px){.dr-grid{grid-template-columns:1fr}}
 </style>
 
 <div class="dr-wrap">
@@ -316,7 +369,7 @@ if($_SERVER['REQUEST_METHOD']==='POST' && isset($_POST['save_all_report']) && em
   </div>
 
   <?php if (empty($missingTables) && $canUseFrontOfficeForm && $master): ?>
-  <div class="dr-card" style="margin-bottom:12px;"><div class="dr-card-head">Report Context</div><div class="dr-card-body"><div class="dr-grid"><div class="dr-field"><label>Report Date</label><form method="GET" action="index.php"><input type="hidden" name="page" value="dailyreports/entry"><input type="date" name="report_date" value="<?= h($reportDate) ?>" onchange="this.form.submit()"></form></div><div class="dr-field"><label>Type</label><input type="text" value="Front Office" readonly></div><div class="dr-field"><label>Status</label><input type="text" value="<?= h(ucfirst((string)($master['status'] ?? 'draft'))) ?>" readonly></div><div class="dr-field"><label>Edit Mode</label><input type="text" value="<?= h($editModeLabel) ?>" readonly></div></div></div></div>
+  <div class="dr-card" style="margin-bottom:12px;"><div class="dr-card-head">Report Context</div><div class="dr-card-body"><div class="dr-grid"><div class="dr-field"><label>Report Date</label><form method="GET" action="index.php"><input type="hidden" name="page" value="dailyreports/entry"><input type="date" class="js-dr-report-date" name="report_date" value="<?= h($reportDate) ?>"></form></div><div class="dr-field"><label>Type</label><input type="text" value="Front Office" readonly></div><div class="dr-field"><label>Status</label><input type="text" value="<?= h(ucfirst((string)($master['status'] ?? 'draft'))) ?>" readonly></div><div class="dr-field"><label>Edit Mode</label><input type="text" value="<?= h($editModeLabel) ?>" readonly></div></div></div></div>
 
   <form method="POST" id="dailyReportForm">
     <input type="hidden" name="csrf_token" value="<?= h(generateCSRF()) ?>"><input type="hidden" name="save_all_report" value="1">
@@ -342,6 +395,36 @@ if($_SERVER['REQUEST_METHOD']==='POST' && isset($_POST['save_all_report']) && em
 
 <script>
 (function(){
+  function drAjaxSwap(url){
+    const main = document.querySelector('.main-content');
+    if(!main){ window.location.href = url; return; }
+    const u = new URL(url, window.location.href);
+    u.searchParams.set('ajax', '1');
+    main.innerHTML = '<div class="drv-card"><div class="drv-body"><div class="drv-blank">Loading...</div></div></div>';
+    fetch(u.toString(), { headers: { 'X-Requested-With':'XMLHttpRequest' } })
+      .then(function(r){ return r.text(); })
+      .then(function(html){
+        const tmp = document.createElement('div');
+        tmp.innerHTML = html;
+        main.innerHTML = tmp.innerHTML;
+        const scripts = Array.from(main.querySelectorAll('script'));
+        scripts.forEach(function(old){
+          const s = document.createElement('script');
+          if (old.src) { s.src = old.src; s.async = false; } else { s.textContent = old.textContent; }
+          document.body.appendChild(s);
+          old.remove();
+          setTimeout(function(){ try { s.remove(); } catch(e) {} }, 0);
+        });
+        window.history.replaceState({}, '', url);
+      })
+      .catch(function(){ window.location.href = url; });
+  }
+  document.addEventListener('change', function(e){
+    if(!e.target.classList.contains('js-dr-report-date')) return;
+    const dt = (e.target.value || '').trim();
+    if(!dt) return;
+    drAjaxSwap('index.php?page=dailyreports/entry&report_date=' + encodeURIComponent(dt));
+  });
   const tabs=[...document.querySelectorAll('.dr-tab')], steps=[...document.querySelectorAll('.dr-step')];
   function showStep(n){tabs.forEach(t=>t.classList.toggle('active',Number(t.dataset.step)===n));steps.forEach(s=>s.classList.toggle('active',Number(s.dataset.step)===n));window.scrollTo({top:0,behavior:'smooth'});}  
   tabs.forEach(t=>t.addEventListener('click',()=>showStep(Number(t.dataset.step))));
@@ -469,6 +552,124 @@ if($_SERVER['REQUEST_METHOD']==='POST' && isset($_POST['save_all_report']) && em
   document.getElementById('addCollegeRow')?.addEventListener('click',()=>{ addRow('collegeBody','<td><input name="college_serial_no[]"></td><td><input name="college_contact_name[]"></td><td><input name="college_designation[]"></td><td><input name="college_email[]"></td><td><input name="college_contact_no[]"></td><td><input name="college_name[]"></td><td><input name="college_location[]"></td><td><input type="date" name="college_status_date[]" value="<?= h($reportDate) ?>"></td><td><textarea name="college_status_text[]"></textarea></td><td><button type="button" class="dr-mini-btn del js-del-row">Delete</button></td>'); renumberAllSerials(); });
   document.getElementById('addDbRow')?.addEventListener('click',()=>{ addRow('dbBody','<td><input name="db_serial_no[]"></td><td><input name="db_name[]"></td><td><input name="db_department[]"></td><td><input name="db_college[]"></td><td><input name="db_mobile[]"></td><td><input type="date" name="db_status_date[]" value="<?= h($reportDate) ?>"></td><td><textarea name="db_status_text[]"></textarea></td><td><button type="button" class="dr-mini-btn del js-del-row">Delete</button></td>'); renumberAllSerials(); });
   renumberAllSerials();
+  function enableEnterNavigation(formEl){
+    if(!formEl) return;
+    formEl.addEventListener('keydown', function(e){
+      if (e.key !== 'Enter') return;
+      const target = e.target;
+      if (!target || !target.matches('input, select, textarea')) return;
+      if (target.matches('button, [type="submit"], [type="button"], [type="file"], [type="checkbox"], [type="radio"]')) return;
+      e.preventDefault();
+      const fields = Array.from(formEl.querySelectorAll('input, select, textarea')).filter(function(el){
+        if (!el) return false;
+        if (el.disabled || el.readOnly) return false;
+        if (el.type === 'hidden' || el.type === 'submit' || el.type === 'button' || el.type === 'file' || el.type === 'checkbox' || el.type === 'radio') return false;
+        if (el.offsetParent === null) return false;
+        return true;
+      });
+      const idx = fields.indexOf(target);
+      if (idx >= 0 && idx < fields.length - 1) {
+        const next = fields[idx + 1];
+        next.focus();
+        if (typeof next.select === 'function' && next.tagName === 'INPUT') next.select();
+      }
+    });
+  }
+  function enableTablePaste(formEl){
+    if(!formEl) return;
+    formEl.addEventListener('paste', function(e){
+      const target = e.target;
+      if(!target || !target.matches('input, textarea, select')) return;
+      const text = (e.clipboardData || window.clipboardData)?.getData('text') || '';
+      if(!text || (text.indexOf('\t') === -1 && text.indexOf('\n') === -1 && text.indexOf('\r') === -1)) return;
+      const tr = target.closest('tr');
+      if(!tr) return;
+      const table = tr.closest('table');
+      if(!table) return;
+      const tableRows = Array.from(table.querySelectorAll('tbody tr'));
+      const startRow = tableRows.indexOf(tr);
+      if(startRow < 0) return;
+      const rowFields = Array.from(tr.querySelectorAll('input, textarea, select')).filter(function(el){
+        if(el.disabled || el.readOnly) return false;
+        if(el.type === 'hidden' || el.type === 'button' || el.type === 'submit' || el.type === 'file') return false;
+        return true;
+      });
+      const startCol = rowFields.indexOf(target);
+      if(startCol < 0) return;
+      const matrix = text.replace(/\r/g,'').split('\n').filter(function(line){ return line !== ''; }).map(function(line){ return line.split('\t'); });
+      if(!matrix.length) return;
+      e.preventDefault();
+      matrix.forEach(function(cols, rIdx){
+        const row = tableRows[startRow + rIdx];
+        if(!row) return;
+        const fields = Array.from(row.querySelectorAll('input, textarea, select')).filter(function(el){
+          if(el.disabled || el.readOnly) return false;
+          if(el.type === 'hidden' || el.type === 'button' || el.type === 'submit' || el.type === 'file') return false;
+          return true;
+        });
+        cols.forEach(function(val, cIdx){
+          const cell = fields[startCol + cIdx];
+          if(!cell) return;
+          cell.value = val;
+          cell.dispatchEvent(new Event('input', { bubbles:true }));
+          cell.dispatchEvent(new Event('change', { bubbles:true }));
+        });
+      });
+    });
+  }
+  function attachStatusAutoFill(cfg){
+    const tbody = document.getElementById(cfg.tbodyId);
+    if(!tbody) return;
+    const table = tbody.closest('table');
+    const wrap = table?.parentElement;
+    if(!wrap) return;
+    if(wrap.querySelector('[data-status-search-for="'+cfg.tbodyId+'"]')) return;
+    const box = document.createElement('div');
+    box.setAttribute('data-status-search-for', cfg.tbodyId);
+    box.style.cssText = 'display:flex;align-items:center;gap:8px;margin:0 0 8px 0;flex-wrap:wrap;';
+    const input = document.createElement('input');
+    input.type='text';
+    input.placeholder=cfg.placeholder || 'Search...';
+    input.style.cssText='max-width:360px;';
+    const btn = document.createElement('button');
+    btn.type='button';
+    btn.className='dr-mini-btn add';
+    btn.textContent='Search & Auto Fill';
+    box.appendChild(input); box.appendChild(btn);
+    wrap.parentNode.insertBefore(box, wrap);
+    function ensureTargetRow(){
+      const rows = Array.from(tbody.querySelectorAll('tr'));
+      for(const tr of rows){ if(cfg.isRowEmpty(tr)) return tr; }
+      const addBtn = document.getElementById(cfg.addBtnId);
+      if(addBtn) addBtn.click();
+      const latest = tbody.querySelectorAll('tr');
+      return latest.length ? latest[latest.length-1] : null;
+    }
+    btn.addEventListener('click', async function(){
+      const q=(input.value||'').trim();
+      if(!q){ if(window.Swal) Swal.fire({icon:'warning',title:'Search Required',text:'Type search text first.'}); return; }
+      try{
+        const url='index.php?page=dailyreports/entry&ajax='+encodeURIComponent(cfg.ajax)+'&q='+encodeURIComponent(q);
+        const res=await fetch(url,{headers:{'X-Requested-With':'XMLHttpRequest'}});
+        const data=await res.json();
+        const rows=Array.isArray(data.rows)?data.rows:[];
+        if(!rows.length){ if(window.Swal) Swal.fire({icon:'info',title:'No Match',text:'No previous records found.'}); return; }
+        let picked=rows[0];
+        if(rows.length>1 && window.Swal){
+          const opts={}; rows.forEach((r,i)=>{ opts[String(i)] = cfg.optionLabel(r); });
+          const pick = await Swal.fire({title:'Select Record',input:'select',inputOptions:opts,inputValue:'0',showCancelButton:true,confirmButtonColor:'#e91e63'});
+          if(!pick.isConfirmed) return;
+          picked = rows[parseInt(pick.value||'0',10)] || rows[0];
+        }
+        const tr = ensureTargetRow();
+        if(!tr) return;
+        cfg.fillRow(tr,picked);
+        if(window.Swal) Swal.fire({icon:'success',title:'Loaded',text:'Previous data loaded. Update and save.'});
+      }catch(err){
+        if(window.Swal) Swal.fire({icon:'error',title:'Error',text:'Search failed. Try again.'});
+      }
+    });
+  }
 
   const form=document.getElementById('dailyReportForm');
   if(form){
@@ -481,29 +682,52 @@ if($_SERVER['REQUEST_METHOD']==='POST' && isset($_POST['save_all_report']) && em
         return String(from).trim() !== '' && String(to).trim() !== '' && String(particulars).trim() !== '';
       });
     }
-    form.addEventListener('keydown', function(e){
-      if (e.key !== 'Enter') return;
-      const target = e.target;
-      if (!target) return;
-      if (!target.matches('input, select, textarea')) return;
-      if (target.matches('button, [type=\"submit\"], [type=\"button\"]')) return;
-      e.preventDefault();
-
-      const fields = Array.from(form.querySelectorAll('input, select, textarea'))
-        .filter(function(el){
-          if (!el) return false;
-          if (el.disabled || el.readOnly) return false;
-          if (el.type === 'hidden' || el.type === 'submit' || el.type === 'button') return false;
-          if (el.offsetParent === null) return false; // hidden/inactive tab
-          return true;
-        });
-
-      const idx = fields.indexOf(target);
-      if (idx >= 0 && idx < fields.length - 1) {
-        fields[idx + 1].focus();
-        if (typeof fields[idx + 1].select === 'function' && fields[idx + 1].tagName === 'INPUT') {
-          fields[idx + 1].select();
-        }
+    enableEnterNavigation(form);
+    enableTablePaste(form);
+    attachStatusAutoFill({
+      tbodyId:'collegeBody',
+      addBtnId:'addCollegeRow',
+      ajax:'fo_college_lookup',
+      placeholder:'Search old college followup (name/college/contact/location)',
+      optionLabel:function(r){ return (r.contact_name||'-')+' | '+(r.college_name||'-')+' | '+(r.contact_no||'-')+' | '+(r.report_date||'-'); },
+      isRowEmpty:function(tr){
+        return !(tr.querySelector('input[name="college_contact_name[]"]')?.value||'').trim()
+          && !(tr.querySelector('input[name="college_contact_no[]"]')?.value||'').trim()
+          && !(tr.querySelector('input[name="college_name[]"]')?.value||'').trim();
+      },
+      fillRow:function(tr,r){
+        const set=(name,val)=>{ const el=tr.querySelector('input[name="'+name+'[]"], textarea[name="'+name+'[]"]'); if(el) el.value=(val||'').toString(); };
+        set('college_serial_no', r.serial_no);
+        set('college_contact_name', r.contact_name);
+        set('college_designation', r.designation);
+        set('college_email', r.email);
+        set('college_contact_no', r.contact_no);
+        set('college_name', r.college_name);
+        set('college_location', r.location);
+        set('college_status_date', r.status_date || '<?= h($reportDate) ?>');
+        set('college_status_text', r.status_text);
+      }
+    });
+    attachStatusAutoFill({
+      tbodyId:'dbBody',
+      addBtnId:'addDbRow',
+      ajax:'fo_db_lookup',
+      placeholder:'Search old database followup (name/college/mobile)',
+      optionLabel:function(r){ return (r.name||'-')+' | '+(r.college||'-')+' | '+(r.mobile||'-')+' | '+(r.report_date||'-'); },
+      isRowEmpty:function(tr){
+        return !(tr.querySelector('input[name="db_name[]"]')?.value||'').trim()
+          && !(tr.querySelector('input[name="db_college[]"]')?.value||'').trim()
+          && !(tr.querySelector('input[name="db_mobile[]"]')?.value||'').trim();
+      },
+      fillRow:function(tr,r){
+        const set=(name,val)=>{ const el=tr.querySelector('input[name="'+name+'[]"], textarea[name="'+name+'[]"]'); if(el) el.value=(val||'').toString(); };
+        set('db_serial_no', r.serial_no);
+        set('db_name', r.name);
+        set('db_department', r.department);
+        set('db_college', r.college);
+        set('db_mobile', r.mobile);
+        set('db_status_date', r.status_date || '<?= h($reportDate) ?>');
+        set('db_status_text', r.status_text);
       }
     });
 

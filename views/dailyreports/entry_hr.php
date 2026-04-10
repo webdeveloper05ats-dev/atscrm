@@ -34,6 +34,51 @@ $sections=[
   'college_followup'=>[['name'=>'','position'=>'','mail_id'=>'','contact_number'=>'','report_text'=>'','college'=>'']]
 ];
 
+if (isset($_GET['ajax']) && $_GET['ajax'] === 'hr_lookup') {
+  header('Content-Type: application/json; charset=utf-8');
+  if (!$canUseHrForm) { echo json_encode(['ok'=>false,'rows'=>[]]); exit; }
+  $section = trim((string)($_GET['section'] ?? ''));
+  $q = trim((string)($_GET['q'] ?? ''));
+  if ($q === '') { echo json_encode(['ok'=>true,'rows'=>[]]); exit; }
+  $like = '%'.$q.'%';
+  $cfg = [
+    'interview' => [
+      'table' => 'dailyreport_hr_interview_rows',
+      'fields' => 'r.candidate_name,r.company_name,r.interview_date,r.interview_status,r.remark',
+      'where' => '(r.candidate_name LIKE ? OR r.company_name LIKE ? OR r.interview_status LIKE ?)'
+    ],
+    'placement' => [
+      'table' => 'dailyreport_hr_placement_call_rows',
+      'fields' => 'r.entry_date,r.company_name,r.poc_name,r.contact_no,r.status_text,r.remarks',
+      'where' => '(r.company_name LIKE ? OR r.poc_name LIKE ? OR r.contact_no LIKE ? OR r.status_text LIKE ?)'
+    ],
+    'old_client' => [
+      'table' => 'dailyreport_hr_old_client_rows',
+      'fields' => 'r.serial_no,r.client_company,r.poc,r.contact_no,r.email_id,r.followup_date,r.followup_report',
+      'where' => '(r.client_company LIKE ? OR r.poc LIKE ? OR r.contact_no LIKE ? OR r.followup_report LIKE ?)'
+    ],
+    'new_client' => [
+      'table' => 'dailyreport_hr_new_client_rows',
+      'fields' => 'r.company_name,r.address,r.city,r.hr_name,r.contact_number,r.status_text',
+      'where' => '(r.company_name LIKE ? OR r.hr_name LIKE ? OR r.contact_number LIKE ? OR r.status_text LIKE ?)'
+    ],
+    'college_data' => [
+      'table' => 'dailyreport_hr_college_data_rows',
+      'fields' => 'r.serial_no,r.contact_name,r.contact_no,r.college_name,r.topic,r.days_text,r.resource_person,r.requirement,r.status_text',
+      'where' => '(r.contact_name LIKE ? OR r.college_name LIKE ? OR r.contact_no LIKE ? OR r.status_text LIKE ?)'
+    ]
+  ];
+  if (!isset($cfg[$section])) { echo json_encode(['ok'=>false,'rows'=>[]]); exit; }
+  $sql = "SELECT dm.report_date, {$cfg[$section]['fields']} FROM {$cfg[$section]['table']} r
+          INNER JOIN dailyreport_master dm ON dm.id=r.master_id
+          WHERE dm.report_type='hr' AND dm.user_id=? AND dm.branch_id=? AND {$cfg[$section]['where']}
+          ORDER BY dm.report_date DESC, r.id DESC LIMIT 30";
+  $stmt = $pdo->prepare($sql);
+  $stmt->execute([$userId,$branchId,$like,$like,$like,$like]);
+  echo json_encode(['ok'=>true,'rows'=>$stmt->fetchAll(PDO::FETCH_ASSOC) ?: []], JSON_UNESCAPED_UNICODE);
+  exit;
+}
+
 $master=null; $isEditable=false; $warning='';
 $drSuccessMessage = (isset($_GET['saved']) && (string)$_GET['saved'] === '1') ? 'HR daily report saved successfully.' : '';
 $drErrorMessage = trim((string)($_GET['save_error'] ?? ''));
@@ -183,14 +228,14 @@ $editModeLabel='Read Only'; if($isToday) $editModeLabel=$isEditable?'Editable (T
 .dr-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.dr-field label{display:block;font-size:.82rem;color:#6b7280;font-weight:700;margin-bottom:6px}.dr-field input,.dr-field textarea{width:100%;border:1px solid #ecd3df;border-radius:10px;padding:8px 10px}.dr-field textarea{min-height:90px}
 .dr-btn{border:none;border-radius:10px;height:38px;padding:0 14px;font-weight:700;cursor:pointer}.dr-btn-primary{background:linear-gradient(135deg,#ff4d8d,#e91e63);color:#fff}.dr-btn-muted{background:#64748b;color:#fff}.dr-btn-success{background:#15803d;color:#fff}.dr-step-nav{display:flex;justify-content:space-between;margin-top:10px}
 .dr-activity-board{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.dr-block{border:1px solid #f1d6e3;border-radius:12px;overflow:hidden;background:#fff}.dr-block-head{background:linear-gradient(135deg,#ff4d8d,#e91e63);color:#fff;font-weight:800;text-align:center;padding:8px 10px;font-size:.95rem}.dr-block-body{padding:12px;display:grid;gap:10px}
-.dr-table-wrap{overflow:auto}.dr-table{width:100%;border-collapse:collapse}.dr-table th,.dr-table td{border:1px solid #f1d6e3;padding:8px;vertical-align:top}.dr-table th{background:#fff4fa;color:#9d174d;font-size:.82rem}.dr-mini-btn{border:none;background:#e2e8f0;color:#334155;border-radius:8px;padding:6px 8px;font-size:.78rem;font-weight:700;cursor:pointer}.dr-mini-btn.add{background:#dcfce7;color:#166534}.dr-mini-btn.del{background:#fee2e2;color:#991b1b}
+.dr-table-wrap{overflow:auto}.dr-table{width:100%;border-collapse:collapse}.dr-table th,.dr-table td{border:1px solid #f1d6e3;padding:8px;vertical-align:top}.dr-table th{background:#fff4fa;color:#9d174d;font-size:.82rem}.dr-mini-btn{border:none;background:#e2e8f0;color:#334155;border-radius:8px;padding:6px 8px;font-size:.78rem;font-weight:700;cursor:pointer}.dr-mini-btn.add{background:linear-gradient(135deg,#ff4d8d,#e91e63);color:#fff;height:34px;min-width:140px;display:inline-flex;align-items:center;justify-content:center;padding:0 12px}.dr-mini-btn.del{background:#fee2e2;color:#991b1b}
 @media(max-width:1100px){.dr-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.dr-activity-board{grid-template-columns:1fr}}
 </style>
 <div class="dr-wrap">
   <div class="dr-head"><div><h2 class="dr-title">Daily Report Entry</h2><p class="dr-note">HR - same flow (final save only)</p></div></div>
   <?php if($warning!==''): ?><div class="dr-card"><div class="dr-card-body" style="color:#9a3412"><?= h($warning) ?></div></div><?php endif; ?>
   <div class="dr-card"><div class="dr-card-body">
-    <div class="dr-grid"><div class="dr-field"><label>Report Date</label><input type="date" value="<?= h($reportDate) ?>" onchange="window.location='index.php?page=dailyreports/entry&report_date='+this.value"></div><div class="dr-field"><label>Edit Mode</label><input readonly value="<?= h($editModeLabel) ?>"></div><div class="dr-field"><label>Role</label><input readonly value="HR"></div><div class="dr-field"><label>Status</label><input readonly value="<?= h(ucfirst((string)($master['status'] ?? 'draft'))) ?>"></div></div>
+    <div class="dr-grid"><div class="dr-field"><label>Report Date</label><input type="date" class="js-dr-report-date" value="<?= h($reportDate) ?>"></div><div class="dr-field"><label>Edit Mode</label><input readonly value="<?= h($editModeLabel) ?>"></div><div class="dr-field"><label>Role</label><input readonly value="HR"></div><div class="dr-field"><label>Status</label><input readonly value="<?= h(ucfirst((string)($master['status'] ?? 'draft'))) ?>"></div></div>
     <?php if($master && empty($missingTables) && $canUseHrForm): ?>
     <form method="POST" id="hrDailyForm">
       <input type="hidden" name="csrf_token" value="<?= h(generateCSRF()) ?>"><input type="hidden" name="save_all_report" value="1">
@@ -426,6 +471,36 @@ $editModeLabel='Read Only'; if($isToday) $editModeLabel=$isEditable?'Editable (T
 </div>
 <script>
 document.addEventListener('DOMContentLoaded',function(){
+  function drAjaxSwap(url){
+    const main = document.querySelector('.main-content');
+    if(!main){ window.location.href = url; return; }
+    const u = new URL(url, window.location.href);
+    u.searchParams.set('ajax', '1');
+    main.innerHTML = '<div class="drv-card"><div class="drv-body"><div class="drv-blank">Loading...</div></div></div>';
+    fetch(u.toString(), { headers: { 'X-Requested-With':'XMLHttpRequest' } })
+      .then(function(r){ return r.text(); })
+      .then(function(html){
+        const tmp = document.createElement('div');
+        tmp.innerHTML = html;
+        main.innerHTML = tmp.innerHTML;
+        const scripts = Array.from(main.querySelectorAll('script'));
+        scripts.forEach(function(old){
+          const s = document.createElement('script');
+          if (old.src) { s.src = old.src; s.async = false; } else { s.textContent = old.textContent; }
+          document.body.appendChild(s);
+          old.remove();
+          setTimeout(function(){ try { s.remove(); } catch(e) {} }, 0);
+        });
+        window.history.replaceState({}, '', url);
+      })
+      .catch(function(){ window.location.href = url; });
+  }
+  document.addEventListener('change', function(e){
+    if(!e.target.classList.contains('js-dr-report-date')) return;
+    const dt = (e.target.value || '').trim();
+    if(!dt) return;
+    drAjaxSwap('index.php?page=dailyreports/entry&report_date=' + encodeURIComponent(dt));
+  });
   const tabs=[...document.querySelectorAll('.dr-tab')],steps=[...document.querySelectorAll('.dr-step')];
   function show(n){tabs.forEach(t=>t.classList.toggle('active',+t.dataset.step===n));steps.forEach(s=>s.classList.toggle('active',+s.dataset.step===n));window.scrollTo({top:0,behavior:'smooth'});}
   tabs.forEach(t=>t.addEventListener('click',()=>show(+t.dataset.step)));
@@ -532,6 +607,161 @@ document.addEventListener('DOMContentLoaded',function(){
   }
   document.getElementById('addHrInternRow')?.addEventListener('click', function(){ addInternshipRow(); });
   const form=document.getElementById('hrDailyForm');
+  function enableEnterNavigation(formEl){
+    if(!formEl) return;
+    formEl.addEventListener('keydown', function(e){
+      if (e.key !== 'Enter') return;
+      const target = e.target;
+      if (!target || !target.matches('input, select, textarea')) return;
+      if (target.matches('button, [type="submit"], [type="button"], [type="file"], [type="checkbox"], [type="radio"]')) return;
+      e.preventDefault();
+      const fields = Array.from(formEl.querySelectorAll('input, select, textarea')).filter(function(el){
+        if (!el) return false;
+        if (el.disabled || el.readOnly) return false;
+        if (el.type === 'hidden' || el.type === 'submit' || el.type === 'button' || el.type === 'file' || el.type === 'checkbox' || el.type === 'radio') return false;
+        if (el.offsetParent === null) return false;
+        return true;
+      });
+      const idx = fields.indexOf(target);
+      if (idx >= 0 && idx < fields.length - 1) {
+        const next = fields[idx + 1];
+        next.focus();
+        if (typeof next.select === 'function' && next.tagName === 'INPUT') next.select();
+      }
+    });
+  }
+  function enableTablePaste(formEl){
+    if(!formEl) return;
+    formEl.addEventListener('paste', function(e){
+      const target = e.target;
+      if(!target || !target.matches('input, textarea, select')) return;
+      const text = (e.clipboardData || window.clipboardData)?.getData('text') || '';
+      if(!text || (text.indexOf('\t') === -1 && text.indexOf('\n') === -1 && text.indexOf('\r') === -1)) return;
+      const tr = target.closest('tr');
+      if(!tr) return;
+      const table = tr.closest('table');
+      if(!table) return;
+      const tableRows = Array.from(table.querySelectorAll('tbody tr'));
+      const startRow = tableRows.indexOf(tr);
+      if(startRow < 0) return;
+      const rowFields = Array.from(tr.querySelectorAll('input, textarea, select')).filter(function(el){
+        if(el.disabled || el.readOnly) return false;
+        if(el.type === 'hidden' || el.type === 'button' || el.type === 'submit' || el.type === 'file') return false;
+        return true;
+      });
+      const startCol = rowFields.indexOf(target);
+      if(startCol < 0) return;
+      const matrix = text.replace(/\r/g,'').split('\n').filter(function(line){ return line !== ''; }).map(function(line){ return line.split('\t'); });
+      if(!matrix.length) return;
+      e.preventDefault();
+      matrix.forEach(function(cols, rIdx){
+        const row = tableRows[startRow + rIdx];
+        if(!row) return;
+        const fields = Array.from(row.querySelectorAll('input, textarea, select')).filter(function(el){
+          if(el.disabled || el.readOnly) return false;
+          if(el.type === 'hidden' || el.type === 'button' || el.type === 'submit' || el.type === 'file') return false;
+          return true;
+        });
+        cols.forEach(function(val, cIdx){
+          const cell = fields[startCol + cIdx];
+          if(!cell) return;
+          cell.value = val;
+          cell.dispatchEvent(new Event('input', { bubbles:true }));
+          cell.dispatchEvent(new Event('change', { bubbles:true }));
+        });
+      });
+    });
+  }
+  function attachStatusAutoFill(cfg){
+    const tbody = document.getElementById(cfg.tbodyId);
+    if(!tbody) return;
+    const table = tbody.closest('table');
+    const wrap = table?.parentElement;
+    if(!wrap) return;
+    if(wrap.querySelector('[data-status-search-for="'+cfg.tbodyId+'"]')) return;
+    const box = document.createElement('div');
+    box.setAttribute('data-status-search-for', cfg.tbodyId);
+    box.style.cssText = 'display:flex;align-items:center;gap:8px;margin:0 0 8px 0;flex-wrap:wrap;';
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.placeholder = cfg.placeholder || 'Search...';
+    input.style.cssText = 'max-width:360px;';
+    const btn = document.createElement('button');
+    btn.type='button';
+    btn.className='dr-mini-btn add';
+    btn.textContent='Search & Auto Fill';
+    box.appendChild(input); box.appendChild(btn);
+    wrap.parentNode.insertBefore(box, wrap);
+    function ensureTargetRow(){
+      const rows = Array.from(tbody.querySelectorAll('tr'));
+      for(const tr of rows){ if(cfg.isRowEmpty(tr)) return tr; }
+      const addBtn = document.getElementById(cfg.addBtnId);
+      if(addBtn) addBtn.click();
+      const latest = tbody.querySelectorAll('tr');
+      return latest.length ? latest[latest.length-1] : null;
+    }
+    btn.addEventListener('click', async function(){
+      const q = (input.value||'').trim();
+      if(!q){ if(window.Swal) Swal.fire({icon:'warning',title:'Search Required',text:'Type search text first.'}); return; }
+      try{
+        const url='index.php?page=dailyreports/entry&ajax=hr_lookup&section='+encodeURIComponent(cfg.section)+'&q='+encodeURIComponent(q);
+        const res=await fetch(url,{headers:{'X-Requested-With':'XMLHttpRequest'}});
+        const data=await res.json();
+        const rows=Array.isArray(data.rows)?data.rows:[];
+        if(!rows.length){ if(window.Swal) Swal.fire({icon:'info',title:'No Match',text:'No previous records found.'}); return; }
+        let picked=rows[0];
+        if(rows.length>1 && window.Swal){
+          const opts={}; rows.forEach((r,i)=>{ opts[String(i)] = cfg.optionLabel(r); });
+          const pick = await Swal.fire({title:'Select Record',input:'select',inputOptions:opts,inputValue:'0',showCancelButton:true,confirmButtonColor:'#e91e63'});
+          if(!pick.isConfirmed) return;
+          picked=rows[parseInt(pick.value||'0',10)] || rows[0];
+        }
+        const tr=ensureTargetRow();
+        if(!tr) return;
+        cfg.fillRow(tr,picked);
+        if(window.Swal) Swal.fire({icon:'success',title:'Loaded',text:'Previous data loaded. Update and save.'});
+      }catch(err){
+        if(window.Swal) Swal.fire({icon:'error',title:'Error',text:'Search failed. Try again.'});
+      }
+    });
+  }
+  enableEnterNavigation(form);
+  enableTablePaste(form);
+  attachStatusAutoFill({
+    tbodyId:'hrInterviewBody', addBtnId:'addHrInterviewRow', section:'interview',
+    placeholder:'Search old interview (candidate/company/status)',
+    optionLabel:r => (r.candidate_name||'-')+' | '+(r.company_name||'-')+' | '+(r.interview_status||'-')+' | '+(r.report_date||'-'),
+    isRowEmpty:tr => !(tr.querySelector('.hr-intv-candidate_name')?.value||'').trim() && !(tr.querySelector('.hr-intv-company_name')?.value||'').trim(),
+    fillRow:function(tr,r){ tr.querySelector('.hr-intv-candidate_name').value=r.candidate_name||''; tr.querySelector('.hr-intv-company_name').value=r.company_name||''; tr.querySelector('.hr-intv-interview_date').value=r.interview_date||''; tr.querySelector('.hr-intv-interview_status').value=r.interview_status||''; tr.querySelector('.hr-intv-remark').value=r.remark||''; }
+  });
+  attachStatusAutoFill({
+    tbodyId:'hrPlacementBody', addBtnId:'addHrPlacementRow', section:'placement',
+    placeholder:'Search old placement (company/poc/contact/status)',
+    optionLabel:r => (r.company_name||'-')+' | '+(r.poc_name||'-')+' | '+(r.contact_no||'-')+' | '+(r.report_date||'-'),
+    isRowEmpty:tr => !(tr.querySelector('.hr-place-company_name')?.value||'').trim() && !(tr.querySelector('.hr-place-contact_no')?.value||'').trim(),
+    fillRow:function(tr,r){ tr.querySelector('.hr-place-entry_date').value=r.entry_date||'<?= h($reportDate) ?>'; tr.querySelector('.hr-place-company_name').value=r.company_name||''; tr.querySelector('.hr-place-poc_name').value=r.poc_name||''; tr.querySelector('.hr-place-contact_no').value=r.contact_no||''; tr.querySelector('.hr-place-status_text').value=r.status_text||''; tr.querySelector('.hr-place-remarks').value=r.remarks||''; }
+  });
+  attachStatusAutoFill({
+    tbodyId:'hrOldClientBody', addBtnId:'addHrOldClientRow', section:'old_client',
+    placeholder:'Search old client followup (company/poc/contact)',
+    optionLabel:r => (r.client_company||'-')+' | '+(r.poc||'-')+' | '+(r.contact_no||'-')+' | '+(r.report_date||'-'),
+    isRowEmpty:tr => !(tr.querySelector('.hr-old-client_company')?.value||'').trim() && !(tr.querySelector('.hr-old-contact_no')?.value||'').trim(),
+    fillRow:function(tr,r){ tr.querySelector('.hr-old-client_company').value=r.client_company||''; tr.querySelector('.hr-old-poc').value=r.poc||''; tr.querySelector('.hr-old-contact_no').value=r.contact_no||''; tr.querySelector('.hr-old-email_id').value=r.email_id||''; tr.querySelector('.hr-old-followup_date').value=r.followup_date||'<?= h($reportDate) ?>'; tr.querySelector('.hr-old-followup_report').value=r.followup_report||''; }
+  });
+  attachStatusAutoFill({
+    tbodyId:'hrNewClientBody', addBtnId:'addHrNewClientRow', section:'new_client',
+    placeholder:'Search old new-client status (company/hr/contact/status)',
+    optionLabel:r => (r.company_name||'-')+' | '+(r.hr_name||'-')+' | '+(r.contact_number||'-')+' | '+(r.report_date||'-'),
+    isRowEmpty:tr => !(tr.querySelector('.hr-new-company_name')?.value||'').trim() && !(tr.querySelector('.hr-new-contact_number')?.value||'').trim(),
+    fillRow:function(tr,r){ tr.querySelector('.hr-new-company_name').value=r.company_name||''; tr.querySelector('.hr-new-address').value=r.address||''; tr.querySelector('.hr-new-city').value=r.city||''; tr.querySelector('.hr-new-hr_name').value=r.hr_name||''; tr.querySelector('.hr-new-contact_number').value=r.contact_number||''; tr.querySelector('.hr-new-status_text').value=r.status_text||''; }
+  });
+  attachStatusAutoFill({
+    tbodyId:'hrCollegeDataBody', addBtnId:'addHrCollegeDataRow', section:'college_data',
+    placeholder:'Search old college data status (contact/college/status)',
+    optionLabel:r => (r.contact_name||'-')+' | '+(r.college_name||'-')+' | '+(r.contact_no||'-')+' | '+(r.report_date||'-'),
+    isRowEmpty:tr => !(tr.querySelector('.hr-cd-contact_name')?.value||'').trim() && !(tr.querySelector('.hr-cd-college_name')?.value||'').trim(),
+    fillRow:function(tr,r){ tr.querySelector('.hr-cd-contact_name').value=r.contact_name||''; tr.querySelector('.hr-cd-contact_no').value=r.contact_no||''; tr.querySelector('.hr-cd-college_name').value=r.college_name||''; tr.querySelector('.hr-cd-topic').value=r.topic||''; tr.querySelector('.hr-cd-days_text').value=r.days_text||''; tr.querySelector('.hr-cd-resource_person').value=r.resource_person||''; tr.querySelector('.hr-cd-requirement').value=r.requirement||''; tr.querySelector('.hr-cd-status_text').value=r.status_text||''; }
+  });
   renumberInternRows();
   document.addEventListener('click', function(e){
     if (e.target.classList.contains('js-del-intern-row')) {

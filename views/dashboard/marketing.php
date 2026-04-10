@@ -4,13 +4,12 @@
 // File: views/dashboard/marketing.php
 // =======================================================
 
-requireView('dashboard/marketing');
-
 if (!defined('APP_NAME')) {
     die("Unauthorized access.");
 }
 
 if (($_SESSION['role_name'] ?? '') !== 'Marketing') {
+    requireView('dashboard/marketing');
     redirect('index.php');
     exit;
 }

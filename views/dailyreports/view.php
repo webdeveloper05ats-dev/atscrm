@@ -169,6 +169,59 @@ function drRenderHrViewDetails($selectedMaster, $activity, $hourlyRows, $internR
     return ob_get_clean();
 }
 
+function drRenderMarketingViewDetails($selectedMaster, $activity, $hourlyRows, $collegeRows, $prospectRows, $actRows, $amountRows, $programRows, $artsCollegeRows, $artsPcRows, $enggCollegeRows, $enggPcRows, $polytechRows): string {
+    ob_start();
+    if (!$selectedMaster) {
+        echo '<div class="drv-card"><div class="drv-body"><div class="drv-blank">Click <b>View</b> in the table to load report sections.</div></div></div>';
+        return ob_get_clean();
+    }
+    $viewDate = (string)($selectedMaster['report_date'] ?? '');
+    $viewDay = $viewDate !== '' ? date('l', strtotime($viewDate)) : '-';
+    ?>
+    <div class="drv-card"><div class="drv-body"><div class="drv-context">
+      <span class="drv-chip"><i class="fas fa-calendar-day"></i> Date: <?= h($viewDate) ?></span>
+      <span class="drv-chip"><i class="fas fa-clock"></i> Day: <?= h($viewDay) ?></span>
+      <span class="drv-chip"><i class="fas fa-bullhorn"></i> Marketing Report</span>
+    </div></div></div>
+    <div class="drv-card"><div class="drv-body"><h4 class="drv-sec">Activity Summary</h4>
+      <div class="drv-table-wrap"><table class="drv-table"><tbody>
+        <tr><th>Fresh Calls</th><td><?= h($activity['fresh_calls'] ?? 0) ?></td><th>Follow Calls</th><td><?= h($activity['follow_calls'] ?? 0) ?></td><th>Messages</th><td><?= h($activity['messages_sent'] ?? 0) ?></td></tr>
+        <tr><th>Mails</th><td><?= h($activity['mails_sent'] ?? 0) ?></td><th>Forum Posting</th><td><?= h($activity['forum_posting'] ?? 0) ?></td><th>Total Calls</th><td><?= h($activity['total_calls'] ?? 0) ?></td></tr>
+        <tr><th>Promotions</th><td><?= h($activity['promotions'] ?? 0) ?></td><th>Reference</th><td><?= h($activity['reference_count'] ?? 0) ?></td><th>DB Calls</th><td><?= h($activity['db_calls'] ?? 0) ?></td></tr>
+        <tr><th>Total Collection</th><td><?= h($activity['total_collection'] ?? '0.00') ?></td><th>Walkins</th><td><?= h($activity['walkins'] ?? 0) ?></td><th>Conversion Ratio</th><td><?= h($activity['conversion_ratio'] ?? '0.00') ?>%</td></tr>
+      </tbody></table></div>
+    </div></div>
+    <?php
+    $sections = [
+        'Hourly Report' => $hourlyRows,
+        'Colleges' => $collegeRows,
+        'Prospect' => $prospectRows,
+        'Act Report' => $actRows,
+        'Amount' => $amountRows,
+        'Programs' => $programRows,
+        'Arts Colleges' => $artsCollegeRows,
+        'Arts PC' => $artsPcRows,
+        'Engg Colleges' => $enggCollegeRows,
+        'Engg PC' => $enggPcRows,
+        'Polytech Colleges' => $polytechRows
+    ];
+    foreach ($sections as $title => $rows): ?>
+      <div class="drv-card"><div class="drv-body"><h4 class="drv-sec"><?= h($title) ?></h4>
+      <?php if (empty($rows)): ?><div class="drv-blank">No rows.</div>
+      <?php else:
+        $ignoreKeys = ['id','master_id','sort_order'];
+        $visibleKeys = [];
+        foreach(array_keys($rows[0]) as $k){
+            if (!in_array($k, $ignoreKeys, true)) $visibleKeys[] = $k;
+        }
+      ?><div class="drv-table-wrap"><table class="drv-table"><thead><tr><th>S.No</th><?php foreach($visibleKeys as $k): ?><th><?= h(ucwords(str_replace('_',' ',$k))) ?></th><?php endforeach; ?></tr></thead><tbody>
+      <?php foreach($rows as $idx => $r): ?><tr><td><?= (int)$idx + 1 ?></td><?php foreach($visibleKeys as $k): ?><td><?php $cell = (string)($r[$k] ?? ''); if ($k === 'created_at' || $k === 'updated_at') $cell = drFmtDateTime($cell); if ($k === 'time_from' || $k === 'time_to') $cell = drFmtTime12($cell); ?><?= h($cell) ?></td><?php endforeach; ?></tr><?php endforeach; ?>
+      </tbody></table></div><?php endif; ?>
+      </div></div>
+    <?php endforeach;
+    return ob_get_clean();
+}
+
 if ($hasMasterTable) {
     if ($canAdvancedFilters) {
         $uq = "SELECT u.id, u.name, COALESCE(r.role_name,'-') AS role_name
@@ -196,10 +249,13 @@ if ($hasMasterTable) {
         $params[] = $userId;
     }
 
+    // Hide unsaved drafts from view list.
+    $where[] = "dm.status IN ('submitted','locked')";
+
     if (!$isSuperAdmin && $branchId > 0) { $where[] = "dm.branch_id = ?"; $params[] = $branchId; }
 
     $sql = "SELECT dm.*, u.name AS user_name, COALESCE(r.role_name,'-') AS role_label, COALESCE(b.branch_name,'-') AS branch_name,
-                   COALESCE(act.total_collection, hr_act.total_collection, 0) AS total_collection_day,
+                   COALESCE(act.total_collection, hr_act.total_collection, mk_act.total_collection, 0) AS total_collection_day,
                    (
                      SELECT COUNT(*)
                      FROM enquiry_followups ef
@@ -213,6 +269,7 @@ if ($hasMasterTable) {
             LEFT JOIN branches b ON b.id = dm.branch_id
             LEFT JOIN dailyreport_frontoffice_activity act ON act.master_id = dm.id
             LEFT JOIN dailyreport_hr_activity hr_act ON hr_act.master_id = dm.id
+            LEFT JOIN dailyreport_marketing_activity mk_act ON mk_act.master_id = dm.id
             WHERE ".implode(' AND ', $where)."
             ORDER BY dm.id DESC";
     $st = $pdo->prepare($sql);
@@ -239,10 +296,21 @@ $hrOldClientRows = [];
 $hrNewClientRows = [];
 $hrCollegeDataRows = [];
 $hrCollegeFollowRows = [];
+$mkCollegeRows = [];
+$mkProspectRows = [];
+$mkActRows = [];
+$mkAmountRows = [];
+$mkProgramRows = [];
+$mkArtsCollegeRows = [];
+$mkArtsPcRows = [];
+$mkEnggCollegeRows = [];
+$mkEnggPcRows = [];
+$mkPolytechRows = [];
 
 if ($selectedMaster) {
     $masterId = (int)$selectedMaster['id'];
     $isHrReport = strtolower((string)($selectedMaster['report_type'] ?? '')) === 'hr';
+    $isMarketingReport = strtolower((string)($selectedMaster['report_type'] ?? '')) === 'marketing';
 
     if ($isHrReport && function_exists('crmTableExists') && crmTableExists($pdo, 'dailyreport_hr_activity')) {
         $q = $pdo->prepare("SELECT * FROM dailyreport_hr_activity WHERE master_id = ? LIMIT 1");
@@ -266,13 +334,55 @@ if ($selectedMaster) {
                 ${$cfg[0]} = $q->fetchAll(PDO::FETCH_ASSOC) ?: [];
             }
         }
+    } elseif ($isMarketingReport && function_exists('crmTableExists') && crmTableExists($pdo, 'dailyreport_marketing_activity')) {
+        $q = $pdo->prepare("SELECT * FROM dailyreport_marketing_activity WHERE master_id = ? LIMIT 1");
+        $q->execute([$masterId]);
+        $activity = $q->fetch(PDO::FETCH_ASSOC) ?: null;
+
+        $mkMap = [
+            'dailyreport_marketing_hourly_rows' => ['hourlyRows', 'sort_order ASC, id ASC'],
+            'dailyreport_marketing_colleges_rows' => ['mkCollegeRows', 'sort_order ASC, id ASC'],
+            'dailyreport_marketing_prospect_rows' => ['mkProspectRows', 'sort_order ASC, id ASC'],
+            'dailyreport_marketing_act_report_rows' => ['mkActRows', 'sort_order ASC, id ASC'],
+            'dailyreport_marketing_amount_rows' => ['mkAmountRows', 'sort_order ASC, id ASC'],
+            'dailyreport_marketing_program_rows' => ['mkProgramRows', 'sort_order ASC, id ASC'],
+            'dailyreport_marketing_arts_college_rows' => ['mkArtsCollegeRows', 'sort_order ASC, id ASC'],
+            'dailyreport_marketing_arts_pc_rows' => ['mkArtsPcRows', 'sort_order ASC, id ASC'],
+            'dailyreport_marketing_engg_college_rows' => ['mkEnggCollegeRows', 'sort_order ASC, id ASC'],
+            'dailyreport_marketing_engg_pc_rows' => ['mkEnggPcRows', 'sort_order ASC, id ASC'],
+            'dailyreport_marketing_polytech_college_rows' => ['mkPolytechRows', 'sort_order ASC, id ASC']
+        ];
+        foreach ($mkMap as $table => $cfg) {
+            if (function_exists('crmTableExists') && crmTableExists($pdo, $table)) {
+                $q = $pdo->prepare("SELECT * FROM {$table} WHERE master_id = ? ORDER BY {$cfg[1]}");
+                $q->execute([$masterId]);
+                ${$cfg[0]} = $q->fetchAll(PDO::FETCH_ASSOC) ?: [];
+            }
+        }
+        if (!empty($mkProspectRows) && function_exists('crmTableExists') && crmTableExists($pdo, 'dailyreport_marketing_prospect_status_rows')) {
+            $ids = array_map(function($r){ return (int)($r['id'] ?? 0); }, $mkProspectRows);
+            $ids = array_values(array_filter($ids));
+            if ($ids) {
+                $ph = implode(',', array_fill(0, count($ids), '?'));
+                $q = $pdo->prepare("SELECT prospect_row_id, status_date, status_text, remarks FROM dailyreport_marketing_prospect_status_rows WHERE prospect_row_id IN ($ph) ORDER BY prospect_row_id ASC, sort_order ASC, id ASC");
+                $q->execute($ids);
+                $tmp = $q->fetchAll(PDO::FETCH_ASSOC) ?: [];
+                $map = [];
+                foreach($tmp as $r){ $map[(int)$r['prospect_row_id']][] = trim((string)$r['status_date']).' '.trim((string)$r['status_text']).' '.trim((string)$r['remarks']); }
+                foreach($mkProspectRows as &$r){
+                    $id=(int)($r['id'] ?? 0);
+                    $r['status_timeline'] = isset($map[$id]) ? implode(' | ', array_filter($map[$id])) : '';
+                }
+                unset($r);
+            }
+        }
     } elseif (function_exists('crmTableExists') && crmTableExists($pdo, 'dailyreport_frontoffice_activity')) {
         $q = $pdo->prepare("SELECT * FROM dailyreport_frontoffice_activity WHERE master_id = ? LIMIT 1");
         $q->execute([$masterId]);
         $activity = $q->fetch(PDO::FETCH_ASSOC) ?: null;
     }
 
-    if (!$isHrReport) {
+    if (!$isHrReport && !$isMarketingReport) {
         if (function_exists('crmTableExists') && crmTableExists($pdo, 'dailyreport_frontoffice_registration_rows')) {
             $q = $pdo->prepare("SELECT * FROM dailyreport_frontoffice_registration_rows WHERE master_id = ? ORDER BY id ASC");
             $q->execute([$masterId]);
@@ -343,6 +453,7 @@ if ($canDownload && isset($_GET['action']) && $_GET['action'] === 'download' && 
     $out .= drViewCsvRow([]);
 
     $isHrDownload = strtolower((string)($selectedMaster['report_type'] ?? '')) === 'hr';
+    $isMarketingDownload = strtolower((string)($selectedMaster['report_type'] ?? '')) === 'marketing';
     if ($isHrDownload) {
         $hrSets = [
             'Hourly Report' => $hourlyRows,
@@ -355,6 +466,33 @@ if ($canDownload && isset($_GET['action']) && $_GET['action'] === 'download' && 
             'College Follow Up' => $hrCollegeFollowRows
         ];
         foreach ($hrSets as $title => $rows) {
+            $out .= drViewCsvRow([$title]);
+            if ($rows) {
+                $out .= drViewCsvRow(array_keys($rows[0]));
+                foreach ($rows as $r) $out .= drViewCsvRow(array_values($r));
+            } else {
+                $out .= drViewCsvRow(['No rows']);
+            }
+            $out .= drViewCsvRow([]);
+        }
+        echo $out;
+        exit;
+    }
+    if ($isMarketingDownload) {
+        $mkSets = [
+            'Hourly Report' => $hourlyRows,
+            'Colleges' => $mkCollegeRows,
+            'Prospect' => $mkProspectRows,
+            'Act Report' => $mkActRows,
+            'Amount' => $mkAmountRows,
+            'Programs' => $mkProgramRows,
+            'Arts Colleges' => $mkArtsCollegeRows,
+            'Arts PC' => $mkArtsPcRows,
+            'Engg Colleges' => $mkEnggCollegeRows,
+            'Engg PC' => $mkEnggPcRows,
+            'Polytech Colleges' => $mkPolytechRows
+        ];
+        foreach ($mkSets as $title => $rows) {
             $out .= drViewCsvRow([$title]);
             if ($rows) {
                 $out .= drViewCsvRow(array_keys($rows[0]));
@@ -412,9 +550,12 @@ if ($canDownload && isset($_GET['action']) && $_GET['action'] === 'download' && 
 
 if (isset($_GET['ajax']) && $_GET['ajax'] === 'details') {
     $isHrAjax = $selectedMaster && strtolower((string)($selectedMaster['report_type'] ?? '')) === 'hr';
+    $isMkAjax = $selectedMaster && strtolower((string)($selectedMaster['report_type'] ?? '')) === 'marketing';
     echo $isHrAjax
         ? drRenderHrViewDetails($selectedMaster, $activity, $hourlyRows, $hrInternRows, $hrInterviewRows, $hrPlacementRows, $hrOldClientRows, $hrNewClientRows, $hrCollegeDataRows, $hrCollegeFollowRows)
-        : drRenderViewDetails($selectedMaster, $activity, $registrationRows, $plannerRows, $hourlyRows, $collegeRows, $dbRows);
+        : ($isMkAjax
+            ? drRenderMarketingViewDetails($selectedMaster, $activity, $hourlyRows, $mkCollegeRows, $mkProspectRows, $mkActRows, $mkAmountRows, $mkProgramRows, $mkArtsCollegeRows, $mkArtsPcRows, $mkEnggCollegeRows, $mkEnggPcRows, $mkPolytechRows)
+            : drRenderViewDetails($selectedMaster, $activity, $registrationRows, $plannerRows, $hourlyRows, $collegeRows, $dbRows));
     exit;
 }
 ?>
@@ -537,16 +678,55 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'details') {
     </div>
 
     <div id="reportDetailContainer">
-      <?php $isHrRender = $selectedMaster && strtolower((string)($selectedMaster['report_type'] ?? '')) === 'hr'; ?>
+      <?php
+        $isHrRender = $selectedMaster && strtolower((string)($selectedMaster['report_type'] ?? '')) === 'hr';
+        $isMkRender = $selectedMaster && strtolower((string)($selectedMaster['report_type'] ?? '')) === 'marketing';
+      ?>
       <?= $isHrRender
         ? drRenderHrViewDetails($selectedMaster, $activity, $hourlyRows, $hrInternRows, $hrInterviewRows, $hrPlacementRows, $hrOldClientRows, $hrNewClientRows, $hrCollegeDataRows, $hrCollegeFollowRows)
-        : drRenderViewDetails($selectedMaster, $activity, $registrationRows, $plannerRows, $hourlyRows, $collegeRows, $dbRows) ?>
+        : ($isMkRender
+          ? drRenderMarketingViewDetails($selectedMaster, $activity, $hourlyRows, $mkCollegeRows, $mkProspectRows, $mkActRows, $mkAmountRows, $mkProgramRows, $mkArtsCollegeRows, $mkArtsPcRows, $mkEnggCollegeRows, $mkEnggPcRows, $mkPolytechRows)
+          : drRenderViewDetails($selectedMaster, $activity, $registrationRows, $plannerRows, $hourlyRows, $collegeRows, $dbRows)) ?>
     </div>
   <?php endif; ?>
 </div>
 
 <script>
 document.addEventListener('DOMContentLoaded', function(){
+  function drAjaxSwap(url){
+    const main = document.querySelector('.main-content');
+    if(!main){ window.location.href = url; return; }
+    const u = new URL(url, window.location.href);
+    u.searchParams.set('ajax', '1');
+    main.innerHTML = '<div class="drv-card"><div class="drv-body"><div class="drv-blank">Loading...</div></div></div>';
+    fetch(u.toString(), { headers: { 'X-Requested-With':'XMLHttpRequest' } })
+      .then(function(r){ return r.text(); })
+      .then(function(html){
+        const tmp = document.createElement('div');
+        tmp.innerHTML = html;
+        main.innerHTML = tmp.innerHTML;
+        const scripts = Array.from(main.querySelectorAll('script'));
+        scripts.forEach(function(old){
+          const s = document.createElement('script');
+          if (old.src) { s.src = old.src; s.async = false; } else { s.textContent = old.textContent; }
+          document.body.appendChild(s);
+          old.remove();
+          setTimeout(function(){ try { s.remove(); } catch(e) {} }, 0);
+        });
+        window.history.replaceState({}, '', url);
+      })
+      .catch(function(){ window.location.href = url; });
+  }
+  const filterForm = document.querySelector('.drv-card form[action="index.php"]');
+  if (filterForm) {
+    filterForm.addEventListener('submit', function(e){
+      e.preventDefault();
+      const fd = new FormData(filterForm);
+      const p = new URLSearchParams();
+      fd.forEach(function(v,k){ p.append(k, v); });
+      drAjaxSwap('index.php?' + p.toString());
+    });
+  }
   if (typeof crmDataTable === 'function' && document.getElementById('savedReportsTable')) {
     crmDataTable('#savedReportsTable', {
       pageLength: 10,
