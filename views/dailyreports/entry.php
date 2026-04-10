@@ -3,6 +3,13 @@
 if (!defined('APP_NAME')) die('Unauthorized access.');
 if (!function_exists('h')) { function h($v){ return htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8'); } }
 
+$__drRoleName = strtolower(trim((string)($_SESSION['role_name'] ?? '')));
+$__drRequestedType = strtolower(trim((string)($_GET['report_type'] ?? '')));
+if ($__drRoleName === 'hr' || ($__drRoleName === 'super admin' && $__drRequestedType === 'hr')) {
+  require __DIR__ . '/entry_hr.php';
+  return;
+}
+
 function drInt($v){ return max(0, (int)$v); }
 function drDec($v){ return number_format((float)$v, 2, '.', ''); }
 function drText($v){ return trim((string)$v); }
@@ -237,7 +244,7 @@ if($_SERVER['REQUEST_METHOD']==='POST' && isset($_POST['save_all_report']) && em
   $p['total_calls']=$p['fresh_calls']+$p['follow_calls']+$p['messages_sent']+$p['mails_sent'];
   $p['registration_total']=$p['promotions']+$p['reference_count']+$p['db_calls'];
   $p['total_collection']=drDec(((float)$p['fresh_collection'])+((float)$p['old_collection']));
-  $p['conversion_ratio']=$p['walkins']>0?drDec(($p['registration_total']/$p['walkins'])*100):'0.00';
+  $p['conversion_ratio']=$p['total_calls']>0?drDec(($p['registration_total']/$p['total_calls'])*100):'0.00';
 
   try{
     $pdo->beginTransaction();
@@ -343,7 +350,7 @@ if($_SERVER['REQUEST_METHOD']==='POST' && isset($_POST['save_all_report']) && em
 
   function n(id){const e=document.getElementById(id); if(!e) return 0; const v=parseFloat(e.value||'0'); return isNaN(v)?0:v;}
   function set(id,val,d){const e=document.getElementById(id); if(!e) return; e.value=(typeof d==='number')?Number(val).toFixed(d):String(Math.max(0,Math.round(val)));}
-  function calc(){const tc=n('fresh_calls')+n('follow_calls')+n('messages_sent')+n('mails_sent'); set('total_calls',tc); const rt=n('promotions')+n('reference_count')+n('db_calls'); set('registration_total',rt); set('total_collection',n('fresh_collection')+n('old_collection'),2); const w=n('walkins'); set('conversion_ratio',w>0?(rt/w)*100:0,2);}
+  function calc(){const tc=n('fresh_calls')+n('follow_calls')+n('messages_sent')+n('mails_sent'); set('total_calls',tc); const rt=n('promotions')+n('reference_count')+n('db_calls'); set('registration_total',rt); set('total_collection',n('fresh_collection')+n('old_collection'),2); set('conversion_ratio',tc>0?(rt/tc)*100:0,2);}
   ['fresh_calls','follow_calls','messages_sent','mails_sent','promotions','reference_count','db_calls','fresh_collection','old_collection','walkins'].forEach(id=>{const e=document.getElementById(id); if(e){e.addEventListener('input',calc);e.addEventListener('change',calc);}}); calc();
 
   function renumberSerialColumn(tbodyId, inputName){

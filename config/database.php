@@ -27,6 +27,8 @@ $options = [
 try {
     $pdo = new PDO($dsn, $username, $password, $options);
 	$pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    // Ensure MySQL NOW()/CURRENT_TIMESTAMP use IST consistently.
+    $pdo->exec("SET time_zone = '+05:30'");
 } catch (PDOException $e) {
     // Do NOT show raw error in production
     die("Database connection failed. Please contact administrator.");

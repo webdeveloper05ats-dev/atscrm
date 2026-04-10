@@ -1,6 +1,24 @@
 <?php
 if (!defined('APP_NAME')) die('Unauthorized access.');
 if (!function_exists('h')) { function h($v){ return htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8'); } }
+if (!function_exists('drFmtDateTime')) {
+    function drFmtDateTime($v){
+        $s = trim((string)$v);
+        if ($s === '' || $s === '0000-00-00 00:00:00') return '';
+        $ts = strtotime($s);
+        if ($ts === false) return $s;
+        return date('d-m-Y h:i A', $ts);
+    }
+}
+if (!function_exists('drFmtTime12')) {
+    function drFmtTime12($v){
+        $s = trim((string)$v);
+        if ($s === '') return '';
+        $ts = strtotime($s);
+        if ($ts === false) return $s;
+        return date('h:i A', $ts);
+    }
+}
 
 $userId = (int)($_SESSION['user_id'] ?? 0);
 $branchId = (int)($_SESSION['branch_id'] ?? 0);
@@ -96,6 +114,61 @@ function drRenderViewDetails($selectedMaster, $activity, $registrationRows, $pla
     return ob_get_clean();
 }
 
+function drRenderHrViewDetails($selectedMaster, $activity, $hourlyRows, $internRows, $interviewRows, $placementRows, $oldClientRows, $newClientRows, $collegeDataRows, $collegeFollowRows): string {
+    ob_start();
+    if (!$selectedMaster) {
+        echo '<div class="drv-card"><div class="drv-body"><div class="drv-blank">Click <b>View</b> in the table to load report sections.</div></div></div>';
+        return ob_get_clean();
+    }
+    $viewDate = (string)($selectedMaster['report_date'] ?? '');
+    $viewDay = $viewDate !== '' ? date('l', strtotime($viewDate)) : '-';
+    ?>
+    <div class="drv-card"><div class="drv-body"><div class="drv-context">
+      <span class="drv-chip"><i class="fas fa-calendar-day"></i> Date: <?= h($viewDate) ?></span>
+      <span class="drv-chip"><i class="fas fa-clock"></i> Day: <?= h($viewDay) ?></span>
+      <span class="drv-chip"><i class="fas fa-user"></i> HR Report</span>
+    </div></div></div>
+    <div class="drv-card"><div class="drv-body"><h4 class="drv-sec">Activity Summary</h4>
+      <div class="drv-table-wrap"><table class="drv-table"><tbody>
+        <tr><th>Fresh Calls</th><td><?= h($activity['fresh_calls'] ?? 0) ?></td><th>Follow Calls</th><td><?= h($activity['follow_calls'] ?? 0) ?></td><th>Messages</th><td><?= h($activity['messages_sent'] ?? 0) ?></td></tr>
+        <tr><th>Mails</th><td><?= h($activity['mails_sent'] ?? 0) ?></td><th>Forum Posting</th><td><?= h($activity['forum_posting'] ?? 0) ?></td><th>Total Calls</th><td><?= h($activity['total_calls'] ?? 0) ?></td></tr>
+        <tr><th>Promotions</th><td><?= h($activity['promotions'] ?? 0) ?></td><th>Reference</th><td><?= h($activity['reference_count'] ?? 0) ?></td><th>DB Calls</th><td><?= h($activity['db_calls'] ?? 0) ?></td></tr>
+        <tr><th>Total Collection</th><td><?= h($activity['total_collection'] ?? '0.00') ?></td><th>Walkins</th><td><?= h($activity['walkins'] ?? 0) ?></td><th>Conversion Ratio</th><td><?= h($activity['conversion_ratio'] ?? '0.00') ?>%</td></tr>
+      </tbody></table></div>
+    </div></div>
+    <?php
+    $sections = [
+        'Hourly Report' => $hourlyRows,
+        'Internship' => $internRows,
+        'Interview Data' => $interviewRows,
+        'Placement Calls' => $placementRows,
+        'Old Clients' => $oldClientRows,
+        'New Clients' => $newClientRows,
+        'College Data' => $collegeDataRows,
+        'College Follow Up' => $collegeFollowRows
+    ];
+    foreach ($sections as $title => $rows): ?>
+      <div class="drv-card"><div class="drv-body"><h4 class="drv-sec"><?= h($title) ?></h4>
+      <?php if (empty($rows)): ?><div class="drv-blank">No rows.</div>
+      <?php else:
+        $ignoreKeys = ['id','master_id','sort_order','serial_no'];
+        for($i=1;$i<=12;$i++){
+            $ignoreKeys[] = 'day_'.$i;
+            $ignoreKeys[] = 'date_'.$i;
+            $ignoreKeys[] = 'topic_'.$i;
+        }
+        $visibleKeys = [];
+        foreach(array_keys($rows[0]) as $k){
+            if (!in_array($k, $ignoreKeys, true)) $visibleKeys[] = $k;
+        }
+      ?><div class="drv-table-wrap"><table class="drv-table"><thead><tr><th>S.No</th><?php foreach($visibleKeys as $k): ?><th><?= h(ucwords(str_replace('_',' ',$k))) ?></th><?php endforeach; ?></tr></thead><tbody>
+      <?php foreach($rows as $idx => $r): ?><tr><td><?= (int)$idx + 1 ?></td><?php foreach($visibleKeys as $k): ?><td><?php $cell = (string)($r[$k] ?? ''); if ($k === 'created_at' || $k === 'updated_at') $cell = drFmtDateTime($cell); if ($k === 'time_from' || $k === 'time_to') $cell = drFmtTime12($cell); ?><?= h($cell) ?></td><?php endforeach; ?></tr><?php endforeach; ?>
+      </tbody></table></div><?php endif; ?>
+      </div></div>
+    <?php endforeach;
+    return ob_get_clean();
+}
+
 if ($hasMasterTable) {
     if ($canAdvancedFilters) {
         $uq = "SELECT u.id, u.name, COALESCE(r.role_name,'-') AS role_name
@@ -126,7 +199,7 @@ if ($hasMasterTable) {
     if (!$isSuperAdmin && $branchId > 0) { $where[] = "dm.branch_id = ?"; $params[] = $branchId; }
 
     $sql = "SELECT dm.*, u.name AS user_name, COALESCE(r.role_name,'-') AS role_label, COALESCE(b.branch_name,'-') AS branch_name,
-                   COALESCE(act.total_collection, 0) AS total_collection_day,
+                   COALESCE(act.total_collection, hr_act.total_collection, 0) AS total_collection_day,
                    (
                      SELECT COUNT(*)
                      FROM enquiry_followups ef
@@ -139,6 +212,7 @@ if ($hasMasterTable) {
             LEFT JOIN roles r ON r.id = dm.role_id
             LEFT JOIN branches b ON b.id = dm.branch_id
             LEFT JOIN dailyreport_frontoffice_activity act ON act.master_id = dm.id
+            LEFT JOIN dailyreport_hr_activity hr_act ON hr_act.master_id = dm.id
             WHERE ".implode(' AND ', $where)."
             ORDER BY dm.id DESC";
     $st = $pdo->prepare($sql);
@@ -158,58 +232,90 @@ $plannerRows = [];
 $hourlyRows = [];
 $collegeRows = [];
 $dbRows = [];
+$hrInternRows = [];
+$hrInterviewRows = [];
+$hrPlacementRows = [];
+$hrOldClientRows = [];
+$hrNewClientRows = [];
+$hrCollegeDataRows = [];
+$hrCollegeFollowRows = [];
 
 if ($selectedMaster) {
     $masterId = (int)$selectedMaster['id'];
+    $isHrReport = strtolower((string)($selectedMaster['report_type'] ?? '')) === 'hr';
 
-    if (function_exists('crmTableExists') && crmTableExists($pdo, 'dailyreport_frontoffice_activity')) {
+    if ($isHrReport && function_exists('crmTableExists') && crmTableExists($pdo, 'dailyreport_hr_activity')) {
+        $q = $pdo->prepare("SELECT * FROM dailyreport_hr_activity WHERE master_id = ? LIMIT 1");
+        $q->execute([$masterId]);
+        $activity = $q->fetch(PDO::FETCH_ASSOC) ?: null;
+
+        $map = [
+            'dailyreport_hr_hourly_rows' => ['hourlyRows', 'sort_order ASC, id ASC'],
+            'dailyreport_hr_internship_rows' => ['hrInternRows', 'id ASC'],
+            'dailyreport_hr_interview_rows' => ['hrInterviewRows', 'sort_order ASC, id ASC'],
+            'dailyreport_hr_placement_call_rows' => ['hrPlacementRows', 'sort_order ASC, id ASC'],
+            'dailyreport_hr_old_client_rows' => ['hrOldClientRows', 'id ASC'],
+            'dailyreport_hr_new_client_rows' => ['hrNewClientRows', 'sort_order ASC, id ASC'],
+            'dailyreport_hr_college_data_rows' => ['hrCollegeDataRows', 'id ASC'],
+            'dailyreport_hr_college_followup_rows' => ['hrCollegeFollowRows', 'sort_order ASC, id ASC']
+        ];
+        foreach ($map as $table => $cfg) {
+            if (function_exists('crmTableExists') && crmTableExists($pdo, $table)) {
+                $q = $pdo->prepare("SELECT * FROM {$table} WHERE master_id = ? ORDER BY {$cfg[1]}");
+                $q->execute([$masterId]);
+                ${$cfg[0]} = $q->fetchAll(PDO::FETCH_ASSOC) ?: [];
+            }
+        }
+    } elseif (function_exists('crmTableExists') && crmTableExists($pdo, 'dailyreport_frontoffice_activity')) {
         $q = $pdo->prepare("SELECT * FROM dailyreport_frontoffice_activity WHERE master_id = ? LIMIT 1");
         $q->execute([$masterId]);
         $activity = $q->fetch(PDO::FETCH_ASSOC) ?: null;
     }
 
-    if (function_exists('crmTableExists') && crmTableExists($pdo, 'dailyreport_frontoffice_registration_rows')) {
-        $q = $pdo->prepare("SELECT * FROM dailyreport_frontoffice_registration_rows WHERE master_id = ? ORDER BY id ASC");
-        $q->execute([$masterId]);
-        $registrationRows = $q->fetchAll(PDO::FETCH_ASSOC) ?: [];
-    }
+    if (!$isHrReport) {
+        if (function_exists('crmTableExists') && crmTableExists($pdo, 'dailyreport_frontoffice_registration_rows')) {
+            $q = $pdo->prepare("SELECT * FROM dailyreport_frontoffice_registration_rows WHERE master_id = ? ORDER BY id ASC");
+            $q->execute([$masterId]);
+            $registrationRows = $q->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        }
 
-    if (function_exists('crmTableExists') && crmTableExists($pdo, 'dailyreport_frontoffice_planner_rows')) {
-        $q = $pdo->prepare("SELECT * FROM dailyreport_frontoffice_planner_rows WHERE master_id = ? ORDER BY sort_order ASC, id ASC");
-        $q->execute([$masterId]);
-        $plannerRows = $q->fetchAll(PDO::FETCH_ASSOC) ?: [];
-    }
+        if (function_exists('crmTableExists') && crmTableExists($pdo, 'dailyreport_frontoffice_planner_rows')) {
+            $q = $pdo->prepare("SELECT * FROM dailyreport_frontoffice_planner_rows WHERE master_id = ? ORDER BY sort_order ASC, id ASC");
+            $q->execute([$masterId]);
+            $plannerRows = $q->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        }
 
-    if (function_exists('crmTableExists') && crmTableExists($pdo, 'dailyreport_frontoffice_hourly_rows')) {
-        $q = $pdo->prepare("SELECT * FROM dailyreport_frontoffice_hourly_rows WHERE master_id = ? ORDER BY sort_order ASC, id ASC");
-        $q->execute([$masterId]);
-        $hourlyRows = $q->fetchAll(PDO::FETCH_ASSOC) ?: [];
-    }
+        if (function_exists('crmTableExists') && crmTableExists($pdo, 'dailyreport_frontoffice_hourly_rows')) {
+            $q = $pdo->prepare("SELECT * FROM dailyreport_frontoffice_hourly_rows WHERE master_id = ? ORDER BY sort_order ASC, id ASC");
+            $q->execute([$masterId]);
+            $hourlyRows = $q->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        }
 
-    if (function_exists('crmTableExists') && crmTableExists($pdo, 'dailyreport_frontoffice_college_followup_rows')) {
-        $q = $pdo->prepare("
-            SELECT c.*,
-                   (SELECT s.status_date FROM dailyreport_frontoffice_college_followup_status s WHERE s.followup_row_id = c.id ORDER BY s.id DESC LIMIT 1) AS status_date,
-                   (SELECT s.status_text FROM dailyreport_frontoffice_college_followup_status s WHERE s.followup_row_id = c.id ORDER BY s.id DESC LIMIT 1) AS status_text
-            FROM dailyreport_frontoffice_college_followup_rows c
-            WHERE c.master_id = ?
-            ORDER BY c.sort_order ASC, c.id ASC
-        ");
-        $q->execute([$masterId]);
-        $collegeRows = $q->fetchAll(PDO::FETCH_ASSOC) ?: [];
-    }
+        if (function_exists('crmTableExists') && crmTableExists($pdo, 'dailyreport_frontoffice_college_followup_rows')) {
+            $q = $pdo->prepare("
+                SELECT c.*,
+                       (SELECT s.status_date FROM dailyreport_frontoffice_college_followup_status s WHERE s.followup_row_id = c.id ORDER BY s.id DESC LIMIT 1) AS status_date,
+                       (SELECT s.status_text FROM dailyreport_frontoffice_college_followup_status s WHERE s.followup_row_id = c.id ORDER BY s.id DESC LIMIT 1) AS status_text
+                FROM dailyreport_frontoffice_college_followup_rows c
+                WHERE c.master_id = ?
+                ORDER BY c.sort_order ASC, c.id ASC
+            ");
+            $q->execute([$masterId]);
+            $collegeRows = $q->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        }
 
-    if (function_exists('crmTableExists') && crmTableExists($pdo, 'dailyreport_frontoffice_database_followup_rows')) {
-        $q = $pdo->prepare("
-            SELECT d.*,
-                   (SELECT s.status_date FROM dailyreport_frontoffice_database_followup_status s WHERE s.database_row_id = d.id ORDER BY s.id DESC LIMIT 1) AS status_date,
-                   (SELECT s.status_text FROM dailyreport_frontoffice_database_followup_status s WHERE s.database_row_id = d.id ORDER BY s.id DESC LIMIT 1) AS status_text
-            FROM dailyreport_frontoffice_database_followup_rows d
-            WHERE d.master_id = ?
-            ORDER BY d.sort_order ASC, d.id ASC
-        ");
-        $q->execute([$masterId]);
-        $dbRows = $q->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        if (function_exists('crmTableExists') && crmTableExists($pdo, 'dailyreport_frontoffice_database_followup_rows')) {
+            $q = $pdo->prepare("
+                SELECT d.*,
+                       (SELECT s.status_date FROM dailyreport_frontoffice_database_followup_status s WHERE s.database_row_id = d.id ORDER BY s.id DESC LIMIT 1) AS status_date,
+                       (SELECT s.status_text FROM dailyreport_frontoffice_database_followup_status s WHERE s.database_row_id = d.id ORDER BY s.id DESC LIMIT 1) AS status_text
+                FROM dailyreport_frontoffice_database_followup_rows d
+                WHERE d.master_id = ?
+                ORDER BY d.sort_order ASC, d.id ASC
+            ");
+            $q->execute([$masterId]);
+            $dbRows = $q->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        }
     }
 }
 
@@ -235,6 +341,32 @@ if ($canDownload && isset($_GET['action']) && $_GET['action'] === 'download' && 
         $out .= drViewCsvRow(['No activity data']);
     }
     $out .= drViewCsvRow([]);
+
+    $isHrDownload = strtolower((string)($selectedMaster['report_type'] ?? '')) === 'hr';
+    if ($isHrDownload) {
+        $hrSets = [
+            'Hourly Report' => $hourlyRows,
+            'Internship' => $hrInternRows,
+            'Interview Data' => $hrInterviewRows,
+            'Placement Calls' => $hrPlacementRows,
+            'Old Clients' => $hrOldClientRows,
+            'New Clients' => $hrNewClientRows,
+            'College Data' => $hrCollegeDataRows,
+            'College Follow Up' => $hrCollegeFollowRows
+        ];
+        foreach ($hrSets as $title => $rows) {
+            $out .= drViewCsvRow([$title]);
+            if ($rows) {
+                $out .= drViewCsvRow(array_keys($rows[0]));
+                foreach ($rows as $r) $out .= drViewCsvRow(array_values($r));
+            } else {
+                $out .= drViewCsvRow(['No rows']);
+            }
+            $out .= drViewCsvRow([]);
+        }
+        echo $out;
+        exit;
+    }
 
     $out .= drViewCsvRow(['Registration']);
     $out .= drViewCsvRow(['S.No','Name','Department','Contact','College','Date','Course','Billing','Collection','Balance','Mode']);
@@ -279,7 +411,10 @@ if ($canDownload && isset($_GET['action']) && $_GET['action'] === 'download' && 
 }
 
 if (isset($_GET['ajax']) && $_GET['ajax'] === 'details') {
-    echo drRenderViewDetails($selectedMaster, $activity, $registrationRows, $plannerRows, $hourlyRows, $collegeRows, $dbRows);
+    $isHrAjax = $selectedMaster && strtolower((string)($selectedMaster['report_type'] ?? '')) === 'hr';
+    echo $isHrAjax
+        ? drRenderHrViewDetails($selectedMaster, $activity, $hourlyRows, $hrInternRows, $hrInterviewRows, $hrPlacementRows, $hrOldClientRows, $hrNewClientRows, $hrCollegeDataRows, $hrCollegeFollowRows)
+        : drRenderViewDetails($selectedMaster, $activity, $registrationRows, $plannerRows, $hourlyRows, $collegeRows, $dbRows);
     exit;
 }
 ?>
@@ -402,7 +537,10 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'details') {
     </div>
 
     <div id="reportDetailContainer">
-      <?= drRenderViewDetails($selectedMaster, $activity, $registrationRows, $plannerRows, $hourlyRows, $collegeRows, $dbRows) ?>
+      <?php $isHrRender = $selectedMaster && strtolower((string)($selectedMaster['report_type'] ?? '')) === 'hr'; ?>
+      <?= $isHrRender
+        ? drRenderHrViewDetails($selectedMaster, $activity, $hourlyRows, $hrInternRows, $hrInterviewRows, $hrPlacementRows, $hrOldClientRows, $hrNewClientRows, $hrCollegeDataRows, $hrCollegeFollowRows)
+        : drRenderViewDetails($selectedMaster, $activity, $registrationRows, $plannerRows, $hourlyRows, $collegeRows, $dbRows) ?>
     </div>
   <?php endif; ?>
 </div>
