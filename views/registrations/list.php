@@ -144,76 +144,150 @@ if (!function_exists('buildPaymentReceiptAttachmentHtml')) {
   {
     $orgName = (string) ($context['org_name'] ?? APP_NAME);
     $studentName = (string) ($context['student_name'] ?? '-');
+    $studentPhone = (string) ($context['student_phone'] ?? '-');
+    $studentEmail = (string) ($context['student_email'] ?? '-');
     $registrationNo = (string) ($context['registration_no'] ?? '-');
     $programName = (string) ($context['program_name'] ?? '-');
+    $batchName = (string) ($context['batch_name'] ?? '-');
     $receiptNo = (string) ($context['receipt_no'] ?? '-');
     $paymentDate = (string) ($context['payment_date'] ?? '-');
     $paymentMode = (string) ($context['payment_mode'] ?? '-');
-    $paymentType = (string) ($context['payment_type'] ?? '-');
     $amount = (float) ($context['amount'] ?? 0);
-    $paidAmount = (float) ($context['paid_amount'] ?? 0);
-    $balanceAmount = (float) ($context['balance_amount'] ?? 0);
-    $paymentStatus = (string) ($context['payment_status'] ?? '-');
     $referenceNo = (string) ($context['reference_no'] ?? '-');
     $collectedBy = (string) ($context['collected_by'] ?? '-');
-    $ownerName = (string) ($context['owner_name'] ?? '-');
+    $remarks = trim((string) ($context['remarks'] ?? ''));
+    $moneyBig = 'Rs ' . number_format($amount, 2);
 
     return '<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Payment Receipt</title>
   <style>
-    body{font-family:Arial,sans-serif;color:#111827;background:#fff;margin:24px;}
-    .card{max-width:780px;margin:0 auto;border:1px solid #e5e7eb;border-radius:16px;overflow:hidden;}
-    .head{background:#fdf2f8;padding:20px 24px;border-bottom:1px solid #fbcfe8;}
-    .title{font-size:24px;font-weight:700;color:#be185d;margin:0 0 6px;}
-    .sub{font-size:13px;color:#6b7280;}
-    .body{padding:24px;}
-    .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
-    .box{border:1px solid #e5e7eb;border-radius:12px;padding:14px;}
-    .box h3{margin:0 0 12px;font-size:15px;color:#be185d;}
-    .row{display:flex;justify-content:space-between;gap:16px;padding:6px 0;border-bottom:1px solid #f3f4f6;}
+    @page{size:A4 portrait;margin:12mm;}
+    *{box-sizing:border-box;}
+    body{margin:0;padding:0;background:#ffffff;color:#1f2937;font-family:Poppins,Segoe UI,Arial,sans-serif;}
+    .shell{max-width:186mm;margin:0 auto;padding:0;}
+    .card{background:#fff;border:1px solid #e7d9df;border-radius:18px;overflow:hidden;}
+    .hero{padding:18px 20px 16px;background:linear-gradient(180deg,#fff7fa 0%,#ffffff 100%);border-bottom:1px solid #eadde3;page-break-inside:avoid;}
+    .kicker{display:inline-block;padding:6px 10px;border-radius:999px;background:#fff;border:1px solid #eadde3;font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#be185d;margin-bottom:10px;}
+    .title{font-size:24px;font-weight:800;color:#be185d;margin:0 0 6px;}
+    .sub{font-size:12px;color:#6b7280;line-height:1.6;}
+    .hero-grid{display:table;width:100%;table-layout:fixed;}
+    .hero-copy,.hero-amount{display:table-cell;vertical-align:bottom;}
+    .hero-amount{width:180px;padding-left:14px;}
+    .money-card{padding:14px;border-radius:14px;background:#fff;border:1px solid #eadde3;text-align:center;}
+    .money-big{font-size:28px;line-height:1.1;font-weight:800;color:#be185d;margin:0 0 4px;}
+    .money-sub{font-size:11px;color:#7b8190;}
+    .body{padding:18px 20px 16px;}
+    .meta-strip{margin:0 0 14px;}
+    .chip{display:inline-block;margin:0 8px 8px 0;padding:7px 10px;border-radius:999px;background:#fff4f7;border:1px solid #eed6df;color:#be185d;font-size:10px;font-weight:800;letter-spacing:.03em;text-transform:uppercase;}
+    .section{margin-bottom:14px;border:1px solid #eadde3;border-radius:14px;background:#fff;page-break-inside:avoid;break-inside:avoid;}
+    .section-title{padding:12px 14px;border-bottom:1px solid #efe5e9;font-size:14px;font-weight:800;color:#be185d;background:#fff9fb;}
+    .section-body{padding:0 14px 4px;}
+    .row{display:table;width:100%;table-layout:fixed;border-bottom:1px solid #f3ebee;}
     .row:last-child{border-bottom:none;}
-    .label{font-weight:600;color:#6b7280;}
-    .value{font-weight:700;color:#111827;text-align:right;}
-    .full{grid-column:1 / -1;}
+    .label,.value{display:table-cell;padding:10px 0;vertical-align:top;}
+    .label{width:38%;font-weight:700;color:#6b7280;padding-right:14px;}
+    .value{font-weight:800;color:#111827;text-align:right;word-break:break-word;}
+    .note{margin:0 0 14px;padding:14px;border:1px solid #eadde3;border-radius:14px;background:#fff9fb;color:#6b7280;font-size:12px;line-height:1.7;page-break-inside:avoid;break-inside:avoid;}
+    .footer{padding:0 20px 18px;}
+    .footer-card{padding:14px;border-radius:14px;background:#faf7f8;border:1px solid #eadde3;font-size:11px;line-height:1.7;color:#7b8190;page-break-inside:avoid;break-inside:avoid;}
+    @media print{
+      html,body{background:#fff !important;}
+      .shell{max-width:none;width:100%;}
+      .card,.section,.note,.footer-card,.hero{page-break-inside:avoid;break-inside:avoid;}
+    }
   </style>
 </head>
 <body>
-  <div class="card">
-    <div class="head">
-      <div class="title">' . h($orgName) . ' Payment Receipt</div>
-      <div class="sub">Receipt No: <b>' . h($receiptNo) . '</b> | Payment Date: <b>' . h($paymentDate) . '</b></div>
-    </div>
-    <div class="body">
-      <div class="grid">
-        <div class="box">
-          <h3>Student Details</h3>
-          <div class="row"><div class="label">Student</div><div class="value">' . h($studentName) . '</div></div>
-          <div class="row"><div class="label">Registration No</div><div class="value">' . h($registrationNo) . '</div></div>
-          <div class="row"><div class="label">Program</div><div class="value">' . h($programName) . '</div></div>
+  <div class="shell">
+    <div class="card">
+      <div class="hero">
+        <div class="hero-grid">
+          <div class="hero-copy">
+            <div class="kicker">Payment Receipt</div>
+            <div class="title">' . h($orgName) . '</div>
+            <div class="sub">Receipt No: <b>' . h($receiptNo) . '</b><br>Payment Date: <b>' . h($paymentDate) . '</b><br>Reference No: <b>' . h($referenceNo) . '</b></div>
+          </div>
+          <div class="hero-amount">
+            <div class="money-card">
+              <div class="money-big">' . h($moneyBig) . '</div>
+              <div class="money-sub">Amount received in this transaction</div>
+            </div>
+          </div>
         </div>
-        <div class="box">
-          <h3>Payment Details</h3>
-          <div class="row"><div class="label">Amount</div><div class="value">Rs ' . h(number_format($amount, 2)) . '</div></div>
-          <div class="row"><div class="label">Mode</div><div class="value">' . h($paymentMode) . '</div></div>
-          <div class="row"><div class="label">Type</div><div class="value">' . h(ucfirst($paymentType)) . '</div></div>
-          <div class="row"><div class="label">Reference No</div><div class="value">' . h($referenceNo) . '</div></div>
+      </div>
+      <div class="body">
+        <div class="meta-strip">
+          <div class="chip">' . h(ucfirst($paymentMode)) . '</div>
+          <div class="chip">' . h($moneyBig) . '</div>
         </div>
-        <div class="box full">
-          <h3>Fee Summary</h3>
-          <div class="row"><div class="label">Total Paid</div><div class="value">Rs ' . h(number_format($paidAmount, 2)) . '</div></div>
-          <div class="row"><div class="label">Balance</div><div class="value">Rs ' . h(number_format($balanceAmount, 2)) . '</div></div>
-          <div class="row"><div class="label">Payment Status</div><div class="value">' . h(ucfirst($paymentStatus)) . '</div></div>
-          <div class="row"><div class="label">Collected By</div><div class="value">' . h($collectedBy) . '</div></div>
-          <div class="row"><div class="label">Owner</div><div class="value">' . h($ownerName) . '</div></div>
+        <div class="section">
+          <div class="section-title">Student Details</div>
+          <div class="section-body">
+            <div class="row"><div class="label">Student</div><div class="value">' . h($studentName) . '</div></div>
+            <div class="row"><div class="label">Phone</div><div class="value">' . h($studentPhone) . '</div></div>
+            <div class="row"><div class="label">Email</div><div class="value">' . h($studentEmail) . '</div></div>
+            <div class="row"><div class="label">Registration No</div><div class="value">' . h($registrationNo) . '</div></div>
+          </div>
+        </div>
+        <div class="section">
+          <div class="section-title">Course Details</div>
+          <div class="section-body">
+            <div class="row"><div class="label">Program</div><div class="value">' . h($programName) . '</div></div>
+            <div class="row"><div class="label">Batch</div><div class="value">' . h($batchName) . '</div></div>
+          </div>
+        </div>
+        <div class="section">
+          <div class="section-title">Collection Details</div>
+          <div class="section-body">
+            <div class="row"><div class="label">Receipt No</div><div class="value">' . h($receiptNo) . '</div></div>
+            <div class="row"><div class="label">Collected By</div><div class="value">' . h($collectedBy) . '</div></div>
+            ' . ($referenceNo !== '' && $referenceNo !== '-' ? '<div class="row"><div class="label">Reference No</div><div class="value">' . h($referenceNo) . '</div></div>' : '') . '
+          </div>
+        </div>
+        <div class="note">This receipt reflects only the current payment transaction recorded for this registration. Previous payments are intentionally not included in this mailed copy.</div>'
+        . ($remarks !== '' ? '
+        <div class="note"><strong style="color:#2f1c28;">Remarks:</strong><br>' . nl2br(h($remarks)) . '</div>' : '') . '
+      </div>
+      <div class="footer">
+        <div class="footer-card">
+          This receipt copy was generated by ' . h($orgName) . '. Please keep it for your records.
         </div>
       </div>
     </div>
   </div>
 </body>
 </html>';
+  }
+}
+if (!function_exists('buildPaymentReceiptAttachmentPdf')) {
+  function buildPaymentReceiptAttachmentPdf(array $context): ?string
+  {
+    $autoloadPath = dirname(__DIR__, 2) . DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR . 'autoload.php';
+    if (!class_exists(\Dompdf\Dompdf::class) && is_file($autoloadPath)) {
+      require_once $autoloadPath;
+    }
+
+    if (!class_exists(\Dompdf\Dompdf::class)) {
+      return null;
+    }
+
+    try {
+      $dompdf = new \Dompdf\Dompdf([
+        'isRemoteEnabled' => false,
+        'isHtml5ParserEnabled' => true,
+        'defaultFont' => 'DejaVu Sans',
+      ]);
+      $dompdf->loadHtml(buildPaymentReceiptAttachmentHtml($context), 'UTF-8');
+      $dompdf->setPaper('A4', 'portrait');
+      $dompdf->render();
+      return $dompdf->output();
+    } catch (Throwable $e) {
+      return null;
+    }
   }
 }
 
@@ -1217,6 +1291,19 @@ if (isset($_POST['add_payment'])) {
         $studentDisplayName = trim((string) ($reg['enquiry_snapshot_name'] ?? 'Student'));
         $parentDisplayName = trim((string) ($reg['parent_name'] ?? '')) !== '' ? trim((string) ($reg['parent_name'] ?? '')) : 'Parent';
         $teacherDisplayName = trim((string) ($reg['guide_name'] ?? '')) !== '' ? trim((string) ($reg['guide_name'] ?? '')) : trim((string) ($reg['owner_name'] ?? ''));
+        $collectedByName = trim((string) ($_SESSION['full_name'] ?? $_SESSION['name'] ?? $_SESSION['username'] ?? ''));
+        if ($collectedByName === '' && $userId > 0) {
+          try {
+            $collectedByStmt = $pdo->prepare("SELECT name FROM users WHERE id = ? LIMIT 1");
+            $collectedByStmt->execute([$userId]);
+            $collectedByName = trim((string) ($collectedByStmt->fetchColumn() ?? ''));
+          } catch (Exception $e) {
+            $collectedByName = '';
+          }
+        }
+        if ($collectedByName === '') {
+          $collectedByName = 'Staff';
+        }
         $recipients = [
           ['email' => $reg['enquiry_snapshot_email'] ?? '', 'name' => $studentDisplayName],
           ['email' => $reg['parent_email'] ?? '', 'name' => $parentDisplayName],
@@ -1233,10 +1320,7 @@ if (isset($_POST['add_payment'])) {
                 <strong>Payment Date:</strong> ' . h((string) $payment_date) . '<br>
                 <strong>Payment Mode:</strong> ' . h((string) $payment_mode) . '<br>
                 <strong>Payment Type:</strong> ' . h((string) $payment_type) . '<br>
-                <strong>Receipt No:</strong> ' . h($receiptNo) . '<br>
-                <strong>Total Paid:</strong> ' . h(number_format((float) ($updatedPaymentSummary['paid_amount'] ?? 0), 2, '.', '')) . '<br>
-                <strong>Balance:</strong> ' . h(number_format((float) ($updatedPaymentSummary['balance_amount'] ?? 0), 2, '.', '')) . '<br>
-                <strong>Payment Status:</strong> ' . h(ucfirst((string) ($updatedPaymentSummary['payment_status'] ?? ''))) . '</p>
+                <strong>Receipt No:</strong> ' . h($receiptNo) . '</p>
                 <p>The receipt copy is attached with this email.</p>
                 <p>Regards,<br>' . h(APP_NAME) . '</p>';
         $textBody = "Dear Student and Parent,\n\n"
@@ -1249,33 +1333,39 @@ if (isset($_POST['add_payment'])) {
           . "Payment Mode: " . (string) $payment_mode . "\n"
           . "Payment Type: " . (string) $payment_type . "\n"
           . "Receipt No: {$receiptNo}\n"
-          . "Total Paid: " . number_format((float) ($updatedPaymentSummary['paid_amount'] ?? 0), 2, '.', '') . "\n"
-          . "Balance: " . number_format((float) ($updatedPaymentSummary['balance_amount'] ?? 0), 2, '.', '') . "\n"
-          . "Payment Status: " . ucfirst((string) ($updatedPaymentSummary['payment_status'] ?? '')) . "\n"
           . "The receipt copy is attached with this email.\n\n"
           . "Regards,\n" . APP_NAME;
-        $receiptAttachmentHtml = buildPaymentReceiptAttachmentHtml([
+        $receiptAttachmentContext = [
           'org_name' => APP_NAME,
           'student_name' => $studentDisplayName,
+          'student_phone' => (string) ($reg['enquiry_snapshot_phone'] ?? ''),
+          'student_email' => (string) ($reg['enquiry_snapshot_email'] ?? ''),
           'registration_no' => (string) ($reg['registration_no'] ?? ''),
           'program_name' => (string) ($reg['program_name'] ?? ''),
+          'batch_name' => (string) ($reg['batch_name'] ?? ''),
           'receipt_no' => $receiptNo,
           'payment_date' => (string) $payment_date,
           'payment_mode' => (string) $payment_mode,
-          'payment_type' => (string) $payment_type,
           'amount' => (float) $amount,
-          'paid_amount' => (float) ($updatedPaymentSummary['paid_amount'] ?? 0),
-          'balance_amount' => (float) ($updatedPaymentSummary['balance_amount'] ?? 0),
-          'payment_status' => (string) ($updatedPaymentSummary['payment_status'] ?? ''),
           'reference_no' => (string) ($reference_no ?? ''),
-          'collected_by' => (string) ($_SESSION['full_name'] ?? $_SESSION['name'] ?? $_SESSION['username'] ?? 'Staff'),
-          'owner_name' => (string) ($reg['owner_name'] ?? ''),
-        ]);
-        $attachments = [[
-          'filename' => preg_replace('/[^A-Za-z0-9_-]/', '_', $receiptNo) . '.html',
-          'content' => $receiptAttachmentHtml,
-          'mime_type' => 'text/html; charset=UTF-8',
-        ]];
+          'collected_by' => $collectedByName,
+          'remarks' => (string) ($remarksPay ?? ''),
+        ];
+        $receiptAttachmentPdf = buildPaymentReceiptAttachmentPdf($receiptAttachmentContext);
+        if ($receiptAttachmentPdf !== null) {
+          $attachments = [[
+            'filename' => preg_replace('/[^A-Za-z0-9_-]/', '_', $receiptNo) . '.pdf',
+            'content' => $receiptAttachmentPdf,
+            'mime_type' => 'application/pdf',
+          ]];
+        } else {
+          $receiptAttachmentHtml = buildPaymentReceiptAttachmentHtml($receiptAttachmentContext);
+          $attachments = [[
+            'filename' => preg_replace('/[^A-Za-z0-9_-]/', '_', $receiptNo) . '.html',
+            'content' => $receiptAttachmentHtml,
+            'mime_type' => 'text/html; charset=UTF-8',
+          ]];
+        }
         $mailError = null;
         $mailWarning = '';
         if (!crmSendEmail($recipients, 'Payment received for ' . $studentDisplayName, $htmlBody, $textBody, $mailError, $attachments)) {

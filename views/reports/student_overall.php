@@ -57,6 +57,8 @@ if ($registrationId > 0) {
         $academicData = studentReportFetchAcademicAndHrData($pdo, $registrationId);
     }
 }
+
+$reportGeneratedAt = date('d M Y h:i A');
 ?>
 
 <h2 style="margin-bottom:20px;">Student Overall Report</h2>
@@ -106,6 +108,29 @@ if ($registrationId > 0) {
     <div class="card" style="margin-top:16px;">
         <div class="card-header">Overall Student Report</div>
         <div class="sor-wrap">
+            <div class="sor-print-hero">
+                <div class="sor-print-kicker">Official Report</div>
+                <div class="sor-print-title">Student Overall Report</div>
+                <div class="sor-print-copy">A consolidated summary of academic, attendance, HR, placement, and fee details for internal review.</div>
+                <div class="sor-print-meta">
+                    <div class="sor-print-meta-card">
+                        <div class="sor-print-meta-label">Student</div>
+                        <div class="sor-print-meta-value"><?= studentReportH($student['student_name'] ?: $student['enquiry_snapshot_name'] ?: '-') ?></div>
+                    </div>
+                    <div class="sor-print-meta-card">
+                        <div class="sor-print-meta-label">Registration No</div>
+                        <div class="sor-print-meta-value"><?= studentReportH($student['registration_no'] ?: '-') ?></div>
+                    </div>
+                    <div class="sor-print-meta-card">
+                        <div class="sor-print-meta-label">Program</div>
+                        <div class="sor-print-meta-value"><?= studentReportH($student['program_name'] ?: '-') ?></div>
+                    </div>
+                    <div class="sor-print-meta-card">
+                        <div class="sor-print-meta-label">Generated On</div>
+                        <div class="sor-print-meta-value"><?= studentReportH($reportGeneratedAt) ?></div>
+                    </div>
+                </div>
+            </div>
             <div class="sor-topbar">
                 <div>
                     <div class="sor-name"><?= studentReportH($student['student_name'] ?: $student['enquiry_snapshot_name'] ?: '-') ?></div>
@@ -199,6 +224,14 @@ if ($registrationId > 0) {
 .sor-filter-row > div{flex:1 1 260px;}
 .sor-alert{margin-top:16px;padding:14px 16px;border-radius:14px;background:#fff7ed;color:#9a3412;border:1px solid #fed7aa;font-weight:700;}
 .sor-wrap{padding:16px;}
+.sor-print-hero{display:none;margin-bottom:18px;border:1px solid #d9dee8;border-radius:18px;padding:20px 22px;background:linear-gradient(180deg,#ffffff 0%,#f8fafc 100%);}
+.sor-print-kicker{font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#64748b;}
+.sor-print-title{margin-top:8px;font-size:28px;font-weight:800;color:#0f172a;}
+.sor-print-copy{margin-top:6px;color:#475569;line-height:1.7;}
+.sor-print-meta{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-top:16px;}
+.sor-print-meta-card{border:1px solid #e2e8f0;border-radius:14px;padding:12px 14px;background:#fff;}
+.sor-print-meta-label{font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#64748b;}
+.sor-print-meta-value{margin-top:6px;font-size:15px;font-weight:700;color:#0f172a;word-break:break-word;}
 .sor-topbar{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;flex-wrap:wrap;margin-bottom:16px;}
 .sor-name{font-size:22px;font-weight:900;color:#111827;}
 .sor-meta{margin-top:6px;color:#64748b;}
@@ -213,7 +246,19 @@ if ($registrationId > 0) {
 .sor-empty{text-align:center;color:#64748b;font-weight:700;}
 @media (max-width: 1000px){.sor-summary-grid,.sor-section-grid{grid-template-columns:1fr 1fr;}}
 @media (max-width: 700px){.sor-summary-grid,.sor-section-grid{grid-template-columns:1fr;}}
-@media print{.wrapper aside,.card:first-of-type,.sor-actions,.sidebar,.topbar,.header{display:none !important;}.content,.main-content{padding:0 !important;}.card{box-shadow:none !important;border:none !important;}}
+@media print{
+  @page{size:A4;margin:12mm;}
+  .wrapper aside,.card:first-of-type,.sor-actions,.sidebar,.topbar,.header{display:none !important;}
+  .content,.main-content{padding:0 !important;margin:0 !important;width:100% !important;}
+  .card{box-shadow:none !important;border:none !important;}
+  .sor-print-hero{display:block !important;page-break-inside:avoid;break-inside:avoid;}
+  .sor-topbar{margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid #d7dce5;}
+  .sor-summary-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;}
+  .sor-card,.sor-panel{border-color:#d7dce5 !important;box-shadow:none !important;break-inside:avoid;page-break-inside:avoid;background:#fff !important;}
+  .sor-label,.sor-panel-title,.sor-meta{color:#475569 !important;}
+  .sor-value,.sor-name{color:#111827 !important;}
+  .sor-table th,.sor-table td{border-color:#d7dce5 !important;}
+}
 
 /* =====================================================
 GLOBAL TYPOGRAPHY STYLECSS SYNC

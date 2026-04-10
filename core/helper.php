@@ -69,9 +69,9 @@ function responseJson($status, $message, $data = [])
 {
     header('Content-Type: application/json');
     echo json_encode([
-        'status'  => $status,
+        'status' => $status,
         'message' => $message,
-        'data'    => $data
+        'data' => $data
     ]);
     exit;
 }
@@ -95,7 +95,8 @@ function generateUniqueCode($prefix = '')
 
 function formatDate($date, $format = 'd M Y')
 {
-    if (!$date) return '';
+    if (!$date)
+        return '';
     return date($format, strtotime($date));
 }
 
@@ -787,7 +788,6 @@ function crmSaveCourseCertificateSnapshot(int $registrationId, array $snapshot):
     if ($registrationId <= 0) {
         return false;
     }
-
     $snapshot['registration_id'] = $registrationId;
     $snapshot['stored_at'] = date('Y-m-d H:i:s');
 
