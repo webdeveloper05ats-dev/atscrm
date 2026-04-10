@@ -169,6 +169,13 @@ function studentProfileReportMark($value): string
 
     return is_numeric($value) ? number_format((float) $value, 2) : htmlspecialchars((string) $value);
 }
+
+$studentDisplayName = trim((string) ($student['enquiry_snapshot_name'] ?? $student['student_name'] ?? '-'));
+$studentRegistrationNo = trim((string) ($student['registration_no'] ?? '-'));
+$studentProgramName = trim((string) ($student['program_name'] ?? '-'));
+$studentJoinedOn = trim((string) ($student['joined_on'] ?? '-'));
+$reportGeneratedAt = date('d M Y h:i A');
+$reportLabel = $isCourseStudent ? 'Course Student Report' : 'Internship Student Report';
 ?>
 
 <style>
@@ -216,6 +223,68 @@ function studentProfileReportMark($value): string
         font-size: 12px;
         font-weight: 600;
         color: #8b94a7;
+    }
+
+    .print-report-hero {
+        display: none;
+        margin-bottom: 18px;
+        border: 1px solid #d9dee8;
+        border-radius: 18px;
+        padding: 20px 22px;
+        background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+    }
+
+    .print-report-kicker {
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: .12em;
+        text-transform: uppercase;
+        color: #64748b;
+    }
+
+    .print-report-title {
+        margin: 8px 0 6px;
+        font-size: 28px;
+        font-weight: 800;
+        color: #0f172a;
+    }
+
+    .print-report-copy {
+        margin: 0;
+        max-width: 760px;
+        font-size: 14px;
+        line-height: 1.7;
+        color: #475569;
+    }
+
+    .print-report-meta {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 12px;
+        margin-top: 16px;
+    }
+
+    .print-report-meta-card {
+        border: 1px solid #e2e8f0;
+        border-radius: 14px;
+        padding: 12px 14px;
+        background: #fff;
+    }
+
+    .print-report-meta-label {
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+        color: #64748b;
+    }
+
+    .print-report-meta-value {
+        margin-top: 6px;
+        font-size: 15px;
+        font-weight: 700;
+        color: #0f172a;
+        word-break: break-word;
     }
 
     .report-toolbar-btn {
@@ -668,10 +737,16 @@ function studentProfileReportMark($value): string
     }
 
     @media print {
+        @page {
+            size: A4;
+            margin: 12mm;
+        }
+
         body {
             background: #fff !important;
             height: auto !important;
             overflow: visible !important;
+            color: #111827 !important;
         }
 
         html {
@@ -715,12 +790,60 @@ function studentProfileReportMark($value): string
             padding: 0;
         }
 
+        .print-report-hero {
+            display: block !important;
+            break-inside: avoid;
+            page-break-inside: avoid;
+        }
+
         .student-header,
         .summary-card,
         .profile-item {
             box-shadow: none;
             page-break-inside: avoid;
             break-inside: avoid;
+        }
+
+        .student-header,
+        .tab-panel,
+        .summary-card,
+        .profile-item,
+        .mini-summary-card,
+        .report-table,
+        .report-table th,
+        .report-table td {
+            border-color: #d7dce5 !important;
+        }
+
+        .student-header,
+        .summary-card,
+        .profile-item,
+        .mini-summary-card,
+        .tab-panel {
+            background: #fff !important;
+        }
+
+        .summary-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+        }
+
+        .summary-card {
+            padding: 14px;
+        }
+
+        .summary-title,
+        .profile-label,
+        .mini-summary-label,
+        .report-table th {
+            color: #475569 !important;
+        }
+
+        .summary-value,
+        .profile-value,
+        .mini-summary-value,
+        .panel-title {
+            color: #111827 !important;
         }
 
         .tab-panel,
@@ -733,6 +856,18 @@ function studentProfileReportMark($value): string
         .tab-content {
             display: block !important;
             margin-bottom: 16px;
+            position: relative;
+        }
+
+        .tab-content::before {
+            content: attr(data-report-section-title);
+            display: block;
+            margin: 0 0 10px;
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: .14em;
+            text-transform: uppercase;
+            color: #64748b;
         }
 
         body.print-report-mode .tab-content {
@@ -753,6 +888,10 @@ function studentProfileReportMark($value): string
 
         .print-brand {
             display: flex !important;
+        }
+
+        .print-report-meta {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
         }
     }
 
@@ -845,6 +984,31 @@ button i:only-child {
             <div class="print-brand-meta">
                 <div class="print-brand-title"><?= htmlspecialchars(APP_NAME) ?></div>
                 <div class="print-brand-sub">Student Detail Report</div>
+            </div>
+        </div>
+        <div class="print-report-hero">
+            <div class="print-report-kicker">Official Report</div>
+            <div class="print-report-title"><?= htmlspecialchars($reportLabel) ?></div>
+            <p class="print-report-copy">
+                This report summarizes the student's profile, academic progress, attendance, and administrative status in a print-ready format for records and review.
+            </p>
+            <div class="print-report-meta">
+                <div class="print-report-meta-card">
+                    <div class="print-report-meta-label">Student</div>
+                    <div class="print-report-meta-value"><?= htmlspecialchars($studentDisplayName) ?></div>
+                </div>
+                <div class="print-report-meta-card">
+                    <div class="print-report-meta-label">Registration No</div>
+                    <div class="print-report-meta-value"><?= htmlspecialchars($studentRegistrationNo) ?></div>
+                </div>
+                <div class="print-report-meta-card">
+                    <div class="print-report-meta-label">Program</div>
+                    <div class="print-report-meta-value"><?= htmlspecialchars($studentProgramName) ?></div>
+                </div>
+                <div class="print-report-meta-card">
+                    <div class="print-report-meta-label">Generated On</div>
+                    <div class="print-report-meta-value"><?= htmlspecialchars($reportGeneratedAt) ?></div>
+                </div>
             </div>
         </div>
     <?php endif; ?>
@@ -962,7 +1126,7 @@ button i:only-child {
 
     <!-- PROFILE TAB -->
 
-    <div class="tab-content active" id="profile">
+    <div class="tab-content active" id="profile" data-report-section-title="Profile Summary">
 
         <div class="tab-panel">
             <h3 class="panel-title">Student Profile</h3>
@@ -1045,7 +1209,7 @@ button i:only-child {
 
     <!-- PAYMENTS TAB -->
     <?php if (!$isStaffViewer): ?>
-        <div class="tab-content" id="payments">
+        <div class="tab-content" id="payments" data-report-section-title="Payment Ledger">
 
             <div class="tab-panel">
                 <h3 class="panel-title">Payment History</h3>
@@ -1098,7 +1262,7 @@ button i:only-child {
 
 
     <?php if ($isCourseStudent): ?>
-        <div class="tab-content" id="progress">
+        <div class="tab-content" id="progress" data-report-section-title="Academic Progress">
 
             <div class="tab-panel">
                 <h3 class="panel-title">Course Progress Overview</h3>
@@ -1201,7 +1365,7 @@ button i:only-child {
 
         </div>
 
-        <div class="tab-content" id="attendance">
+        <div class="tab-content" id="attendance" data-report-section-title="Attendance Register">
 
             <div class="tab-panel">
                 <h3 class="panel-title">Attendance Overview</h3>
@@ -1262,7 +1426,7 @@ button i:only-child {
 
         </div>
 
-        <div class="tab-content" id="placement">
+        <div class="tab-content" id="placement" data-report-section-title="Placement And HR Review">
 
             <div class="tab-panel">
                 <?php if ($isStaffViewer): ?>
@@ -1325,7 +1489,7 @@ button i:only-child {
     <!-- INTERNSHIP TAB -->
 
     <?php if ($isInternshipStudent): ?>
-        <div class="tab-content" id="internship">
+        <div class="tab-content" id="internship" data-report-section-title="Internship Summary">
 
             <div class="tab-panel">
                 <h3 class="panel-title">Internship Overview</h3>
@@ -1345,7 +1509,7 @@ button i:only-child {
                         <div class="profile-label">Completion Status</div>
                         <div class="profile-value">
                             <span
-                                class="value-pill <?= ($student['internship_completion_status'] ?? '') === 'completed' ? 'success' : 'warning' ?>"><?= ucfirst($student['internship_completion_status']) ?></span>
+                                class="value-pill <?= ($student['internship_completion_status'] ?? '') === 'completed' ? 'success' : 'warning' ?>"><?= htmlspecialchars(ucfirst((string) ($student['internship_completion_status'] ?? '-'))) ?></span>
                             <div class="value-subnote">
                                 <?= !empty($student['internship_end_date']) ? 'Date: ' . htmlspecialchars($student['internship_end_date']) : 'Date not available' ?>
                             </div>
@@ -1356,7 +1520,7 @@ button i:only-child {
                         <div class="profile-label">Certificate Status</div>
                         <div class="profile-value">
                             <span
-                                class="value-pill <?= ($student['internship_certificate_status'] ?? '') === 'given' ? 'success' : 'neutral' ?>"><?= ucfirst($student['internship_certificate_status']) ?></span>
+                                class="value-pill <?= ($student['internship_certificate_status'] ?? '') === 'given' ? 'success' : 'neutral' ?>"><?= htmlspecialchars(ucfirst((string) ($student['internship_certificate_status'] ?? '-'))) ?></span>
                             <div class="value-subnote">
                                 <?= !empty($student['internship_certificate_issued_at']) ? 'Date: ' . htmlspecialchars($student['internship_certificate_issued_at']) : 'Date not available' ?>
                             </div>
@@ -1377,7 +1541,7 @@ button i:only-child {
                         <div class="profile-label">Report Status</div>
                         <div class="profile-value">
                             <span
-                                class="value-pill <?= ($student['internship_report_status'] ?? '') === 'provided' ? 'success' : 'neutral' ?>"><?= ucfirst($student['internship_report_status']) ?></span>
+                                class="value-pill <?= ($student['internship_report_status'] ?? '') === 'provided' ? 'success' : 'neutral' ?>"><?= htmlspecialchars(ucfirst((string) ($student['internship_report_status'] ?? '-'))) ?></span>
                             <div class="value-subnote">
                                 <?= !empty($student['internship_report_issued_at']) ? 'Date: ' . htmlspecialchars($student['internship_report_issued_at']) : 'Date not available' ?>
                             </div>
