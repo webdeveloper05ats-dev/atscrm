@@ -542,7 +542,7 @@ if (isset($_POST['save_registration'])) {
             $isNewRegistration = $regIdPost <= 0;
             $isFreshActivation = $registration_status === 'active' && $previousRegistrationStatus !== 'active';
 
-            if ($isNewRegistration || $isFreshActivation) {
+            if ($isNewRegistration || $isFreshActivation || $registration_status === 'active') {
                 $registrationDate = $joined_on ?: date('Y-m-d');
                 $studentDisplayName = trim((string) $student_name);
                 $parentDisplayName = trim((string) $parent_name) !== '' ? trim((string) $parent_name) : 'Parent';
@@ -577,6 +577,7 @@ if (isset($_POST['save_registration'])) {
                     . "Joined On: {$registrationDate}\n\n"
                     . "Regards,\n" . APP_NAME;
                 $mailError = null;
+                crmLogMailEvent('Attempting registration mail from enquiry conversion for registration_id=' . (int) $realRegId . ', status=' . $registration_status . ', student_email=' . (string) $email . ', parent_email=' . (string) $parent_email);
                 if (!crmSendEmail($recipients, $subject, $htmlBody, $textBody, $mailError)) {
                     $mailWarning = ' Registration saved, but email delivery failed';
                     if ($mailError) {

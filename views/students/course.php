@@ -171,8 +171,21 @@ try {
                         $studentName = $row['student_name'] ?: $row['enquiry_snapshot_name'] ?: '-';
                         $certificateIssuedAt = trim((string) ($row['internship_certificate_issued_at'] ?? ''));
                         $certificateStatus = strtolower(trim((string) ($row['internship_certificate_status'] ?? 'not_given')));
-                        $certificateSnapshotExists = crmCourseCertificateSnapshotExists((int) $row['id']);
-                        $certificateIsViewOnly = $certificateSnapshotExists;
+                        $certificateSnapshot = crmLoadCourseCertificateSnapshot((int) $row['id']);
+                        $certificateSnapshotExists = $certificateSnapshot !== null;
+                        $certificateViewConsumed = trim((string) ($certificateSnapshot['view_consumed_at'] ?? '')) !== '';
+                        $certificateLabel = 'Not Issued';
+                        $certificateClass = 'status-muted';
+                        if ($certificateSnapshotExists && $certificateViewConsumed) {
+                            $certificateLabel = 'Viewed';
+                            $certificateClass = 'status-muted';
+                        } elseif ($certificateSnapshotExists) {
+                            $certificateLabel = 'Saved';
+                            $certificateClass = 'status-success';
+                        } elseif ($certificateStatus === 'given') {
+                            $certificateLabel = 'Issued';
+                            $certificateClass = 'status-success';
+                        }
                         ?>
                         <tr>
                             <td>
@@ -196,11 +209,15 @@ try {
                                 </span>
                             </td>
                             <td>
-                                <span class="status-pill <?= $certificateIsViewOnly || $certificateStatus === 'given' ? 'status-success' : 'status-muted' ?>">
-                                    <?= h($certificateIsViewOnly || $certificateStatus === 'given' ? 'Issued' : 'Not Issued') ?>
+                                <span class="status-pill <?= h($certificateClass) ?>">
+                                    <?= h($certificateLabel) ?>
                                 </span>
                                 <div class="handlink-sub">
-                                    <?= h($certificateIssuedAt !== '' && $certificateIssuedAt !== '0000-00-00 00:00:00' ? $certificateIssuedAt : '-') ?>
+                                    <?php if ($certificateViewConsumed): ?>
+                                        Viewed: <?= h((string) ($certificateSnapshot['view_consumed_at'] ?? '-')) ?>
+                                    <?php else: ?>
+                                        <?= h($certificateIssuedAt !== '' && $certificateIssuedAt !== '0000-00-00 00:00:00' ? $certificateIssuedAt : '-') ?>
+                                    <?php endif; ?>
                                 </div>
                             </td>
                             <td class="text-center">
@@ -212,16 +229,23 @@ try {
                                         aria-label="View student details">
                                         <i class="fas fa-eye"></i>
                                     </a>
-                                    <?php if ($certificateIsViewOnly): ?>
+                                    <?php if ($certificateSnapshotExists && !$certificateViewConsumed): ?>
                                         <a
                                             href="index.php?page=students/course_certificate&id=<?= (int) $row['id'] ?>"
                                             target="_blank"
                                             rel="noopener"
                                             class="crm-icon-btn is-success"
-                                            data-modern-tooltip="Open certificate"
-                                            aria-label="Open certificate">
+                                            data-modern-tooltip="View certificate once"
+                                            aria-label="View certificate once">
                                             <i class="fas fa-certificate"></i>
                                         </a>
+                                    <?php elseif ($certificateSnapshotExists): ?>
+                                        <span
+                                            class="crm-icon-btn is-disabled"
+                                            data-modern-tooltip="Certificate already viewed"
+                                            aria-label="Certificate already viewed">
+                                            <i class="fas fa-lock"></i>
+                                        </span>
                                     <?php else: ?>
                                         <button
                                             type="button"
@@ -250,7 +274,7 @@ try {
         <div class="crm-modal-header">
             <div>
                 <h3 id="courseCertificateModalTitle">Generate Course Certificate</h3>
-                <p class="handlink-modal-copy">Upload the final signature along with the performance remark before opening the certificate.</p>
+                <p class="handlink-modal-copy">Upload the final signature along with the performance remark. The saved certificate can be viewed only once.</p>
             </div>
             <button type="button" class="crm-modal-close" data-close-modal aria-label="Close">
                 <i class="fas fa-times"></i>
@@ -297,13 +321,584 @@ try {
             <div class="crm-modal-footer">
                 <button type="button" class="crm-btn ghost" data-close-modal>Cancel</button>
                 <button type="submit" class="crm-btn primary">
-                    <i class="fas fa-certificate"></i> Open Certificate
+                    <i class="fas fa-certificate"></i> Generate & Save Certificate
                 </button>
             </div>
         </form>
     </div>
 </div>
 
+<<<<<<< HEAD
+=======
+<style>
+    .handlink-page {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .handlink-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 14px;
+        flex-wrap: wrap;
+    }
+
+    .handlink-header h2 {
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 28px;
+        font-weight: 900;
+        color: #2b3547;
+    }
+
+    .handlink-header p {
+        margin: 8px 0 0;
+        color: #69778a;
+        font-weight: 600;
+    }
+
+    .handlink-stat span {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 9px 14px;
+        border-radius: 999px;
+        background: #fff5f9;
+        border: 1px solid #f6d6e4;
+        color: #c2185b;
+        font-weight: 800;
+    }
+
+    .handlink-filter-form {
+        padding: 12px 14px;
+    }
+
+    .handlink-filter-grid {
+        display: grid;
+        grid-template-columns: minmax(260px, 1fr) minmax(180px, 220px) auto;
+        gap: 14px;
+        align-items: end;
+    }
+
+    .filter-field label {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        margin-bottom: 8px;
+        font-size: 13px;
+        font-weight: 800;
+        color: #5f6b7a;
+        text-transform: uppercase;
+        letter-spacing: .3px;
+    }
+
+    .filter-field input,
+    .filter-field select {
+        width: 100%;
+        min-height: 42px;
+        padding: 10px 12px;
+        border: 1px solid #d7dde5;
+        border-radius: 10px;
+        background: #fff;
+        outline: none;
+        transition: .15s ease;
+    }
+
+    .filter-field input:focus,
+    .filter-field select:focus {
+        border-color: #e91e63;
+        box-shadow: 0 0 0 3px rgba(233, 30, 99, .14);
+    }
+
+    .filter-actions {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        justify-content: flex-end;
+    }
+
+    .handlink-table-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        width: 100%;
+        font-weight: 900;
+        font-size: 16px;
+        color: #2b3547;
+    }
+
+    .handlink-table-wrap {
+        padding: 14px;
+        overflow-x: auto;
+    }
+
+    #datatableControls {
+        width: auto;
+        margin-left: auto;
+        display: flex;
+        justify-content: flex-end;
+    }
+
+    #datatableControls .dt-top {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 12px;
+        flex-wrap: nowrap;
+    }
+
+    .dataTables_wrapper .dt-top,
+    .dataTables_wrapper .dt-bottom {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+
+    .dataTables_wrapper .dt-bottom {
+        justify-content: space-between;
+        margin-top: 12px;
+    }
+
+    .dataTables_wrapper .dataTables_length,
+    .dataTables_wrapper .dataTables_filter {
+        margin: 0;
+        display: flex;
+        align-items: center;
+    }
+
+    .dataTables_wrapper .dataTables_length label,
+    .dataTables_wrapper .dataTables_filter label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin: 0;
+        font-weight: 700;
+        color: #334155;
+        white-space: nowrap;
+    }
+
+    .dataTables_wrapper .dataTables_filter input,
+    .dataTables_wrapper .dataTables_length select {
+        border: 1px solid #d7dde5;
+        border-radius: 10px;
+        padding: 8px 12px;
+        background: #fff;
+        min-height: 38px;
+        outline: none;
+    }
+
+    .dataTables_wrapper .dataTables_filter input:focus,
+    .dataTables_wrapper .dataTables_length select:focus {
+        border-color: #e91e63;
+        box-shadow: 0 0 0 3px rgba(233, 30, 99, .14);
+    }
+
+    .dataTables_wrapper .dataTables_filter input {
+        min-width: 240px;
+    }
+
+    .dataTables_wrapper .dataTables_paginate .paginate_button {
+        border: 1px solid #f1d6e3 !important;
+        background: #fff !important;
+        color: #475569 !important;
+        border-radius: 8px !important;
+        padding: 6px 10px !important;
+    }
+
+    .dataTables_wrapper .dataTables_paginate .paginate_button.current {
+        background: #e91e63 !important;
+        border-color: #e91e63 !important;
+        color: #fff !important;
+    }
+
+    .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+        background: #fff5f9 !important;
+        border-color: #f1d6e3 !important;
+        color: #c2185b !important;
+    }
+
+    .dataTables_wrapper .dataTables_info {
+        color: #64748b;
+        font-weight: 600;
+    }
+
+    .crm-table.handlink-table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 980px;
+    }
+
+    .crm-table.handlink-table th,
+    .crm-table.handlink-table td {
+        padding: 12px 12px;
+        border-bottom: 1px solid #f0f0f0;
+        vertical-align: middle;
+        font-size: 13px;
+    }
+
+    .crm-table.handlink-table td:nth-child(4),
+    .crm-table.handlink-table td:nth-child(5),
+    .crm-table.handlink-table td:nth-child(6),
+    .crm-table.handlink-table td:nth-child(7) {
+        text-align: center;
+    }
+
+    .crm-table.handlink-table th {
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: .35px;
+        font-weight: 800;
+        color: #2b3547;
+        background: #fafbfd;
+        white-space: nowrap;
+    }
+
+    .crm-table.handlink-table tbody tr:hover {
+        background: #fff8fb;
+    }
+
+    .handlink-primary {
+        font-weight: 800;
+        color: #182235;
+    }
+
+    .handlink-sub {
+        margin-top: 3px;
+        font-size: 12px;
+        color: #7a8698;
+    }
+
+    .status-pill {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 92px;
+        padding: 6px 12px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 800;
+        border: 1px solid transparent;
+    }
+
+    .status-success {
+        background: #ebfff3;
+        color: #15803d;
+        border-color: #b7f0cc;
+    }
+
+    .status-warning {
+        background: #fff8e8;
+        color: #b26a00;
+        border-color: #f3ddb0;
+    }
+
+    .status-muted {
+        background: #f5f7fb;
+        color: #64748b;
+        border-color: #d9e1ea;
+    }
+
+    .status-hr {
+        background: #eef4ff;
+        color: #2459c3;
+        border-color: #cad8ff;
+    }
+
+    .crm-icon-btn.is-disabled {
+        background: #f1f5f9;
+        border-color: #d9e1ea;
+        color: #94a3b8;
+        cursor: not-allowed;
+        box-shadow: none;
+        transform: none;
+    }
+
+    .crm-modal {
+        position: fixed;
+        inset: 0;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        z-index: 10030;
+    }
+
+    .crm-modal.show {
+        display: flex;
+    }
+
+    .crm-modal-backdrop {
+        position: absolute;
+        inset: 0;
+        background: rgba(15, 23, 42, .42);
+        backdrop-filter: blur(2px);
+    }
+
+    .crm-modal-dialog {
+        position: relative;
+        z-index: 1;
+        width: min(100%, 560px);
+        background: linear-gradient(180deg, #fffefe 0%, #fff7fb 100%);
+        border: 1px solid #f2d6e3;
+        border-radius: 22px;
+        box-shadow: 0 30px 60px rgba(15, 23, 42, .24);
+        overflow: hidden;
+    }
+
+    .crm-modal-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 20px 22px 14px;
+        border-bottom: 1px solid #f4e1ea;
+    }
+
+    .crm-modal-header h3 {
+        margin: 0;
+        font-size: 22px;
+        font-weight: 900;
+        color: #243046;
+    }
+
+    .crm-modal-close {
+        width: 38px;
+        height: 38px;
+        border: 1px solid #f0d7e3;
+        border-radius: 12px;
+        background: #fff;
+        color: #64748b;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: .15s ease;
+    }
+
+    .crm-modal-close:hover {
+        background: #fff2f7;
+        color: #c2185b;
+        border-color: #efc5d8;
+    }
+
+    .crm-modal-body {
+        padding: 18px 22px;
+    }
+
+    .crm-modal-footer {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 10px;
+        padding: 0 22px 22px;
+        flex-wrap: wrap;
+    }
+
+    .handlink-certificate-dialog {
+        max-width: 560px;
+    }
+
+    .handlink-modal-copy {
+        margin: 6px 0 0;
+        color: #7a8698;
+        font-size: 13px;
+        font-weight: 600;
+    }
+
+    .handlink-certificate-form {
+        margin: 0;
+    }
+
+    .handlink-modal-summary {
+        padding: 12px 14px;
+        border-radius: 14px;
+        background: #fff7fb;
+        border: 1px solid #f6d7e4;
+        margin-bottom: 14px;
+    }
+
+    .handlink-modal-label {
+        font-size: 12px;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: .35px;
+        color: #8b5e72;
+    }
+
+    .handlink-modal-value {
+        margin-top: 4px;
+        color: #1f2937;
+        font-size: 15px;
+        font-weight: 800;
+    }
+
+    .handlink-upload-note {
+        margin-top: 8px;
+        font-size: 12px;
+        color: #7a8698;
+        font-weight: 600;
+    }
+
+    .crm-btn {
+        border: none;
+        border-radius: 10px;
+        min-height: 44px;
+        min-width: 140px;
+        padding: 10px 18px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        font-weight: 800;
+        cursor: pointer;
+        text-decoration: none;
+        white-space: nowrap;
+        flex: 0 0 auto;
+    }
+
+    .crm-btn.primary {
+        background: #e91e63;
+        color: #fff;
+    }
+
+    .crm-btn.ghost {
+        background: #f1f5f9;
+        color: #475569;
+    }
+
+    @media (max-width: 900px) {
+        .handlink-filter-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .filter-actions {
+            justify-content: flex-start;
+        }
+
+        .crm-modal {
+            padding: 12px;
+        }
+
+        .crm-modal-header,
+        .crm-modal-body,
+        .crm-modal-footer {
+            padding-left: 16px;
+            padding-right: 16px;
+        }
+
+        .crm-modal-footer {
+            justify-content: stretch;
+        }
+
+        .crm-modal-footer .crm-btn {
+            flex: 1 1 100%;
+            width: 100%;
+            min-width: 0;
+        }
+
+        #datatableControls {
+            width: 100%;
+            margin-left: 0;
+            justify-content: flex-start;
+        }
+
+        #datatableControls .dt-top,
+        .dataTables_wrapper .dt-bottom {
+            justify-content: flex-start;
+        }
+
+        #datatableControls .dt-top {
+            flex-wrap: wrap;
+        }
+
+        .dataTables_wrapper .dataTables_filter,
+        .dataTables_wrapper .dataTables_length {
+            width: 100%;
+        }
+
+        .dataTables_wrapper .dataTables_filter label {
+            width: 100%;
+        }
+
+        .dataTables_wrapper .dataTables_filter input {
+            width: 100% !important;
+            min-width: 0;
+        }
+    }
+
+/* =====================================================
+GLOBAL TYPOGRAPHY STYLECSS SYNC
+font-family + font-size + font-weight only
+===================================================== */
+:where(body,button,input,select,textarea,label,span,p,h1,h2,h3,h4,h5,h6,a,div){
+  font-family:'Poppins',sans-serif !important;
+}
+:where(h1,.h1,.page-title,.crm-page-title,.dashboard-header h2){font-size:clamp(2rem, 2.5vw, 2.4rem) !important;font-weight:700 !important;}
+:where(h2,.h2,.section-title){font-size:clamp(1.6rem, 2vw, 2rem) !important;font-weight:600 !important;}
+:where(h3,.h3,.card-header,.table-title){font-size:clamp(1.3rem, 1.6vw, 1.5rem) !important;font-weight:600 !important;}
+:where(h4,.h4){font-size:1.2rem !important;font-weight:500 !important;}
+:where(h5,.h5){font-size:1rem !important;font-weight:500 !important;}
+:where(h6,.h6){font-size:0.9rem !important;font-weight:500 !important;}
+:where(body){font-size:1rem !important;}
+:where(p,.text-body,li,td,.text-muted,.help-text,.form-text,.small,small,.secondary-text){font-size:0.95rem !important;font-weight:400 !important;}
+:where(.small,small,.text-muted,.help-text,.form-text,.att-sub,.crm-note){font-size:0.85rem !important;font-weight:400 !important;}
+:where(label,.form-label){font-size:0.85rem !important;font-weight:500 !important;}
+:where(input,select,textarea,.form-control,.form-select){font-size:0.95rem !important;font-weight:400 !important;}
+:where(input::placeholder,textarea::placeholder){font-weight:400 !important;}
+:where(button,.btn,.dt-button,.crm-action-btn,.crm-icon-btn,.btn-icon-only,.action-btn,.targets-btn-icon,.iso-report-btn,.iso-report-action-btn){font-size:0.9rem !important;font-weight:600 !important;}
+:where(.btn[data-mobile-label],.btn-icon-only[data-mobile-label],.action-btn[data-mobile-label],.crm-icon-btn[data-mobile-label],.targets-btn-icon[data-mobile-label],.iso-report-icon-btn[data-mobile-label],.iso-report-action-btn[data-mobile-label])::after{font-size:0.75rem !important;font-weight:600 !important;}
+:where(.table th,.crm-table th,.dataTables_wrapper th,th){font-size:0.75rem !important;font-weight:600 !important;}
+:where(.table td,.dataTables_wrapper tbody td){font-size:0.9rem !important;}
+:where(.dataTables_wrapper .dataTables_info){font-size:0.85rem !important;font-weight:400 !important;}
+:where(.dataTables_wrapper .paginate_button){font-size:0.9rem !important;font-weight:600 !important;}
+:where(.badge,.status-badge,.crm-status-badge,.status-pill,.badge-status,[data-status],.tooltip,.ui-tooltip,.floating-ui-tooltip__bubble){font-weight:600 !important;}
+
+/* ===== GLOBAL BUTTON STANDARDIZATION ===== */
+button,
+.btn,
+.crm-action-btn,
+.btn-filter,
+.btn-reset,
+.btn-add,
+.btn-excel,
+.action-btn,
+.btn-icon-only,
+a.btn,
+input[type="button"],
+input[type="submit"],
+input[type="reset"],
+[role="button"] {
+    font-size: 0.92rem;
+    min-height: 38px;
+    padding: 8px 14px;
+    border-radius: 10px;
+    font-weight: 600;
+}
+
+.btn-icon-only,
+.crm-action-btn,
+.action-btn,
+.btn-sm,
+.btn-xs,
+button.btn-icon,
+a.btn-icon,
+.btn i:only-child,
+button i:only-child {
+    font-size: 0.9rem;
+    min-height: 34px;
+    padding: 8px;
+    border-radius: 10px;
+    font-weight: 600;
+}
+</style>
+
+>>>>>>> 9ff78a73d99b8230a71931eac4450ef1c253596d
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     if (typeof crmDataTable !== 'function') {

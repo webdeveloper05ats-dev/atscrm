@@ -796,14 +796,43 @@ function crmSaveCourseCertificateSnapshot(int $registrationId, array $snapshot):
         return false;
     }
     $snapshot['registration_id'] = $registrationId;
-    $snapshot['stored_at'] = date('Y-m-d H:i:s');
+    if (empty($snapshot['stored_at'])) {
+        $snapshot['stored_at'] = date('Y-m-d H:i:s');
+    }
+    $snapshot['updated_at'] = date('Y-m-d H:i:s');
 
     $encoded = json_encode($snapshot, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     if ($encoded === false) {
         return false;
     }
 
-    return file_put_contents(crmCourseCertificateSnapshotAbsolutePath($registrationId), $encoded) !== false;
+    return file_put_contents(crmCourseCertificateSnapshotAbsolutePath($registrationId), $encoded, LOCK_EX) !== false;
+}
+
+function crmCourseCertificateSnapshotViewConsumed(int $registrationId): bool
+{
+    $snapshot = crmLoadCourseCertificateSnapshot($registrationId);
+    if ($snapshot === null) {
+        return false;
+    }
+
+    return trim((string) ($snapshot['view_consumed_at'] ?? '')) !== '';
+}
+
+function crmMarkCourseCertificateSnapshotViewed(int $registrationId): bool
+{
+    $snapshot = crmLoadCourseCertificateSnapshot($registrationId);
+    if ($snapshot === null) {
+        return false;
+    }
+    if (trim((string) ($snapshot['view_consumed_at'] ?? '')) !== '') {
+        return true;
+    }
+
+    $snapshot['view_consumed_at'] = date('Y-m-d H:i:s');
+    $snapshot['view_consumed_by'] = (string) ($_SESSION['username'] ?? $_SESSION['full_name'] ?? $_SESSION['name'] ?? 'HR');
+
+    return crmSaveCourseCertificateSnapshot($registrationId, $snapshot);
 }
 
 if (isset($pdo) && $pdo instanceof PDO) {

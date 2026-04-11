@@ -1,0 +1,20 @@
+{
+    "certificate_no": "ATS-COURSE-000002",
+    "issued_at": "2026-04-01 09:21:53",
+    "student_name": "JOSEPH",
+    "student_name_raw": "Joseph",
+    "program_name": "DATA SCIENCE",
+    "program_name_raw": "Data science",
+    "start_date_text": "30.03.2026",
+    "end_date_text": "01.04.2026",
+    "performance_remark": "Excellent",
+    "hr_name": "Human Resources",
+    "signature_path": "uploads/course_certificates/1775891530_9253.jpeg",
+    "registration_no": "REG-202603-0002",
+    "student_email": "joseph@gmail.com",
+    "parent_name": "qwertyui",
+    "parent_email": "parent@gmail.com",
+    "overall_score": 83.5,
+    "registration_id": 2,
+    "stored_at": "2026-04-11 12:42:12"
+}
