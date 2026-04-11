@@ -325,11 +325,20 @@ $pipelineCards = [
         <div class="fo-action-grid">
             <?php foreach ($quickActions as $item): ?>
                 <a class="fo-action-card <?= htmlspecialchars($item['tone']) ?>" href="<?= htmlspecialchars($item['link']) ?>">
-                    <div class="fo-action-icon"><i class="<?= htmlspecialchars($item['icon']) ?>"></i></div>
-                    <div class="fo-action-content">
-                        <div class="fo-action-label"><?= htmlspecialchars($item['label']) ?></div>
-                        <div class="fo-action-count"><?= (int)$item['count'] ?></div>
-                        <div class="fo-action-caption"><?= htmlspecialchars($item['caption']) ?></div>
+                    <div class="fo-action-flip">
+                        <div class="fo-action-face fo-action-front">
+                            <div class="fo-action-icon"><i class="<?= htmlspecialchars($item['icon']) ?>"></i></div>
+                            <div class="fo-action-content">
+                                <div class="fo-action-label"><?= htmlspecialchars($item['label']) ?></div>
+                                <div class="fo-action-count"><?= (int)$item['count'] ?></div>
+                                <div class="fo-action-caption"><?= htmlspecialchars($item['caption']) ?></div>
+                            </div>
+                        </div>
+                        <div class="fo-action-face fo-action-back">
+                            <div class="fo-action-back-title"><?= htmlspecialchars($item['label']) ?></div>
+                            <div class="fo-action-back-value"><?= (int)$item['count'] ?></div>
+                            <div class="fo-action-back-copy">Tap to open and work this queue now.</div>
+                        </div>
                     </div>
                 </a>
             <?php endforeach; ?>
@@ -347,12 +356,21 @@ $pipelineCards = [
         <div class="fo-metrics-grid">
             <?php foreach ($pipelineCards as $card): ?>
                 <div class="fo-metric-card">
-                    <div class="fo-metric-top">
-                        <div class="fo-metric-title"><?= htmlspecialchars($card['title']) ?></div>
-                        <span class="fo-metric-dot fo-tone-<?= htmlspecialchars($card['tone']) ?>"></span>
+                    <div class="fo-metric-flip">
+                        <div class="fo-metric-face fo-metric-front">
+                            <div class="fo-metric-top">
+                                <div class="fo-metric-title"><?= htmlspecialchars($card['title']) ?></div>
+                                <span class="fo-metric-dot fo-tone-<?= htmlspecialchars($card['tone']) ?>"></span>
+                            </div>
+                            <div class="fo-metric-value"><?= (int)$card['value'] ?></div>
+                            <div class="fo-metric-meta"><?= htmlspecialchars($card['meta']) ?></div>
+                        </div>
+                        <div class="fo-metric-face fo-metric-back">
+                            <div class="fo-metric-back-title"><?= htmlspecialchars($card['title']) ?></div>
+                            <div class="fo-metric-back-value"><?= (int)$card['value'] ?></div>
+                            <div class="fo-metric-back-copy">Current snapshot from your owned pipeline data.</div>
+                        </div>
                     </div>
-                    <div class="fo-metric-value"><?= (int)$card['value'] ?></div>
-                    <div class="fo-metric-meta"><?= htmlspecialchars($card['meta']) ?></div>
                 </div>
             <?php endforeach; ?>
         </div>

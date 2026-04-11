@@ -147,6 +147,49 @@ while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
 $chartLabels = array_values($chartLabels);
 $chartData = array_values($chartData);
 
+$currentMonth = (int)date('n');
+$currentYear = (int)date('Y');
+$overallTargetAmount = 0.0;
+$overallAchievedAmount = 0.0;
+
+try {
+    $st = $pdo->prepare("
+        SELECT IFNULL(SUM(target_amount),0)
+        FROM monthly_targets
+        WHERE target_month = ?
+          AND target_year = ?
+          AND status = 'active'
+    ");
+    $st->execute([$currentMonth, $currentYear]);
+    $overallTargetAmount = (float)($st->fetchColumn() ?? 0);
+} catch (Exception $e) {
+    $overallTargetAmount = 0.0;
+}
+
+try {
+    $st = $pdo->prepare("
+        SELECT IFNULL(SUM(rp.amount),0)
+        FROM registration_payments rp
+        INNER JOIN (
+            SELECT DISTINCT user_id
+            FROM monthly_targets
+            WHERE target_month = ?
+              AND target_year = ?
+              AND status = 'active'
+        ) tu ON tu.user_id = rp.staff_id
+        WHERE MONTH(rp.payment_date) = ?
+          AND YEAR(rp.payment_date) = ?
+    ");
+    $st->execute([$currentMonth, $currentYear, $currentMonth, $currentYear]);
+    $overallAchievedAmount = (float)($st->fetchColumn() ?? 0);
+} catch (Exception $e) {
+    $overallAchievedAmount = 0.0;
+}
+
+$overallTargetBalance = max($overallTargetAmount - $overallAchievedAmount, 0);
+$overallTargetPct = $overallTargetAmount > 0 ? round(($overallAchievedAmount / $overallTargetAmount) * 100, 1) : 0.0;
+$overallTargetPct = max(0.0, min(100.0, $overallTargetPct));
+
 ?>
 
 <!-- Super Admin dashboard styles moved to assets/css/style.css -->
@@ -274,6 +317,10 @@ $chartData = array_values($chartData);
                     <i class="fas fa-file-invoice-dollar"></i>
                     <?= inr_symbol() ?> <?= number_format((float)$pendingDueAmount, 2) ?> pending dues
                 </span>
+                <span class="sa-chip">
+                    <i class="fas fa-bullseye"></i>
+                    <?= number_format((float)$overallTargetPct, 1) ?>% monthly target achieved
+                </span>
             </div>
         </div>
 
@@ -347,30 +394,50 @@ $chartData = array_values($chartData);
 
     <section class="sa-health-grid">
         <article class="sa-health-card">
-            <div class="sa-health-head">
-                <div class="sa-health-title">Collection Efficiency (Today)</div>
-                <span class="sa-chip"><i class="fas fa-wallet"></i> Cash Pulse</span>
-            </div>
-            <div class="sa-health-value"><?= number_format((float)$collectionVsDuePercent, 1) ?>%</div>
-            <div class="sa-health-sub">Share of due pressure covered by today's collections.</div>
-            <div class="sa-health-track"><div class="sa-health-fill" style="width:<?= max(0, min(100, (float)$collectionVsDuePercent)) ?>%"></div></div>
-            <div class="sa-health-foot">
-                <span>Today: <?= inr_symbol() ?> <?= number_format((float)$todayCollection, 0) ?></span>
-                <span>Due: <?= inr_symbol() ?> <?= number_format((float)$pendingDueAmount, 0) ?></span>
+            <div class="sa-health-flip">
+                <div class="sa-health-face sa-health-front">
+                    <div class="sa-health-head">
+                        <div class="sa-health-title">Collection Efficiency (Today)</div>
+                        <span class="sa-chip"><i class="fas fa-wallet"></i> Cash Pulse</span>
+                    </div>
+                    <div class="sa-health-value"><?= number_format((float)$collectionVsDuePercent, 1) ?>%</div>
+                    <div class="sa-health-sub">Share of due pressure covered by today's collections.</div>
+                    <div class="sa-health-track"><div class="sa-health-fill" style="width:<?= max(0, min(100, (float)$collectionVsDuePercent)) ?>%"></div></div>
+                    <div class="sa-health-foot">
+                        <span>Today: <?= inr_symbol() ?> <?= number_format((float)$todayCollection, 0) ?></span>
+                        <span>Due: <?= inr_symbol() ?> <?= number_format((float)$pendingDueAmount, 0) ?></span>
+                    </div>
+                </div>
+                <div class="sa-health-face sa-health-back">
+                    <div class="sa-health-back-title">Insight</div>
+                    <div class="sa-health-back-copy">
+                        Improving same-day collection share reduces tomorrow's due pressure and keeps cash flow stable.
+                    </div>
+                </div>
             </div>
         </article>
 
         <article class="sa-health-card">
-            <div class="sa-health-head">
-                <div class="sa-health-title">Due Exposure</div>
-                <span class="sa-chip"><i class="fas fa-user-clock"></i> Risk</span>
-            </div>
-            <div class="sa-health-value"><?= number_format((float)$dueStudentSharePercent, 1) ?>%</div>
-            <div class="sa-health-sub">Active students currently carrying unpaid or partial balances.</div>
-            <div class="sa-health-track"><div class="sa-health-fill" style="width:<?= max(0, min(100, (float)$dueStudentSharePercent)) ?>%"></div></div>
-            <div class="sa-health-foot">
-                <span><?= number_format((float)$pendingDueStudents) ?> students</span>
-                <span>of <?= number_format((float)$totalStudents) ?></span>
+            <div class="sa-health-flip">
+                <div class="sa-health-face sa-health-front">
+                    <div class="sa-health-head">
+                        <div class="sa-health-title">Due Exposure</div>
+                        <span class="sa-chip"><i class="fas fa-user-clock"></i> Risk</span>
+                    </div>
+                    <div class="sa-health-value"><?= number_format((float)$dueStudentSharePercent, 1) ?>%</div>
+                    <div class="sa-health-sub">Active students currently carrying unpaid or partial balances.</div>
+                    <div class="sa-health-track"><div class="sa-health-fill" style="width:<?= max(0, min(100, (float)$dueStudentSharePercent)) ?>%"></div></div>
+                    <div class="sa-health-foot">
+                        <span><?= number_format((float)$pendingDueStudents) ?> students</span>
+                        <span>of <?= number_format((float)$totalStudents) ?></span>
+                    </div>
+                </div>
+                <div class="sa-health-face sa-health-back">
+                    <div class="sa-health-back-title">Insight</div>
+                    <div class="sa-health-back-copy">
+                        A higher due share means more payment followups needed from front office and accounts teams.
+                    </div>
+                </div>
             </div>
         </article>
 
@@ -407,45 +474,93 @@ $chartData = array_values($chartData);
 
     <section class="sa-kpi-grid">
         <article class="sa-card sa-kpi-card">
-            <div class="sa-kpi-icon"><i class="fas fa-user-plus"></i></div>
-            <div class="sa-kpi-label">Today Leads</div>
-            <div class="sa-kpi-value"><?= number_format((float)$todayLeads) ?></div>
-            <div class="sa-kpi-sub">Fresh enquiries created today across the CRM.</div>
+            <div class="sa-kpi-flip">
+                <div class="sa-kpi-face sa-kpi-front">
+                    <div class="sa-kpi-icon"><i class="fas fa-user-plus"></i></div>
+                    <div class="sa-kpi-label">Today Leads</div>
+                    <div class="sa-kpi-value"><?= number_format((float)$todayLeads) ?></div>
+                    <div class="sa-kpi-sub">Fresh enquiries created today across the CRM.</div>
+                </div>
+                <div class="sa-kpi-face sa-kpi-back">
+                    <div class="sa-kpi-back-title">Action Insight</div>
+                    <div class="sa-kpi-back-copy">New leads should move quickly into followup workflow within the day.</div>
+                </div>
+            </div>
         </article>
 
         <article class="sa-card sa-kpi-card">
-            <div class="sa-kpi-icon"><i class="fas fa-user-check"></i></div>
-            <div class="sa-kpi-label">Today Registrations</div>
-            <div class="sa-kpi-value"><?= number_format((float)$todayRegistrations) ?></div>
-            <div class="sa-kpi-sub">New student conversions recorded today.</div>
+            <div class="sa-kpi-flip">
+                <div class="sa-kpi-face sa-kpi-front">
+                    <div class="sa-kpi-icon"><i class="fas fa-user-check"></i></div>
+                    <div class="sa-kpi-label">Today Registrations</div>
+                    <div class="sa-kpi-value"><?= number_format((float)$todayRegistrations) ?></div>
+                    <div class="sa-kpi-sub">New student conversions recorded today.</div>
+                </div>
+                <div class="sa-kpi-face sa-kpi-back">
+                    <div class="sa-kpi-back-title">Action Insight</div>
+                    <div class="sa-kpi-back-copy">Keep onboarding documents and first-payment followup tightly synced.</div>
+                </div>
+            </div>
         </article>
 
         <article class="sa-card sa-kpi-card">
-            <div class="sa-kpi-icon"><i class="fas fa-wallet"></i></div>
-            <div class="sa-kpi-label">Today Collection</div>
-            <div class="sa-kpi-value"><?= inr_symbol() ?> <?= number_format((float)$todayCollection, 2) ?></div>
-            <div class="sa-kpi-sub">Payments captured against registrations today.</div>
+            <div class="sa-kpi-flip">
+                <div class="sa-kpi-face sa-kpi-front">
+                    <div class="sa-kpi-icon"><i class="fas fa-wallet"></i></div>
+                    <div class="sa-kpi-label">Today Collection</div>
+                    <div class="sa-kpi-value"><?= inr_symbol() ?> <?= number_format((float)$todayCollection, 2) ?></div>
+                    <div class="sa-kpi-sub">Payments captured against registrations today.</div>
+                </div>
+                <div class="sa-kpi-face sa-kpi-back">
+                    <div class="sa-kpi-back-title">Action Insight</div>
+                    <div class="sa-kpi-back-copy">Compare this with pending due queue to measure daily cash pressure.</div>
+                </div>
+            </div>
         </article>
 
         <article class="sa-card sa-kpi-card">
-            <div class="sa-kpi-icon"><i class="fas fa-percent"></i></div>
-            <div class="sa-kpi-label">Today Conversion</div>
-            <div class="sa-kpi-value"><?= number_format((float)$todayConversionRate, 1) ?>%</div>
-            <div class="sa-kpi-sub">Lead-to-registration conversion based on today activity.</div>
+            <div class="sa-kpi-flip">
+                <div class="sa-kpi-face sa-kpi-front">
+                    <div class="sa-kpi-icon"><i class="fas fa-percent"></i></div>
+                    <div class="sa-kpi-label">Today Conversion</div>
+                    <div class="sa-kpi-value"><?= number_format((float)$todayConversionRate, 1) ?>%</div>
+                    <div class="sa-kpi-sub">Lead-to-registration conversion based on today activity.</div>
+                </div>
+                <div class="sa-kpi-face sa-kpi-back">
+                    <div class="sa-kpi-back-title">Action Insight</div>
+                    <div class="sa-kpi-back-copy">Conversion improves when today followups are cleared before end of day.</div>
+                </div>
+            </div>
         </article>
 
         <article class="sa-card sa-kpi-card">
-            <div class="sa-kpi-icon"><i class="fas fa-user-graduate"></i></div>
-            <div class="sa-kpi-label">Total Students</div>
-            <div class="sa-kpi-value"><?= number_format((float)$totalStudents) ?></div>
-            <div class="sa-kpi-sub">Students with active registration status.</div>
+            <div class="sa-kpi-flip">
+                <div class="sa-kpi-face sa-kpi-front">
+                    <div class="sa-kpi-icon"><i class="fas fa-user-graduate"></i></div>
+                    <div class="sa-kpi-label">Total Students</div>
+                    <div class="sa-kpi-value"><?= number_format((float)$totalStudents) ?></div>
+                    <div class="sa-kpi-sub">Students with active registration status.</div>
+                </div>
+                <div class="sa-kpi-face sa-kpi-back">
+                    <div class="sa-kpi-back-title">Action Insight</div>
+                    <div class="sa-kpi-back-copy">Active student base is the key reference for due and capacity metrics.</div>
+                </div>
+            </div>
         </article>
 
         <article class="sa-card sa-kpi-card">
-            <div class="sa-kpi-icon"><i class="fas fa-file-invoice-dollar"></i></div>
-            <div class="sa-kpi-label">Pending Dues</div>
-            <div class="sa-kpi-value"><?= inr_symbol() ?> <?= number_format((float)$pendingDueAmount, 0) ?></div>
-            <div class="sa-kpi-sub"><?= number_format((float)$pendingDueStudents) ?> active students with unpaid or partial balances.</div>
+            <div class="sa-kpi-flip">
+                <div class="sa-kpi-face sa-kpi-front">
+                    <div class="sa-kpi-icon"><i class="fas fa-file-invoice-dollar"></i></div>
+                    <div class="sa-kpi-label">Pending Dues</div>
+                    <div class="sa-kpi-value"><?= inr_symbol() ?> <?= number_format((float)$pendingDueAmount, 0) ?></div>
+                    <div class="sa-kpi-sub"><?= number_format((float)$pendingDueStudents) ?> active students with unpaid or partial balances.</div>
+                </div>
+                <div class="sa-kpi-face sa-kpi-back">
+                    <div class="sa-kpi-back-title">Action Insight</div>
+                    <div class="sa-kpi-back-copy">Prioritize high-balance accounts first to reduce overall risk faster.</div>
+                </div>
+            </div>
         </article>
     </section>
 
@@ -515,6 +630,20 @@ $chartData = array_values($chartData);
                             </a>
                         </div>
                         <div class="sa-snapshot-value"><?= number_format((float)$todayFollowups) ?></div>
+                    </div>
+                </div>
+
+                <div class="sa-mini-chart-wrap">
+                    <div class="sa-panel-label" style="margin-bottom:8px;">
+                        <i class="fas fa-chart-pie"></i>
+                        Today's Collection Mix
+                    </div>
+                    <div class="sa-mini-chart-shell">
+                        <canvas id="saDueMixChart"></canvas>
+                    </div>
+                    <div class="sa-health-foot" style="margin-top:8px;">
+                        <span>Collected: <?= inr_symbol() ?> <?= number_format((float)$todayCollection, 0) ?></span>
+                        <span>Pending: <?= inr_symbol() ?> <?= number_format((float)$pendingDueAmount, 0) ?></span>
                     </div>
                 </div>
             </div>
@@ -724,6 +853,49 @@ color:'#667085'
 }
 
 });
+
+const mixCanvas = document.getElementById("saDueMixChart");
+if (mixCanvas) {
+    new Chart(mixCanvas.getContext("2d"), {
+        type: 'doughnut',
+        data: {
+            labels: ['Collected Today', 'Pending Dues'],
+            datasets: [{
+                data: [<?= (float)$todayCollection ?>, <?= (float)$pendingDueAmount ?>],
+                backgroundColor: ['#e11d74', '#fbcfe8'],
+                borderColor: ['#e11d74', '#fbcfe8'],
+                borderWidth: 0,
+                hoverOffset: 6
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '68%',
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        usePointStyle: true,
+                        boxWidth: 10,
+                        color: '#5b6477',
+                        padding: 12,
+                        font: { weight: '700' }
+                    }
+                },
+                tooltip: {
+                    displayColors: false,
+                    callbacks: {
+                        label: function(context){
+                            const v = Number(context.raw || 0);
+                            return context.label + ': <?= inr_symbol() ?> ' + v.toLocaleString();
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
 
 });
 

@@ -1,0 +1,181 @@
+/* Super Admin v2 enhancements: flip animations + secondary chart shell */
+
+/* Tone boost: align hero feel with brand-rich dashboards */
+.sa-hero-main {
+  background:
+    radial-gradient(circle at top right, rgba(255, 255, 255, 0.14), transparent 30%),
+    linear-gradient(135deg, #ef4a98 0%, #d81b74 42%, #b8125f 100%);
+}
+
+.sa-hero-main::after {
+  background: radial-gradient(circle, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0) 72%);
+}
+
+.sa-hero-title {
+  color: #ffffff;
+}
+
+.sa-hero-title strong {
+  color: #ffe3f1;
+}
+
+.sa-hero-copy {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.sa-hero-main .sa-chip {
+  background: rgba(255, 255, 255, 0.16);
+  border-color: rgba(255, 255, 255, 0.26);
+  color: #ffffff;
+}
+
+.sa-hero-main .sa-chip i {
+  color: #fff3fb;
+}
+
+.sa-hero-side {
+  background: linear-gradient(180deg, #fff 0%, #fff6fb 100%);
+}
+
+.sa-health-card {
+  padding: 0;
+  perspective: 1000px;
+  min-height: 206px;
+}
+
+.sa-health-flip {
+  position: relative;
+  width: 100%;
+  min-height: 206px;
+  transform-style: preserve-3d;
+  transition: transform 0.56s cubic-bezier(0.2, 0.65, 0.25, 1);
+}
+
+.sa-health-face {
+  position: absolute;
+  inset: 0;
+  padding: 14px;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  background: #fff;
+  border-radius: 16px;
+}
+
+.sa-health-back {
+  transform: rotateY(180deg);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 8px;
+  background: linear-gradient(155deg, #fff7fb 0%, #fff 100%);
+}
+
+.sa-health-back-title {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #9d174d;
+}
+
+.sa-health-back-copy {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: #6b7280;
+}
+
+.sa-kpi-card {
+  padding: 0;
+  perspective: 1000px;
+  min-height: 188px;
+}
+
+.sa-kpi-flip {
+  position: relative;
+  width: 100%;
+  min-height: 188px;
+  transform-style: preserve-3d;
+  transition: transform 0.56s cubic-bezier(0.2, 0.65, 0.25, 1);
+}
+
+.sa-kpi-face {
+  position: absolute;
+  inset: 0;
+  padding: 18px;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.sa-kpi-back {
+  transform: rotateY(180deg);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 8px;
+  background: linear-gradient(155deg, #fff7fb 0%, #fff 100%);
+  border-radius: 24px;
+}
+
+.sa-kpi-back-title {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #9d174d;
+}
+
+.sa-kpi-back-copy {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: #6b7280;
+}
+
+.sa-mini-chart-wrap {
+  margin-top: 14px;
+  border: 1px solid #f3dce8;
+  border-radius: 16px;
+  background: #fff;
+  padding: 12px;
+}
+
+.sa-mini-chart-shell {
+  height: 200px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .sa-health-card:hover .sa-health-flip,
+  .sa-health-card:focus-within .sa-health-flip {
+    transform: rotateY(180deg);
+  }
+
+  .sa-kpi-card:hover .sa-kpi-flip,
+  .sa-kpi-card:focus-within .sa-kpi-flip {
+    transform: rotateY(180deg);
+  }
+}
+
+@media (max-width: 1100px) {
+  .sa-health-card,
+  .sa-health-flip {
+    min-height: 186px;
+  }
+}
+
+@media (max-width: 768px) {
+  .sa-kpi-card,
+  .sa-kpi-flip {
+    min-height: 168px;
+  }
+
+  .sa-kpi-face {
+    padding: 14px;
+  }
+
+  .sa-mini-chart-shell {
+    height: 180px;
+  }
+}
