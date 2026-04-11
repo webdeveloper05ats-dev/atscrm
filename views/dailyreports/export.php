@@ -257,6 +257,144 @@ if ($doExport) {
         }
       } catch (Exception $e) {}
     }
+    } elseif ($reportType === 'marketing') {
+    // Activity (details + totals) - Marketing
+    try {
+        $q = $pdo->prepare("
+            SELECT dm.report_date, dm.user_id, u.name AS user_name, a.*
+            FROM dailyreport_marketing_activity a
+            INNER JOIN dailyreport_master dm ON dm.id = a.master_id
+            LEFT JOIN users u ON u.id = dm.user_id
+            WHERE a.master_id IN ($ph)
+            ORDER BY dm.report_date ASC, u.name ASC, a.id ASC
+        ");
+        $q->execute($masterIds);
+        $acts = $q->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        foreach ($acts as $a) {
+            $d = (string)$a['report_date']; $sid = (int)($a['user_id'] ?? 0);
+            if (!isset($byDate[$d])) continue;
+            if (!isset($byStaff[$sid])) $byStaff[$sid] = [];
+            if (!isset($byStaff[$sid][$d])) $byStaff[$sid][$d] = $newBucket();
+            $staff = (string)($a['user_name'] ?? '-');
+            if (!isset($staffLabelById[$sid])) $staffLabelById[$sid] = $staff !== '' ? $staff : ('Staff ' . $sid);
+            $line = 'Fresh '.(int)$a['fresh_calls'].', Follow '.(int)$a['follow_calls'].', SMS '.(int)$a['messages_sent'].', Calls '.(int)$a['total_calls'].', Reg '.(int)$a['registration_total'].', Collection '.number_format((float)$a['total_collection'],2,'.','');
+            $byDate[$d]['activity'][] = $staff . ': ' . $line;
+            $byStaff[$sid][$d]['activity'][] = $line;
+            $byDate[$d]['total_calls'] += (int)($a['total_calls'] ?? 0);
+            $byDate[$d]['total_followups'] += (int)($a['follow_calls'] ?? 0);
+            $byDate[$d]['total_sms'] += (int)($a['messages_sent'] ?? 0);
+            $byDate[$d]['total_collection'] += (float)($a['total_collection'] ?? 0);
+            $byDate[$d]['total_reg'] += (int)($a['registration_total'] ?? 0);
+            $byStaff[$sid][$d]['total_calls'] += (int)($a['total_calls'] ?? 0);
+            $byStaff[$sid][$d]['total_followups'] += (int)($a['follow_calls'] ?? 0);
+            $byStaff[$sid][$d]['total_sms'] += (int)($a['messages_sent'] ?? 0);
+            $byStaff[$sid][$d]['total_collection'] += (float)($a['total_collection'] ?? 0);
+            $byStaff[$sid][$d]['total_reg'] += (int)($a['registration_total'] ?? 0);
+        }
+    } catch (Exception $e) {}
+
+    // Hourly
+    try {
+        $q = $pdo->prepare("SELECT dm.report_date, dm.user_id, u.name AS user_name, hr.* FROM dailyreport_marketing_hourly_rows hr INNER JOIN dailyreport_master dm ON dm.id = hr.master_id LEFT JOIN users u ON u.id = dm.user_id WHERE hr.master_id IN ($ph) ORDER BY dm.report_date ASC, u.name ASC, hr.sort_order ASC, hr.id ASC");
+        $q->execute($masterIds); $hrs = $q->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        foreach ($hrs as $h) {
+            $d=(string)$h['report_date']; $sid=(int)($h['user_id'] ?? 0);
+            if (!isset($byDate[$d])) continue;
+            if (!isset($byStaff[$sid])) $byStaff[$sid] = [];
+            if (!isset($byStaff[$sid][$d])) $byStaff[$sid][$d] = $newBucket();
+            $staff = (string)($h['user_name'] ?? '-');
+            if (!isset($staffLabelById[$sid])) $staffLabelById[$sid] = $staff !== '' ? $staff : ('Staff ' . $sid);
+            $from=trim((string)($h['time_from'] ?? '')); $to=trim((string)($h['time_to'] ?? ''));
+            $part=trim((string)($h['particulars'] ?? '')); $act=trim((string)($h['activities_undergone'] ?? ''));
+            $txt = $from.'-'.$to.' '.$part.($act!=='' ? ' ('.$act.')' : '');
+            $byDate[$d]['hourly'][] = $staff . ': ' . $txt;
+            $byStaff[$sid][$d]['hourly'][] = $txt;
+            $low = strtolower($txt);
+            if (strpos($low,'leave')!==false) { $byDate[$d]['total_leave']++; $byStaff[$sid][$d]['total_leave']++; }
+            if (strpos($low,'permission')!==false) { $byDate[$d]['total_permission']++; $byStaff[$sid][$d]['total_permission']++; }
+        }
+    } catch (Exception $e) {}
+
+    // Colleges
+    try {
+        $q = $pdo->prepare("SELECT dm.report_date, dm.user_id, u.name AS user_name, c.* FROM dailyreport_marketing_colleges_rows c INNER JOIN dailyreport_master dm ON dm.id = c.master_id LEFT JOIN users u ON u.id = dm.user_id WHERE c.master_id IN ($ph) ORDER BY dm.report_date ASC, u.name ASC, c.sort_order ASC, c.id ASC");
+        $q->execute($masterIds); $rows2 = $q->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        foreach ($rows2 as $r2) {
+            $d=(string)$r2['report_date']; $sid=(int)($r2['user_id'] ?? 0);
+            if (!isset($byDate[$d])) continue;
+            if (!isset($byStaff[$sid])) $byStaff[$sid] = [];
+            if (!isset($byStaff[$sid][$d])) $byStaff[$sid][$d] = $newBucket();
+            $staff = (string)($r2['user_name'] ?? '-');
+            if (!isset($staffLabelById[$sid])) $staffLabelById[$sid] = $staff !== '' ? $staff : ('Staff ' . $sid);
+            $txt = trim((string)($r2['college_name'] ?? '')) . ' / ' . trim((string)($r2['contact_person'] ?? '')) . ' / ' . trim((string)($r2['status_1'] ?? ''));
+            $byDate[$d]['college'][] = $staff . ': ' . $txt;
+            $byStaff[$sid][$d]['college'][] = $txt;
+        }
+    } catch (Exception $e) {}
+
+    // Prospect (+ status timeline)
+    try {
+        $q = $pdo->prepare("SELECT dm.report_date, dm.user_id, u.name AS user_name, p.* FROM dailyreport_marketing_prospect_rows p INNER JOIN dailyreport_master dm ON dm.id = p.master_id LEFT JOIN users u ON u.id = dm.user_id WHERE p.master_id IN ($ph) ORDER BY dm.report_date ASC, u.name ASC, p.sort_order ASC, p.id ASC");
+        $q->execute($masterIds); $pros = $q->fetchAll(PDO::FETCH_ASSOC) ?: [];
+
+        $prospectIds = array_map('intval', array_column($pros, 'id'));
+        $statusByProspect = [];
+        if (!empty($prospectIds)) {
+            $ph2 = implode(',', array_fill(0, count($prospectIds), '?'));
+            $q2 = $pdo->prepare("SELECT prospect_row_id, status_date, status_text, remarks FROM dailyreport_marketing_prospect_status_rows WHERE prospect_row_id IN ($ph2) ORDER BY prospect_row_id ASC, sort_order ASC, id ASC");
+            $q2->execute($prospectIds);
+            $stRows = $q2->fetchAll(PDO::FETCH_ASSOC) ?: [];
+            foreach($stRows as $srow){
+                $rid = (int)($srow['prospect_row_id'] ?? 0);
+                $seg = trim((string)($srow['status_date'] ?? ''));
+                $txt = trim((string)($srow['status_text'] ?? ''));
+                $rmk = trim((string)($srow['remarks'] ?? ''));
+                $piece = trim($seg . ' ' . $txt . ($rmk !== '' ? ' (' . $rmk . ')' : ''));
+                if ($piece !== '') $statusByProspect[$rid][] = $piece;
+            }
+        }
+
+        foreach ($pros as $r2) {
+            $d=(string)$r2['report_date']; $sid=(int)($r2['user_id'] ?? 0);
+            if (!isset($byDate[$d])) continue;
+            if (!isset($byStaff[$sid])) $byStaff[$sid] = [];
+            if (!isset($byStaff[$sid][$d])) $byStaff[$sid][$d] = $newBucket();
+            $staff = (string)($r2['user_name'] ?? '-');
+            if (!isset($staffLabelById[$sid])) $staffLabelById[$sid] = $staff !== '' ? $staff : ('Staff ' . $sid);
+            $rid = (int)($r2['id'] ?? 0);
+            $timeline = !empty($statusByProspect[$rid]) ? (' | ' . implode(' -> ', $statusByProspect[$rid])) : '';
+            $txt = trim((string)($r2['college'] ?? '')) . ' / ' . trim((string)($r2['staff_name'] ?? '')) . $timeline;
+            $byDate[$d]['registration'][] = $staff . ': ' . $txt;
+            $byStaff[$sid][$d]['registration'][] = $txt;
+        }
+    } catch (Exception $e) {}
+
+    // Program + Amount + Act report summarized in database column
+    $mkMap = [
+      ['dailyreport_marketing_program_rows','college','topics'],
+      ['dailyreport_marketing_amount_rows','college_name','particulars'],
+      ['dailyreport_marketing_act_report_rows','metric_name','total_value']
+    ];
+    foreach ($mkMap as $cfg) {
+      try {
+        $q = $pdo->prepare("SELECT dm.report_date, dm.user_id, u.name AS user_name, t.* FROM {$cfg[0]} t INNER JOIN dailyreport_master dm ON dm.id=t.master_id LEFT JOIN users u ON u.id=dm.user_id WHERE t.master_id IN ($ph) ORDER BY dm.report_date ASC, u.name ASC, t.sort_order ASC, t.id ASC");
+        $q->execute($masterIds); $rows2 = $q->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        foreach ($rows2 as $r2) {
+          $d=(string)$r2['report_date']; $sid=(int)($r2['user_id'] ?? 0);
+          if (!isset($byDate[$d])) continue;
+          if (!isset($byStaff[$sid])) $byStaff[$sid] = [];
+          if (!isset($byStaff[$sid][$d])) $byStaff[$sid][$d] = $newBucket();
+          $staff = (string)($r2['user_name'] ?? '-');
+          if (!isset($staffLabelById[$sid])) $staffLabelById[$sid] = $staff !== '' ? $staff : ('Staff ' . $sid);
+          $left = trim((string)($r2[$cfg[1]] ?? ''));
+          $right = trim((string)($r2[$cfg[2]] ?? ''));
+          if ($left === '' && $right === '') continue;
+          $txt = $left . ($right !== '' ? ' / ' . $right : '');
+          $byDate[$d]['database'][] = $staff . ': ' . $txt;
+          $byStaff[$sid][$d]['database'][] = $txt;
+        }
+      } catch (Exception $e) {}
+    }
     } else {
     // Activity (details + totals)
     try {

@@ -17,6 +17,7 @@ $requiredTables=['dailyreport_master','dailyreport_hr_activity','dailyreport_hr_
 $missingTables=[]; foreach($requiredTables as $t){ if(!function_exists('crmTableExists') || !crmTableExists($pdo,$t)) $missingTables[]=$t; }
 
 $today=date('Y-m-d');
+$minSelectableDate = date('Y-m-d', strtotime($today.' -2 day'));
 $reportDate=trim((string)($_GET['report_date']??$today));
 if(!preg_match('/^\d{4}-\d{2}-\d{2}$/',$reportDate)) $reportDate=$today;
 $dayDiff=(int)((strtotime($today.' 00:00:00')-strtotime($reportDate.' 00:00:00'))/86400);
@@ -235,7 +236,7 @@ $editModeLabel='Read Only'; if($isToday) $editModeLabel=$isEditable?'Editable (T
   <div class="dr-head"><div><h2 class="dr-title">Daily Report Entry</h2><p class="dr-note">HR - same flow (final save only)</p></div></div>
   <?php if($warning!==''): ?><div class="dr-card"><div class="dr-card-body" style="color:#9a3412"><?= h($warning) ?></div></div><?php endif; ?>
   <div class="dr-card"><div class="dr-card-body">
-    <div class="dr-grid"><div class="dr-field"><label>Report Date</label><input type="date" class="js-dr-report-date" value="<?= h($reportDate) ?>"></div><div class="dr-field"><label>Edit Mode</label><input readonly value="<?= h($editModeLabel) ?>"></div><div class="dr-field"><label>Role</label><input readonly value="HR"></div><div class="dr-field"><label>Status</label><input readonly value="<?= h(ucfirst((string)($master['status'] ?? 'draft'))) ?>"></div></div>
+    <div class="dr-grid"><div class="dr-field"><label>Report Date</label><input type="date" class="js-dr-report-date" value="<?= h($reportDate) ?>" min="<?= h($minSelectableDate) ?>" max="<?= h($today) ?>"></div><div class="dr-field"><label>Edit Mode</label><input readonly value="<?= h($editModeLabel) ?>"></div><div class="dr-field"><label>Role</label><input readonly value="HR"></div><div class="dr-field"><label>Status</label><input readonly value="<?= h(ucfirst((string)($master['status'] ?? 'draft'))) ?>"></div></div>
     <?php if($master && empty($missingTables) && $canUseHrForm): ?>
     <form method="POST" id="hrDailyForm">
       <input type="hidden" name="csrf_token" value="<?= h(generateCSRF()) ?>"><input type="hidden" name="save_all_report" value="1">
@@ -497,10 +498,20 @@ function init(){
       .catch(function(){ window.location.href = url; });
   }
   const root = document.querySelector('.dr-wrap') || document;
+  root.querySelectorAll('.js-dr-report-date').forEach(function(el){
+    el.setAttribute('min', '<?= h($minSelectableDate) ?>');
+    el.setAttribute('max', '<?= h($today) ?>');
+  });
   root.addEventListener('change', function(e){
     if(!e.target.classList.contains('js-dr-report-date')) return;
     const dt = (e.target.value || '').trim();
     if(!dt) return;
+    const minDt = '<?= h($minSelectableDate) ?>';
+    const maxDt = '<?= h($today) ?>';
+    if (dt < minDt || dt > maxDt) {
+      e.target.value = '<?= h($reportDate) ?>';
+      return;
+    }
     drAjaxSwap('index.php?page=dailyreports/entry&report_date=' + encodeURIComponent(dt));
   });
   const tabs=[...document.querySelectorAll('.dr-tab')],steps=[...document.querySelectorAll('.dr-step')];
