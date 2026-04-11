@@ -18,6 +18,29 @@ if (isset($_SESSION['user_id'])) {
 }
 
 $pageTitle = "Login";
+$brandAppName = (string) crm_brand('app.name', APP_NAME);
+$brandLogo = (string) crm_brand('assets.logo', 'assets/images/logo.png');
+$brandFavicon = (string) crm_brand('assets.favicon', $brandLogo);
+$brandFontUrl = trim((string) crm_brand('theme.font.google_url', ''));
+$brandVars = [
+    '--crm-font-family' => (string) crm_brand('theme.font.family', "'Poppins', sans-serif"),
+    '--crm-primary' => (string) crm_brand('theme.colors.primary', '#e91e63'),
+    '--crm-primary-dark' => (string) crm_brand('theme.colors.primary_dark', '#c2185b'),
+    '--crm-primary-light' => (string) crm_brand('theme.colors.primary_light', '#fce4ec'),
+    '--crm-accent' => (string) crm_brand('theme.colors.accent', '#ff4d8d'),
+    '--crm-text' => (string) crm_brand('theme.colors.text', '#333333'),
+    '--crm-text-muted' => (string) crm_brand('theme.colors.text_muted', '#6b7280'),
+    '--crm-bg-light' => (string) crm_brand('theme.colors.bg_light', '#fff7fa'),
+    '--crm-border' => (string) crm_brand('theme.colors.border', '#f3c6d3'),
+    '--crm-surface' => (string) crm_brand('theme.colors.surface', '#ffffff'),
+    '--crm-link' => (string) crm_brand('theme.colors.link', '#be185d'),
+];
+$brandCssParts = [];
+foreach ($brandVars as $key => $value) {
+    $clean = preg_replace('/[^#(),.%+\\-\\w\\s\'"]/', '', (string) $value);
+    $brandCssParts[] = $key . ':' . trim($clean);
+}
+$brandCssInline = implode(';', $brandCssParts);
 
 // -------------------------------
 // Handle Login
@@ -88,7 +111,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title><?= htmlspecialchars($pageTitle) ?> - <?= htmlspecialchars(APP_NAME) ?></title>
+    <title><?= htmlspecialchars($pageTitle) ?> - <?= htmlspecialchars($brandAppName) ?></title>
 
 <!-- Bootstrap -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
@@ -96,14 +119,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <!-- Font Awesome -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 
-<link rel="icon" type="image/png" href="<?= BASE_URL ?>assets/images/logo.png">
-<link rel="shortcut icon" type="image/png" href="<?= BASE_URL ?>assets/images/logo.png">
+<link rel="icon" type="image/png" href="<?= BASE_URL . htmlspecialchars($brandFavicon, ENT_QUOTES, 'UTF-8') ?>">
+<link rel="shortcut icon" type="image/png" href="<?= BASE_URL . htmlspecialchars($brandFavicon, ENT_QUOTES, 'UTF-8') ?>">
 
-<!-- Google Poppins -->
+<?php if ($brandFontUrl !== ''): ?>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link href="<?= htmlspecialchars($brandFontUrl) ?>" rel="stylesheet">
+<?php endif; ?>
+<link rel="stylesheet" href="<?= BASE_URL ?>assets/css/brand.css">
+<link rel="stylesheet" href="<?= BASE_URL ?>assets/css/form-system.css">
+<style>:root{<?= htmlspecialchars($brandCssInline, ENT_QUOTES, 'UTF-8') ?>}</style>
 
 
     <style>
@@ -120,7 +146,7 @@ p,
 h1,h2,h3,h4,h5,h6,
 a,
 div{
-    font-family: 'Poppins', sans-serif !important;
+    font-family: var(--crm-font-family, 'Poppins', sans-serif) !important;
 }
 
 /* DO NOT override Font Awesome */
@@ -133,14 +159,14 @@ div{
 
         *{ box-sizing:border-box; }
         :root{
-            --ats-pink:#ec3d8f;
-            --ats-pink-dark:#cf2f78;
-            --ats-pink-soft:#fff2f8;
-            --ats-ink:#172033;
-            --ats-text:#24324a;
-            --ats-muted:#6d7788;
-            --ats-line:#f2dbe6;
-            --ats-bg:#fff8fb;
+            --ats-pink:var(--crm-primary);
+            --ats-pink-dark:var(--crm-primary-dark);
+            --ats-pink-soft:var(--crm-primary-light);
+            --ats-ink:var(--crm-text);
+            --ats-text:var(--crm-text);
+            --ats-muted:var(--crm-text-muted);
+            --ats-line:var(--crm-border);
+            --ats-bg:var(--crm-bg-light);
             --radius:28px;
         }
         html, body{
@@ -811,7 +837,7 @@ button i:only-child {
                     ATS CRM Workspace
                 </div>
                 <div class="auth-brand">
-                    <img class="auth-logo" src="<?= BASE_URL ?>assets/images/logo.png" alt="ATS Logo">
+                    <img class="auth-logo" src="<?= BASE_URL . htmlspecialchars($brandLogo, ENT_QUOTES, 'UTF-8') ?>" alt="<?= htmlspecialchars($brandAppName) ?> Logo">
                     <div>
                         <h4>Welcome to <?= htmlspecialchars(APP_NAME) ?></h4>
                         <p>Centralize admissions, collections, team activity, and branch operations in one focused workspace.</p>

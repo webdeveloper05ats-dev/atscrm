@@ -409,431 +409,7 @@ if (!empty($form['user_id'])) {
 }
 ?>
 
-<style>
-
-.targets-setup-wrap{
-background:
-radial-gradient(circle at top left, rgba(255,236,244,.9), rgba(255,248,252,0) 38%),
-linear-gradient(180deg,#fffafd 0%,#fff6fa 100%);
-border:1px solid #f6dce8;
-border-radius:24px;
-padding:18px;
-box-shadow:0 12px 30px rgba(233,30,99,.06);
-}
-
-.targets-topbar{
-background:linear-gradient(135deg,#ffffff 0%,#fff6fb 100%);
-border:1px solid #f0d9e5;
-border-radius:18px;
-padding:14px 18px;
-box-shadow:0 8px 20px rgba(233,30,99,.06);
-display:flex;
-align-items:center;
-justify-content:space-between;
-gap:16px;
-flex-wrap:wrap;
-margin-bottom:16px;
-}
-
-.targets-topbar-title{
-font-size:1.05rem;
-font-weight:800;
-color:#1f2940;
-}
-
-.targets-topbar-sub{
-margin-top:4px;
-font-size:.74rem;
-font-weight:600;
-color:#8b6b7d;
-}
-
-.targets-topbar-sub{
-margin-top:4px;
-font-size:.74rem;
-font-weight:600;
-color:#8b6b7d;
-}
-
-.targets-summary-row{
-display:grid;
-grid-template-columns:repeat(3,1fr);
-gap:14px;
-margin-bottom:18px;
-}
-
-.targets-summary-card{
-background:#fff;
-border:1px solid #f0d9e5;
-border-radius:18px;
-padding:16px 18px;
-}
-
-.targets-main-card{
-background:#fff;
-border:1px solid #f0d9e5;
-border-radius:18px;
-overflow:hidden;
-box-shadow:0 14px 34px rgba(15,23,42,.05);
-}
-
-.targets-main-head{
-background:linear-gradient(135deg,#ec1670 0%,#c8135b 100%);
-color:#fff;
-padding:12px 18px;
-font-weight:800;
-letter-spacing:.02em;
-font-size:.88rem;
-}
-
-.targets-main-body{
-padding:16px 18px 18px;
-}
-
-.targets-section-tag{
-display:inline-flex;
-align-items:center;
-gap:8px;
-padding:7px 12px;
-border-radius:999px;
-border:1px solid #f2d9e5;
-background:#fff7fb;
-color:#a23f6d;
-font-size:.72rem;
-font-weight:800;
-letter-spacing:.03em;
-text-transform:uppercase;
-margin-bottom:14px;
-}
-
-.targets-section-tag{
-display:inline-flex;
-align-items:center;
-gap:8px;
-padding:7px 12px;
-border-radius:999px;
-border:1px solid #f2d9e5;
-background:#fff7fb;
-color:#a23f6d;
-font-size:.72rem;
-font-weight:800;
-letter-spacing:.03em;
-text-transform:uppercase;
-margin-bottom:14px;
-}
-
-.targets-form-grid{
-display:grid;
-grid-template-columns:repeat(2,minmax(240px,1fr));
-gap:14px 16px;
-max-width:920px;
-}
-
-.targets-field-full{
-grid-column:1/-1;
-}
-
-.targets-label{
-font-weight:700;
-font-size:.76rem;
-letter-spacing:.03em;
-text-transform:uppercase;
-color:#8f4f6d;
-margin-bottom:8px;
-display:block;
-}
-
-.targets-label .required-mark{
-color:#e91e63;
-margin-left:4px;
-}
-
-.targets-help{
-font-size:.82rem;
-color:#777;
-margin-top:6px;
-}
-
-.targets-form-grid .form-control,
-.targets-form-grid .form-select{
-width:100%;
-min-height:38px;
-border:1px solid #efcada;
-border-radius:10px;
-background:#fff;
-box-shadow:none;
-padding:8px 10px;
-font-size:.84rem;
-font-weight:600;
-color:#27364c;
-transition:border-color .18s ease, box-shadow .18s ease;
-}
-
-.targets-form-grid .form-control:focus,
-.targets-form-grid .form-select:focus{
-border-color:#e91e63;
-box-shadow:0 0 0 4px rgba(233,30,99,.12);
-outline:none;
-}
-
-.targets-form-grid textarea.form-control{
-min-height:92px;
-resize:vertical;
-}
-
-.targets-input-shell{
-position:relative;
-}
-
-.targets-input-icon{
-position:absolute;
-left:11px;
-top:50%;
-transform:translateY(-50%);
-color:#e91e63;
-font-size:.84rem;
-pointer-events:none;
-}
-
-.targets-input-shell .form-control,
-.targets-input-shell .form-select{
-padding-left:30px;
-}
-
-.targets-readonly{
-background:linear-gradient(180deg,#fff7fb 0%,#fff2f8 100%) !important;
-border-color:#f1d8e4 !important;
-color:#6f4b60 !important;
-cursor:not-allowed;
-}
-
-.targets-readonly:focus{
-box-shadow:none !important;
-}
-
-.targets-input-shell.textarea-shell .targets-input-icon{
-top:14px;
-transform:none;
-}
-
-.targets-inline-note{
-margin-top:5px;
-font-size:.68rem;
-font-weight:600;
-color:#9b6a82;
-line-height:1.35;
-}
-
-.targets-inline-note.is-muted{
-opacity:.82;
-}
-
-.targets-inline-note.is-muted{
-opacity:.82;
-}
-
-.status-pills{
-display:flex;
-align-items:center;
-gap:0;
-margin-top:0;
-border:1px solid #efcada;
-border-radius:10px;
-background:#fff;
-overflow:hidden;
-}
-
-.status-pill{
-flex:1;
-border:0;
-background:transparent;
-color:#6b7280;
-padding:10px 14px;
-font-size:.8rem;
-font-weight:700;
-line-height:1;
-cursor:pointer;
-transition:all .18s ease;
-}
-
-.status-pill.is-active{
-box-shadow:none;
-}
-
-.status-pill[data-status="active"].is-active{
-background:linear-gradient(135deg, #e91e63 0%, #ff4f9c 100%);
-color:#fff;
-}
-
-.status-pill[data-status="inactive"].is-active{
-background:linear-gradient(135deg, #e91e63 0%, #ff4f9c 100%);
-color:#fff;
-}
-
-.status-pill + .status-pill{
-border-left:1px solid #f3d8e5;
-}
-
-/* amount slider */
-
-.amount-slider{
-margin-top:10px;
-padding:8px 10px;
-border:1px solid #f1d8e4;
-border-radius:10px;
-background:#fff9fc;
-}
-
-.amount-combo{
-padding:10px;
-border:1px solid #f1d8e4;
-border-radius:12px;
-background:linear-gradient(180deg,#fffdfd 0%,#fff8fb 100%);
-}
-
-.amount-combo .targets-input-shell{
-margin-bottom:8px;
-}
-
-.amount-slider input[type=range]{
-width:100%;
-height:8px;
-background:#f0d9e5;
-border-radius:10px;
-appearance:none;
-}
-
-.amount-slider input[type=range]::-webkit-slider-thumb{
-appearance:none;
-width:20px;
-height:20px;
-background:#e91e63;
-border-radius:50%;
-cursor:pointer;
-}
-
-.amount-display{
-margin-top:8px;
-font-weight:700;
-color:#8d1246;
-font-size:.78rem;
-}
-
-.targets-btn{
-border-radius:10px;
-padding:9px 16px;
-font-weight:700;
-text-decoration:none;
-display:inline-flex;
-align-items:center;
-gap:8px;
-font-size:.84rem;
-}
-
-.targets-btn:disabled{
-opacity:.58;
-cursor:not-allowed;
-transform:none;
-box-shadow:none;
-}
-
-.targets-btn-primary{
-background:linear-gradient(135deg,#ec1670,#c8135b);
-color:#fff;
-border:none;
-}
-
-.targets-btn-outline{
-border:1px solid #e4cfd9;
-background:#fff;
-color:#6e4b60;
-}
-
-.targets-form-actions{
-margin-top:16px;
-display:flex;
-gap:10px;
-flex-wrap:wrap;
-padding-top:14px;
-border-top:1px solid #f4dfe8;
-}
-
-@media(max-width:900px){
-.targets-form-grid{
-grid-template-columns:1fr;
-max-width:none;
-}
-}
-
-
-/* =====================================================
-GLOBAL TYPOGRAPHY STYLECSS SYNC
-font-family + font-size + font-weight only
-===================================================== */
-:where(body,button,input,select,textarea,label,span,p,h1,h2,h3,h4,h5,h6,a,div){
-  font-family:'Poppins',sans-serif !important;
-}
-:where(h1,.h1,.page-title,.crm-page-title,.dashboard-header h2){font-size:clamp(2rem, 2.5vw, 2.4rem) !important;font-weight:700 !important;}
-:where(h2,.h2,.section-title){font-size:clamp(1.6rem, 2vw, 2rem) !important;font-weight:600 !important;}
-:where(h3,.h3,.card-header,.table-title){font-size:clamp(1.3rem, 1.6vw, 1.5rem) !important;font-weight:600 !important;}
-:where(h4,.h4){font-size:1.2rem !important;font-weight:500 !important;}
-:where(h5,.h5){font-size:1rem !important;font-weight:500 !important;}
-:where(h6,.h6){font-size:0.9rem !important;font-weight:500 !important;}
-:where(body){font-size:1rem !important;}
-:where(p,.text-body,li,td,.text-muted,.help-text,.form-text,.small,small,.secondary-text){font-size:0.95rem !important;font-weight:400 !important;}
-:where(.small,small,.text-muted,.help-text,.form-text,.att-sub,.crm-note){font-size:0.85rem !important;font-weight:400 !important;}
-:where(label,.form-label){font-size:0.85rem !important;font-weight:500 !important;}
-:where(input,select,textarea,.form-control,.form-select){font-size:0.95rem !important;font-weight:400 !important;}
-:where(input::placeholder,textarea::placeholder){font-weight:400 !important;}
-:where(button,.btn,.dt-button,.crm-action-btn,.crm-icon-btn,.btn-icon-only,.action-btn,.targets-btn-icon,.iso-report-btn,.iso-report-action-btn){font-size:0.9rem !important;font-weight:600 !important;}
-:where(.btn[data-mobile-label],.btn-icon-only[data-mobile-label],.action-btn[data-mobile-label],.crm-icon-btn[data-mobile-label],.targets-btn-icon[data-mobile-label],.iso-report-icon-btn[data-mobile-label],.iso-report-action-btn[data-mobile-label])::after{font-size:0.75rem !important;font-weight:600 !important;}
-:where(.table th,.crm-table th,.dataTables_wrapper th,th){font-size:0.75rem !important;font-weight:600 !important;}
-:where(.table td,.dataTables_wrapper tbody td){font-size:0.9rem !important;}
-:where(.dataTables_wrapper .dataTables_info){font-size:0.85rem !important;font-weight:400 !important;}
-:where(.dataTables_wrapper .paginate_button){font-size:0.9rem !important;font-weight:600 !important;}
-:where(.badge,.status-badge,.crm-status-badge,.status-pill,.badge-status,[data-status],.tooltip,.ui-tooltip,.floating-ui-tooltip__bubble){font-weight:600 !important;}
-
-/* ===== GLOBAL BUTTON STANDARDIZATION ===== */
-button,
-.btn,
-.crm-action-btn,
-.btn-filter,
-.btn-reset,
-.btn-add,
-.btn-excel,
-.action-btn,
-.btn-icon-only,
-a.btn,
-input[type="button"],
-input[type="submit"],
-input[type="reset"],
-[role="button"] {
-    font-size: 0.92rem;
-    min-height: 38px;
-    padding: 8px 14px;
-    border-radius: 10px;
-    font-weight: 600;
-}
-
-.btn-icon-only,
-.crm-action-btn,
-.action-btn,
-.btn-sm,
-.btn-xs,
-button.btn-icon,
-a.btn-icon,
-.btn i:only-child,
-button i:only-child {
-    font-size: 0.9rem;
-    min-height: 34px;
-    padding: 8px;
-    border-radius: 10px;
-    font-weight: 600;
-}
-</style>
-
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
 
 <div class="container-fluid py-3">
 <div class="targets-setup-wrap">
@@ -864,7 +440,6 @@ document.addEventListener("DOMContentLoaded", function () {
 </div>
 
 </div>
-
 
 <div class="targets-main-card">
 
@@ -904,7 +479,6 @@ value="<?= h($form['target_year']) ?>">
 <div class="targets-inline-note is-muted">Auto-filled year. It will still be saved with this target.</div>
 </div>
 
-
 <div>
 <label class="targets-label">Target Month</label>
 <div class="targets-input-shell">
@@ -926,7 +500,6 @@ value="<?= h($form['target_year']) ?>">
 </div>
 <div class="targets-inline-note is-muted">Choose the month for which this target should apply.</div>
 </div>
-
 
 <div>
 <label class="targets-label">Staff / User <span class="required-mark">*</span></label>
@@ -955,7 +528,6 @@ data-role-name="<?= h($user['role_name']) ?>"
 <div class="targets-inline-note">Only active target-applicable staff are shown here.</div>
 </div>
 
-
 <div>
 <label class="targets-label">Role</label>
 <div class="targets-input-shell">
@@ -968,8 +540,6 @@ value="<?= h($selectedRoleName) ?>">
 </div>
 <div class="targets-inline-note is-muted">Auto-filled from staff selection. Role ID still goes to the database.</div>
 </div>
-
-
 
 <div>
 <label class="targets-label">Target Amount <span class="required-mark">*</span></label>
@@ -999,7 +569,7 @@ value="<?= $form['target_amount'] ?: 0 ?>">
 
 <div class="amount-display">
 
-? <span id="amount_value">
+<?= inr_symbol() ?> <span id="amount_value">
 <?= $form['target_amount'] ?: 0 ?>
 </span>
 
@@ -1009,7 +579,6 @@ value="<?= $form['target_amount'] ?: 0 ?>">
 </div>
 
 </div>
-
 
 <div>
 <label class="targets-label">Incentive %</label>
@@ -1023,8 +592,6 @@ value="<?= h($form['incentive_percent']) ?>">
 </div>
 <div class="targets-inline-note is-muted">Set the incentive percentage linked to achievement.</div>
 </div>
-
-
 
 <div>
 
@@ -1051,7 +618,6 @@ value="<?= h($form['status']) ?>">
 
 </div>
 
-
 <div>
 
 <label class="targets-label">Remarks</label>
@@ -1068,9 +634,7 @@ class="form-control">
 <div class="targets-inline-note is-muted">Add any internal note about the monthly target or incentive plan.</div>
 </div>
 
-
 </div>
-
 
 <div class="targets-form-actions">
 
@@ -1094,7 +658,6 @@ View Target List
 
 </div>
 
-
 </form>
 
 </div>
@@ -1102,7 +665,6 @@ View Target List
 
 </div>
 </div>
-
 
 <script>
 
@@ -1131,7 +693,6 @@ const targetAmount=(amountInput?.value || "").trim();
 saveTargetBtn.disabled = (selectedUser === "" || targetAmount === "");
 };
 
-
 /* STATUS PILLS */
 
 const statusHidden=document.getElementById("status_hidden");
@@ -1157,7 +718,6 @@ this.classList.add("is-active");
 });
 
 }
-
 
 /* TARGET AMOUNT SLIDER */
 
@@ -1188,7 +748,6 @@ syncSaveTargetState();
 });
 
 }
-
 
 /* REQUIRED FIELD VALIDATION */
 
@@ -1253,4 +812,5 @@ userSelect.addEventListener("change",syncSaveTargetState);
 syncSaveTargetState();
 
 </script>
+
 

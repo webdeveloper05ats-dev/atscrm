@@ -1,0 +1,429 @@
+/* White-label brand layer
+   Loaded after base/page CSS so client-specific values win. */
+
+:root{
+  --crm-font-family:'Poppins',sans-serif;
+  --crm-primary:#e91e63;
+  --crm-primary-dark:#c2185b;
+  --crm-primary-light:#fce4ec;
+  --crm-accent:#ff4d8d;
+  --crm-text:#333333;
+  --crm-text-muted:#6b7280;
+  --crm-bg-light:#fff7fa;
+  --crm-border:#f3c6d3;
+  --crm-surface:#ffffff;
+  --crm-link:#be185d;
+  --crm-gradient-primary:linear-gradient(135deg,var(--crm-accent),var(--crm-primary));
+}
+
+/* Map app variables to brand variables */
+:root{
+  --primary:var(--crm-primary);
+  --primary-dark:var(--crm-primary-dark);
+  --primary-light:var(--crm-primary-light);
+  --text-dark:var(--crm-text);
+  --text-light:var(--crm-text-muted);
+  --bg-light:var(--crm-bg-light);
+  --border:var(--crm-border);
+  --white:var(--crm-surface);
+}
+
+/* Force brand font globally (kept last to beat page-level overrides) */
+:where(body,button,input,select,textarea,label,span,p,h1,h2,h3,h4,h5,h6,a,div){
+  font-family:var(--crm-font-family) !important;
+}
+
+a{
+  color:var(--crm-link);
+}
+
+/* Common pink-gradient action buttons used across modules */
+:where(.btn-primary,.dre-btn,.dr-btn-primary,.auth-btn){
+  background:var(--crm-gradient-primary) !important;
+  border-color:transparent !important;
+  color:#fff !important;
+}
+
+:where(.btn-primary:hover,.dre-btn:hover,.dr-btn-primary:hover,.auth-btn:hover){
+  filter:brightness(.96);
+}
+
+.sidebar .logo{
+  color:var(--crm-primary) !important;
+}
+
+/* Unified modern icon action style (matches product icon tile look) */
+:where(
+  .btn-icon-only,
+  .crm-icon-btn,
+  .sa-icon-btn,
+  .att-icon-btn,
+  .source-icon,
+  .targets-btn-icon,
+  .iso-report-icon-btn,
+  .iso-report-action-btn,
+  .intern-action-btn,
+  .ssr-action-btn,
+  .drv-icon-btn,
+  .dre-icon-btn,
+  .menu-edit,
+  .menu-delete,
+  .user-btn,
+  .user-edit,
+  .user-delete,
+  .atsrm-role-ui-actions .action-btn,
+  .action-buttons .action-btn
+):not([data-mobile-label]){
+  width:44px !important;
+  min-width:44px !important;
+  height:44px !important;
+  min-height:44px !important;
+  padding:0 !important;
+  border-radius:12px !important;
+  border:1px solid color-mix(in srgb, var(--crm-primary) 18%, #e2bcd0) !important;
+  background:linear-gradient(180deg, #fdf1f7 0%, #f7e3ed 100%) !important;
+  color:var(--crm-primary) !important;
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  box-shadow:0 4px 10px rgba(233, 30, 99, 0.10) !important;
+  text-decoration:none !important;
+}
+
+:where(
+  .btn-icon-only,
+  .crm-icon-btn,
+  .sa-icon-btn,
+  .att-icon-btn,
+  .source-icon,
+  .targets-btn-icon,
+  .iso-report-icon-btn,
+  .iso-report-action-btn,
+  .intern-action-btn,
+  .ssr-action-btn,
+  .drv-icon-btn,
+  .dre-icon-btn,
+  .menu-edit,
+  .menu-delete,
+  .user-btn,
+  .user-edit,
+  .user-delete,
+  .atsrm-role-ui-actions .action-btn,
+  .action-buttons .action-btn
+):not([data-mobile-label]):hover,
+:where(
+  .btn-icon-only,
+  .crm-icon-btn,
+  .sa-icon-btn,
+  .att-icon-btn,
+  .source-icon,
+  .targets-btn-icon,
+  .iso-report-icon-btn,
+  .iso-report-action-btn,
+  .intern-action-btn,
+  .ssr-action-btn,
+  .drv-icon-btn,
+  .dre-icon-btn,
+  .menu-edit,
+  .menu-delete,
+  .user-btn,
+  .user-edit,
+  .user-delete,
+  .atsrm-role-ui-actions .action-btn,
+  .action-buttons .action-btn
+):not([data-mobile-label]):focus-visible{
+  transform:translateY(-1px) !important;
+  border-color:color-mix(in srgb, var(--crm-primary) 35%, #d8a4bf) !important;
+  background:linear-gradient(180deg, #fcebf3 0%, #f4dae8 100%) !important;
+  color:var(--crm-primary-dark) !important;
+  box-shadow:0 8px 16px rgba(233, 30, 99, 0.16) !important;
+  outline:none !important;
+}
+
+:where(
+  .btn-icon-only,
+  .crm-icon-btn,
+  .sa-icon-btn,
+  .att-icon-btn,
+  .source-icon,
+  .targets-btn-icon,
+  .iso-report-icon-btn,
+  .iso-report-action-btn,
+  .intern-action-btn,
+  .ssr-action-btn,
+  .drv-icon-btn,
+  .dre-icon-btn,
+  .menu-edit,
+  .menu-delete,
+  .user-btn,
+  .user-edit,
+  .user-delete,
+  .atsrm-role-ui-actions .action-btn,
+  .action-buttons .action-btn
+):not([data-mobile-label]) > i{
+  font-size:15px !important;
+  line-height:1 !important;
+}
+
+/* Force-modern overrides for legacy .action-btn.* classes with old !important rules */
+.atsrm-role-ui-actions .action-btn,
+.action-btn.edit,
+.action-btn.delete,
+.action-btn.view,
+.action-btn.convert,
+.action-btn.payment,
+.action-btn.idcard,
+.action-btn.download-report,
+.action-btn.export,
+.menu-edit,
+.menu-delete,
+.user-btn,
+.user-edit,
+.user-delete{
+  width:44px !important;
+  min-width:44px !important;
+  height:44px !important;
+  min-height:44px !important;
+  padding:0 !important;
+  border-radius:12px !important;
+  border:1px solid color-mix(in srgb, var(--crm-primary) 18%, #e2bcd0) !important;
+  background:linear-gradient(180deg, #fdf1f7 0%, #f7e3ed 100%) !important;
+  color:var(--crm-primary) !important;
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  box-shadow:0 4px 10px rgba(233, 30, 99, 0.10) !important;
+}
+
+.atsrm-role-ui-actions .action-btn:hover,
+.action-btn.edit:hover,
+.action-btn.delete:hover,
+.action-btn.view:hover,
+.action-btn.convert:hover,
+.action-btn.payment:hover,
+.action-btn.idcard:hover,
+.action-btn.download-report:hover,
+.action-btn.export:hover,
+.menu-edit:hover,
+.menu-delete:hover,
+.user-btn:hover,
+.user-edit:hover,
+.user-delete:hover{
+  background:linear-gradient(180deg, #fcebf3 0%, #f4dae8 100%) !important;
+  color:var(--crm-primary-dark) !important;
+  border-color:color-mix(in srgb, var(--crm-primary) 35%, #d8a4bf) !important;
+}
+
+/* Leads source icon should follow global modern icon style */
+.source-icon,
+.source-col .source-icon{
+  width:44px !important;
+  min-width:44px !important;
+  height:44px !important;
+  min-height:44px !important;
+  padding:0 !important;
+  border-radius:12px !important;
+  border:1px solid color-mix(in srgb, var(--crm-primary) 18%, #e2bcd0) !important;
+  background:linear-gradient(180deg, #fdf1f7 0%, #f7e3ed 100%) !important;
+  color:var(--crm-primary) !important;
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  box-shadow:0 4px 10px rgba(233, 30, 99, 0.10) !important;
+}
+
+.source-icon i,
+.source-col .source-icon i{
+  color:var(--crm-primary) !important;
+  font-size:15px !important;
+  line-height:1 !important;
+}
+
+.source-icon:hover,
+.source-icon:focus-visible,
+.source-col .source-icon:hover,
+.source-col .source-icon:focus-visible{
+  transform:translateY(-1px) !important;
+  border-color:color-mix(in srgb, var(--crm-primary) 35%, #d8a4bf) !important;
+  background:linear-gradient(180deg, #fcebf3 0%, #f4dae8 100%) !important;
+  color:var(--crm-primary-dark) !important;
+  box-shadow:0 8px 16px rgba(233, 30, 99, 0.16) !important;
+}
+
+.source-icon:hover i,
+.source-icon:focus-visible i,
+.source-col .source-icon:hover i,
+.source-col .source-icon:focus-visible i{
+  color:var(--crm-primary-dark) !important;
+}
+
+/* Global pagination contrast safety (DataTables v1 + v2) */
+:where(
+  .dataTables_wrapper .dataTables_paginate .paginate_button,
+  .dataTables_wrapper .dataTables_paginate .paginate_button a,
+  .dataTables_wrapper .dt-paging .dt-paging-button,
+  .dataTables_wrapper .dt-paging .dt-paging-button a
+){
+  color:var(--crm-primary) !important;
+}
+
+:where(
+  .dataTables_wrapper .dataTables_paginate .paginate_button:hover,
+  .dataTables_wrapper .dataTables_paginate .paginate_button:focus-visible,
+  .dataTables_wrapper .dataTables_paginate .paginate_button:active,
+  .dataTables_wrapper .dt-paging .dt-paging-button:hover,
+  .dataTables_wrapper .dt-paging .dt-paging-button:focus-visible,
+  .dataTables_wrapper .dt-paging .dt-paging-button:active
+){
+  background:#fff0f6 !important;
+  border-color:var(--crm-primary) !important;
+  color:var(--crm-primary-dark) !important;
+}
+
+:where(
+  .dataTables_wrapper .dataTables_paginate .paginate_button:hover a,
+  .dataTables_wrapper .dataTables_paginate .paginate_button:focus-visible a,
+  .dataTables_wrapper .dataTables_paginate .paginate_button:active a,
+  .dataTables_wrapper .dt-paging .dt-paging-button:hover a,
+  .dataTables_wrapper .dt-paging .dt-paging-button:focus-visible a,
+  .dataTables_wrapper .dt-paging .dt-paging-button:active a
+){
+  color:var(--crm-primary-dark) !important;
+}
+
+:where(
+  .dataTables_wrapper .dataTables_paginate .paginate_button.current,
+  .dataTables_wrapper .dataTables_paginate .paginate_button.current:hover,
+  .dataTables_wrapper .dt-paging .dt-paging-button.current,
+  .dataTables_wrapper .dt-paging .dt-paging-button.current:hover
+){
+  background:var(--crm-gradient-primary) !important;
+  border-color:var(--crm-primary) !important;
+  color:#fff !important;
+}
+
+/* =====================================================
+   Unified DataTable System (global, all modules)
+   ===================================================== */
+:where(.dataTables_wrapper){
+  font-size:13px !important;
+}
+
+:where(.dataTables_wrapper table, .dataTables_wrapper .crm-table, .dataTables_wrapper .leads-table){
+  border:1px solid color-mix(in srgb, var(--crm-border) 85%, #e2d3db) !important;
+  border-radius:12px !important;
+  overflow:hidden;
+  background:#fff !important;
+}
+
+:where(.dataTables_wrapper table thead th, .dataTables_wrapper .crm-table thead th, .dataTables_wrapper .leads-table thead th){
+  background:#fff1f7 !important;
+  color:#5b4d57 !important;
+  border-color:color-mix(in srgb, var(--crm-border) 85%, #e2d3db) !important;
+  font-size:12px !important;
+  font-weight:700 !important;
+  letter-spacing:.25px;
+  text-transform:uppercase;
+  padding:10px 11px !important;
+}
+
+:where(.dataTables_wrapper table tbody td, .dataTables_wrapper .crm-table tbody td, .dataTables_wrapper .leads-table tbody td){
+  border-color:color-mix(in srgb, var(--crm-border) 76%, #e7dce2) !important;
+  color:#374151 !important;
+  font-size:13px !important;
+  padding:10px 11px !important;
+  vertical-align:middle;
+}
+
+:where(.dataTables_wrapper table tbody tr:hover, .dataTables_wrapper .crm-table tbody tr:hover, .dataTables_wrapper .leads-table tbody tr:hover){
+  background:#fff6fb !important;
+}
+
+:where(.dataTables_wrapper .dataTables_length, .dataTables_wrapper .dataTables_filter, .dataTables_wrapper .dt-buttons){
+  display:flex !important;
+  align-items:center !important;
+  gap:8px !important;
+  margin:0 !important;
+}
+
+:where(.dataTables_wrapper .dataTables_length label, .dataTables_wrapper .dataTables_filter label){
+  display:inline-flex !important;
+  align-items:center !important;
+  gap:8px !important;
+  font-size:13px !important;
+  color:#5b6472 !important;
+  margin:0 !important;
+}
+
+:where(.dataTables_wrapper .dataTables_length select){
+  min-height:38px !important;
+  border-radius:10px !important;
+  border:1px solid #f1b7c8 !important;
+  padding:6px 10px !important;
+  background:#fff !important;
+  color:#374151 !important;
+  font-size:13px !important;
+}
+
+:where(.dataTables_wrapper .dataTables_filter input[type="search"]){
+  min-height:38px !important;
+  border-radius:999px !important;
+  border:1px solid #f1b7c8 !important;
+  background:#fff !important;
+  color:#374151 !important;
+  font-size:13px !important;
+  padding:8px 12px 8px 34px !important;
+}
+
+:where(.dataTables_wrapper .dataTables_filter input[type="search"]::placeholder){
+  color:#8c95a3 !important;
+}
+
+:where(.dataTables_wrapper .dataTables_filter input[type="search"]:focus){
+  border-color:var(--crm-primary) !important;
+  box-shadow:0 0 0 3px rgba(233,30,99,.12) !important;
+  outline:none !important;
+}
+
+:where(.dataTables_wrapper .dataTables_info){
+  font-size:13px !important;
+  color:#6b7280 !important;
+  font-weight:500 !important;
+  margin:0 !important;
+}
+
+:where(.dataTables_wrapper .dataTables_paginate, .dataTables_wrapper .dt-paging){
+  display:flex !important;
+  align-items:center !important;
+  gap:6px !important;
+  margin:0 !important;
+}
+
+:where(.dataTables_wrapper .dataTables_paginate .paginate_button, .dataTables_wrapper .dt-paging .dt-paging-button){
+  min-width:34px !important;
+  height:34px !important;
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  padding:0 10px !important;
+  border-radius:8px !important;
+  border:1px solid #f1d6e3 !important;
+  background:#fff !important;
+  font-size:13px !important;
+  font-weight:600 !important;
+  line-height:1 !important;
+  text-decoration:none !important;
+}
+
+@media (max-width: 768px){
+  :where(.dataTables_wrapper .dataTables_info){
+    font-size:12px !important;
+  }
+
+  :where(.dataTables_wrapper .dataTables_paginate .paginate_button, .dataTables_wrapper .dt-paging .dt-paging-button){
+    min-width:32px !important;
+    height:32px !important;
+    font-size:12px !important;
+    padding:0 8px !important;
+  }
+}

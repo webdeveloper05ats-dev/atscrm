@@ -74,514 +74,6 @@ $payments = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 ?>
 
-<style>
-.student-page {
-    background:
-        radial-gradient(circle at top right, rgba(255, 204, 224, 0.45), transparent 28%),
-        linear-gradient(180deg, #fff8fb 0%, #ffffff 100%);
-    padding: 32px;
-    border-radius: 24px;
-    border: 1px solid #f6d5e2;
-    box-shadow: 0 24px 52px rgba(236, 72, 153, 0.08);
-    max-width: 1180px;
-    margin: 30px auto;
-    font-family: 'Poppins', sans-serif;
-    color: #342431;
-    line-height: 1.6;
-}
-
-h2 {
-    font-size: 28px;
-    font-weight: 800;
-    color: #9f1249;
-    margin: 0 0 26px;
-    letter-spacing: -0.5px;
-}
-
-.profile-card {
-    display: flex;
-    gap: 32px;
-    align-items: center;
-    background: linear-gradient(180deg, #ffffff 0%, #fff7fb 100%);
-    border: 1px solid #f6d5e2;
-    border-radius: 22px;
-    padding: 28px;
-    margin-bottom: 26px;
-    box-shadow: 0 18px 40px rgba(236, 72, 153, 0.08);
-}
-
-.profile-left img,
-.profile-photo {
-    width: 160px;
-    height: 160px;
-    border-radius: 20px;
-    object-fit: cover;
-    background: #fff;
-    border: 5px solid #fff0f6;
-    box-shadow: 0 16px 34px rgba(236, 72, 153, 0.14);
-}
-
-.profile-right h3 {
-    margin: 0 0 16px;
-    font-size: 30px;
-    font-weight: 800;
-    color: #7e1842;
-}
-
-.profile-right p {
-    margin: 12px 0;
-    font-size: 14px;
-    color: #6a5565;
-}
-
-.profile-right p strong {
-    color: #a01453;
-    font-weight: 700;
-}
-
-.details-grid {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 22px;
-    align-items: start;
-    grid-auto-rows: min-content;
-}
-
-.student-profile-card-block {
-    background: linear-gradient(180deg, #ffffff 0%, #fff8fb 100%);
-    border: 1px solid #f7d7e4;
-    border-radius: 20px;
-    padding: 22px;
-    box-shadow: 0 14px 30px rgba(236, 72, 153, 0.07);
-    align-self: start;
-    height: auto !important;
-    min-height: 0 !important;
-}
-
-.section-title {
-    font-size: 17px;
-    font-weight: 700;
-    color: #8d1246;
-    margin: 0 0 16px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.section-title::before {
-    content: '';
-    width: 12px;
-    height: 12px;
-    flex: 0 0 12px;
-    border-radius: 50%;
-    background: linear-gradient(180deg, #ff4f91 0%, #ff8fb8 100%);
-    box-shadow: 0 0 0 6px #fff0f6;
-}
-
-.student-profile-table {
-    width: 100%;
-    border-collapse: separate;
-    border-spacing: 0;
-    background: transparent;
-    border-radius: 14px;
-    overflow: hidden;
-    border: 1px solid #f9dce8;
-    font-size: 13px;
-}
-
-.student-profile-table th,
-.student-profile-table td {
-    padding: 14px 16px;
-    text-align: left;
-}
-
-.student-profile-table th {
-    background: #fff0f6;
-    font-weight: 700;
-    color: #a01453;
-    text-transform: uppercase;
-    font-size: 11px;
-    letter-spacing: 0.7px;
-    border-bottom: 1px solid #f5cddd;
-}
-
-.student-profile-table td {
-    color: #5f4d5b;
-    border-bottom: 1px solid #fbe5ee;
-    background: rgba(255, 255, 255, 0.92);
-    white-space: normal;
-    word-break: break-word;
-    overflow-wrap: anywhere;
-}
-
-.student-profile-table tbody tr:nth-child(even) td {
-    background: #fffafc;
-}
-
-.student-profile-table tr:last-child td {
-    border-bottom: none;
-}
-
-.student-profile-table tr td:first-child {
-    font-weight: 600;
-    color: #7d103f;
-    word-break: normal;
-    overflow-wrap: normal;
-}
-
-.student-profile-table td a {
-    color: #e91e63;
-    font-weight: 600;
-    text-decoration: none;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 7px 12px;
-    border-radius: 999px;
-    background: #fff0f6;
-}
-
-.student-profile-table td a:hover {
-    background: #ffe0ec;
-}
-
-.payment-history-table td a.crm-icon-btn{
-    width: 38px;
-    height: 38px;
-    min-height: 38px;
-    padding: 0 !important;
-    border-radius: 12px;
-}
-
-.student-page,
-.profile-card,
-.student-profile-card-block,
-.student-profile-table,
-.student-profile-table tr,
-.student-profile-table td {
-    max-width: 100%;
-    box-sizing: border-box;
-}
-
-@media (max-width: 992px) {
-    .profile-card {
-        flex-direction: column;
-        align-items: center;
-        text-align: center;
-    }
-
-    .details-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .profile-left img,
-    .profile-photo {
-        width: 140px;
-        height: 140px;
-    }
-
-    .student-page {
-        padding: 28px;
-    }
-}
-
-@media (max-width: 640px) {
-    .student-profile-table th,
-    .student-profile-table td {
-        padding: 12px 14px;
-        font-size: 14px;
-    }
-
-    .student-profile-table tr{
-        display:grid;
-        grid-template-columns:minmax(132px, 42%) minmax(0, 58%);
-    }
-
-    .student-profile-table tr td:first-child{
-        white-space:nowrap;
-        font-weight:700;
-        color:#7d103f;
-        padding-right:10px;
-    }
-
-    .student-profile-table tr td:last-child{
-        text-align:left;
-        word-break:break-word;
-        overflow-wrap:anywhere;
-    }
-
-    h2 { font-size: 24px; }
-    .section-title { font-size: 18px; }
-    .profile-right h3 { font-size: 25px; }
-    .student-page { padding: 18px; }
-}
-
-/* =====================================================
-GLOBAL TYPOGRAPHY STYLECSS SYNC
-font-family + font-size + font-weight only
-===================================================== */
-:where(body,button,input,select,textarea,label,span,p,h1,h2,h3,h4,h5,h6,a,div){
-  font-family:'Poppins',sans-serif !important;
-}
-:where(h1,.h1,.page-title,.crm-page-title,.dashboard-header h2){font-size:clamp(2rem, 2.5vw, 2.4rem) !important;font-weight:700 !important;}
-:where(h2,.h2,.section-title){font-size:clamp(1.6rem, 2vw, 2rem) !important;font-weight:600 !important;}
-:where(h3,.h3,.card-header,.table-title){font-size:clamp(1.3rem, 1.6vw, 1.5rem) !important;font-weight:600 !important;}
-:where(h4,.h4){font-size:1.2rem !important;font-weight:500 !important;}
-:where(h5,.h5){font-size:1rem !important;font-weight:500 !important;}
-:where(h6,.h6){font-size:0.9rem !important;font-weight:500 !important;}
-:where(body){font-size:1rem !important;}
-:where(p,.text-body,li,td,.text-muted,.help-text,.form-text,.small,small,.secondary-text){font-size:0.95rem !important;font-weight:400 !important;}
-:where(.small,small,.text-muted,.help-text,.form-text,.att-sub,.crm-note){font-size:0.85rem !important;font-weight:400 !important;}
-:where(label,.form-label){font-size:0.85rem !important;font-weight:500 !important;}
-:where(input,select,textarea,.form-control,.form-select){font-size:0.95rem !important;font-weight:400 !important;}
-:where(input::placeholder,textarea::placeholder){font-weight:400 !important;}
-:where(button,.btn,.dt-button,.crm-action-btn,.crm-icon-btn,.btn-icon-only,.action-btn,.targets-btn-icon,.iso-report-btn,.iso-report-action-btn){font-size:0.9rem !important;font-weight:600 !important;}
-:where(.btn[data-mobile-label],.btn-icon-only[data-mobile-label],.action-btn[data-mobile-label],.crm-icon-btn[data-mobile-label],.targets-btn-icon[data-mobile-label],.iso-report-icon-btn[data-mobile-label],.iso-report-action-btn[data-mobile-label])::after{font-size:0.75rem !important;font-weight:600 !important;}
-:where(.table th,.crm-table th,.dataTables_wrapper th,th){font-size:0.75rem !important;font-weight:600 !important;}
-:where(.table td,.dataTables_wrapper tbody td){font-size:0.9rem !important;}
-:where(.dataTables_wrapper .dataTables_info){font-size:0.85rem !important;font-weight:400 !important;}
-:where(.dataTables_wrapper .paginate_button){font-size:0.9rem !important;font-weight:600 !important;}
-:where(.badge,.status-badge,.crm-status-badge,.status-pill,.badge-status,[data-status],.tooltip,.ui-tooltip,.floating-ui-tooltip__bubble){font-weight:600 !important;}
-
-/* ===== GLOBAL BUTTON STANDARDIZATION ===== */
-button,
-.btn,
-.crm-action-btn,
-.btn-filter,
-.btn-reset,
-.btn-add,
-.btn-excel,
-.action-btn,
-.btn-icon-only,
-a.btn,
-input[type="button"],
-input[type="submit"],
-input[type="reset"],
-[role="button"] {
-    font-size: 0.92rem;
-    min-height: 38px;
-    padding: 8px 14px;
-    border-radius: 10px;
-    font-weight: 600;
-}
-
-.btn-icon-only,
-.crm-action-btn,
-.action-btn,
-.btn-sm,
-.btn-xs,
-button.btn-icon,
-a.btn-icon,
-.btn i:only-child,
-button i:only-child {
-    font-size: 0.9rem;
-    min-height: 34px;
-    padding: 8px;
-    border-radius: 10px;
-    font-weight: 600;
-}
-
-/* ===== Student Profile Responsive Fixes ===== */
-.student-page > h2{
-    line-height: 1.15;
-    word-break: break-word;
-}
-
-@media (min-width: 1025px) and (max-width: 1366px){
-    .student-page{
-        max-width: 100%;
-        margin: 20px auto;
-        padding: 24px;
-    }
-    .profile-card{
-        gap: 24px;
-        padding: 24px;
-    }
-    .details-grid{
-        gap: 18px;
-    }
-}
-
-@media (min-width: 768px) and (max-width: 1024px){
-    .student-page{
-        max-width: 100%;
-        margin: 16px auto;
-        padding: 20px;
-        border-radius: 18px;
-    }
-    .student-page > h2{
-        font-size: clamp(1.5rem, 2.4vw, 1.9rem) !important;
-        margin-bottom: 18px;
-    }
-    .profile-card{
-        gap: 18px;
-        padding: 20px;
-        align-items: flex-start;
-    }
-    .profile-left img,
-    .profile-photo{
-        width: 124px;
-        height: 124px;
-    }
-    .profile-right{
-        width: 100%;
-    }
-    .profile-right h3{
-        font-size: clamp(1.35rem, 2.2vw, 1.75rem) !important;
-        margin-bottom: 10px;
-    }
-    .profile-right p{
-        margin: 8px 0;
-    }
-    .details-grid{
-        grid-template-columns: 1fr;
-        gap: 16px;
-    }
-    .student-profile-card-block{
-        padding: 18px;
-        border-radius: 16px;
-    }
-}
-
-@media (max-width: 767px){
-    .student-page{
-        max-width: 100%;
-        margin: 12px auto;
-        padding: 14px;
-        border-radius: 14px;
-    }
-    .student-page > h2{
-        font-size: clamp(1.35rem, 6.2vw, 1.75rem) !important;
-        margin-bottom: 14px;
-    }
-    .profile-card{
-        padding: 14px;
-        gap: 14px;
-        border-radius: 14px;
-    }
-    .profile-left{
-        width: 100%;
-        display: flex;
-        justify-content: center;
-    }
-    .profile-left img,
-    .profile-photo{
-        width: 108px;
-        height: 108px;
-        border-radius: 14px;
-    }
-    .profile-right{
-        width: 100%;
-        text-align: left;
-    }
-    .profile-right h3{
-        font-size: clamp(1.2rem, 5.6vw, 1.55rem) !important;
-        margin: 0 0 10px;
-    }
-    .profile-right p{
-        font-size: 0.9rem !important;
-        margin: 6px 0;
-        line-height: 1.4;
-        word-break: break-word;
-    }
-    .details-grid{
-        grid-template-columns: 1fr;
-        gap: 12px;
-    }
-    .student-profile-card-block{
-        padding: 14px;
-        border-radius: 14px;
-    }
-    .section-title{
-        margin-bottom: 10px;
-    }
-    .student-profile-table{
-        border-radius: 12px;
-    }
-    .student-profile-table:not(.payment-history-table) tr{
-        display: grid;
-        grid-template-columns: minmax(120px, 42%) minmax(0, 58%);
-    }
-    .student-profile-table td{
-        padding: 10px 12px !important;
-        font-size: 0.88rem !important;
-    }
-    .student-profile-table:not(.payment-history-table) tr td:first-child{
-        white-space: nowrap;
-    }
-    .student-profile-table:not(.payment-history-table) tr td:last-child{
-        word-break: break-word;
-        overflow-wrap: anywhere;
-    }
-
-    /* Payment History: mobile card rows only */
-    .payment-history-table{
-        border: 0 !important;
-        background: transparent !important;
-    }
-    .payment-history-table thead{
-        display: none !important;
-    }
-    .payment-history-table tbody{
-        display: block;
-    }
-    .payment-history-table tbody tr{
-        display: block !important;
-        border: 1px solid #f9dce8;
-        border-radius: 12px;
-        background: #fff;
-        margin-bottom: 10px;
-        overflow: hidden;
-    }
-    .payment-history-table tbody tr td{
-        display: flex !important;
-        align-items: center;
-        justify-content: space-between;
-        gap: 10px;
-        width: 100%;
-        border-bottom: 1px solid #fbe5ee;
-        background: #fff;
-        padding: 10px 12px !important;
-    }
-    .payment-history-table tbody tr td:last-child{
-        border-bottom: 0;
-    }
-    .payment-history-table tbody tr td::before{
-        content: attr(data-label);
-        font-weight: 700;
-        color: #7d103f;
-        margin-right: 10px;
-        flex: 0 0 auto;
-    }
-    .payment-history-table tbody tr td a{
-        margin-left: auto;
-    }
-    .payment-history-table tbody tr td[data-label="Amount / Mode"]{
-        align-items: flex-start;
-    }
-    .payment-history-table .amount-mode-stack{
-        margin-left: auto;
-        display: inline-flex;
-        flex-direction: column;
-        align-items: flex-end;
-        gap: 2px;
-        line-height: 1.2;
-    }
-    .payment-history-table .amount-mode-stack .amount-line{
-        font-weight: 600;
-    }
-    .payment-history-table tbody tr td[colspan]{
-        display: block !important;
-        text-align: center;
-        color: #6a5565;
-        font-weight: 600;
-    }
-    .payment-history-table tbody tr td[colspan]::before{
-        content: none;
-    }
-}
-</style>
-
 <div class="student-page">
 
 <h2>Student Profile</h2>
@@ -625,7 +117,6 @@ PROFILE CARD
 <div class="details-grid">
 
 <div class="student-profile-card-block">
-
 
 <!-- ===============================
 PERSONAL INFORMATION
@@ -681,7 +172,6 @@ PERSONAL INFORMATION
 
 <div class="student-profile-card-block">
 
-
 <!-- ===============================
 COURSE / INTERNSHIP
 =============================== -->
@@ -716,7 +206,6 @@ COURSE / INTERNSHIP
 
 <div class="student-profile-card-block">
 
-
 <!-- ===============================
 FEE SUMMARY
 =============================== -->
@@ -727,31 +216,30 @@ FEE SUMMARY
 
 <tr>
 <td>Total Fee</td>
-<td>₹<?= number_format((float)$reg['total_fee'],2) ?></td>
+<td><?= inr_symbol() ?> <?= number_format((float)$reg['total_fee'],2) ?></td>
 </tr>
 
 <tr>
 <td>Discount</td>
-<td>₹<?= number_format((float)$reg['discount_amount'],2) ?></td>
+<td><?= inr_symbol() ?> <?= number_format((float)$reg['discount_amount'],2) ?></td>
 </tr>
 
 <tr>
 <td>Final Fee</td>
-<td>₹<?= number_format((float)$reg['final_fee'],2) ?></td>
+<td><?= inr_symbol() ?> <?= number_format((float)$reg['final_fee'],2) ?></td>
 </tr>
 
 <tr>
 <td>Paid</td>
-<td>₹<?= number_format((float)$reg['paid_amount'],2) ?></td>
+<td><?= inr_symbol() ?> <?= number_format((float)$reg['paid_amount'],2) ?></td>
 </tr>
 
 <tr>
 <td>Balance</td>
-<td>₹<?= number_format((float)$reg['balance_amount'],2) ?></td>
+<td><?= inr_symbol() ?> <?= number_format((float)$reg['balance_amount'],2) ?></td>
 </tr>
 
 </table>
-
 
 </div>
 
@@ -794,7 +282,7 @@ PAYMENT HISTORY
 
 <td data-label="Amount / Mode">
 <span class="amount-mode-stack">
-<span class="amount-line">₹<?= number_format((float)$p['amount'],2) ?></span>
+<span class="amount-line"><?= inr_symbol() ?> <?= number_format((float)$p['amount'],2) ?></span>
 <span class="sub"><?= h($p['payment_mode']) ?></span>
 </span>
 </td>
@@ -829,4 +317,6 @@ class="crm-icon-btn is-info">
 </div>
 
 </div>
+
+
 

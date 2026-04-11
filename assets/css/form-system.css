@@ -1,0 +1,194 @@
+/* Unified Form System
+   Product-level consistency for all CRM forms. */
+
+:root{
+  --crm-form-height:40px;
+  --crm-form-radius:12px;
+  --crm-form-border:1px solid color-mix(in srgb, var(--crm-border, #f3c6d3) 82%, #cbd5e1);
+  --crm-form-bg:var(--crm-surface, #ffffff);
+  --crm-form-text:var(--crm-text, #333333);
+  --crm-form-placeholder:color-mix(in srgb, var(--crm-text-muted, #6b7280) 82%, #94a3b8);
+  --crm-form-focus-ring:0 0 0 3px color-mix(in srgb, var(--crm-primary, #e91e63) 22%, transparent);
+  --crm-form-focus-border:color-mix(in srgb, var(--crm-primary, #e91e63) 60%, #cbd5e1);
+  --crm-form-label-size:0.83rem;
+  --crm-form-label-weight:700;
+  --crm-form-gap:10px;
+}
+
+/* Label harmonization */
+:where(
+  form label,
+  .form-group > label,
+  .dr-field > label,
+  .dre-grid label,
+  .filter-item label,
+  .toolbar-field label,
+  .m-label,
+  .enq-field label
+){
+  display:block;
+  margin-bottom:6px;
+  font-size:var(--crm-form-label-size) !important;
+  font-weight:var(--crm-form-label-weight) !important;
+  color:var(--crm-text-muted, #6b7280) !important;
+  letter-spacing:.01em;
+}
+
+/* Input/select/textarea core */
+:where(
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="search"],
+  input[type="date"],
+  input[type="datetime-local"],
+  input[type="month"],
+  input[type="week"],
+  input[type="time"],
+  input[type="number"],
+  input[type="tel"],
+  input[type="url"],
+  select,
+  textarea,
+  .form-control,
+  .form-select
+):not(.auth-input):not(.ms-search){
+  width:100%;
+  min-height:var(--crm-form-height);
+  border:var(--crm-form-border) !important;
+  border-radius:var(--crm-form-radius) !important;
+  background:linear-gradient(180deg, #fff 0%, color-mix(in srgb, var(--crm-form-bg) 92%, #f8fafc) 100%) !important;
+  color:var(--crm-form-text) !important;
+  padding:8px 12px !important;
+  box-shadow:0 1px 0 rgba(255,255,255,.85), 0 4px 10px rgba(15,23,42,.03);
+  transition:border-color .16s ease, box-shadow .16s ease, background-color .16s ease;
+}
+
+:where(
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="search"],
+  input[type="date"],
+  input[type="datetime-local"],
+  input[type="month"],
+  input[type="week"],
+  input[type="time"],
+  input[type="number"],
+  input[type="tel"],
+  input[type="url"],
+  textarea,
+  .form-control
+):not(.auth-input)::placeholder{
+  color:var(--crm-form-placeholder) !important;
+}
+
+:where(
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="search"],
+  input[type="date"],
+  input[type="datetime-local"],
+  input[type="month"],
+  input[type="week"],
+  input[type="time"],
+  input[type="number"],
+  input[type="tel"],
+  input[type="url"],
+  select,
+  textarea,
+  .form-control,
+  .form-select
+):not(.auth-input):not(.ms-search):focus{
+  outline:none !important;
+  border-color:var(--crm-form-focus-border) !important;
+  box-shadow:var(--crm-form-focus-ring) !important;
+}
+
+:where(textarea){
+  min-height:88px;
+  resize:vertical;
+}
+
+:where(input[readonly], textarea[readonly], select[disabled], input[disabled], textarea[disabled]){
+  background:color-mix(in srgb, var(--crm-form-bg) 85%, #f1f5f9) !important;
+  color:color-mix(in srgb, var(--crm-text-muted, #6b7280) 88%, #475569) !important;
+}
+
+/* Field/group rhythm */
+:where(
+  .form-group,
+  .dr-field,
+  .dre-grid > div,
+  .filter-item,
+  .toolbar-field,
+  .enq-field
+){
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+
+:where(
+  form,
+  .filter-form,
+  .toolbar-form,
+  .dr-grid,
+  .dre-grid,
+  .enq-form-grid
+){
+  row-gap:var(--crm-form-gap);
+}
+
+/* Checkbox/radio alignment */
+:where(
+  .form-check,
+  .auth-remember,
+  .remember-me
+){
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+
+/* Shared action rows */
+:where(
+  .filter-actions,
+  .toolbar-actions,
+  .dr-step-nav,
+  .form-actions,
+  .crm-icon-actions
+){
+  display:flex;
+  align-items:center;
+  gap:8px;
+  flex-wrap:wrap;
+}
+
+/* DataTable filter controls should match form style */
+:where(.dataTables_wrapper .dataTables_filter input[type="search"]){
+  min-height:38px !important;
+  border-radius:999px !important;
+  padding-inline:34px 12px !important;
+}
+
+:where(.dataTables_wrapper .dataTables_length select){
+  width:auto !important;
+  min-width:74px;
+  min-height:38px !important;
+}
+
+/* Error state helpers for future server/client validation */
+:where(.is-invalid, .input-error, [aria-invalid="true"]){
+  border-color:#ef4444 !important;
+  box-shadow:0 0 0 3px rgba(239,68,68,.14) !important;
+}
+
+@media (max-width: 768px){
+  :root{
+    --crm-form-height:42px;
+    --crm-form-gap:9px;
+  }
+}
+

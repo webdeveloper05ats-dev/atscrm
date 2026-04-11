@@ -681,6 +681,11 @@
   .crm-modal-close {
     width: 38px;
     height: 38px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    line-height: 1;
     border-radius: 12px;
     border: 1px solid #dbe3ef;
     background: linear-gradient(180deg, #ffffff, #f8fafc);
@@ -688,6 +693,12 @@
     font-size: 18px;
     transition: .2s ease;
     color: #0f172a;
+  }
+
+  .crm-modal-close i{
+    font-size: 16px;
+    line-height: 1;
+    pointer-events: none;
   }
 
   .crm-modal-close:hover {

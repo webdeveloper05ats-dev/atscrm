@@ -1,0 +1,164 @@
+/* Student allocation page styles (scoped) */
+
+.student-allocation-page .filter-row {
+    display: flex;
+    gap: 16px;
+    align-items: flex-end;
+    flex-wrap: wrap;
+}
+
+.student-allocation-page .filter-row input,
+.student-allocation-page .filter-row select {
+    min-width: 260px;
+    height: 44px;
+    padding: 0 14px;
+    border-radius: 14px;
+    border: 1px solid var(--crm-border, #f1bfd4);
+    background: #fff;
+}
+
+.student-allocation-page .filter-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.student-allocation-page .table-wrap {
+    padding: 12px 16px 8px;
+}
+
+.student-allocation-page .lead-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    border: 1px solid var(--crm-border, #f1bfd4);
+    border-radius: 14px;
+    overflow: hidden;
+}
+
+.student-allocation-page .lead-table th {
+    padding: 12px 14px;
+    text-align: left;
+    background: #fff4f9;
+    border-bottom: 1px solid var(--crm-border, #f1bfd4);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: #6a4960;
+}
+
+.student-allocation-page .lead-table td {
+    padding: 12px 14px;
+    border-bottom: 1px solid #f6ddea;
+    vertical-align: top;
+}
+
+.student-allocation-page .lead-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.student-allocation-page .lead-name {
+    font-weight: 600;
+}
+
+.student-allocation-page .lead-sub {
+    margin-top: 4px;
+    font-size: 12px;
+    color: #7f6f7a;
+}
+
+.student-allocation-page .action-col {
+    white-space: nowrap;
+}
+
+.student-allocation-page .btn-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 2px;
+    border: 1px solid var(--crm-border, #f1bfd4);
+    text-decoration: none;
+}
+
+.student-allocation-page .btn-icon.edit {
+    background: #fff4f9;
+    color: var(--crm-primary, #ea1f73);
+}
+
+.student-allocation-page .crm-table-footer {
+    padding: 12px 16px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.student-allocation-page .crm-table-info {
+    font-size: 14px;
+    color: #756775;
+}
+
+.student-allocation-page .pagination {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.student-allocation-page .pagination .page-btn,
+.student-allocation-page .pagination .page-info {
+    min-width: 38px;
+    height: 38px;
+    padding: 0 10px;
+    border-radius: 10px;
+    border: 1px solid var(--crm-border, #f1bfd4);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.student-allocation-page .pagination .page-btn {
+    background: #fff;
+    color: #6e6071;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.student-allocation-page .pagination .page-btn:hover {
+    border-color: var(--crm-primary, #ea1f73);
+    color: var(--crm-primary, #ea1f73);
+    background: #fff4f9;
+}
+
+.student-allocation-page .pagination .page-btn.is-disabled {
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+.student-allocation-page .pagination .page-info {
+    border-color: var(--crm-primary, #ea1f73);
+    background: var(--crm-primary, #ea1f73);
+    color: #fff;
+    font-weight: 700;
+}
+
+@media (max-width: 767.98px) {
+    .student-allocation-page .filter-row input,
+    .student-allocation-page .filter-row select {
+        min-width: 100%;
+        width: 100%;
+    }
+
+    .student-allocation-page .crm-table-footer {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .student-allocation-page .pagination {
+        justify-content: center;
+    }
+}

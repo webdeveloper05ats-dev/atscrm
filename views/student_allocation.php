@@ -87,6 +87,8 @@ try {
 $totalPages = (int)ceil($totalRows / $perPage);
 if ($totalPages < 1) $totalPages = 1;
 if ($page > $totalPages) $page = $totalPages;
+$startRow = $totalRows > 0 ? (($page - 1) * $perPage) + 1 : 0;
+$endRow   = $totalRows > 0 ? min($totalRows, $page * $perPage) : 0;
 
 /* Rows */
 $rows = [];
@@ -136,6 +138,7 @@ function payBadge($s){
 $baseUrl = "index.php?page=student_allocation&q=" . urlencode($q);
 ?>
 
+<section class="student-allocation-page">
 <h2 style="margin-bottom:20px;">Student Allocation</h2>
 
 <div class="card">
@@ -225,174 +228,23 @@ $baseUrl = "index.php?page=student_allocation&q=" . urlencode($q);
         </table>
     </div>
 
-    <div class="pagination">
-        <a href="<?= $baseUrl ?>&p=1"><i class="fas fa-angle-double-left"></i></a>
-        <a href="<?= $baseUrl ?>&p=<?= max(1, $page-1) ?>"><i class="fas fa-angle-left"></i></a>
-        <span class="page-info">Page <?= (int)$page ?> / <?= (int)$totalPages ?></span>
-        <a href="<?= $baseUrl ?>&p=<?= min($totalPages, $page+1) ?>"><i class="fas fa-angle-right"></i></a>
-        <a href="<?= $baseUrl ?>&p=<?= (int)$totalPages ?>"><i class="fas fa-angle-double-right"></i></a>
+    <div class="crm-table-footer">
+        <div class="crm-table-info">
+            <?php if ($totalRows > 0): ?>
+                Showing <?= (int)$startRow ?> to <?= (int)$endRow ?> of <?= (int)$totalRows ?> entries
+            <?php else: ?>
+                Showing 0 to 0 of 0 entries
+            <?php endif; ?>
+        </div>
+        <div class="pagination">
+            <a class="page-btn <?= $page <= 1 ? 'is-disabled' : '' ?>" href="<?= $page <= 1 ? '#' : ($baseUrl . '&p=1') ?>" aria-label="First page"><i class="fas fa-angle-double-left"></i></a>
+            <a class="page-btn <?= $page <= 1 ? 'is-disabled' : '' ?>" href="<?= $page <= 1 ? '#' : ($baseUrl . '&p=' . max(1, $page - 1)) ?>" aria-label="Previous page"><i class="fas fa-angle-left"></i></a>
+            <span class="page-info"><?= (int)$page ?></span>
+            <a class="page-btn <?= $page >= $totalPages ? 'is-disabled' : '' ?>" href="<?= $page >= $totalPages ? '#' : ($baseUrl . '&p=' . min($totalPages, $page + 1)) ?>" aria-label="Next page"><i class="fas fa-angle-right"></i></a>
+            <a class="page-btn <?= $page >= $totalPages ? 'is-disabled' : '' ?>" href="<?= $page >= $totalPages ? '#' : ($baseUrl . '&p=' . (int)$totalPages) ?>" aria-label="Last page"><i class="fas fa-angle-double-right"></i></a>
+        </div>
     </div>
 </div>
+</section>
 
-<style>
-.filter-row{
-display:flex;
-gap:16px;
-align-items:flex-end;
-flex-wrap:wrap;
-}
-
-.filter-row input,
-.filter-row select{
-padding:10px;
-border-radius:8px;
-border:1px solid #ddd;
-min-width:250px;
-}
-
-.filter-actions{
-display:flex;
-gap:10px;
-align-items:center;
-}
-
-.table-wrap{
-padding:16px;
-}
-
-.lead-table{
-width:100%;
-border-collapse:collapse;
-}
-
-.lead-table th{
-background:#f5f6fa;
-padding:14px;
-text-align:left;
-font-weight:700;
-}
-
-.lead-table td{
-padding:14px;
-border-bottom:1px solid #eee;
-}
-
-.lead-name{
-font-weight:700;
-}
-
-.lead-sub{
-font-size:12px;
-color:#777;
-}
-
-.action-col{
-white-space:nowrap;
-}
-
-.btn-icon{
-width:36px;
-height:36px;
-border-radius:8px;
-display:inline-flex;
-align-items:center;
-justify-content:center;
-margin:0 2px;
-border:none;
-cursor:pointer;
-text-decoration:none;
-}
-
-.edit{background:#e8f4fd;color:#1565c0;}
-
-.pagination{
-display:flex;
-justify-content:center;
-align-items:center;
-gap:8px;
-padding:16px;
-}
-
-.pagination a{
-width:36px;
-height:36px;
-display:flex;
-align-items:center;
-justify-content:center;
-border-radius:8px;
-border:1px solid #ddd;
-text-decoration:none;
-color:#333;
-}
-
-.page-info{
-padding:0 8px;
-font-weight:600;
-}
-
-/* =====================================================
-GLOBAL TYPOGRAPHY STYLECSS SYNC
-font-family + font-size + font-weight only
-===================================================== */
-:where(body,button,input,select,textarea,label,span,p,h1,h2,h3,h4,h5,h6,a,div){
-  font-family:'Poppins',sans-serif !important;
-}
-:where(h1,.h1,.page-title,.crm-page-title,.dashboard-header h2){font-size:clamp(2rem, 2.5vw, 2.4rem) !important;font-weight:700 !important;}
-:where(h2,.h2,.section-title){font-size:clamp(1.6rem, 2vw, 2rem) !important;font-weight:600 !important;}
-:where(h3,.h3,.card-header,.table-title){font-size:clamp(1.3rem, 1.6vw, 1.5rem) !important;font-weight:600 !important;}
-:where(h4,.h4){font-size:1.2rem !important;font-weight:500 !important;}
-:where(h5,.h5){font-size:1rem !important;font-weight:500 !important;}
-:where(h6,.h6){font-size:0.9rem !important;font-weight:500 !important;}
-:where(body){font-size:1rem !important;}
-:where(p,.text-body,li,td,.text-muted,.help-text,.form-text,.small,small,.secondary-text){font-size:0.95rem !important;font-weight:400 !important;}
-:where(.small,small,.text-muted,.help-text,.form-text,.att-sub,.crm-note){font-size:0.85rem !important;font-weight:400 !important;}
-:where(label,.form-label){font-size:0.85rem !important;font-weight:500 !important;}
-:where(input,select,textarea,.form-control,.form-select){font-size:0.95rem !important;font-weight:400 !important;}
-:where(input::placeholder,textarea::placeholder){font-weight:400 !important;}
-:where(button,.btn,.dt-button,.crm-action-btn,.crm-icon-btn,.btn-icon-only,.action-btn,.targets-btn-icon,.iso-report-btn,.iso-report-action-btn){font-size:0.9rem !important;font-weight:600 !important;}
-:where(.btn[data-mobile-label],.btn-icon-only[data-mobile-label],.action-btn[data-mobile-label],.crm-icon-btn[data-mobile-label],.targets-btn-icon[data-mobile-label],.iso-report-icon-btn[data-mobile-label],.iso-report-action-btn[data-mobile-label])::after{font-size:0.75rem !important;font-weight:600 !important;}
-:where(.table th,.crm-table th,.dataTables_wrapper th,th){font-size:0.75rem !important;font-weight:600 !important;}
-:where(.table td,.dataTables_wrapper tbody td){font-size:0.9rem !important;}
-:where(.dataTables_wrapper .dataTables_info){font-size:0.85rem !important;font-weight:400 !important;}
-:where(.dataTables_wrapper .paginate_button){font-size:0.9rem !important;font-weight:600 !important;}
-:where(.badge,.status-badge,.crm-status-badge,.status-pill,.badge-status,[data-status],.tooltip,.ui-tooltip,.floating-ui-tooltip__bubble){font-weight:600 !important;}
-
-/* ===== GLOBAL BUTTON STANDARDIZATION ===== */
-button,
-.btn,
-.crm-action-btn,
-.btn-filter,
-.btn-reset,
-.btn-add,
-.btn-excel,
-.action-btn,
-.btn-icon-only,
-a.btn,
-input[type="button"],
-input[type="submit"],
-input[type="reset"],
-[role="button"] {
-    font-size: 0.92rem;
-    min-height: 38px;
-    padding: 8px 14px;
-    border-radius: 10px;
-    font-weight: 600;
-}
-
-.btn-icon-only,
-.crm-action-btn,
-.action-btn,
-.btn-sm,
-.btn-xs,
-button.btn-icon,
-a.btn-icon,
-.btn i:only-child,
-button i:only-child {
-    font-size: 0.9rem;
-    min-height: 34px;
-    padding: 8px;
-    border-radius: 10px;
-    font-weight: 600;
-}
-</style>
 

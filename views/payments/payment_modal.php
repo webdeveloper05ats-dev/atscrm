@@ -108,17 +108,17 @@ PAYMENT SUMMARY
 
 <div class="pro-pay-card">
 <span class="label">Final Fee</span>
-<span class="value">₹ <?= number_format($finalFee,2) ?></span>
+<span class="value"><?= inr_symbol() ?> <?= number_format($finalFee,2) ?></span>
 </div>
 
 <div class="pro-pay-card">
 <span class="label">Paid</span>
-<span class="value">₹ <?= number_format($paidAmt,2) ?></span>
+<span class="value"><?= inr_symbol() ?> <?= number_format($paidAmt,2) ?></span>
 </div>
 
 <div class="pro-pay-card highlight">
 <span class="label">Balance</span>
-<span class="value">₹ <?= number_format($balance,2) ?></span>
+<span class="value"><?= inr_symbol() ?> <?= number_format($balance,2) ?></span>
 </div>
 
 </div>
@@ -257,7 +257,7 @@ No payments recorded yet.
 
 <td><?= htmlspecialchars($p['payment_date']) ?></td>
 
-<td>₹ <?= number_format($p['amount'],2) ?></td>
+<td><?= inr_symbol() ?> <?= number_format($p['amount'],2) ?></td>
 
 <td><?= htmlspecialchars($p['payment_mode']) ?></td>
 

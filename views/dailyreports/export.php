@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 if (!defined('APP_NAME')) die('Unauthorized access.');
 if (!function_exists('h')) { function h($v){ return htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8'); } }
 
@@ -824,34 +824,6 @@ if ($doExport) {
 }
 ?>
 
-<style>
-.dre-wrap{padding:8px 0}
-.dre-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
-.dre-title{margin:0;color:#be185d;font-size:1.5rem;font-weight:800}
-.dre-note{margin:0;color:#6b7280;font-size:.9rem}
-.dre-card{background:#fff;border:1px solid #f1d6e3;border-radius:14px;box-shadow:0 8px 18px rgba(0,0,0,.06);overflow:hidden;margin-bottom:12px}
-.dre-body{padding:14px}
-.dre-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px}
-.dre-grid label{display:block;font-size:.82rem;color:#6b7280;font-weight:700;margin-bottom:6px}
-.dre-grid input,.dre-grid select{width:100%;border:1px solid #ecd3df;border-radius:10px;padding:8px 10px}
-.dre-btn{border:none;border-radius:10px;height:38px;padding:0 14px;font-weight:700;cursor:pointer;background:linear-gradient(135deg,#ff4d8d,#e91e63);color:#fff}
-.dre-btn-muted{background:#64748b;color:#fff;text-decoration:none;display:inline-flex;align-items:center;justify-content:center}
-.dre-icon-btn{width:38px;min-width:38px;padding:0;display:inline-flex;align-items:center;justify-content:center;border-radius:12px}
-.dre-icon-btn[data-mobile-label]{padding:0 !important;min-width:38px !important;width:38px !important}
-.dre-icon-btn[data-mobile-label]::before,
-.dre-icon-btn[data-mobile-label]::after{content:none !important;display:none !important}
-.dre-status-icon{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:10px;border:1px solid #f1d6e3}
-.dre-status-icon.is-submitted{color:#16a34a;background:#ecfdf3;border-color:#bbf7d0}
-.dre-status-icon.is-draft{color:#d97706;background:#fff7ed;border-color:#fed7aa}
-.dre-status-icon.is-locked{color:#475569;background:#f1f5f9;border-color:#cbd5e1}
-.dre-cell-center{text-align:center;vertical-align:middle}
-.dre-table{width:100%;border-collapse:collapse}
-.dre-table th,.dre-table td{border:1px solid #f1d6e3;padding:8px;vertical-align:top}
-.dre-table th{background:#fff4fa;color:#9d174d;font-size:.82rem}
-@media(max-width:1100px){.dre-grid{grid-template-columns:repeat(2,minmax(0,1fr));}}
-@media(max-width:640px){.dre-grid{grid-template-columns:1fr;}}
-</style>
-
 <div class="dre-wrap">
   <div class="dre-head">
     <div>
@@ -902,7 +874,7 @@ if ($doExport) {
           <?php endif; ?>
           <div style="display:flex;align-items:flex-end;gap:8px">
             <button type="submit" class="dre-btn dre-icon-btn ui-tooltip" data-modern-tooltip="Load Reports"><i class="fas fa-filter"></i></button>
-            <a id="exportCsvBtn" class="dre-btn-muted dre-icon-btn ui-tooltip" data-modern-tooltip="Export CSV" href="index.php?page=dailyreports/export&period=<?= urlencode($period) ?>&week=<?= urlencode($weekValue) ?>&month=<?= urlencode($monthValue) ?>&date_from=<?= urlencode($dateFrom) ?>&date_to=<?= urlencode($dateTo) ?>&report_type=<?= urlencode($reportType) ?>&user_id=<?= (int)$userFilter ?>&load=<?= $isLoaded ? '1' : '0' ?>&action=export"><i class="fas fa-download"></i></a>
+            <a id="exportCsvBtn" class="dre-btn dre-icon-btn ui-tooltip" data-modern-tooltip="Export CSV" href="index.php?page=dailyreports/export&period=<?= urlencode($period) ?>&week=<?= urlencode($weekValue) ?>&month=<?= urlencode($monthValue) ?>&date_from=<?= urlencode($dateFrom) ?>&date_to=<?= urlencode($dateTo) ?>&report_type=<?= urlencode($reportType) ?>&user_id=<?= (int)$userFilter ?>&load=<?= $isLoaded ? '1' : '0' ?>&action=export"><i class="fas fa-download"></i></a>
             <a id="exportXlsxBtn" class="dre-btn dre-icon-btn ui-tooltip" data-modern-tooltip="Export Excel (XLSX)" href="index.php?page=dailyreports/export&period=<?= urlencode($period) ?>&week=<?= urlencode($weekValue) ?>&month=<?= urlencode($monthValue) ?>&date_from=<?= urlencode($dateFrom) ?>&date_to=<?= urlencode($dateTo) ?>&report_type=<?= urlencode($reportType) ?>&user_id=<?= (int)$userFilter ?>&load=<?= $isLoaded ? '1' : '0' ?>&action=export_xlsx"><i class="fas fa-file-excel"></i></a>
           </div>
         </div>
@@ -1052,3 +1024,4 @@ if (document.readyState === 'loading') {
 }
 })();
 </script>
+

@@ -505,7 +505,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_batch'])) {
     }
 }
 
-
 /* Recent import batches */
 $batches = [];
 try {
@@ -640,7 +639,6 @@ if ($batchId > 0) {
                         <span class="import-file-name" id="import_file_name">No file selected</span>
                     </span>
                 </label>
-                <small class="lead-import-note">Supports `.xlsx`, `.xls`, `.csv` | Max file size: 10 MB | Drag & drop enabled</small>
             </div>
 
             <div class="filter-item">
@@ -668,6 +666,7 @@ if ($batchId > 0) {
                 </div>
             </div>
         </div>
+        <small class="lead-import-note">Supports `.xlsx`, `.xls`, `.csv` | Max file size: 10 MB | Drag & drop enabled</small>
     </form>
 </div>
 
@@ -694,7 +693,7 @@ if ($batchId > 0) {
         <table class="leads-table import-table" id="importBatchesTable">
             <thead>
                 <tr>
-                    <th>Batch</th>
+                    <th>S.No</th>
                     <th>File</th>
                     <th>Total</th>
                     <th>Success</th>
@@ -714,28 +713,32 @@ if ($batchId > 0) {
 
                 <?php foreach ($batches as $b): ?>
                     <tr>
-                        <td>#<?= (int) $b['id'] ?></td>
-                        <td><?= h($b['file_name']) ?></td>
+                        <td class="batch-sno" data-order="<?= (int) $b['id'] ?>"></td>
+                        <td class="import-file-cell" title="<?= h($b['file_name']) ?>">
+                            <span class="import-file-name-text"><?= h($b['file_name']) ?></span>
+                        </td>
                         <td><?= (int) $b['total_rows'] ?></td>
                         <td style="color:#2e7d32;font-weight:700;"><?= (int) $b['success_rows'] ?></td>
                         <td style="color:#e53935;font-weight:700;"><?= (int) $b['failed_rows'] ?></td>
                         <td><?= h(ucfirst($b['status'])) ?></td>
-                        <td><?= h($b['created_by_name'] ?? '-') ?></td>
-                        <td><?= h($b['created_at']) ?></td>
+                        <td class="created-by-cell"><?= h($b['created_by_name'] ?? '-') ?></td>
+                        <td class="created-at-cell"><?= h($b['created_at']) ?></td>
                         <td class="action-col">
-                            <a class="action-btn edit" href="index.php?page=leads/import&batch_id=<?= (int) $b['id'] ?>"
-                                data-tooltip="View Batch">
-                                <i class="fas fa-eye"></i>
-                            </a>
+                            <div class="import-row-actions">
+                                <a class="action-btn edit" href="index.php?page=leads/import&batch_id=<?= (int) $b['id'] ?>"
+                                    data-tooltip="View Batch">
+                                    <i class="fas fa-eye"></i>
+                                </a>
 
-                            <form method="POST" class="deleteBatchForm" style="display:inline;">
-                                <input type="hidden" name="csrf_token" value="<?= h(generateCSRF()) ?>">
-                                <input type="hidden" name="delete_batch" value="1">
-                                <input type="hidden" name="batch_id" value="<?= (int) $b['id'] ?>">
-                                <button type="submit" class="action-btn delete" data-tooltip="Delete Batch">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </form>
+                                <form method="POST" class="deleteBatchForm">
+                                    <input type="hidden" name="csrf_token" value="<?= h(generateCSRF()) ?>">
+                                    <input type="hidden" name="delete_batch" value="1">
+                                    <input type="hidden" name="batch_id" value="<?= (int) $b['id'] ?>">
+                                    <button type="submit" class="action-btn delete" data-tooltip="Delete Batch">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
                         </td>
                     </tr>
                 <?php endforeach; ?>
@@ -848,420 +851,6 @@ if ($batchId > 0) {
 
 </div>
 
-<style>
-    .lead-import-page {
-        max-width: 100%;
-        overflow-x: hidden;
-    }
-
-    .import-grid {
-        display: grid !important;
-        grid-template-columns: minmax(240px, 1.2fr) minmax(220px, 1fr) auto;
-        gap: 12px;
-        align-items: start;
-        width: 100%;
-    }
-
-    .import-grid .filter-item {
-        min-width: 0;
-    }
-
-    .import-grid .filter-item.filter-actions {
-        margin-left: 0;
-        align-self: start;
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
-    }
-
-    .import-grid .filter-item.filter-actions .actions-label {
-        visibility: hidden;
-        font-size: .75rem;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: .3px;
-        line-height: 1;
-        margin: 0;
-    }
-
-    .import-actions-row {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        flex-wrap: nowrap;
-    }
-
-    .import-file-input {
-        position: absolute;
-        width: 1px;
-        height: 1px;
-        opacity: 0;
-        pointer-events: none;
-    }
-
-    .import-file-box {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        width: 100%;
-        min-height: 50px;
-        padding: 10px 12px;
-        border: 1px dashed #f1b5cc;
-        border-radius: 10px;
-        background: #fff7fb;
-        cursor: pointer;
-        transition: all .2s ease;
-    }
-
-    .import-file-box:hover {
-        border-color: #e91e63;
-        background: #fff1f7;
-    }
-
-    .import-file-box.dragover {
-        border-color: #e91e63;
-        background: #ffeaf3;
-        box-shadow: 0 0 0 3px rgba(233, 30, 99, .12);
-    }
-
-    .import-file-input:focus + .import-file-box {
-        border-color: #e91e63;
-        box-shadow: 0 0 0 3px rgba(233, 30, 99, .12);
-    }
-
-    .import-file-icon {
-        width: 32px;
-        height: 32px;
-        border-radius: 8px;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        background: linear-gradient(135deg, #ff4d8d, #e91e63);
-        color: #fff;
-        flex: 0 0 auto;
-    }
-
-    .import-file-meta {
-        min-width: 0;
-        display: flex;
-        flex-direction: column;
-        gap: 2px;
-    }
-
-    .import-file-title {
-        color: #be185d;
-        font-weight: 700;
-        font-size: 13px;
-        line-height: 1.2;
-    }
-
-    .import-file-name {
-        color: #6b7280;
-        font-size: 12px;
-        line-height: 1.2;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-        max-width: 100%;
-    }
-
-    #uploadLeadsBtn[disabled] {
-        opacity: .7;
-        cursor: not-allowed;
-        pointer-events: none;
-    }
-
-    .lead-import-note {
-        display: block;
-        margin-top: 6px;
-        color: #6b7280;
-        font-size: 12px;
-    }
-
-    .import-warn-wrap {
-        padding: 14px 16px;
-        color: #b91c1c;
-    }
-
-    .import-warn-item {
-        margin-bottom: 6px;
-        font-size: 13px;
-    }
-
-    .action-col {
-        white-space: nowrap;
-    }
-
-    .batch-topbar {
-        display: flex;
-        align-items: flex-end;
-        justify-content: space-between;
-        gap: 12px;
-        flex-wrap: wrap;
-        padding-bottom: 8px;
-    }
-
-    .batch-summary {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-        align-items: center;
-        flex: 1 1 auto;
-    }
-
-    .bulk-assign-wrap {
-        display: flex;
-        gap: 12px;
-        align-items: flex-end;
-        flex-wrap: nowrap;
-        justify-content: flex-end;
-        margin-left: auto;
-    }
-
-    .batch-actions-wrap {
-        display: flex;
-        align-items: flex-end;
-        gap: 12px;
-        margin-left: auto;
-    }
-
-    .assign-filter-wrap label {
-        display: block;
-        font-size: .75rem;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: .3px;
-        color: #6b7280;
-        margin-bottom: 6px;
-    }
-
-    .assign-filter-wrap select {
-        min-width: 140px;
-        padding: 8px 10px;
-        border: 1px solid #e5e7eb;
-        border-radius: 8px;
-        background: #fff;
-    }
-
-    .assign-filter-wrap select:focus {
-        outline: none;
-        border-color: #e91e63;
-        box-shadow: 0 0 0 3px rgba(233, 30, 99, .12);
-    }
-
-    .batch-chip {
-        display: inline-flex;
-        align-items: center;
-        padding: 5px 10px;
-        border-radius: 999px;
-        font-size: 12px;
-        font-weight: 700;
-        border: 1px solid #e5e7eb;
-        background: #f8fafc;
-        color: #334155;
-    }
-
-    .batch-chip.assigned {
-        background: #ecfdf5;
-        border-color: #bbf7d0;
-        color: #166534;
-    }
-
-    .batch-chip.unassigned {
-        background: #fff7ed;
-        border-color: #fed7aa;
-        color: #9a3412;
-    }
-
-    .batch-chip.converted {
-        background: #eff6ff;
-        border-color: #bfdbfe;
-        color: #1d4ed8;
-    }
-
-    .batch-chip.not-converted {
-        background: #fdf2f8;
-        border-color: #fbcfe8;
-        color: #9d174d;
-    }
-
-    .bulk-assign-wrap label {
-        display: block;
-        font-size: .75rem;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: .3px;
-        color: #6b7280;
-        margin-bottom: 6px;
-    }
-
-    .bulk-assign-wrap select,
-    .filter-item input:not(.import-file-input),
-    .filter-item select {
-        width: 100%;
-        padding: 8px 10px;
-        border: 1px solid #e5e7eb;
-        border-radius: 8px;
-        background: #fff;
-    }
-
-    .bulk-assign-wrap select:focus,
-    .filter-item input:not(.import-file-input):focus,
-    .filter-item select:focus {
-        outline: none;
-        border-color: #e91e63;
-        box-shadow: 0 0 0 3px rgba(233, 30, 99, .12);
-    }
-
-    .import-table th,
-    .import-table td {
-        white-space: normal !important;
-        word-break: break-word;
-    }
-
-    .import-table .action-col {
-        text-align: right;
-    }
-
-    #importTableControls .dt-top {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 12px;
-        flex-wrap: wrap;
-    }
-
-    #batchLeadsTableControls .dt-top {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 12px;
-        flex-wrap: wrap;
-    }
-
-    @media(max-width:768px) {
-        .batch-topbar {
-            align-items: stretch;
-        }
-
-        .batch-summary {
-            width: 100%;
-        }
-
-        .batch-actions-wrap {
-            width: 100%;
-            flex-wrap: wrap;
-            margin-left: 0;
-        }
-
-        .bulk-assign-wrap {
-            width: 100%;
-            flex-wrap: wrap;
-            justify-content: flex-start;
-            margin-left: 0;
-        }
-
-        .import-grid {
-            grid-template-columns: 1fr;
-            align-items: stretch;
-        }
-
-        .filter-actions {
-            width: 100%;
-            margin-left: 0;
-            flex-wrap: wrap;
-        }
-
-        .filter-actions .btn-filter,
-        .filter-actions .btn-reset {
-            flex: 1;
-            justify-content: center;
-        }
-    }
-
-    @media(max-width:1100px) {
-        .import-grid {
-            grid-template-columns: 1fr 1fr;
-            align-items: end;
-        }
-
-        .import-grid .filter-actions {
-            grid-column: 1 / -1;
-            justify-content: flex-start;
-            flex-wrap: wrap;
-        }
-
-        .import-actions-row {
-            flex-wrap: wrap;
-        }
-    }
-
-/* =====================================================
-GLOBAL TYPOGRAPHY STYLECSS SYNC
-font-family + font-size + font-weight only
-===================================================== */
-:where(body,button,input,select,textarea,label,span,p,h1,h2,h3,h4,h5,h6,a,div){
-  font-family:'Poppins',sans-serif !important;
-}
-:where(h1,.h1,.page-title,.crm-page-title,.dashboard-header h2){font-size:clamp(2rem, 2.5vw, 2.4rem) !important;font-weight:700 !important;}
-:where(h2,.h2,.section-title){font-size:clamp(1.6rem, 2vw, 2rem) !important;font-weight:600 !important;}
-:where(h3,.h3,.card-header,.table-title){font-size:clamp(1.3rem, 1.6vw, 1.5rem) !important;font-weight:600 !important;}
-:where(h4,.h4){font-size:1.2rem !important;font-weight:500 !important;}
-:where(h5,.h5){font-size:1rem !important;font-weight:500 !important;}
-:where(h6,.h6){font-size:0.9rem !important;font-weight:500 !important;}
-:where(body){font-size:1rem !important;}
-:where(p,.text-body,li,td,.text-muted,.help-text,.form-text,.small,small,.secondary-text){font-size:0.95rem !important;font-weight:400 !important;}
-:where(.small,small,.text-muted,.help-text,.form-text,.att-sub,.crm-note){font-size:0.85rem !important;font-weight:400 !important;}
-:where(label,.form-label){font-size:0.85rem !important;font-weight:500 !important;}
-:where(input,select,textarea,.form-control,.form-select){font-size:0.95rem !important;font-weight:400 !important;}
-:where(input::placeholder,textarea::placeholder){font-weight:400 !important;}
-:where(button,.btn,.dt-button,.crm-action-btn,.crm-icon-btn,.btn-icon-only,.action-btn,.targets-btn-icon,.iso-report-btn,.iso-report-action-btn){font-size:0.9rem !important;font-weight:600 !important;}
-:where(.btn[data-mobile-label],.btn-icon-only[data-mobile-label],.action-btn[data-mobile-label],.crm-icon-btn[data-mobile-label],.targets-btn-icon[data-mobile-label],.iso-report-icon-btn[data-mobile-label],.iso-report-action-btn[data-mobile-label])::after{font-size:0.75rem !important;font-weight:600 !important;}
-:where(.table th,.crm-table th,.dataTables_wrapper th,th){font-size:0.75rem !important;font-weight:600 !important;}
-:where(.table td,.dataTables_wrapper tbody td){font-size:0.9rem !important;}
-:where(.dataTables_wrapper .dataTables_info){font-size:0.85rem !important;font-weight:400 !important;}
-:where(.dataTables_wrapper .paginate_button){font-size:0.9rem !important;font-weight:600 !important;}
-:where(.badge,.status-badge,.crm-status-badge,.status-pill,.badge-status,[data-status],.tooltip,.ui-tooltip,.floating-ui-tooltip__bubble){font-weight:600 !important;}
-
-/* ===== GLOBAL BUTTON STANDARDIZATION ===== */
-button,
-.btn,
-.crm-action-btn,
-.btn-filter,
-.btn-reset,
-.btn-add,
-.btn-excel,
-.action-btn,
-.btn-icon-only,
-a.btn,
-input[type="button"],
-input[type="submit"],
-input[type="reset"],
-[role="button"] {
-    font-size: 0.92rem;
-    min-height: 38px;
-    padding: 8px 14px;
-    border-radius: 10px;
-    font-weight: 600;
-}
-
-.btn-icon-only,
-.crm-action-btn,
-.action-btn,
-.btn-sm,
-.btn-xs,
-button.btn-icon,
-a.btn-icon,
-.btn i:only-child,
-button i:only-child {
-    font-size: 0.9rem;
-    min-height: 34px;
-    padding: 8px;
-    border-radius: 10px;
-    font-weight: 600;
-}
-</style>
-
 <script>
     const chkAll = document.getElementById('chkAll');
     if (chkAll) {
@@ -1363,6 +952,20 @@ button i:only-child {
                     target.appendChild(controls);
                 }
             }, 100);
+
+            if (window.jQuery && jQuery.fn && jQuery.fn.dataTable) {
+                const importDt = jQuery('#importBatchesTable').DataTable();
+                const redrawBatchSerial = function () {
+                    importDt
+                        .column(0, { search: 'applied', order: 'applied', page: 'current' })
+                        .nodes()
+                        .each(function (cell, i) {
+                            cell.textContent = String(i + 1);
+                        });
+                };
+                importDt.on('draw.dt order.dt search.dt', redrawBatchSerial);
+                redrawBatchSerial();
+            }
         }
 
         if (typeof crmDataTable === "function" && document.querySelector('#batchLeadsTable')) {
@@ -1525,4 +1128,5 @@ button i:only-child {
     });
 });
 </script>
+
 

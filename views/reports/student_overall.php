@@ -183,11 +183,11 @@ $reportGeneratedAt = date('d M Y h:i A');
                 </div>
                 <div class="sor-panel">
                     <div class="sor-panel-title">Fees</div>
-                    <div class="sor-row"><b>Total Fee:</b> Rs <?= studentReportH(number_format((float) ($student['total_fee'] ?? 0), 2)) ?></div>
-                    <div class="sor-row"><b>Discount:</b> Rs <?= studentReportH(number_format((float) ($student['discount_amount'] ?? 0), 2)) ?></div>
-                    <div class="sor-row"><b>Final Fee:</b> Rs <?= studentReportH(number_format((float) ($student['final_fee'] ?? 0), 2)) ?></div>
-                    <div class="sor-row"><b>Paid:</b> Rs <?= studentReportH(number_format((float) ($student['paid_amount'] ?? 0), 2)) ?></div>
-                    <div class="sor-row"><b>Balance:</b> Rs <?= studentReportH(number_format((float) ($student['balance_amount'] ?? 0), 2)) ?></div>
+                    <div class="sor-row"><b>Total Fee:</b> <?= inr_symbol() ?> <?= studentReportH(number_format((float) ($student['total_fee'] ?? 0), 2)) ?></div>
+                    <div class="sor-row"><b>Discount:</b> <?= inr_symbol() ?> <?= studentReportH(number_format((float) ($student['discount_amount'] ?? 0), 2)) ?></div>
+                    <div class="sor-row"><b>Final Fee:</b> <?= inr_symbol() ?> <?= studentReportH(number_format((float) ($student['final_fee'] ?? 0), 2)) ?></div>
+                    <div class="sor-row"><b>Paid:</b> <?= inr_symbol() ?> <?= studentReportH(number_format((float) ($student['paid_amount'] ?? 0), 2)) ?></div>
+                    <div class="sor-row"><b>Balance:</b> <?= inr_symbol() ?> <?= studentReportH(number_format((float) ($student['balance_amount'] ?? 0), 2)) ?></div>
                     <div class="sor-row"><b>Payment Status:</b> <?= studentReportH(ucfirst((string) ($student['payment_status'] ?? '-'))) ?></div>
                 </div>
             </div>
@@ -219,110 +219,5 @@ $reportGeneratedAt = date('d M Y h:i A');
     </div>
 <?php endif; ?>
 
-<style>
-.sor-filter-row,.sor-filter-actions,.sor-actions{display:flex;gap:12px;flex-wrap:wrap;align-items:end;}
-.sor-filter-row > div{flex:1 1 260px;}
-.sor-alert{margin-top:16px;padding:14px 16px;border-radius:14px;background:#fff7ed;color:#9a3412;border:1px solid #fed7aa;font-weight:700;}
-.sor-wrap{padding:16px;}
-.sor-print-hero{display:none;margin-bottom:18px;border:1px solid #d9dee8;border-radius:18px;padding:20px 22px;background:linear-gradient(180deg,#ffffff 0%,#f8fafc 100%);}
-.sor-print-kicker{font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#64748b;}
-.sor-print-title{margin-top:8px;font-size:28px;font-weight:800;color:#0f172a;}
-.sor-print-copy{margin-top:6px;color:#475569;line-height:1.7;}
-.sor-print-meta{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-top:16px;}
-.sor-print-meta-card{border:1px solid #e2e8f0;border-radius:14px;padding:12px 14px;background:#fff;}
-.sor-print-meta-label{font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#64748b;}
-.sor-print-meta-value{margin-top:6px;font-size:15px;font-weight:700;color:#0f172a;word-break:break-word;}
-.sor-topbar{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;flex-wrap:wrap;margin-bottom:16px;}
-.sor-name{font-size:22px;font-weight:900;color:#111827;}
-.sor-meta{margin-top:6px;color:#64748b;}
-.sor-summary-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin-bottom:16px;}
-.sor-card,.sor-panel{border:1px solid #f3e8ef;border-radius:16px;padding:14px;background:#fff;}
-.sor-label{font-size:12px;font-weight:800;color:#9d174d;text-transform:uppercase;}
-.sor-value{margin-top:8px;font-size:22px;font-weight:900;color:#111827;}
-.sor-section-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;}
-.sor-panel-title{font-size:15px;font-weight:900;color:#111827;margin-bottom:10px;}
-.sor-row{margin-bottom:8px;color:#475569;}
-.sor-table th,.sor-table td{vertical-align:top;white-space:normal;}
-.sor-empty{text-align:center;color:#64748b;font-weight:700;}
-@media (max-width: 1000px){.sor-summary-grid,.sor-section-grid{grid-template-columns:1fr 1fr;}}
-@media (max-width: 700px){.sor-summary-grid,.sor-section-grid{grid-template-columns:1fr;}}
-@media print{
-  @page{size:A4;margin:12mm;}
-  .wrapper aside,.card:first-of-type,.sor-actions,.sidebar,.topbar,.header{display:none !important;}
-  .content,.main-content{padding:0 !important;margin:0 !important;width:100% !important;}
-  .card{box-shadow:none !important;border:none !important;}
-  .sor-print-hero{display:block !important;page-break-inside:avoid;break-inside:avoid;}
-  .sor-topbar{margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid #d7dce5;}
-  .sor-summary-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;}
-  .sor-card,.sor-panel{border-color:#d7dce5 !important;box-shadow:none !important;break-inside:avoid;page-break-inside:avoid;background:#fff !important;}
-  .sor-label,.sor-panel-title,.sor-meta{color:#475569 !important;}
-  .sor-value,.sor-name{color:#111827 !important;}
-  .sor-table th,.sor-table td{border-color:#d7dce5 !important;}
-}
 
-/* =====================================================
-GLOBAL TYPOGRAPHY STYLECSS SYNC
-font-family + font-size + font-weight only
-===================================================== */
-:where(body,button,input,select,textarea,label,span,p,h1,h2,h3,h4,h5,h6,a,div){
-  font-family:'Poppins',sans-serif !important;
-}
-:where(h1,.h1,.page-title,.crm-page-title,.dashboard-header h2){font-size:clamp(2rem, 2.5vw, 2.4rem) !important;font-weight:700 !important;}
-:where(h2,.h2,.section-title){font-size:clamp(1.6rem, 2vw, 2rem) !important;font-weight:600 !important;}
-:where(h3,.h3,.card-header,.table-title){font-size:clamp(1.3rem, 1.6vw, 1.5rem) !important;font-weight:600 !important;}
-:where(h4,.h4){font-size:1.2rem !important;font-weight:500 !important;}
-:where(h5,.h5){font-size:1rem !important;font-weight:500 !important;}
-:where(h6,.h6){font-size:0.9rem !important;font-weight:500 !important;}
-:where(body){font-size:1rem !important;}
-:where(p,.text-body,li,td,.text-muted,.help-text,.form-text,.small,small,.secondary-text){font-size:0.95rem !important;font-weight:400 !important;}
-:where(.small,small,.text-muted,.help-text,.form-text,.att-sub,.crm-note){font-size:0.85rem !important;font-weight:400 !important;}
-:where(label,.form-label){font-size:0.85rem !important;font-weight:500 !important;}
-:where(input,select,textarea,.form-control,.form-select){font-size:0.95rem !important;font-weight:400 !important;}
-:where(input::placeholder,textarea::placeholder){font-weight:400 !important;}
-:where(button,.btn,.dt-button,.crm-action-btn,.crm-icon-btn,.btn-icon-only,.action-btn,.targets-btn-icon,.iso-report-btn,.iso-report-action-btn){font-size:0.9rem !important;font-weight:600 !important;}
-:where(.btn[data-mobile-label],.btn-icon-only[data-mobile-label],.action-btn[data-mobile-label],.crm-icon-btn[data-mobile-label],.targets-btn-icon[data-mobile-label],.iso-report-icon-btn[data-mobile-label],.iso-report-action-btn[data-mobile-label])::after{font-size:0.75rem !important;font-weight:600 !important;}
-:where(.table th,.crm-table th,.dataTables_wrapper th,th){font-size:0.75rem !important;font-weight:600 !important;}
-:where(.table td,.dataTables_wrapper tbody td){font-size:0.9rem !important;}
-:where(.dataTables_wrapper .dataTables_info){font-size:0.85rem !important;font-weight:400 !important;}
-:where(.dataTables_wrapper .paginate_button){font-size:0.9rem !important;font-weight:600 !important;}
-:where(.badge,.status-badge,.crm-status-badge,.status-pill,.badge-status,[data-status],.tooltip,.ui-tooltip,.floating-ui-tooltip__bubble){font-weight:600 !important;}
-
-/* ===== GLOBAL BUTTON STANDARDIZATION ===== */
-button,
-.btn,
-.crm-action-btn,
-.btn-filter,
-.btn-reset,
-.btn-add,
-.btn-excel,
-.action-btn,
-.btn-icon-only,
-a.btn,
-input[type="button"],
-input[type="submit"],
-input[type="reset"],
-[role="button"] {
-    font-size: 0.92rem;
-    min-height: 38px;
-    padding: 8px 14px;
-    border-radius: 10px;
-    font-weight: 600;
-}
-
-.btn-icon-only,
-.crm-action-btn,
-.action-btn,
-.btn-sm,
-.btn-xs,
-button.btn-icon,
-a.btn-icon,
-.btn i:only-child,
-button i:only-child {
-    font-size: 0.9rem;
-    min-height: 34px;
-    padding: 8px;
-    border-radius: 10px;
-    font-weight: 600;
-}
-</style>
 

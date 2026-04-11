@@ -13,11 +13,68 @@ if (session_status() === PHP_SESSION_NONE) {
 // -------------------------------
 // App Basic Settings
 // -------------------------------
+if (!function_exists('crm_brand_array_get')) {
+    function crm_brand_array_get(array $source, string $path, $default = null) {
+        $value = $source;
+        foreach (explode('.', $path) as $part) {
+            if (!is_array($value) || !array_key_exists($part, $value)) {
+                return $default;
+            }
+            $value = $value[$part];
+        }
+        return $value;
+    }
+}
+
+$crmBrandDefaults = [
+    'app' => ['name' => 'ATS CRM'],
+    'assets' => ['logo' => 'assets/images/logo.png', 'favicon' => 'assets/images/logo.png'],
+    'theme' => [
+        'font' => ['family' => "'Poppins', sans-serif", 'google_url' => ''],
+        'colors' => [
+            'primary' => '#e91e63',
+            'primary_dark' => '#c2185b',
+            'primary_light' => '#fce4ec',
+            'accent' => '#ff4d8d',
+            'text' => '#333333',
+            'text_muted' => '#6b7280',
+            'bg_light' => '#fff7fa',
+            'border' => '#f3c6d3',
+            'surface' => '#ffffff',
+            'link' => '#be185d',
+        ],
+    ],
+];
+$crmBrandFile = __DIR__ . '/branding.php';
+$crmBrandConfig = [];
+if (is_file($crmBrandFile)) {
+    $loaded = require $crmBrandFile;
+    if (is_array($loaded)) {
+        $crmBrandConfig = $loaded;
+    }
+}
+$GLOBALS['CRM_BRANDING'] = array_replace_recursive($crmBrandDefaults, $crmBrandConfig);
+
+if (!function_exists('crm_brand')) {
+    function crm_brand(string $path, $default = null) {
+        $brand = $GLOBALS['CRM_BRANDING'] ?? [];
+        if (!is_array($brand)) return $default;
+        return crm_brand_array_get($brand, $path, $default);
+    }
+}
+
+if (!function_exists('inr_symbol')) {
+    function inr_symbol(): string {
+        // HTML entity keeps symbol stable even when a file/DB row has bad encoding.
+        return '&#8377;';
+    }
+}
+
 if (!defined('APP_NAME')) {
-    define('APP_NAME', 'ATS CRM');
+    define('APP_NAME', (string) crm_brand('app.name', 'ATS CRM'));
 }
 define('APP_ENV', 'development'); // change to 'production' in live server
-define('BASE_URL', 'http://localhost/new_2025/demo/crm git/'); // change in production
+define('BASE_URL', 'http://localhost/new_2025/demo/crm gitcopy/'); // change in production
 
 //define('BASE_URL', 'http://localhost/2026/crm/');
 

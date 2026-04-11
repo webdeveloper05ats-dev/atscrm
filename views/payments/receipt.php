@@ -180,418 +180,6 @@ if ($paymentId <= 0) {
 }
 ?>
 
-<style>
-.receipt-page{
-  max-width: 1040px;
-  margin: 0 auto;
-  padding: 8px 0 14px;
-}
-.receipt-toolbar{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  gap:14px;
-  flex-wrap:wrap;
-  margin-bottom:18px;
-  background:#fff;
-  border:1px solid #f2d8e5;
-  border-radius:16px;
-  padding:12px 14px;
-  box-shadow:0 8px 22px rgba(0,0,0,.05);
-}
-.receipt-card{
-  background:linear-gradient(180deg,#fff 0%,#fffbfd 100%);
-  border:1px solid #efd7e4;
-  border-radius:20px;
-  box-shadow:0 14px 30px rgba(233,30,99,.08);
-  overflow:hidden;
-}
-.receipt-head{
-  padding:18px 20px;
-  border-bottom:1px solid #f3d9e6;
-  background:linear-gradient(135deg,#fff4fa 0%,#fff 70%);
-}
-.receipt-brand{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:14px;
-  flex-wrap:wrap;
-  margin-bottom:12px;
-  padding-bottom:12px;
-  border-bottom:1px solid #f3d9e6;
-}
-.receipt-brand-left{
-  display:flex;
-  align-items:center;
-  gap:12px;
-}
-.receipt-brand-logo{
-  width:58px;
-  height:58px;
-  object-fit:contain;
-  border-radius:10px;
-  background:#fff;
-  border:1px solid #f3d9e6;
-  padding:6px;
-}
-.receipt-brand-title{
-  margin:0;
-  font-size:20px;
-  font-weight:900;
-  color:#be185d;
-  line-height:1.1;
-}
-.receipt-brand-sub{
-  margin-top:3px;
-  font-size:12px;
-  color:#6b7280;
-  font-weight:700;
-}
-.receipt-brand-contact{
-  text-align:right;
-  font-size:12px;
-  color:#6b7280;
-  font-weight:700;
-  line-height:1.45;
-}
-.receipt-title{
-  font-size:22px;
-  font-weight:800;
-  color:#be185d;
-  margin-bottom:7px;
-  display:flex;
-  align-items:center;
-  gap:10px;
-}
-.receipt-sub{
-  color:#6b7280;
-  font-size:13px;
-  font-weight:600;
-}
-.receipt-body{
-  padding:22px;
-}
-.receipt-grid{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:14px;
-}
-.receipt-box{
-  border:1px solid #f0dbe5;
-  border-radius:16px;
-  padding:14px;
-  background:#fff;
-  transition:all .2s ease;
-}
-.print-essential{}
-.print-hide-box{}
-.receipt-box:hover{
-  transform:translateY(-1px);
-  box-shadow:0 8px 16px rgba(233,30,99,.07);
-}
-.receipt-box.full{
-  grid-column:1 / -1;
-}
-.receipt-box-title{
-  font-size:13px;
-  font-weight:800;
-  margin-bottom:10px;
-  color:#be185d;
-  text-transform:uppercase;
-  letter-spacing:.4px;
-  border-bottom:1px solid #f5e4ec;
-  padding-bottom:8px;
-}
-.receipt-row{
-  display:flex;
-  justify-content:space-between;
-  gap:16px;
-  padding:8px 0;
-  border-bottom:1px dashed #f3dfe9;
-}
-.receipt-row:last-child{
-  border-bottom:none;
-}
-.receipt-label{
-  font-size:12px;
-  color:#6b7280;
-  font-weight:700;
-}
-.receipt-value{
-  font-size:13px;
-  color:#1f2937;
-  font-weight:800;
-  text-align:right;
-}
-.money-big{
-  font-size:30px;
-  font-weight:900;
-  color:#be185d;
-}
-.money-sub{
-  margin-top:6px;
-  font-size:13px;
-  color:#6b7280;
-}
-.receipt-footer{
-  margin-top:20px;
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:16px;
-}
-.receipt-print-footnote{
-  margin-top:14px;
-  border-top:1px dashed #efc8da;
-  padding-top:10px;
-  text-align:center;
-  font-size:11px;
-  color:#7a5a69;
-  line-height:1.5;
-}
-.sign-box{
-  border:1px dashed #efc8da;
-  border-radius:14px;
-  min-height:90px;
-  padding:14px;
-  display:flex;
-  flex-direction:column;
-  justify-content:flex-end;
-  background:#fff;
-}
-.sign-label{
-  font-size:12px;
-  color:#7a5a69;
-  font-weight:700;
-}
-.receipt-tool-title{
-  margin:0;
-  font-size:18px;
-  font-weight:800;
-  color:#be185d;
-  display:flex;
-  align-items:center;
-  gap:8px;
-}
-.receipt-btn{
-  border:none;
-  border-radius:11px;
-  padding:9px 13px;
-  font-size:13px;
-  font-weight:700;
-  text-decoration:none !important;
-  display:inline-flex;
-  align-items:center;
-  gap:8px;
-  transition:all .2s ease;
-}
-.receipt-btn-primary{
-  background:linear-gradient(135deg,#ff4d8d 0%,#e91e63 100%);
-  color:#fff !important;
-  box-shadow:0 8px 14px rgba(233,30,99,.22);
-}
-.receipt-btn-primary:hover{
-  transform:translateY(-1px);
-  color:#fff !important;
-}
-.receipt-btn-light{
-  background:#fff;
-  border:1px solid #e7cddb;
-  color:#4b5563 !important;
-}
-.receipt-btn-light:hover{
-  background:#fff6fa;
-  color:#374151 !important;
-}
-.print-hide{
-  display:block;
-}
-@media (max-width: 900px){
-  .receipt-grid, .receipt-footer{
-    grid-template-columns:1fr;
-  }
-}
-@media (max-width: 640px){
-  .receipt-toolbar{
-    padding:10px 12px;
-  }
-  .receipt-body{
-    padding:14px;
-  }
-  .receipt-title{
-    font-size:18px;
-  }
-}
-@media print{
-  @page{
-    size: A4;
-    margin: 10mm;
-  }
-  html, body{
-    width:100% !important;
-    margin:0 !important;
-    padding:0 !important;
-    background:#fff !important;
-  }
-  body{
-    background:#fff !important;
-  }
-  .sidebar,
-  .topbar,
-  .toggle-btn,
-  .menu-toggle,
-  .dashboard-header,
-  .header,
-  .navbar{
-    display:none !important;
-  }
-  .wrapper,
-  .content,
-  .content.expanded,
-  .main-content{
-    display:block !important;
-    width:100% !important;
-    max-width:100% !important;
-    margin:0 !important;
-    padding:0 !important;
-    transform:none !important;
-  }
-  .print-hide{
-    display:none !important;
-  }
-  .receipt-page{
-    width:100% !important;
-    max-width:190mm !important;
-    margin:0 auto !important;
-    padding:0 !important;
-  }
-  .receipt-card{
-    box-shadow:none;
-    border:1px solid #ccc;
-    break-inside: avoid;
-    page-break-inside: avoid;
-  }
-  .receipt-head{
-    padding:12px 14px !important;
-  }
-  .receipt-title{
-    font-size:18px !important;
-    margin-bottom:4px !important;
-  }
-  .receipt-sub{
-    font-size:11px !important;
-  }
-  .receipt-body{
-    padding:12px 14px !important;
-  }
-  .receipt-grid{
-    grid-template-columns:1fr !important;
-    gap:10px !important;
-  }
-  .receipt-box{
-    border:1px solid #d9d9d9 !important;
-    border-radius:10px !important;
-    padding:10px !important;
-  }
-  .receipt-box-title{
-    font-size:11px !important;
-    padding-bottom:6px !important;
-    margin-bottom:6px !important;
-  }
-  .receipt-row{
-    padding:5px 0 !important;
-  }
-  .receipt-label,
-  .receipt-value{
-    font-size:11px !important;
-  }
-  .receipt-footer{
-    margin-top:10px !important;
-    gap:10px !important;
-  }
-  .sign-box{
-    min-height:64px !important;
-    padding:10px !important;
-  }
-  .print-hide-box{
-    display:none !important;
-  }
-  .receipt-brand-logo{
-    border:1px solid #ddd;
-  }
-  .receipt-print-footnote{
-    margin-top:8px !important;
-    padding-top:8px !important;
-    font-size:10px !important;
-  }
-}
-
-/* =====================================================
-GLOBAL TYPOGRAPHY STYLECSS SYNC
-font-family + font-size + font-weight only
-===================================================== */
-:where(body,button,input,select,textarea,label,span,p,h1,h2,h3,h4,h5,h6,a,div){
-  font-family:'Poppins',sans-serif !important;
-}
-:where(h1,.h1,.page-title,.crm-page-title,.dashboard-header h2){font-size:clamp(2rem, 2.5vw, 2.4rem) !important;font-weight:700 !important;}
-:where(h2,.h2,.section-title){font-size:clamp(1.6rem, 2vw, 2rem) !important;font-weight:600 !important;}
-:where(h3,.h3,.card-header,.table-title){font-size:clamp(1.3rem, 1.6vw, 1.5rem) !important;font-weight:600 !important;}
-:where(h4,.h4){font-size:1.2rem !important;font-weight:500 !important;}
-:where(h5,.h5){font-size:1rem !important;font-weight:500 !important;}
-:where(h6,.h6){font-size:0.9rem !important;font-weight:500 !important;}
-:where(body){font-size:1rem !important;}
-:where(p,.text-body,li,td,.text-muted,.help-text,.form-text,.small,small,.secondary-text){font-size:0.95rem !important;font-weight:400 !important;}
-:where(.small,small,.text-muted,.help-text,.form-text,.att-sub,.crm-note){font-size:0.85rem !important;font-weight:400 !important;}
-:where(label,.form-label){font-size:0.85rem !important;font-weight:500 !important;}
-:where(input,select,textarea,.form-control,.form-select){font-size:0.95rem !important;font-weight:400 !important;}
-:where(input::placeholder,textarea::placeholder){font-weight:400 !important;}
-:where(button,.btn,.dt-button,.crm-action-btn,.crm-icon-btn,.btn-icon-only,.action-btn,.targets-btn-icon,.iso-report-btn,.iso-report-action-btn){font-size:0.9rem !important;font-weight:600 !important;}
-:where(.btn[data-mobile-label],.btn-icon-only[data-mobile-label],.action-btn[data-mobile-label],.crm-icon-btn[data-mobile-label],.targets-btn-icon[data-mobile-label],.iso-report-icon-btn[data-mobile-label],.iso-report-action-btn[data-mobile-label])::after{font-size:0.75rem !important;font-weight:600 !important;}
-:where(.table th,.crm-table th,.dataTables_wrapper th,th){font-size:0.75rem !important;font-weight:600 !important;}
-:where(.table td,.dataTables_wrapper tbody td){font-size:0.9rem !important;}
-:where(.dataTables_wrapper .dataTables_info){font-size:0.85rem !important;font-weight:400 !important;}
-:where(.dataTables_wrapper .paginate_button){font-size:0.9rem !important;font-weight:600 !important;}
-:where(.badge,.status-badge,.crm-status-badge,.status-pill,.badge-status,[data-status],.tooltip,.ui-tooltip,.floating-ui-tooltip__bubble){font-weight:600 !important;}
-
-/* ===== GLOBAL BUTTON STANDARDIZATION ===== */
-button,
-.btn,
-.crm-action-btn,
-.btn-filter,
-.btn-reset,
-.btn-add,
-.btn-excel,
-.action-btn,
-.btn-icon-only,
-a.btn,
-input[type="button"],
-input[type="submit"],
-input[type="reset"],
-[role="button"] {
-    font-size: 0.92rem;
-    min-height: 38px;
-    padding: 8px 14px;
-    border-radius: 10px;
-    font-weight: 600;
-}
-
-.btn-icon-only,
-.crm-action-btn,
-.action-btn,
-.btn-sm,
-.btn-xs,
-button.btn-icon,
-a.btn-icon,
-.btn i:only-child,
-button i:only-child {
-    font-size: 0.9rem;
-    min-height: 34px;
-    padding: 8px;
-    border-radius: 10px;
-    font-weight: 600;
-}
-</style>
-
 <div class="receipt-page">
   <div class="receipt-toolbar print-hide">
     <h2 class="receipt-tool-title"><i class="fas fa-receipt"></i> Payment Receipt</h2>
@@ -702,7 +290,7 @@ button i:only-child {
             <div class="receipt-box-title">Payment Details</div>
             <div class="receipt-row">
               <div class="receipt-label">Amount Received</div>
-              <div class="receipt-value">? <?= h(number_format($paymentAmount, 2)) ?></div>
+              <div class="receipt-value"><?= inr_symbol() ?> <?= h(number_format($paymentAmount, 2)) ?></div>
             </div>
             <div class="receipt-row">
               <div class="receipt-label">Payment Mode</div>
@@ -722,7 +310,7 @@ button i:only-child {
             </div>
             <div class="receipt-row">
               <div class="receipt-label">Balance Amount</div>
-              <div class="receipt-value">? <?= h(number_format($balanceAmount, 2)) ?></div>
+              <div class="receipt-value"><?= inr_symbol() ?> <?= h(number_format($balanceAmount, 2)) ?></div>
             </div>
           </div>
 
@@ -730,28 +318,28 @@ button i:only-child {
             <div class="receipt-box-title">Fee Summary</div>
             <div class="receipt-row">
               <div class="receipt-label">Total Fee</div>
-              <div class="receipt-value">? <?= h(number_format((float)($payment['total_fee'] ?? 0), 2)) ?></div>
+              <div class="receipt-value"><?= inr_symbol() ?> <?= h(number_format((float)($payment['total_fee'] ?? 0), 2)) ?></div>
             </div>
             <div class="receipt-row">
               <div class="receipt-label">Discount</div>
-              <div class="receipt-value">? <?= h(number_format((float)($payment['discount_amount'] ?? 0), 2)) ?></div>
+              <div class="receipt-value"><?= inr_symbol() ?> <?= h(number_format((float)($payment['discount_amount'] ?? 0), 2)) ?></div>
             </div>
             <div class="receipt-row">
               <div class="receipt-label">Final Fee</div>
-              <div class="receipt-value">? <?= h(number_format($finalFee, 2)) ?></div>
+              <div class="receipt-value"><?= inr_symbol() ?> <?= h(number_format($finalFee, 2)) ?></div>
             </div>
             <div class="receipt-row">
               <div class="receipt-label">Total Paid</div>
-              <div class="receipt-value">? <?= h(number_format($paidAmount, 2)) ?></div>
+              <div class="receipt-value"><?= inr_symbol() ?> <?= h(number_format($paidAmount, 2)) ?></div>
             </div>
             <div class="receipt-row">
               <div class="receipt-label">Balance</div>
-              <div class="receipt-value">? <?= h(number_format($balanceAmount, 2)) ?></div>
+              <div class="receipt-value"><?= inr_symbol() ?> <?= h(number_format($balanceAmount, 2)) ?></div>
             </div>
           </div>
 
           <div class="receipt-box full print-hide-box" style="text-align:center;background:#fff7fb;">
-            <div class="money-big">? <?= h(number_format($paymentAmount, 2)) ?></div>
+            <div class="money-big"><?= inr_symbol() ?> <?= h(number_format($paymentAmount, 2)) ?></div>
             <div class="money-sub">Received from the student toward the above registration.</div>
           </div>
 
@@ -796,4 +384,6 @@ button i:only-child {
 
   <?php endif; ?>
 </div>
+
+
 

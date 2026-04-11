@@ -1,0 +1,311 @@
+﻿/* Auto-extracted from views/interviews\schedule.php */
+
+.hrsch-filter-row{
+    display:grid;
+    grid-template-columns:2fr 1fr auto;
+    gap:12px;
+    align-items:end;
+}
+
+.hrsch-filter-actions,
+.hrsch-actions{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+}
+
+.hrsch-note{
+    margin:0 14px 14px;
+    padding:14px 16px;
+    border-radius:14px;
+    background:#fff7ed;
+    color:#9a3412;
+    border:1px solid #fed7aa;
+    font-weight:600;
+}
+
+.hrsch-table th,
+.hrsch-table td{
+    white-space:normal;
+    vertical-align:top;
+}
+
+.hrsch-primary{
+    font-weight:800;
+    color:#1f2937;
+}
+
+.hrsch-sub{
+    margin-top:4px;
+    color:#64748b;
+    font-size:12px;
+}
+
+.hrsch-empty{
+    text-align:center;
+    color:#64748b;
+    font-weight:600;
+}
+
+.hrsch-alert{
+    padding:14px 16px;
+    border-radius:14px;
+    font-weight:600;
+}
+
+.hrsch-alert-warning{
+    background:#fff7ed;
+    color:#9a3412;
+    border:1px solid #fed7aa;
+}
+
+.hrsch-status{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    min-width:96px;
+    padding:6px 12px;
+    border-radius:999px;
+    font-weight:800;
+    font-size:12px;
+}
+
+.hrsch-status-pending{ background:#fef3c7; color:#92400e; }
+.hrsch-status-scheduled{ background:#dbeafe; color:#1d4ed8; }
+.hrsch-status-selected{ background:#dcfce7; color:#15803d; }
+.hrsch-status-rejected{ background:#fee2e2; color:#b91c1c; }
+.hrsch-status-on_hold{ background:#ede9fe; color:#6d28d9; }
+
+.hrsch-placement-btn{
+    background:#eff6ff;
+    color:#1d4ed8;
+    border:1px solid #bfdbfe;
+}
+
+.hrsch-modal-backdrop{
+    position:fixed;
+    inset:0;
+    background:rgba(15,23,42,.55);
+    display:none;
+    z-index:9998;
+}
+
+.hrsch-modal{
+    position:fixed;
+    inset:30px 40px;
+    background:#fff;
+    border-radius:20px;
+    display:none;
+    z-index:9999;
+    overflow:hidden;
+    box-shadow:0 20px 60px rgba(15,23,42,.28);
+}
+
+.hrsch-modal-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:16px;
+    padding:18px 22px;
+    border-bottom:1px solid #e5e7eb;
+    background:#fff7fb;
+}
+
+.hrsch-modal-title{
+    font-size:20px;
+    font-weight:900;
+    color:#111827;
+}
+
+.hrsch-modal-subtitle{
+    margin-top:4px;
+    color:#64748b;
+    font-size:13px;
+}
+
+.hrsch-close{
+    border:none;
+    background:transparent;
+    font-size:28px;
+    line-height:1;
+    color:#64748b;
+    cursor:pointer;
+}
+
+.hrsch-modal-body{
+    padding:18px 22px;
+    overflow:auto;
+    height:calc(100% - 84px);
+}
+
+.hrd-wrap{
+    display:flex;
+    flex-direction:column;
+    gap:18px;
+}
+
+.hrd-grid{
+    display:grid;
+    grid-template-columns:repeat(4, minmax(0, 1fr));
+    gap:12px;
+}
+
+.hrd-grid-two{
+    grid-template-columns:repeat(2, minmax(0, 1fr));
+}
+
+.hrd-card{
+    border:1px solid #f3e8ef;
+    border-radius:16px;
+    padding:14px;
+    background:#fff;
+}
+
+.hrd-card-full{
+    grid-column:1 / -1;
+}
+
+.hrd-title{
+    font-size:12px;
+    font-weight:800;
+    color:#9d174d;
+    text-transform:uppercase;
+    letter-spacing:.04em;
+}
+
+.hrd-value{
+    margin-top:7px;
+    font-size:20px;
+    font-weight:900;
+    color:#111827;
+}
+
+.hrd-meta{
+    margin-top:6px;
+    color:#475569;
+    line-height:1.5;
+    font-size:13px;
+}
+
+.hrd-section{
+    border:1px solid #f3e8ef;
+    border-radius:18px;
+    padding:16px;
+    background:#fff;
+}
+
+.hrd-section-title{
+    margin-bottom:12px;
+    font-size:16px;
+    font-weight:900;
+    color:#111827;
+}
+
+.hrd-table-wrap{
+    overflow:auto;
+}
+
+.hrd-table{
+    width:100%;
+    border-collapse:collapse;
+}
+
+.hrd-table th,
+.hrd-table td{
+    border:1px solid #f3e8ef;
+    padding:10px;
+    text-align:left;
+    vertical-align:top;
+}
+
+.hrd-table th{
+    background:#fff7fb;
+    color:#9d174d;
+    font-weight:800;
+}
+
+.hrd-empty{
+    padding:16px;
+    border-radius:14px;
+    background:#f8fafc;
+    color:#64748b;
+    font-weight:600;
+}
+
+@media (max-width: 1100px){
+    .hrd-grid,
+    .hrd-grid-two,
+    .hrsch-filter-row{
+        grid-template-columns:1fr;
+    }
+
+    .hrsch-modal{
+        inset:20px 16px;
+    }
+}
+
+/* =====================================================
+GLOBAL TYPOGRAPHY STYLECSS SYNC
+font-family + font-size + font-weight only
+===================================================== */
+:where(body,button,input,select,textarea,label,span,p,h1,h2,h3,h4,h5,h6,a,div){
+  font-family:'Poppins',sans-serif !important;
+}
+:where(h1,.h1,.page-title,.crm-page-title,.dashboard-header h2){font-size:clamp(2rem, 2.5vw, 2.4rem) !important;font-weight:700 !important;}
+:where(h2,.h2,.section-title){font-size:clamp(1.6rem, 2vw, 2rem) !important;font-weight:600 !important;}
+:where(h3,.h3,.card-header,.table-title){font-size:clamp(1.3rem, 1.6vw, 1.5rem) !important;font-weight:600 !important;}
+:where(h4,.h4){font-size:1.2rem !important;font-weight:500 !important;}
+:where(h5,.h5){font-size:1rem !important;font-weight:500 !important;}
+:where(h6,.h6){font-size:0.9rem !important;font-weight:500 !important;}
+:where(body){font-size:1rem !important;}
+:where(p,.text-body,li,td,.text-muted,.help-text,.form-text,.small,small,.secondary-text){font-size:0.95rem !important;font-weight:400 !important;}
+:where(.small,small,.text-muted,.help-text,.form-text,.att-sub,.crm-note){font-size:0.85rem !important;font-weight:400 !important;}
+:where(label,.form-label){font-size:0.85rem !important;font-weight:500 !important;}
+:where(input,select,textarea,.form-control,.form-select){font-size:0.95rem !important;font-weight:400 !important;}
+:where(input::placeholder,textarea::placeholder){font-weight:400 !important;}
+:where(button,.btn,.dt-button,.crm-action-btn,.crm-icon-btn,.btn-icon-only,.action-btn,.targets-btn-icon,.iso-report-btn,.iso-report-action-btn){font-size:0.9rem !important;font-weight:600 !important;}
+:where(.btn[data-mobile-label],.btn-icon-only[data-mobile-label],.action-btn[data-mobile-label],.crm-icon-btn[data-mobile-label],.targets-btn-icon[data-mobile-label],.iso-report-icon-btn[data-mobile-label],.iso-report-action-btn[data-mobile-label])::after{font-size:0.75rem !important;font-weight:600 !important;}
+:where(.table th,.crm-table th,.dataTables_wrapper th,th){font-size:0.75rem !important;font-weight:600 !important;}
+:where(.table td,.dataTables_wrapper tbody td){font-size:0.9rem !important;}
+:where(.dataTables_wrapper .dataTables_info){font-size:0.85rem !important;font-weight:400 !important;}
+:where(.dataTables_wrapper .paginate_button){font-size:0.9rem !important;font-weight:600 !important;}
+:where(.badge,.status-badge,.crm-status-badge,.status-pill,.badge-status,[data-status],.tooltip,.ui-tooltip,.floating-ui-tooltip__bubble){font-weight:600 !important;}
+
+/* ===== GLOBAL BUTTON STANDARDIZATION ===== */
+button,
+.btn,
+.crm-action-btn,
+.btn-filter,
+.btn-reset,
+.btn-add,
+.btn-excel,
+.action-btn,
+.btn-icon-only,
+a.btn,
+input[type="button"],
+input[type="submit"],
+input[type="reset"],
+[role="button"] {
+    font-size: 0.92rem;
+    min-height: 38px;
+    padding: 8px 14px;
+    border-radius: 10px;
+    font-weight: 600;
+}
+
+.btn-icon-only,
+.crm-action-btn,
+.action-btn,
+.btn-sm,
+.btn-xs,
+button.btn-icon,
+a.btn-icon,
+.btn i:only-child,
+button i:only-child {
+    font-size: 0.9rem;
+    min-height: 34px;
+    padding: 8px;
+    border-radius: 10px;
+    font-weight: 600;
+}
+

@@ -168,7 +168,7 @@ $chartData = array_values($chartData);
                 </span>
                 <span class="sa-chip">
                     <i class="fas fa-file-invoice-dollar"></i>
-                    ₹ <?= number_format((float)$pendingDueAmount, 2) ?> pending dues
+                    <?= inr_symbol() ?> <?= number_format((float)$pendingDueAmount, 2) ?> pending dues
                 </span>
             </div>
         </div>
@@ -198,7 +198,7 @@ $chartData = array_values($chartData);
                 </div>
                 <div class="sa-mini-stat">
                     <div class="label">Total Collection</div>
-                    <div class="value">₹ <?= number_format((float)$totalCollection, 0) ?></div>
+                    <div class="value"><?= inr_symbol() ?> <?= number_format((float)$totalCollection, 0) ?></div>
                     <div class="sub">Lifetime collected amount</div>
                 </div>
                 <div class="sa-mini-stat">
@@ -259,7 +259,7 @@ $chartData = array_values($chartData);
         <article class="sa-card sa-kpi-card">
             <div class="sa-kpi-icon"><i class="fas fa-wallet"></i></div>
             <div class="sa-kpi-label">Today Collection</div>
-            <div class="sa-kpi-value">₹ <?= number_format((float)$todayCollection, 2) ?></div>
+            <div class="sa-kpi-value"><?= inr_symbol() ?> <?= number_format((float)$todayCollection, 2) ?></div>
             <div class="sa-kpi-sub">Payments captured against registrations today.</div>
         </article>
 
@@ -280,7 +280,7 @@ $chartData = array_values($chartData);
         <article class="sa-card sa-kpi-card">
             <div class="sa-kpi-icon"><i class="fas fa-file-invoice-dollar"></i></div>
             <div class="sa-kpi-label">Pending Dues</div>
-            <div class="sa-kpi-value">₹ <?= number_format((float)$pendingDueAmount, 0) ?></div>
+            <div class="sa-kpi-value"><?= inr_symbol() ?> <?= number_format((float)$pendingDueAmount, 0) ?></div>
             <div class="sa-kpi-sub"><?= number_format((float)$pendingDueStudents) ?> active students with unpaid or partial balances.</div>
         </article>
     </section>
@@ -339,7 +339,7 @@ $chartData = array_values($chartData);
                                 Open Payments
                             </a>
                         </div>
-                        <div class="sa-snapshot-value">₹ <?= number_format((float)$pendingDueAmount, 0) ?></div>
+                        <div class="sa-snapshot-value"><?= inr_symbol() ?> <?= number_format((float)$pendingDueAmount, 0) ?></div>
                     </div>
                     <div class="sa-snapshot-item">
                         <div>
@@ -450,7 +450,7 @@ $chartData = array_values($chartData);
                                 <tr>
                                     <td class="sa-strong"><?= htmlspecialchars($p['student_name'] ?? 'N/A') ?></td>
                                     <td><?= htmlspecialchars($p['program_name'] ?? '') ?></td>
-                                    <td class="sa-money">₹ <?= number_format((float)$p['total_paid'], 2) ?></td>
+                                    <td class="sa-money"><?= inr_symbol() ?> <?= number_format((float)$p['total_paid'], 2) ?></td>
                                     <td class="sa-muted"><?= htmlspecialchars($p['last_payment_date']) ?></td>
                                 </tr>
                             <?php endforeach; ?>

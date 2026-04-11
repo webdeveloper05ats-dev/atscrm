@@ -641,6 +641,10 @@ document.addEventListener("DOMContentLoaded", function () {
             if (!submenu) return;
 
             if (q === "") {
+                // Fully restore submenu children visibility after clearing search.
+                childItems.forEach(function (child) {
+                    child.style.display = "";
+                });
                 const initiallyOpen = item.getAttribute("data-initial-open") === "1";
                 item.classList.toggle("open", initiallyOpen);
                 submenu.style.display = initiallyOpen ? "flex" : "none";
@@ -669,6 +673,9 @@ document.addEventListener("DOMContentLoaded", function () {
     searchInput.addEventListener("input", function () {
         applySearch(searchInput.value || "");
     });
+
+    // Apply once on load to normalize any browser-restored field value/state.
+    applySearch(searchInput.value || "");
 });
 </script>
 

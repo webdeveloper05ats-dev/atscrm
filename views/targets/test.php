@@ -391,446 +391,6 @@ $statusClass = 'badge-soft-secondary';
     }
 }
 ?>
-<style>
-/* ======================================================
-ATS CRM TARGET REPORT
-Modern SaaS UI - Product Ready
-====================================================== */
-
-:root{
-    --primary:#e83e8c;
-    --primary-dark:#d2317a;
-    --primary-soft:#fff1f7;
-    --border:#f1d6e3;
-    --text:#2c2c2c;
-    --muted:#7a7a7a;
-    --bg:#ffffff;
-    --shadow-sm:0 2px 6px rgba(0,0,0,.05);
-    --shadow-md:0 8px 20px rgba(0,0,0,.06);
-    --radius:12px;
-}
-
-/* ROOT */
-
-.iso-report-root{
-    background:#fff;
-    border-radius:16px;
-    padding:26px;
-    box-shadow:var(--shadow-md);
-    border:1px solid var(--border);
-    font-family:'Poppins',sans-serif;
-    color:#333;
-    font-weight:600;
-}
-
-/* HERO */
-
-.iso-report-hero{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    margin-bottom:24px;
-    flex-wrap:wrap;
-    gap:20px;
-}
-
-.iso-report-title{
-    font-size:28px;
-    font-weight:700;
-    color:var(--primary);
-    margin-bottom:6px;
-}
-
-.iso-report-subtitle{
-    font-size:14px;
-    color:#555;
-    font-weight:600;
-}
-
-/* BUTTONS */
-
-.iso-report-btn{
-    display:inline-flex;
-    align-items:center;
-    justify-content:center;
-    gap:6px;
-    height:40px;
-    padding:0 18px;
-    border-radius:30px;
-    font-size:13px;
-    font-weight:600;
-    text-decoration:none;
-    cursor:pointer;
-    border:1px solid transparent;
-    transition:all .25s ease;
-}
-
-.iso-report-btn-primary{
-    background:linear-gradient(135deg,#e83e8c,#d2317a);
-    color:#fff;
-    box-shadow:0 5px 12px rgba(232,62,140,.25);
-}
-
-.iso-report-btn-primary:hover{
-    transform:translateY(-1px);
-    box-shadow:0 8px 18px rgba(232,62,140,.35);
-}
-
-.iso-report-btn-outline{
-    background:#fff;
-    border:1px solid var(--border);
-    color:#444;
-}
-
-.iso-report-btn-outline:hover{
-    border-color:var(--primary);
-    color:var(--primary);
-}
-
-/* CARDS */
-
-.iso-report-card{
-    background:#fff;
-    border-radius:var(--radius);
-    border:1px solid var(--border);
-    margin-bottom:24px;
-    overflow:hidden;
-}
-
-.iso-report-card-head{
-    padding:16px 20px;
-    background:var(--primary-soft);
-    font-weight:700;
-    font-size:15px;
-    color:var(--primary);
-}
-
-.iso-report-card-body{
-    padding:22px;
-}
-
-/* FILTER GRID */
-
-.iso-report-filter-row{
-    display:grid;
-    grid-template-columns:1.5fr 0.7fr 0.8fr 1.2fr 1fr auto auto;
-    gap:14px;
-    align-items:end;
-}
-
-/* FORM */
-
-.form-label{
-    font-size:11px;
-    font-weight:700;
-    text-transform:uppercase;
-    color:#666;
-    margin-bottom:5px;
-}
-
-.form-control,
-.form-select{
-    height:40px;
-    border-radius:8px;
-    border:1px solid #ddd;
-    padding:0 12px;
-    font-size:13px;
-    font-weight:600;
-}
-
-.form-control:focus,
-.form-select:focus{
-    border-color:var(--primary);
-    box-shadow:0 0 0 2px rgba(232,62,140,.15);
-}
-
-/* SUMMARY */
-
-.iso-report-summary{
-    display:grid;
-    grid-template-columns:repeat(6,1fr);
-    gap:14px;
-    margin-bottom:20px;
-}
-
-.iso-report-summary-card{
-    background:#fff;
-    border:1px solid var(--border);
-    border-radius:10px;
-    padding:16px;
-}
-
-.iso-report-summary-label{
-    font-size:11px;
-    font-weight:700;
-    color:#666;
-    text-transform:uppercase;
-}
-
-.iso-report-summary-value{
-    font-size:20px;
-    font-weight:700;
-    color:var(--primary);
-}
-
-/* TABLE */
-
-.iso-report-table{
-    width:100%;
-    border-collapse:collapse;
-    font-size:13px;
-    border:1px solid #f1d6e3;
-}
-
-.iso-report-table thead th{
-    font-size:11px;
-    text-transform:uppercase;
-    letter-spacing:.5px;
-    color:#555;
-    padding:14px;
-    background:var(--primary-soft);
-    border-bottom:1px solid var(--border);
-    font-weight:700;
-}
-
-.iso-report-table tbody td{
-    padding:14px;
-    border-bottom:1px solid #eee;
-    font-weight:600;
-}
-
-.iso-report-table th,
-.iso-report-table td{
-    border-right:1px solid #f5e3ec;
-}
-
-.iso-report-table tr td:last-child,
-.iso-report-table tr th:last-child{
-    border-right:none;
-}
-
-.iso-report-table tbody tr:hover{
-    background:#fff7fb;
-}
-
-/* USER */
-
-.iso-report-name{
-    font-weight:700;
-}
-
-.iso-report-meta{
-    font-size:11px;
-    color:#666;
-    font-weight:600;
-}
-
-/* MONEY */
-
-.iso-report-money{
-    font-weight:700;
-    color:var(--primary);
-}
-
-.iso-report-soft{
-    font-weight:600;
-    color:#444;
-}
-
-/* BADGES */
-
-.iso-report-badge{
-    font-size:11px;
-    padding:5px 12px;
-    border-radius:20px;
-    font-weight:700;
-}
-
-.badge-soft-success{
-    background:#e8f7ed;
-    color:#28a745;
-}
-
-.badge-soft-warning{
-    background:#fff5db;
-    color:#d39e00;
-}
-
-.badge-soft-danger{
-    background:#ffeaea;
-    color:#dc3545;
-}
-
-.badge-soft-secondary{
-    background:#f1f1f1;
-    color:#777;
-}
-
-.badge-soft-info{
-    background:#e8f7ff;
-    color:#17a2b8;
-}
-
-/* ACTION BUTTON */
-
-.iso-report-action-btn{
-    width:32px;
-    height:32px;
-    border-radius:8px;
-    background:#f5f5f5;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    color:#555;
-    border:1px solid #e0e0e0;
-    transition:all .2s;
-}
-
-.iso-report-action-btn:hover{
-    background:var(--primary);
-    color:#fff;
-    border-color:var(--primary);
-}
-
-/* STATUS TWO LINES */
-
-.iso-report-status{
-    display:flex;
-    flex-direction:column;
-    gap:3px;
-}
-
-.iso-report-status-text{
-    font-size:11px;
-    color:#666;
-    font-weight:600;
-}
-
-/* EMPTY STATE */
-
-.iso-report-empty{
-    text-align:center;
-    padding:50px;
-    font-size:14px;
-    color:#666;
-    font-weight:600;
-}
-
-/* TOOLTIP */
-
-[data-tooltip]{
-    position:relative;
-}
-
-[data-tooltip]:hover::after{
-    content:attr(data-tooltip);
-    position:absolute;
-    bottom:130%;
-    left:50%;
-    transform:translateX(-50%);
-    background:#333;
-    color:#fff;
-    font-size:11px;
-    padding:6px 10px;
-    border-radius:6px;
-    white-space:nowrap;
-}
-
-/* RESPONSIVE */
-
-@media(max-width:1400px){
-    .iso-report-summary{
-        grid-template-columns:repeat(3,1fr);
-    }
-}
-
-@media(max-width:992px){
-    .iso-report-filter-row{
-        grid-template-columns:1fr 1fr;
-    }
-
-    .iso-report-summary{
-        grid-template-columns:1fr 1fr;
-    }
-}
-
-@media(max-width:768px){
-    .iso-report-filter-row{
-        grid-template-columns:1fr;
-    }
-
-    .iso-report-summary{
-        grid-template-columns:1fr;
-    }
-}
-
-
-
-/* =====================================================
-GLOBAL TYPOGRAPHY STYLECSS SYNC
-font-family + font-size + font-weight only
-===================================================== */
-:where(body,button,input,select,textarea,label,span,p,h1,h2,h3,h4,h5,h6,a,div){
-  font-family:'Poppins',sans-serif !important;
-}
-:where(h1,.h1,.page-title,.crm-page-title,.dashboard-header h2){font-size:clamp(2rem, 2.5vw, 2.4rem) !important;font-weight:700 !important;}
-:where(h2,.h2,.section-title){font-size:clamp(1.6rem, 2vw, 2rem) !important;font-weight:600 !important;}
-:where(h3,.h3,.card-header,.table-title){font-size:clamp(1.3rem, 1.6vw, 1.5rem) !important;font-weight:600 !important;}
-:where(h4,.h4){font-size:1.2rem !important;font-weight:500 !important;}
-:where(h5,.h5){font-size:1rem !important;font-weight:500 !important;}
-:where(h6,.h6){font-size:0.9rem !important;font-weight:500 !important;}
-:where(body){font-size:1rem !important;}
-:where(p,.text-body,li,td,.text-muted,.help-text,.form-text,.small,small,.secondary-text){font-size:0.95rem !important;font-weight:400 !important;}
-:where(.small,small,.text-muted,.help-text,.form-text,.att-sub,.crm-note){font-size:0.85rem !important;font-weight:400 !important;}
-:where(label,.form-label){font-size:0.85rem !important;font-weight:500 !important;}
-:where(input,select,textarea,.form-control,.form-select){font-size:0.95rem !important;font-weight:400 !important;}
-:where(input::placeholder,textarea::placeholder){font-weight:400 !important;}
-:where(button,.btn,.dt-button,.crm-action-btn,.crm-icon-btn,.btn-icon-only,.action-btn,.targets-btn-icon,.iso-report-btn,.iso-report-action-btn){font-size:0.9rem !important;font-weight:600 !important;}
-:where(.btn[data-mobile-label],.btn-icon-only[data-mobile-label],.action-btn[data-mobile-label],.crm-icon-btn[data-mobile-label],.targets-btn-icon[data-mobile-label],.iso-report-icon-btn[data-mobile-label],.iso-report-action-btn[data-mobile-label])::after{font-size:0.75rem !important;font-weight:600 !important;}
-:where(.table th,.crm-table th,.dataTables_wrapper th,th){font-size:0.75rem !important;font-weight:600 !important;}
-:where(.table td,.dataTables_wrapper tbody td){font-size:0.9rem !important;}
-:where(.dataTables_wrapper .dataTables_info){font-size:0.85rem !important;font-weight:400 !important;}
-:where(.dataTables_wrapper .paginate_button){font-size:0.9rem !important;font-weight:600 !important;}
-:where(.badge,.status-badge,.crm-status-badge,.status-pill,.badge-status,[data-status],.tooltip,.ui-tooltip,.floating-ui-tooltip__bubble){font-weight:600 !important;}
-
-/* ===== GLOBAL BUTTON STANDARDIZATION ===== */
-button,
-.btn,
-.crm-action-btn,
-.btn-filter,
-.btn-reset,
-.btn-add,
-.btn-excel,
-.action-btn,
-.btn-icon-only,
-a.btn,
-input[type="button"],
-input[type="submit"],
-input[type="reset"],
-[role="button"] {
-    font-size: 0.92rem;
-    min-height: 38px;
-    padding: 8px 14px;
-    border-radius: 10px;
-    font-weight: 600;
-}
-
-.btn-icon-only,
-.crm-action-btn,
-.action-btn,
-.btn-sm,
-.btn-xs,
-button.btn-icon,
-a.btn-icon,
-.btn i:only-child,
-button i:only-child {
-    font-size: 0.9rem;
-    min-height: 34px;
-    padding: 8px;
-    border-radius: 10px;
-    font-weight: 600;
-}
-</style>
 
 <!-- Font Awesome for Icons -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -986,35 +546,35 @@ button i:only-child {
                     <i class="fas fa-bullseye" style="margin-right: 4px; color: #e83e8c;"></i>
                     Base Target
                 </div>
-                <div class="iso-report-summary-value">?<?= number_format($totalBaseTarget, 2) ?></div>
+                <div class="iso-report-summary-value"><?= inr_symbol() ?> <?= number_format($totalBaseTarget, 2) ?></div>
             </div>
             <div class="iso-report-summary-card" data-tooltip="Total opening carry forward">
                 <div class="iso-report-summary-label">
                     <i class="fas fa-forward" style="margin-right: 4px; color: #e83e8c;"></i>
                     Opening Carry
                 </div>
-                <div class="iso-report-summary-value">?<?= number_format($totalOpeningCarry, 2) ?></div>
+                <div class="iso-report-summary-value"><?= inr_symbol() ?> <?= number_format($totalOpeningCarry, 2) ?></div>
             </div>
             <div class="iso-report-summary-card" data-tooltip="Total effective target">
                 <div class="iso-report-summary-label">
                     <i class="fas fa-crosshairs" style="margin-right: 4px; color: #e83e8c;"></i>
                     Effective Target
                 </div>
-                <div class="iso-report-summary-value">?<?= number_format($totalEffectiveTarget, 2) ?></div>
+                <div class="iso-report-summary-value"><?= inr_symbol() ?> <?= number_format($totalEffectiveTarget, 2) ?></div>
             </div>
             <div class="iso-report-summary-card" data-tooltip="Total achieved amount">
                 <div class="iso-report-summary-label">
                     <i class="fas fa-trophy" style="margin-right: 4px; color: #e83e8c;"></i>
                     Achieved
                 </div>
-                <div class="iso-report-summary-value">?<?= number_format($totalAchieved, 2) ?></div>
+                <div class="iso-report-summary-value"><?= inr_symbol() ?> <?= number_format($totalAchieved, 2) ?></div>
             </div>
             <div class="iso-report-summary-card" data-tooltip="Total shortfall amount">
                 <div class="iso-report-summary-label">
                     <i class="fas fa-exclamation-triangle" style="margin-right: 4px; color: #e83e8c;"></i>
                     Shortfall
                 </div>
-                <div class="iso-report-summary-value">?<?= number_format($totalShortfall, 2) ?></div>
+                <div class="iso-report-summary-value"><?= inr_symbol() ?> <?= number_format($totalShortfall, 2) ?></div>
             </div>
         </div>
 
@@ -1076,19 +636,19 @@ button i:only-child {
                                                 <?= h($row['role_name'] ?? '-') ?>
                                             </span>
                                         </td>
-                                        <td class="iso-report-money">?<?= number_format((float)($row['base_target'] ?? 0), 2) ?></td>
-                                        <td class="iso-report-soft">?<?= number_format((float)($row['opening_carry'] ?? 0), 2) ?></td>
-                                        <td class="iso-report-money">?<?= number_format((float)($row['effective_target'] ?? 0), 2) ?></td>
-                                        <td class="iso-report-money">?<?= number_format((float)($row['achieved_amount'] ?? 0), 2) ?></td>
-                                        <td class="iso-report-soft">?<?= number_format((float)($row['excess_amount'] ?? 0), 2) ?></td>
-                                        <td class="iso-report-soft">?<?= number_format((float)($row['shortfall_amount'] ?? 0), 2) ?></td>
+                                        <td class="iso-report-money"><?= inr_symbol() ?> <?= number_format((float)($row['base_target'] ?? 0), 2) ?></td>
+                                        <td class="iso-report-soft"><?= inr_symbol() ?> <?= number_format((float)($row['opening_carry'] ?? 0), 2) ?></td>
+                                        <td class="iso-report-money"><?= inr_symbol() ?> <?= number_format((float)($row['effective_target'] ?? 0), 2) ?></td>
+                                        <td class="iso-report-money"><?= inr_symbol() ?> <?= number_format((float)($row['achieved_amount'] ?? 0), 2) ?></td>
+                                        <td class="iso-report-soft"><?= inr_symbol() ?> <?= number_format((float)($row['excess_amount'] ?? 0), 2) ?></td>
+                                        <td class="iso-report-soft"><?= inr_symbol() ?> <?= number_format((float)($row['shortfall_amount'] ?? 0), 2) ?></td>
                                         <td>
                                             <span class="iso-report-soft">
                                                 <?= number_format((float)($row['incentive_percent'] ?? 0), 2) ?>%
                                             </span>
                                         </td>
                                         <td class="iso-report-money">
-                                            ?<?= number_format((float)($row['incentive_amount'] ?? 0), 2) ?>
+                                            <?= inr_symbol() ?> <?= number_format((float)($row['incentive_amount'] ?? 0), 2) ?>
                                         </td>
                                         <td>
 										<div class="iso-report-status">
@@ -1121,4 +681,6 @@ button i:only-child {
 
     </div>
 </div>
+
+
 

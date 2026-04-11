@@ -774,120 +774,6 @@ if ($hrWorkflowReady) {
     <div class="placement-modal-body" id="placementDetailBody"><div class="placement-empty-card">Loading...</div></div>
 </div>
 
-<style>
-.placement-alert{padding:14px 16px;border-radius:14px;font-weight:600;}
-.placement-alert-warning{background:#fff7ed;color:#9a3412;border:1px solid #fed7aa;}
-.placement-filter-row{display:grid;grid-template-columns:2fr 1fr auto;gap:12px;align-items:end;}
-.placement-filter-actions,.placement-action-stack,.placement-form-actions{display:flex;gap:8px;flex-wrap:wrap;}
-.placement-table th,.placement-table td{white-space:normal;vertical-align:top;}
-.placement-primary{font-weight:800;color:#1f2937;}
-.placement-sub{margin-top:4px;color:#64748b;font-size:12px;}
-.placement-empty{text-align:center;color:#64748b;font-weight:600;padding:16px;}
-.placement-empty-card{padding:18px;border-radius:16px;background:#f8fafc;color:#64748b;font-weight:600;}
-.placement-status{display:inline-flex;align-items:center;justify-content:center;min-width:100px;padding:6px 12px;border-radius:999px;font-weight:800;font-size:12px;}
-.placement-status-pending{background:#fef3c7;color:#92400e;}
-.placement-status-scheduled{background:#dbeafe;color:#1d4ed8;}
-.placement-status-attended{background:#e0f2fe;color:#0369a1;}
-.placement-status-selected{background:#dcfce7;color:#15803d;}
-.placement-status-rejected{background:#fee2e2;color:#b91c1c;}
-.placement-status-on_hold{background:#ede9fe;color:#6d28d9;}
-.placement-view-btn{background:#fff7ed;color:#c2410c;border:1px solid #fdba74;}
-.placement-modal-backdrop{position:fixed;inset:0;background:rgba(15,23,42,.55);display:none;z-index:9998;}
-.placement-modal{position:fixed;inset:28px 40px;background:#fff;border-radius:22px;display:none;z-index:9999;overflow:hidden;box-shadow:0 20px 60px rgba(15,23,42,.28);}
-.placement-modal-narrow{inset:50px auto;width:min(780px, calc(100vw - 32px));left:50%;transform:translateX(-50%);}
-.placement-modal-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;padding:18px 22px;border-bottom:1px solid #e5e7eb;background:#fff7fb;}
-.placement-modal-title{font-size:20px;font-weight:900;color:#111827;}
-.placement-modal-subtitle{margin-top:4px;color:#64748b;font-size:13px;}
-.placement-close{border:none;background:transparent;font-size:28px;line-height:1;color:#64748b;cursor:pointer;}
-.placement-modal-body{padding:18px 22px;overflow:auto;height:calc(100% - 84px);}
-.placement-modal-copy{margin-bottom:16px;}
-.placement-modal-heading{font-size:18px;font-weight:900;color:#111827;}
-.placement-modal-subheading{margin-top:6px;color:#64748b;font-size:13px;}
-.placement-form-grid,.placement-detail-grid{display:grid;grid-template-columns:repeat(2, minmax(0, 1fr));gap:12px;}
-.placement-form-full{grid-column:1 / -1;}
-.placement-form-grid input,.placement-form-grid select,.placement-form-grid textarea{width:100%;border:1px solid #e5e7eb;border-radius:12px;padding:11px 12px;background:#fff;}
-.placement-form-grid label{display:block;font-weight:700;margin-bottom:6px;color:#475569;}
-.placement-detail-card{background:#fff;border:1px solid #f3e8ef;border-radius:16px;padding:14px;}
-.placement-label{font-size:12px;font-weight:800;color:#9d174d;text-transform:uppercase;letter-spacing:.04em;}
-.placement-value{margin-top:7px;font-size:20px;font-weight:900;color:#111827;}
-.placement-list-wrap{display:flex;flex-direction:column;gap:12px;}
-.placement-interview-card{width:100%;text-align:left;border:1px solid #f3e8ef;border-radius:16px;padding:14px 16px;background:#fff;cursor:pointer;}
-.placement-interview-card:hover{border-color:#f9a8d4;box-shadow:0 10px 24px rgba(236,72,153,.08);}
-.placement-interview-card-top{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;}
-.placement-interview-company{font-size:16px;font-weight:900;color:#111827;}
-.placement-interview-meta{margin-top:6px;color:#64748b;font-size:13px;line-height:1.5;}
-@media (max-width: 1000px){
-    .placement-filter-row,.placement-form-grid,.placement-detail-grid{grid-template-columns:1fr;}
-    .placement-modal{inset:20px 16px;}
-    .placement-modal-narrow{width:auto;inset:20px 16px;left:auto;transform:none;}
-}
-
-/* =====================================================
-GLOBAL TYPOGRAPHY STYLECSS SYNC
-font-family + font-size + font-weight only
-===================================================== */
-:where(body,button,input,select,textarea,label,span,p,h1,h2,h3,h4,h5,h6,a,div){
-  font-family:'Poppins',sans-serif !important;
-}
-:where(h1,.h1,.page-title,.crm-page-title,.dashboard-header h2){font-size:clamp(2rem, 2.5vw, 2.4rem) !important;font-weight:700 !important;}
-:where(h2,.h2,.section-title){font-size:clamp(1.6rem, 2vw, 2rem) !important;font-weight:600 !important;}
-:where(h3,.h3,.card-header,.table-title){font-size:clamp(1.3rem, 1.6vw, 1.5rem) !important;font-weight:600 !important;}
-:where(h4,.h4){font-size:1.2rem !important;font-weight:500 !important;}
-:where(h5,.h5){font-size:1rem !important;font-weight:500 !important;}
-:where(h6,.h6){font-size:0.9rem !important;font-weight:500 !important;}
-:where(body){font-size:1rem !important;}
-:where(p,.text-body,li,td,.text-muted,.help-text,.form-text,.small,small,.secondary-text){font-size:0.95rem !important;font-weight:400 !important;}
-:where(.small,small,.text-muted,.help-text,.form-text,.att-sub,.crm-note){font-size:0.85rem !important;font-weight:400 !important;}
-:where(label,.form-label){font-size:0.85rem !important;font-weight:500 !important;}
-:where(input,select,textarea,.form-control,.form-select){font-size:0.95rem !important;font-weight:400 !important;}
-:where(input::placeholder,textarea::placeholder){font-weight:400 !important;}
-:where(button,.btn,.dt-button,.crm-action-btn,.crm-icon-btn,.btn-icon-only,.action-btn,.targets-btn-icon,.iso-report-btn,.iso-report-action-btn){font-size:0.9rem !important;font-weight:600 !important;}
-:where(.btn[data-mobile-label],.btn-icon-only[data-mobile-label],.action-btn[data-mobile-label],.crm-icon-btn[data-mobile-label],.targets-btn-icon[data-mobile-label],.iso-report-icon-btn[data-mobile-label],.iso-report-action-btn[data-mobile-label])::after{font-size:0.75rem !important;font-weight:600 !important;}
-:where(.table th,.crm-table th,.dataTables_wrapper th,th){font-size:0.75rem !important;font-weight:600 !important;}
-:where(.table td,.dataTables_wrapper tbody td){font-size:0.9rem !important;}
-:where(.dataTables_wrapper .dataTables_info){font-size:0.85rem !important;font-weight:400 !important;}
-:where(.dataTables_wrapper .paginate_button){font-size:0.9rem !important;font-weight:600 !important;}
-:where(.badge,.status-badge,.crm-status-badge,.status-pill,.badge-status,[data-status],.tooltip,.ui-tooltip,.floating-ui-tooltip__bubble){font-weight:600 !important;}
-
-/* ===== GLOBAL BUTTON STANDARDIZATION ===== */
-button,
-.btn,
-.crm-action-btn,
-.btn-filter,
-.btn-reset,
-.btn-add,
-.btn-excel,
-.action-btn,
-.btn-icon-only,
-a.btn,
-input[type="button"],
-input[type="submit"],
-input[type="reset"],
-[role="button"] {
-    font-size: 0.92rem;
-    min-height: 38px;
-    padding: 8px 14px;
-    border-radius: 10px;
-    font-weight: 600;
-}
-
-.btn-icon-only,
-.crm-action-btn,
-.action-btn,
-.btn-sm,
-.btn-xs,
-button.btn-icon,
-a.btn-icon,
-.btn i:only-child,
-button i:only-child {
-    font-size: 0.9rem;
-    min-height: 34px;
-    padding: 8px;
-    border-radius: 10px;
-    font-weight: 600;
-}
-</style>
-
 <script>
 (function(){
     const backdrop = document.getElementById('placementModalBackdrop');
@@ -986,4 +872,5 @@ button i:only-child {
     });
 })();
 </script>
+
 

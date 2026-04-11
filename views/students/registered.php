@@ -190,106 +190,6 @@ function payStatusBadgeStud($type){
 }
 ?>
 
-<style>
-:root{
-  --stu-primary:#e91e63;
-  --stu-primary-dark:#c2185b;
-  --stu-text:#1f2937;
-  --stu-muted:#6b7280;
-  --stu-border:#e8edf3;
-  --stu-card:#ffffff;
-  --stu-bg:#f6f8fc;
-  --stu-shadow:0 16px 40px rgba(15,23,42,.06);
-}
-.stu-page{ background:linear-gradient(180deg,#fff 0%,#fff7fb 18%,#f7f9fd 100%); border-radius:24px; padding:18px; }
-.stu-page-top{ display:flex; justify-content:space-between; align-items:flex-start; gap:14px; flex-wrap:wrap; margin-bottom:18px; }
-.stu-page-title h2{ margin:0; font-size:28px; font-weight:900; color:var(--stu-text); }
-.stu-page-title p{ margin:6px 0 0; color:var(--stu-muted); font-size:14px; }
-.stu-chip{ display:inline-flex; align-items:center; gap:8px; background:#fff; color:var(--stu-primary-dark); border:1px solid rgba(233,30,99,.12); border-radius:999px; padding:10px 14px; font-size:13px; font-weight:800; }
-.stu-summary{ display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:14px; margin-bottom:18px; }
-.stu-summary-card{ position:relative; background:var(--stu-card); border:1px solid rgba(15,23,42,.06); border-radius:18px; padding:16px; box-shadow:var(--stu-shadow); }
-.stu-summary-card:before{ content:""; position:absolute; top:0; left:0; width:100%; height:4px; background:linear-gradient(90deg,var(--stu-primary),#ff6ba6); }
-.stu-summary-title{ font-size:12px; color:var(--stu-muted); font-weight:800; text-transform:uppercase; letter-spacing:.5px; }
-.stu-summary-value{ margin-top:8px; font-size:26px; font-weight:900; color:var(--stu-text); }
-.stu-filter-row{ display:grid; grid-template-columns:2fr 1fr auto; gap:12px; align-items:end; }
-.badge-pill-custom{ display:inline-flex; align-items:center; padding:6px 11px; border-radius:999px; border:1px solid transparent; font-size:12px; font-weight:700; }
-.stu-table thead th{ white-space:nowrap; }
-.stu-name{ font-weight:800; color:#111827; }
-.stu-sub{ font-size:12px; color:#6b7280; }
-.stu-actions{ display:flex; justify-content:center; gap:6px; }
-.stu-btn-icon{ width:34px; height:34px; border:none; border-radius:10px; display:inline-flex; align-items:center; justify-content:center; text-decoration:none; }
-.stu-view{ background:#e8f4fd; color:#0277bd; }
-.stu-pager{ display:flex; justify-content:center; align-items:center; gap:8px; margin-top:14px; flex-wrap:wrap; }
-.stu-pager a{ text-decoration:none; padding:7px 10px; border:1px solid #e2e8f0; border-radius:10px; color:#334155; font-weight:700; background:#fff; }
-.stu-pager a:hover{ border-color:#f3b4cd; color:var(--stu-primary-dark); }
-@media (max-width: 900px){ .stu-filter-row{ grid-template-columns:1fr; } }
-
-/* =====================================================
-GLOBAL TYPOGRAPHY STYLECSS SYNC
-font-family + font-size + font-weight only
-===================================================== */
-:where(body,button,input,select,textarea,label,span,p,h1,h2,h3,h4,h5,h6,a,div){
-  font-family:'Poppins',sans-serif !important;
-}
-:where(h1,.h1,.page-title,.crm-page-title,.dashboard-header h2){font-size:clamp(2rem, 2.5vw, 2.4rem) !important;font-weight:700 !important;}
-:where(h2,.h2,.section-title){font-size:clamp(1.6rem, 2vw, 2rem) !important;font-weight:600 !important;}
-:where(h3,.h3,.card-header,.table-title){font-size:clamp(1.3rem, 1.6vw, 1.5rem) !important;font-weight:600 !important;}
-:where(h4,.h4){font-size:1.2rem !important;font-weight:500 !important;}
-:where(h5,.h5){font-size:1rem !important;font-weight:500 !important;}
-:where(h6,.h6){font-size:0.9rem !important;font-weight:500 !important;}
-:where(body){font-size:1rem !important;}
-:where(p,.text-body,li,td,.text-muted,.help-text,.form-text,.small,small,.secondary-text){font-size:0.95rem !important;font-weight:400 !important;}
-:where(.small,small,.text-muted,.help-text,.form-text,.att-sub,.crm-note){font-size:0.85rem !important;font-weight:400 !important;}
-:where(label,.form-label){font-size:0.85rem !important;font-weight:500 !important;}
-:where(input,select,textarea,.form-control,.form-select){font-size:0.95rem !important;font-weight:400 !important;}
-:where(input::placeholder,textarea::placeholder){font-weight:400 !important;}
-:where(button,.btn,.dt-button,.crm-action-btn,.crm-icon-btn,.btn-icon-only,.action-btn,.targets-btn-icon,.iso-report-btn,.iso-report-action-btn){font-size:0.9rem !important;font-weight:600 !important;}
-:where(.btn[data-mobile-label],.btn-icon-only[data-mobile-label],.action-btn[data-mobile-label],.crm-icon-btn[data-mobile-label],.targets-btn-icon[data-mobile-label],.iso-report-icon-btn[data-mobile-label],.iso-report-action-btn[data-mobile-label])::after{font-size:0.75rem !important;font-weight:600 !important;}
-:where(.table th,.crm-table th,.dataTables_wrapper th,th){font-size:0.75rem !important;font-weight:600 !important;}
-:where(.table td,.dataTables_wrapper tbody td){font-size:0.9rem !important;}
-:where(.dataTables_wrapper .dataTables_info){font-size:0.85rem !important;font-weight:400 !important;}
-:where(.dataTables_wrapper .paginate_button){font-size:0.9rem !important;font-weight:600 !important;}
-:where(.badge,.status-badge,.crm-status-badge,.status-pill,.badge-status,[data-status],.tooltip,.ui-tooltip,.floating-ui-tooltip__bubble){font-weight:600 !important;}
-
-/* ===== GLOBAL BUTTON STANDARDIZATION ===== */
-button,
-.btn,
-.crm-action-btn,
-.btn-filter,
-.btn-reset,
-.btn-add,
-.btn-excel,
-.action-btn,
-.btn-icon-only,
-a.btn,
-input[type="button"],
-input[type="submit"],
-input[type="reset"],
-[role="button"] {
-    font-size: 0.92rem;
-    min-height: 38px;
-    padding: 8px 14px;
-    border-radius: 10px;
-    font-weight: 600;
-}
-
-.btn-icon-only,
-.crm-action-btn,
-.action-btn,
-.btn-sm,
-.btn-xs,
-button.btn-icon,
-a.btn-icon,
-.btn i:only-child,
-button i:only-child {
-    font-size: 0.9rem;
-    min-height: 34px;
-    padding: 8px;
-    border-radius: 10px;
-    font-weight: 600;
-}
-</style>
-
 <div class="stu-page">
     <div class="stu-page-top">
         <div class="stu-page-title">
@@ -404,4 +304,5 @@ button i:only-child {
         </div>
     </div>
 </div>
+
 

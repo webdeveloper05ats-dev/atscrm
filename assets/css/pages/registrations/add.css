@@ -1,0 +1,1087 @@
+﻿/* Auto-extracted from views/registrations\add.php */
+
+/* ========================================
+   Design System - Pink Blossom
+   Pure White, Pink & Light Pink Theme
+======================================== */
+:root {
+    /* Primary Colors - Pink Family */
+    --pink-50: #fff5f9;
+    --pink-100: #ffeaf3;
+    --pink-200: #ffd5e8;
+    --pink-300: #ffb5d6;
+    --pink-400: #ff8abe;
+    --pink-500: #f65a9f;
+    --pink-600: #e91e63;
+    --pink-700: #c2185b;
+    --pink-800: #9e154c;
+    --pink-900: #7a113c;
+    
+    /* Neutral Colors - Clean Whites & Grays */
+    --white: #ffffff;
+    --white-50: #fefeff;
+    --white-100: #fcfaff;
+    --white-200: #faf5fc;
+    --gray-50: #f8f9fa;
+    --gray-100: #f1f3f5;
+    --gray-200: #e9ecef;
+    --gray-300: #dee2e6;
+    --gray-400: #ced4da;
+    --gray-500: #adb5bd;
+    --gray-600: #868e96;
+    --gray-700: #495057;
+    --gray-800: #343a40;
+    --gray-900: #212529;
+    
+    /* Functional Colors */
+    --success: #40c057;
+    --warning: #fd7e14;
+    --danger: #fa5252;
+    --info: #4dabf7;
+    
+    /* Shadows - Soft Pink Tint */
+    --shadow-xs: 0 2px 4px rgba(233, 30, 99, 0.02);
+    --shadow-sm: 0 4px 8px rgba(233, 30, 99, 0.04);
+    --shadow-md: 0 8px 20px rgba(233, 30, 99, 0.08);
+    --shadow-lg: 0 16px 32px rgba(233, 30, 99, 0.12);
+    --shadow-xl: 0 24px 48px -12px rgba(233, 30, 99, 0.18);
+    
+    /* Border Radius */
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --radius-lg: 16px;
+    --radius-xl: 24px;
+    --radius-2xl: 32px;
+    --radius-full: 9999px;
+    
+    /* Transitions */
+    --transition-all: all 0.2s ease;
+    
+    /* Typography */
+    --font-sans: 'Poppins', sans-serif;
+}
+
+/* ========================================
+   Base Styles
+======================================== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: var(--font-sans);
+    background: linear-gradient(135deg, var(--white) 0%, var(--pink-50) 50%, var(--white) 100%);
+    color: var(--gray-800);
+    line-height: 1.5;
+}
+
+/* ========================================
+   Main Container
+======================================== */
+.reg-portal {
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 24px;
+    min-height: 100vh;
+}
+
+/* ========================================
+   Header Section
+======================================== */
+.reg-header {
+    margin-bottom: 24px;
+    padding: 20px 24px;
+    background: var(--white);
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--pink-100);
+    box-shadow: var(--shadow-md);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.reg-header-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.reg-header-icon {
+    width: 56px;
+    height: 56px;
+    background: linear-gradient(135deg, var(--pink-500), var(--pink-600));
+    border-radius: var(--radius-lg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 24px;
+    box-shadow: var(--shadow-md);
+}
+
+.reg-header-content h1 {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--gray-800);
+    margin: 0 0 4px 0;
+}
+
+.reg-header-content p {
+    font-size: 14px;
+    color: var(--gray-600);
+    margin: 0;
+}
+
+.reg-header-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: var(--pink-50);
+    border: 1px solid var(--pink-200);
+    border-radius: var(--radius-full);
+    color: var(--pink-600);
+    font-size: 13px;
+    font-weight: 600;
+}
+
+/* ========================================
+   Layout Grid
+======================================== */
+.reg-grid {
+    display: grid;
+    grid-template-columns: 340px 1fr;
+    gap: 24px;
+    align-items: start;
+}
+
+/* ========================================
+   Sidebar Cards
+======================================== */
+.reg-sidebar {
+    position: sticky;
+    top: 20px;
+}
+
+.reg-card {
+    background: var(--white);
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--pink-100);
+    overflow: hidden;
+    box-shadow: var(--shadow-md);
+    margin-bottom: 20px;
+}
+
+.reg-card-header {
+    padding: 18px 20px;
+    background: linear-gradient(135deg, var(--white), var(--pink-50));
+    border-bottom: 1px solid var(--pink-100);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.reg-card-header-icon {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, var(--pink-500), var(--pink-600));
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 18px;
+}
+
+.reg-card-header h3 {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--gray-800);
+    margin: 0;
+}
+
+.reg-card-header p {
+    font-size: 12px;
+    color: var(--gray-500);
+    margin: 2px 0 0 0;
+}
+
+.reg-card-content {
+    padding: 20px;
+}
+
+/* ========================================
+   Summary Items
+======================================== */
+.reg-summary-items {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.reg-summary-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px;
+    background: var(--pink-50);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--pink-100);
+    transition: var(--transition-all);
+}
+
+.reg-summary-item:hover {
+    background: var(--white);
+    border-color: var(--pink-300);
+    transform: translateX(4px);
+}
+
+.reg-summary-icon {
+    width: 40px;
+    height: 40px;
+    background: var(--white);
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--pink-600);
+    font-size: 16px;
+    box-shadow: var(--shadow-xs);
+}
+
+.reg-summary-details {
+    flex: 1;
+}
+
+.reg-summary-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--gray-500);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    margin-bottom: 2px;
+}
+
+.reg-summary-value {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--gray-800);
+}
+
+/* ========================================
+   Info Note
+======================================== */
+.reg-note-card {
+    margin-top: 16px;
+    padding: 16px;
+    background: var(--pink-50);
+    border-radius: var(--radius-lg);
+    border-left: 3px solid var(--pink-500);
+    font-size: 13px;
+    color: var(--gray-700);
+    line-height: 1.6;
+}
+
+.reg-note-card strong {
+    color: var(--pink-600);
+}
+
+/* ========================================
+   Progress Steps
+======================================== */
+.reg-progress {
+    margin-bottom: 24px;
+    background: var(--white);
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--pink-100);
+    padding: 20px;
+    box-shadow: var(--shadow-md);
+}
+
+.reg-steps-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
+}
+
+.reg-steps-container::before {
+    content: '';
+    position: absolute;
+    top: 24px;
+    left: 40px;
+    right: 40px;
+    height: 2px;
+    background: var(--pink-200);
+    z-index: 1;
+}
+
+.reg-step-item {
+    position: relative;
+    z-index: 2;
+    background: var(--white);
+    text-align: center;
+    flex: 1;
+}
+
+.reg-step-circle {
+    width: 48px;
+    height: 48px;
+    background: var(--white);
+    border: 2px solid var(--pink-200);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 8px;
+    font-weight: 600;
+    font-size: 18px;
+    color: var(--gray-500);
+    transition: var(--transition-all);
+    cursor: pointer;
+}
+
+.reg-step-item.active .reg-step-circle {
+    background: linear-gradient(135deg, var(--pink-500), var(--pink-600));
+    border-color: var(--pink-500);
+    color: white;
+    transform: scale(1.05);
+    box-shadow: var(--shadow-md);
+}
+
+.reg-step-item.completed .reg-step-circle {
+    background: var(--success);
+    border-color: var(--success);
+    color: white;
+}
+
+.reg-step-label {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--gray-600);
+}
+
+.reg-step-item.active .reg-step-label {
+    color: var(--pink-600);
+    font-weight: 600;
+}
+
+/* ========================================
+   Main Form Card
+======================================== */
+.reg-main-card {
+    background: var(--white);
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--pink-100);
+    overflow: hidden;
+    box-shadow: var(--shadow-lg);
+}
+
+.reg-main-header {
+    padding: 24px 28px;
+    background: linear-gradient(135deg, var(--white), var(--pink-50));
+    border-bottom: 1px solid var(--pink-100);
+}
+
+.reg-main-header h2 {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--gray-800);
+    margin: 0 0 4px 0;
+}
+
+.reg-main-header p {
+    font-size: 14px;
+    color: var(--gray-600);
+    margin: 0;
+}
+
+.reg-main-body {
+    padding: 28px;
+}
+
+/* ========================================
+   Form Steps Container
+======================================== */
+.reg-step-container {
+    display: none;
+}
+
+.reg-step-container.active {
+    display: block;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* ========================================
+   Section Blocks
+======================================== */
+.reg-section {
+    background: var(--white);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--pink-100);
+    overflow: hidden;
+    margin-bottom: 20px;
+}
+
+.reg-section-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px 20px;
+    background: var(--pink-50);
+    border-bottom: 1px solid var(--pink-100);
+}
+
+.reg-section-step {
+    width: 36px;
+    height: 36px;
+    background: linear-gradient(135deg, var(--pink-500), var(--pink-600));
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 600;
+    font-size: 15px;
+}
+
+.reg-section-title h4 {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--gray-800);
+    margin: 0 0 2px 0;
+}
+
+.reg-section-title p {
+    font-size: 12px;
+    color: var(--gray-600);
+    margin: 0;
+}
+
+.reg-section-content {
+    padding: 20px;
+}
+
+/* ========================================
+   Form Grid
+======================================== */
+.reg-form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+}
+
+.reg-form-grid .full-width {
+    grid-column: 1 / -1;
+}
+
+/* ========================================
+   Form Fields
+======================================== */
+.reg-field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.reg-field-label {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--gray-700);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.reg-field-label .required {
+    color: var(--pink-600);
+    font-size: 14px;
+}
+
+.reg-field-input,
+.reg-field-select,
+.reg-field-textarea {
+    width: 100%;
+    padding: 10px 14px;
+    border: 2px solid var(--pink-100);
+    border-radius: var(--radius-md);
+    font-size: 14px;
+    color: var(--gray-800);
+    background: var(--white);
+    transition: var(--transition-all);
+    font-family: inherit;
+}
+
+.reg-field-input:hover,
+.reg-field-select:hover,
+.reg-field-textarea:hover {
+    border-color: var(--pink-300);
+    background: var(--pink-50);
+}
+
+.reg-field-input:focus,
+.reg-field-select:focus,
+.reg-field-textarea:focus {
+    outline: none;
+    border-color: var(--pink-500);
+    box-shadow: 0 0 0 3px rgba(233, 30, 99, 0.1);
+    background: var(--white);
+}
+
+.reg-field-input[readonly] {
+    background: var(--pink-50);
+    border-color: var(--pink-200);
+    color: var(--gray-600);
+    font-weight: 500;
+}
+
+.reg-field-textarea {
+    min-height: 90px;
+    resize: vertical;
+}
+
+/* ========================================
+   Navigation Buttons
+======================================== */
+.reg-nav {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 2px solid var(--pink-100);
+}
+
+.reg-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 12px 24px;
+    border-radius: var(--radius-md);
+    font-size: 14px;
+    font-weight: 500;
+    border: none;
+    cursor: pointer;
+    transition: var(--transition-all);
+    text-decoration: none;
+    min-width: 120px;
+}
+
+.reg-btn-primary {
+    background: linear-gradient(135deg, var(--pink-500), var(--pink-600));
+    color: white;
+    box-shadow: var(--shadow-sm);
+}
+
+.reg-btn-primary:hover {
+    background: linear-gradient(135deg, var(--pink-600), var(--pink-700));
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.reg-btn-secondary {
+    background: var(--pink-50);
+    color: var(--pink-700);
+    border: 1px solid var(--pink-200);
+}
+
+.reg-btn-secondary:hover {
+    background: var(--pink-100);
+    transform: translateY(-2px);
+}
+
+.reg-btn-outline {
+    background: transparent;
+    color: var(--gray-600);
+    border: 2px solid var(--pink-200);
+}
+
+.reg-btn-outline:hover {
+    border-color: var(--pink-500);
+    color: var(--pink-600);
+    background: var(--pink-50);
+    transform: translateY(-2px);
+}
+
+.reg-btn-warning {
+    background: linear-gradient(135deg, #ff8787, #ff6b6b);
+    color: white;
+}
+
+.reg-btn-warning:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.reg-btn-danger {
+    background: linear-gradient(135deg, #ff8787, #fa5252);
+    color: white;
+}
+
+.reg-btn-danger:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+/* ========================================
+   Action Buttons Group
+======================================== */
+.reg-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+/* ========================================
+   Quick Stats
+======================================== */
+.reg-quick-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-top: 16px;
+}
+
+.reg-stat-item {
+    padding: 12px;
+    background: var(--pink-50);
+    border-radius: var(--radius-md);
+    text-align: center;
+}
+
+.reg-stat-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--gray-500);
+    text-transform: uppercase;
+    margin-bottom: 4px;
+}
+
+.reg-stat-value {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--pink-600);
+}
+
+/* ========================================
+   Responsive Design
+======================================== */
+@media (max-width: 1200px) {
+    .reg-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .reg-sidebar {
+        position: static;
+    }
+    
+    .reg-steps-container::before {
+        display: none;
+    }
+    
+    .reg-step-item {
+        min-width: 70px;
+    }
+}
+
+@media (max-width: 768px) {
+    .reg-portal {
+        padding: 16px;
+    }
+    
+    .reg-form-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .reg-main-body {
+        padding: 20px;
+    }
+    
+    .reg-section-content {
+        padding: 16px;
+    }
+    
+    .reg-nav {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .reg-btn {
+        width: 100%;
+    }
+    
+    .reg-step-circle {
+        width: 40px;
+        height: 40px;
+        font-size: 16px;
+    }
+}
+
+.reg-portal{
+  max-width: 100%;
+}
+.reg-header{
+  border: 1px solid #f1d6e3 !important;
+  border-radius: 16px !important;
+  background: #fff !important;
+  box-shadow: 0 8px 20px rgba(0,0,0,.05) !important;
+}
+.reg-header-content h1{
+  color:#be185d !important;
+  font-size:22px !important;
+  line-height:1.2 !important;
+}
+.reg-header-badge{
+  border:1px solid #f1d6e3 !important;
+  background:#fff !important;
+  color:#7c2d5a !important;
+  font-size:13px !important;
+}
+.reg-card,
+.reg-main-card,
+.reg-progress{
+  border: 1px solid #f1d6e3 !important;
+  border-radius: 16px !important;
+  background:#fff !important;
+  box-shadow: 0 8px 20px rgba(0,0,0,.05) !important;
+}
+.reg-main-header{
+  background:#fff3f8 !important;
+  border-bottom:1px solid #f1d6e3 !important;
+}
+.reg-main-header h2{
+  color:#be185d !important;
+  font-size:20px !important;
+  line-height:1.15 !important;
+  margin-bottom:6px !important;
+}
+.reg-main-header p{
+  font-size:13px !important;
+  line-height:1.4 !important;
+}
+
+/* Step pills like enquiries/add.php */
+.reg-steps-container{
+  display:grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)) !important;
+  gap:10px !important;
+  flex-wrap:nowrap !important;
+}
+.reg-steps-container::before{
+  display:none !important;
+}
+.reg-step-item{
+  min-width:0 !important;
+  width:100% !important;
+  border:1px solid #f3d8e5 !important;
+  border-radius:14px !important;
+  background:#fff !important;
+  padding:10px 12px !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:flex-start !important;
+  gap:10px !important;
+  cursor:pointer;
+  transition:.2s ease;
+  text-align:left !important;
+}
+.reg-step-item:hover{
+  border-color:#f29cc4 !important;
+  background:#fff8fb !important;
+}
+.reg-step-circle{
+  width:24px !important;
+  height:24px !important;
+  min-width:24px !important;
+  flex:0 0 24px !important;
+  border-radius:999px !important;
+  background:#ffe4ef !important;
+  color:#c2185b !important;
+  border:none !important;
+  font-size:12px !important;
+  font-weight:800 !important;
+  margin:0 !important;
+}
+.reg-step-label{
+  font-size:12px !important;
+  font-weight:700 !important;
+  color:#374151 !important;
+  line-height:1.15 !important;
+  white-space:normal !important;
+  overflow-wrap:anywhere !important;
+  margin:0 !important;
+  text-align:left !important;
+}
+.reg-step-item.active{
+  border-color:#e91e63 !important;
+  background:#fff6fb !important;
+}
+.reg-step-item.active .reg-step-label{
+  color:#be185d !important;
+}
+.reg-step-item.completed .reg-step-circle{
+  background:#e91e63 !important;
+  color:#fff !important;
+}
+
+/* Field controls */
+.reg-field-input,
+.reg-field-select,
+.reg-field-textarea{
+  border:1px solid #f1d6e3 !important;
+  border-radius:10px !important;
+  min-height:40px;
+  background:#fff !important;
+}
+.reg-field-input:focus,
+.reg-field-select:focus,
+.reg-field-textarea:focus{
+  border-color:#e91e63 !important;
+  box-shadow:0 0 0 3px rgba(233,30,99,.12) !important;
+}
+.reg-field-label{
+  color:#374151 !important;
+  font-size:13px !important;
+}
+.reg-gender-group{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+}
+.reg-gender-option{
+  position:relative;
+  cursor:pointer;
+}
+.reg-gender-option input{
+  position:absolute;
+  opacity:0;
+  pointer-events:none;
+}
+.reg-gender-pill{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  border:1px solid #f1d6e3;
+  border-radius:10px;
+  padding:9px 12px;
+  background:#fff;
+  color:#4b5563;
+  font-weight:700;
+  transition:all .2s ease;
+}
+.reg-gender-option input:checked + .reg-gender-pill{
+  border-color:#e91e63;
+  background:#fff1f7;
+  color:#be185d;
+  box-shadow:0 0 0 3px rgba(233,30,99,.12);
+}
+.reg-section-title h4{
+  font-size:15px !important;
+}
+.reg-section-title p{
+  font-size:12px !important;
+}
+.reg-summary-label,
+.reg-stat-label{
+  font-size:12px !important;
+}
+.reg-summary-value,
+.reg-stat-value{
+  font-size:13px !important;
+}
+
+/* Buttons similar to enquiry wizard */
+.reg-btn{
+  border-radius:12px !important;
+  font-weight:700 !important;
+}
+.reg-btn-primary{
+  background: linear-gradient(135deg, #ff4d8d, #e91e63) !important;
+  border:1px solid transparent !important;
+  color:#fff !important;
+}
+.reg-btn-primary:hover{
+  background: linear-gradient(135deg, #ff3b82, #d81b60) !important;
+}
+.reg-btn-secondary{
+  background:#f3f4f6 !important;
+  color:#374151 !important;
+  border:1px solid #e5e7eb !important;
+}
+.reg-btn-outline{
+  background:#fff !important;
+  border:1px solid #f1d6e3 !important;
+  color:#7c2d5a !important;
+}
+
+/* Allow modern select panels to expand inside registration form */
+.reg-main-card,
+.reg-main-body,
+.reg-step-container.active,
+.reg-section,
+.reg-section-content{
+  overflow: visible !important;
+}
+
+.reg-main-body .ms-select{
+  position: relative;
+}
+
+.reg-main-body .ms-select.open{
+  z-index: 40;
+}
+
+@media (max-width: 768px){
+  .reg-portal{
+    padding:12px !important;
+  }
+  .reg-header{
+    padding:16px !important;
+  }
+  .reg-header-left{
+    width:100% !important;
+    align-items:flex-start !important;
+  }
+  .reg-header-content h1{
+    font-size:18px !important;
+  }
+  .reg-header-content p{
+    font-size:12px !important;
+  }
+  .reg-header-badge{
+    width:100% !important;
+    justify-content:center !important;
+    text-align:center !important;
+    margin-top:10px !important;
+  }
+  .reg-main-header,
+  .reg-main-body,
+  .reg-progress,
+  .reg-section-content{
+    padding:14px !important;
+  }
+  .reg-steps-container{
+    grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)) !important;
+    gap:8px !important;
+  }
+  .reg-step-item{
+    padding:10px !important;
+    min-height:48px !important;
+  }
+  .reg-step-label{
+    font-size:11px !important;
+    white-space:normal !important;
+    word-break:break-word !important;
+    line-height:1.15 !important;
+  }
+  .reg-section-header{
+    padding:14px !important;
+    gap:10px !important;
+  }
+  .reg-section-title h4{
+    font-size:14px !important;
+  }
+  .reg-section-title p{
+    font-size:11px !important;
+  }
+  .reg-nav,
+  .reg-actions{
+    flex-direction:column !important;
+    gap:10px !important;
+  }
+  .reg-btn{
+    width:100% !important;
+  }
+}
+@media (max-width: 520px){
+  .reg-steps-container{
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+  .reg-step-item{
+    justify-content:flex-start !important;
+  }
+  .reg-step-circle{
+    width:26px !important;
+    height:26px !important;
+    min-width:26px !important;
+  }
+  .reg-main-card,
+  .reg-progress{
+    border-radius:14px !important;
+  }
+}
+
+/* =====================================================
+GLOBAL TYPOGRAPHY STYLECSS SYNC
+font-family + font-size + font-weight only
+===================================================== */
+:where(body,button,input,select,textarea,label,span,p,h1,h2,h3,h4,h5,h6,a,div){
+  font-family:'Poppins',sans-serif !important;
+}
+:where(h1,.h1,.page-title,.crm-page-title,.dashboard-header h2){font-size:clamp(2rem, 2.5vw, 2.4rem) !important;font-weight:700 !important;}
+:where(h2,.h2,.section-title){font-size:clamp(1.6rem, 2vw, 2rem) !important;font-weight:600 !important;}
+:where(h3,.h3,.card-header,.table-title){font-size:clamp(1.3rem, 1.6vw, 1.5rem) !important;font-weight:600 !important;}
+:where(h4,.h4){font-size:1.2rem !important;font-weight:500 !important;}
+:where(h5,.h5){font-size:1rem !important;font-weight:500 !important;}
+:where(h6,.h6){font-size:0.9rem !important;font-weight:500 !important;}
+:where(body){font-size:1rem !important;}
+:where(p,.text-body,li,td,.text-muted,.help-text,.form-text,.small,small,.secondary-text){font-size:0.95rem !important;font-weight:400 !important;}
+:where(.small,small,.text-muted,.help-text,.form-text,.att-sub,.crm-note){font-size:0.85rem !important;font-weight:400 !important;}
+:where(label,.form-label){font-size:0.85rem !important;font-weight:500 !important;}
+:where(input,select,textarea,.form-control,.form-select){font-size:0.95rem !important;font-weight:400 !important;}
+:where(input::placeholder,textarea::placeholder){font-weight:400 !important;}
+:where(button,.btn,.dt-button,.crm-action-btn,.crm-icon-btn,.btn-icon-only,.action-btn,.targets-btn-icon,.iso-report-btn,.iso-report-action-btn){font-size:0.9rem !important;font-weight:600 !important;}
+:where(.btn[data-mobile-label],.btn-icon-only[data-mobile-label],.action-btn[data-mobile-label],.crm-icon-btn[data-mobile-label],.targets-btn-icon[data-mobile-label],.iso-report-icon-btn[data-mobile-label],.iso-report-action-btn[data-mobile-label])::after{font-size:0.75rem !important;font-weight:600 !important;}
+:where(.table th,.crm-table th,.dataTables_wrapper th,th){font-size:0.75rem !important;font-weight:600 !important;}
+:where(.table td,.dataTables_wrapper tbody td){font-size:0.9rem !important;}
+:where(.dataTables_wrapper .dataTables_info){font-size:0.85rem !important;font-weight:400 !important;}
+:where(.dataTables_wrapper .paginate_button){font-size:0.9rem !important;font-weight:600 !important;}
+:where(.badge,.status-badge,.crm-status-badge,.status-pill,.badge-status,[data-status],.tooltip,.ui-tooltip,.floating-ui-tooltip__bubble){font-weight:600 !important;}
+
+/* ===== GLOBAL BUTTON STANDARDIZATION ===== */
+button,
+.btn,
+.crm-action-btn,
+.btn-filter,
+.btn-reset,
+.btn-add,
+.btn-excel,
+.action-btn,
+.btn-icon-only,
+a.btn,
+input[type="button"],
+input[type="submit"],
+input[type="reset"],
+[role="button"] {
+    font-size: 0.92rem;
+    min-height: 38px;
+    padding: 8px 14px;
+    border-radius: 10px;
+    font-weight: 600;
+}
+
+.btn-icon-only,
+.crm-action-btn,
+.action-btn,
+.btn-sm,
+.btn-xs,
+button.btn-icon,
+a.btn-icon,
+.btn i:only-child,
+button i:only-child {
+    font-size: 0.9rem;
+    min-height: 34px;
+    padding: 8px;
+    border-radius: 10px;
+    font-weight: 600;
+}
+

@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 if (!defined('APP_NAME')) die('Unauthorized access.');
 if (!function_exists('h')) { function h($v){ return htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8'); } }
 if (!function_exists('drInt')) { function drInt($v){ return max(0, (int)$v); } }
@@ -305,7 +305,7 @@ foreach(($sections['act_report'] ?? []) as $ar){
 }
 function mkj($v){ return h(json_encode($v, JSON_UNESCAPED_UNICODE)); }
 ?>
-<style>.dr-wrap{padding:8px 0}.dr-tabs{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}.dr-tab{border:1px solid #f2d3e2;background:#fff;border-radius:10px;padding:8px 12px;font-weight:700;color:#9d174d;cursor:pointer}.dr-tab.active{background:linear-gradient(135deg,#ff4d8d,#e91e63);color:#fff}.dr-step{display:none}.dr-step.active{display:block}.dr-card{background:#fff;border:1px solid #f1d6e3;border-radius:14px;box-shadow:0 8px 18px rgba(0,0,0,.06)}.dr-card-body{padding:14px}.dr-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.dr-field label{display:block;font-size:.82rem;color:#6b7280;font-weight:700;margin-bottom:6px}.dr-field input,.dr-field textarea{width:100%;border:1px solid #ecd3df;border-radius:10px;padding:8px 10px}.dr-btn{border:none;border-radius:10px;height:38px;padding:0 14px;font-weight:700;cursor:pointer}.dr-btn-primary{background:linear-gradient(135deg,#ff4d8d,#e91e63);color:#fff}.dr-btn-muted{background:#64748b;color:#fff}.dr-btn-success{background:#15803d;color:#fff}.dr-step-nav{display:flex;justify-content:space-between;margin-top:10px}.dr-activity-board{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.dr-block{border:1px solid #f1d6e3;border-radius:12px;overflow:hidden;background:#fff}.dr-block-head{background:linear-gradient(135deg,#ff4d8d,#e91e63);color:#fff;font-weight:800;text-align:center;padding:8px 10px;font-size:.95rem}.dr-block-body{padding:12px;display:grid;gap:10px}.mk-metric-cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-bottom:10px}.mk-metric-row{display:flex;align-items:center;gap:8px}.mk-metric-row .dr-btn{height:32px;padding:0 10px}#mkCollegeSearchBtn,#mkProspectSearchBtn,#mkAddHourRow,#mkAddCollegeRow,#mkAddProspectRow,#mkAddAmountRow,#mkAddProgramRow,#mkAddArtsCollegeRow,#mkAddArtsPcRow,#mkAddEnggCollegeRow,#mkAddEnggPcRow,#mkAddPolytechCollegeRow{height:34px;min-width:140px;display:inline-flex;align-items:center;justify-content:center;padding:0 12px}@media(max-width:1100px){.dr-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.dr-activity-board{grid-template-columns:1fr}.mk-metric-cards{grid-template-columns:1fr}}</style>
+
 <div class="dr-wrap">
   <?php if($warning!==''): ?><div class="dr-card"><div class="dr-card-body" style="color:#9a3412"><?= h($warning) ?></div></div><?php endif; ?>
   <div class="dr-card"><div class="dr-card-body">
@@ -1499,3 +1499,4 @@ if (document.readyState === 'loading') {
 }
 })();
 </script>
+
