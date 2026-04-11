@@ -87,6 +87,14 @@ $todayConversionRate = ((float)$todayLeads > 0)
     ? round((((float)$todayRegistrations / (float)$todayLeads) * 100), 1)
     : 0.0;
 
+$collectionVsDuePercent = ((float)$todayCollection + (float)$pendingDueAmount) > 0
+    ? round((((float)$todayCollection / ((float)$todayCollection + (float)$pendingDueAmount)) * 100), 1)
+    : 0.0;
+
+$dueStudentSharePercent = ((float)$totalStudents > 0)
+    ? round((((float)$pendingDueStudents / (float)$totalStudents) * 100), 1)
+    : 0.0;
+
 /* RECENT REGISTRATIONS */
 
 $recentRegistrations = $pdo->query("
@@ -142,6 +150,102 @@ $chartData = array_values($chartData);
 ?>
 
 <!-- Super Admin dashboard styles moved to assets/css/style.css -->
+<style>
+.sa-health-grid{
+    display:grid;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:14px;
+    margin:16px 0 22px;
+}
+.sa-health-card{
+    background:#fff;
+    border:1px solid #f1d6e3;
+    border-radius:16px;
+    padding:14px;
+    box-shadow:0 10px 24px rgba(15,23,42,.05);
+}
+.sa-health-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:8px;
+    margin-bottom:8px;
+}
+.sa-health-title{
+    font-size:12px;
+    font-weight:800;
+    letter-spacing:.04em;
+    color:#9d174d;
+    text-transform:uppercase;
+}
+.sa-health-value{
+    font-size:26px;
+    font-weight:900;
+    color:#111827;
+    line-height:1.1;
+}
+.sa-health-sub{
+    font-size:12px;
+    color:#6b7280;
+    margin-top:4px;
+}
+.sa-health-track{
+    margin-top:10px;
+    height:8px;
+    border-radius:999px;
+    background:#fce7f3;
+    overflow:hidden;
+}
+.sa-health-fill{
+    height:100%;
+    border-radius:999px;
+    background:linear-gradient(90deg,#ec4899 0%, #db2777 100%);
+}
+.sa-health-foot{
+    margin-top:8px;
+    font-size:11px;
+    color:#6b7280;
+    display:flex;
+    justify-content:space-between;
+    gap:8px;
+}
+.sa-priority-list{
+    margin-top:10px;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+}
+.sa-priority-item{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:12px;
+    padding:10px 12px;
+    border-radius:12px;
+    background:#fff7fb;
+    border:1px solid #f7d4e6;
+}
+.sa-priority-item .left{
+    font-size:13px;
+    color:#4b5563;
+}
+.sa-priority-item .left b{
+    display:block;
+    color:#111827;
+    margin-bottom:2px;
+}
+.sa-priority-item .right{
+    font-size:12px;
+    font-weight:800;
+    color:#9d174d;
+    white-space:nowrap;
+}
+@media (max-width:1100px){
+    .sa-health-grid{
+        grid-template-columns:1fr;
+    }
+}
+</style>
 
 
 <div class="sa-dashboard">
@@ -239,6 +343,66 @@ $chartData = array_values($chartData);
                 <span class="sa-action-sub">Work pending calls for better conversion.</span>
             </span>
         </a>
+    </section>
+
+    <section class="sa-health-grid">
+        <article class="sa-health-card">
+            <div class="sa-health-head">
+                <div class="sa-health-title">Collection Efficiency (Today)</div>
+                <span class="sa-chip"><i class="fas fa-wallet"></i> Cash Pulse</span>
+            </div>
+            <div class="sa-health-value"><?= number_format((float)$collectionVsDuePercent, 1) ?>%</div>
+            <div class="sa-health-sub">Share of due pressure covered by today's collections.</div>
+            <div class="sa-health-track"><div class="sa-health-fill" style="width:<?= max(0, min(100, (float)$collectionVsDuePercent)) ?>%"></div></div>
+            <div class="sa-health-foot">
+                <span>Today: <?= inr_symbol() ?> <?= number_format((float)$todayCollection, 0) ?></span>
+                <span>Due: <?= inr_symbol() ?> <?= number_format((float)$pendingDueAmount, 0) ?></span>
+            </div>
+        </article>
+
+        <article class="sa-health-card">
+            <div class="sa-health-head">
+                <div class="sa-health-title">Due Exposure</div>
+                <span class="sa-chip"><i class="fas fa-user-clock"></i> Risk</span>
+            </div>
+            <div class="sa-health-value"><?= number_format((float)$dueStudentSharePercent, 1) ?>%</div>
+            <div class="sa-health-sub">Active students currently carrying unpaid or partial balances.</div>
+            <div class="sa-health-track"><div class="sa-health-fill" style="width:<?= max(0, min(100, (float)$dueStudentSharePercent)) ?>%"></div></div>
+            <div class="sa-health-foot">
+                <span><?= number_format((float)$pendingDueStudents) ?> students</span>
+                <span>of <?= number_format((float)$totalStudents) ?></span>
+            </div>
+        </article>
+
+        <article class="sa-health-card">
+            <div class="sa-health-head">
+                <div class="sa-health-title">Priority Queue</div>
+                <span class="sa-chip"><i class="fas fa-bolt"></i> Today</span>
+            </div>
+            <div class="sa-priority-list">
+                <div class="sa-priority-item">
+                    <div class="left">
+                        <b>Followups due today</b>
+                        Calls and reminders needing immediate action.
+                    </div>
+                    <div class="right"><?= number_format((float)$todayFollowups) ?> tasks</div>
+                </div>
+                <div class="sa-priority-item">
+                    <div class="left">
+                        <b>New enquiries today</b>
+                        Fresh leads that should be converted quickly.
+                    </div>
+                    <div class="right"><?= number_format((float)$todayLeads) ?> leads</div>
+                </div>
+                <div class="sa-priority-item">
+                    <div class="left">
+                        <b>Registrations today</b>
+                        Confirm onboarding and initial fee workflow.
+                    </div>
+                    <div class="right"><?= number_format((float)$todayRegistrations) ?> students</div>
+                </div>
+            </div>
+        </article>
     </section>
 
     <section class="sa-kpi-grid">
@@ -505,6 +669,10 @@ borderWidth:3
 options:{
 responsive:true,
 maintainAspectRatio:false,
+interaction:{
+mode:'index',
+intersect:false
+},
 
 plugins:{
 legend:{
@@ -515,6 +683,19 @@ boxWidth:10,
 color:'#5b6477',
 font:{
 weight:'700'
+}
+}
+},
+tooltip:{
+backgroundColor:'#111827',
+titleColor:'#fff',
+bodyColor:'#fff',
+padding:10,
+displayColors:false,
+callbacks:{
+label:function(context){
+const v = Number(context.parsed.y || 0);
+return 'Revenue: <?= inr_symbol() ?> ' + v.toLocaleString();
 }
 }
 }
