@@ -191,6 +191,102 @@ border-bottom:6px solid #111827;
 border-top:0;
 }
 
+/* ==========================================
+FINAL CURSOR OVERRIDE (keep at end)
+Ensures hand cursor on real interactive UI.
+========================================== */
+:is(
+  a[href],
+  button,
+  input[type="button"],
+  input[type="submit"],
+  input[type="reset"],
+  summary,
+  label[for],
+  [role="button"],
+  [onclick],
+  .btn,
+  .icon-btn,
+  .btn-icon-only,
+  .crm-icon-btn,
+  .action-btn,
+  .crm-action-btn,
+  .menu-toggle,
+  .sidebar .menu-list a,
+  .swal2-confirm,
+  .swal2-cancel,
+  .swal2-deny
+),
+:is(
+  a[href],
+  button,
+  [role="button"],
+  [onclick],
+  .btn,
+  .icon-btn,
+  .btn-icon-only,
+  .crm-icon-btn,
+  .action-btn,
+  .crm-action-btn
+) * {
+  cursor: pointer !important;
+}
+
+:is(
+  button:disabled,
+  input[type="button"]:disabled,
+  input[type="submit"]:disabled,
+  input[type="reset"]:disabled,
+  .btn:disabled,
+  .icon-btn:disabled,
+  [role="button"][aria-disabled="true"],
+  .is-disabled,
+  .disabled
+),
+:is(
+  button:disabled,
+  .btn:disabled,
+  .is-disabled,
+  .disabled
+) * {
+  cursor: not-allowed !important;
+}
+
+/* ==========================================
+SAFE GLOBAL CLICKABLE CURSOR (PROJECT-WIDE)
+Only interactive elements show pointer.
+========================================== */
+a[href],
+button,
+input[type="button"],
+input[type="submit"],
+input[type="reset"],
+summary,
+[role="button"],
+[onclick],
+.btn,
+.icon-btn,
+.btn-icon-only,
+.crm-icon-btn,
+.action-btn,
+.crm-action-btn,
+.sidebar .menu-list a,
+.sidebar .menu-toggle {
+    cursor: pointer;
+}
+
+button:disabled,
+input[type="button"]:disabled,
+input[type="submit"]:disabled,
+input[type="reset"]:disabled,
+.btn:disabled,
+.icon-btn:disabled,
+[role="button"][aria-disabled="true"],
+.is-disabled,
+.disabled {
+    cursor: not-allowed !important;
+}
+
 @media (hover: none), (pointer: coarse){
 [data-tooltip]::before,
 [data-tooltip]::after,
@@ -3655,4 +3751,65 @@ GLOBAL DESKTOP ICON THEME (PROJECT-WIDE)
         font-size: 16px !important;
         line-height: 1 !important;
     }
+}
+
+/* ==========================================
+FINAL CURSOR OVERRIDE (LAST)
+Must stay at file end for highest priority.
+========================================== */
+:is(
+  a[href],
+  button,
+  input[type="button"],
+  input[type="submit"],
+  input[type="reset"],
+  summary,
+  label[for],
+  [role="button"],
+  [onclick],
+  .btn,
+  .icon-btn,
+  .btn-icon-only,
+  .crm-icon-btn,
+  .action-btn,
+  .crm-action-btn,
+  .menu-toggle,
+  .sidebar .menu-list a,
+  .swal2-confirm,
+  .swal2-cancel,
+  .swal2-deny
+),
+:is(
+  a[href],
+  button,
+  [role="button"],
+  [onclick],
+  .btn,
+  .icon-btn,
+  .btn-icon-only,
+  .crm-icon-btn,
+  .action-btn,
+  .crm-action-btn
+) * {
+  cursor: pointer !important;
+}
+
+:is(
+  button:disabled,
+  input[type="button"]:disabled,
+  input[type="submit"]:disabled,
+  input[type="reset"]:disabled,
+  .btn:disabled,
+  .icon-btn:disabled,
+  [role="button"][aria-disabled="true"],
+  .is-disabled,
+  .disabled
+),
+:is(
+  button:disabled,
+  .btn:disabled,
+  .is-disabled,
+  .disabled
+) * {
+  cursor: not-allowed !important;
 }

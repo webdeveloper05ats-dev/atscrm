@@ -260,7 +260,7 @@ alert('<?= addslashes($error) ?>');
 </div>
 
 <div class="lead-card-body">
-<form method="POST" id="leadForm" novalidate>
+<form method="POST" id="leadForm" novalidate data-focus-start="on" data-focus-target="input[name='name']">
 
 <input type="hidden" name="csrf_token" value="<?= h(generateCSRF()) ?>">
 

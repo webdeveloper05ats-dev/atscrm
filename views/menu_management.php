@@ -173,7 +173,7 @@ confirmButtonColor:'#e91e63'
 
 <div class="menu-title">Add New Menu</div>
 
-<form method="POST" id="menuForm" novalidate>
+<form method="POST" id="menuForm" novalidate data-focus-start="on" data-focus-target="input[name='menu_name']">
 
 <div class="menu-form-group">
 <label>Menu Name</label>

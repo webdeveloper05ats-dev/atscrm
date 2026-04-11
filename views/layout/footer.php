@@ -41,6 +41,9 @@ if (!defined('APP_NAME')) {
 <script src="assets/js/crm-datatable.js"></script>
 <script src="assets/js/modern-select.js"></script>
 <script src="assets/js/modern-datepicker.js"></script>
+<script src="assets/js/crm-form-assist.js"></script>
+<script src="assets/js/crm-time-select.js"></script>
+<script src="assets/js/crm-focus-start.js"></script>
 
 <script>
 (function () {
@@ -641,10 +644,6 @@ document.addEventListener("DOMContentLoaded", function () {
             if (!submenu) return;
 
             if (q === "") {
-                // Fully restore submenu children visibility after clearing search.
-                childItems.forEach(function (child) {
-                    child.style.display = "";
-                });
                 const initiallyOpen = item.getAttribute("data-initial-open") === "1";
                 item.classList.toggle("open", initiallyOpen);
                 submenu.style.display = initiallyOpen ? "flex" : "none";
@@ -673,9 +672,6 @@ document.addEventListener("DOMContentLoaded", function () {
     searchInput.addEventListener("input", function () {
         applySearch(searchInput.value || "");
     });
-
-    // Apply once on load to normalize any browser-restored field value/state.
-    applySearch(searchInput.value || "");
 });
 </script>
 

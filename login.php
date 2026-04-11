@@ -873,7 +873,7 @@ button i:only-child {
                 </div>
             <?php endif; ?>
 
-            <form method="POST" autocomplete="off">
+            <form method="POST" id="loginForm" autocomplete="off" data-focus-start="on" data-focus-target="input[name='email']">
                 <input type="text" style="display:none">
                 <input type="password" style="display:none">
 
@@ -953,6 +953,7 @@ button i:only-child {
     </div>
 </div>
 
+<script src="assets/js/crm-focus-start.js"></script>
 <script>
 // Password Toggle Functionality - Only this added, nothing else changed
 document.addEventListener('DOMContentLoaded', function() {

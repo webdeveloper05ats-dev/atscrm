@@ -212,7 +212,7 @@ confirmButtonColor:'#e91e63'
           <?= $editRole ? 'Edit Role' : 'Add New Role' ?>
         </div>
         <div class="atsrm-role-ui-body">
-          <form method="POST" id="roleForm" novalidate>
+          <form method="POST" id="roleForm" novalidate data-focus-start="on" data-focus-target="input[name='role_name']" data-form-assist="on">
             <?php if($editRole): ?>
             <input type="hidden" name="id" value="<?= $editRole['id'] ?>">
             <?php endif; ?>
