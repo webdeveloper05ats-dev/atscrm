@@ -171,8 +171,21 @@ try {
                         $studentName = $row['student_name'] ?: $row['enquiry_snapshot_name'] ?: '-';
                         $certificateIssuedAt = trim((string) ($row['internship_certificate_issued_at'] ?? ''));
                         $certificateStatus = strtolower(trim((string) ($row['internship_certificate_status'] ?? 'not_given')));
-                        $certificateSnapshotExists = crmCourseCertificateSnapshotExists((int) $row['id']);
-                        $certificateIsViewOnly = $certificateSnapshotExists;
+                        $certificateSnapshot = crmLoadCourseCertificateSnapshot((int) $row['id']);
+                        $certificateSnapshotExists = $certificateSnapshot !== null;
+                        $certificateViewConsumed = trim((string) ($certificateSnapshot['view_consumed_at'] ?? '')) !== '';
+                        $certificateLabel = 'Not Issued';
+                        $certificateClass = 'status-muted';
+                        if ($certificateSnapshotExists && $certificateViewConsumed) {
+                            $certificateLabel = 'Viewed';
+                            $certificateClass = 'status-muted';
+                        } elseif ($certificateSnapshotExists) {
+                            $certificateLabel = 'Saved';
+                            $certificateClass = 'status-success';
+                        } elseif ($certificateStatus === 'given') {
+                            $certificateLabel = 'Issued';
+                            $certificateClass = 'status-success';
+                        }
                         ?>
                         <tr>
                             <td>
@@ -196,11 +209,15 @@ try {
                                 </span>
                             </td>
                             <td>
-                                <span class="status-pill <?= $certificateIsViewOnly || $certificateStatus === 'given' ? 'status-success' : 'status-muted' ?>">
-                                    <?= h($certificateIsViewOnly || $certificateStatus === 'given' ? 'Issued' : 'Not Issued') ?>
+                                <span class="status-pill <?= h($certificateClass) ?>">
+                                    <?= h($certificateLabel) ?>
                                 </span>
                                 <div class="handlink-sub">
-                                    <?= h($certificateIssuedAt !== '' && $certificateIssuedAt !== '0000-00-00 00:00:00' ? $certificateIssuedAt : '-') ?>
+                                    <?php if ($certificateViewConsumed): ?>
+                                        Viewed: <?= h((string) ($certificateSnapshot['view_consumed_at'] ?? '-')) ?>
+                                    <?php else: ?>
+                                        <?= h($certificateIssuedAt !== '' && $certificateIssuedAt !== '0000-00-00 00:00:00' ? $certificateIssuedAt : '-') ?>
+                                    <?php endif; ?>
                                 </div>
                             </td>
                             <td class="text-center">
@@ -212,16 +229,23 @@ try {
                                         aria-label="View student details">
                                         <i class="fas fa-eye"></i>
                                     </a>
-                                    <?php if ($certificateIsViewOnly): ?>
+                                    <?php if ($certificateSnapshotExists && !$certificateViewConsumed): ?>
                                         <a
                                             href="index.php?page=students/course_certificate&id=<?= (int) $row['id'] ?>"
                                             target="_blank"
                                             rel="noopener"
                                             class="crm-icon-btn is-success"
-                                            data-modern-tooltip="Open certificate"
-                                            aria-label="Open certificate">
+                                            data-modern-tooltip="View certificate once"
+                                            aria-label="View certificate once">
                                             <i class="fas fa-certificate"></i>
                                         </a>
+                                    <?php elseif ($certificateSnapshotExists): ?>
+                                        <span
+                                            class="crm-icon-btn is-disabled"
+                                            data-modern-tooltip="Certificate already viewed"
+                                            aria-label="Certificate already viewed">
+                                            <i class="fas fa-lock"></i>
+                                        </span>
                                     <?php else: ?>
                                         <button
                                             type="button"
@@ -250,7 +274,7 @@ try {
         <div class="crm-modal-header">
             <div>
                 <h3 id="courseCertificateModalTitle">Generate Course Certificate</h3>
-                <p class="handlink-modal-copy">Upload the final signature along with the performance remark before opening the certificate.</p>
+                <p class="handlink-modal-copy">Upload the final signature along with the performance remark. The saved certificate can be viewed only once.</p>
             </div>
             <button type="button" class="crm-modal-close" data-close-modal aria-label="Close">
                 <i class="fas fa-times"></i>
@@ -297,7 +321,7 @@ try {
             <div class="crm-modal-footer">
                 <button type="button" class="crm-btn ghost" data-close-modal>Cancel</button>
                 <button type="submit" class="crm-btn primary">
-                    <i class="fas fa-certificate"></i> Open Certificate
+                    <i class="fas fa-certificate"></i> Generate & Save Certificate
                 </button>
             </div>
         </form>
@@ -582,6 +606,15 @@ try {
         background: #eef4ff;
         color: #2459c3;
         border-color: #cad8ff;
+    }
+
+    .crm-icon-btn.is-disabled {
+        background: #f1f5f9;
+        border-color: #d9e1ea;
+        color: #94a3b8;
+        cursor: not-allowed;
+        box-shadow: none;
+        transform: none;
     }
 
     .crm-modal {

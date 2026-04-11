@@ -3,6 +3,11 @@ if (!defined('APP_NAME')) {
     die("Unauthorized access.");
 }
 
+if (!headers_sent()) {
+    header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+    header('Pragma: no-cache');
+}
+
 if (($_SESSION['role_name'] ?? '') !== 'HR') {
     http_response_code(403);
     echo 'Access denied.';
@@ -64,6 +69,7 @@ if ($id <= 0) {
 }
 
 $existingSnapshot = crmLoadCourseCertificateSnapshot($id);
+$existingSnapshotViewConsumed = crmCourseCertificateSnapshotViewConsumed($id);
 $submittedRemark = '';
 $submittedHrName = '';
 $uploadedSignaturePath = '';
@@ -139,6 +145,19 @@ if (!$student) {
     return;
 }
 
+if ($requestMethod === 'POST' && $existingSnapshot !== null) {
+    echo 'Certificate has already been generated and cannot be generated again.';
+    if (!$existingSnapshotViewConsumed) {
+        echo '<br><a href="index.php?page=students/course_certificate&id=' . (int) $id . '">View saved certificate once</a>';
+    }
+    return;
+}
+
+if ($requestMethod === 'GET' && $existingSnapshotViewConsumed) {
+    echo 'This certificate has already been viewed once. Further viewing is not allowed.';
+    return;
+}
+
 $assessmentAverage = null;
 $mockAverage = null;
 try {
@@ -184,6 +203,10 @@ $snapshot = $existingSnapshot;
 if ($snapshot === null) {
     if ($requestMethod !== 'POST') {
         echo 'Certificate has not been generated yet.';
+        return;
+    }
+    if (crmCourseCertificateSnapshotExists($id)) {
+        echo 'Certificate has already been generated and cannot be generated again.';
         return;
     }
 
@@ -261,6 +284,7 @@ if ($snapshot === null) {
         <strong>Program:</strong> ' . h((string) ($snapshot['program_name_raw'] ?? '')) . '<br>
         <strong>Issued At:</strong> ' . h((string) ($snapshot['issued_at'] ?? '')) . '<br>
         <strong>Certificate Link:</strong> <a href="' . h($certificateUrl) . '">' . h($certificateUrl) . '</a></p>
+        <p>This saved certificate link can be viewed only once.</p>
         <p>Regards,<br>' . h(APP_NAME) . '</p>';
     $textBody = "Dear Student and Parent,\n\n"
         . "The course completion certificate has been generated successfully.\n"
@@ -269,8 +293,69 @@ if ($snapshot === null) {
         . "Program: " . (string) ($snapshot['program_name_raw'] ?? '') . "\n"
         . "Issued At: " . (string) ($snapshot['issued_at'] ?? '') . "\n"
         . "Certificate Link: {$certificateUrl}\n\n"
+        . "This saved certificate link can be viewed only once.\n\n"
         . "Regards,\n" . APP_NAME;
     crmSendEmail($recipients, 'Course certificate generated for ' . $studentDisplayName, $htmlBody, $textBody);
+
+    ?>
+    <!doctype html>
+    <html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>Course Certificate Saved</title>
+        <style>
+            body {
+                margin: 0;
+                min-height: 100vh;
+                display: grid;
+                place-items: center;
+                background: #f6f7fb;
+                color: #1f2937;
+                font-family: Arial, sans-serif;
+            }
+            .message {
+                width: min(520px, calc(100% - 32px));
+                border: 1px solid #d7dee8;
+                border-radius: 8px;
+                background: #fff;
+                padding: 24px;
+                box-shadow: 0 14px 32px rgba(15, 23, 42, 0.12);
+            }
+            h1 {
+                margin: 0 0 10px;
+                font-size: 24px;
+            }
+            p {
+                line-height: 1.5;
+            }
+            a {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                min-height: 40px;
+                border-radius: 8px;
+                background: #0f766e;
+                color: #fff;
+                padding: 0 16px;
+                font-weight: 700;
+                text-decoration: none;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="message">
+            <h1>Certificate saved</h1>
+            <p>The course certificate has been generated and saved. It can be viewed only once from the saved certificate link.</p>
+            <a href="index.php?page=students/course_certificate&id=<?= (int) $id ?>">View Certificate Once</a>
+        </div>
+    </body>
+    </html>
+    <?php
+    return;
+}
+
+if ($requestMethod === 'GET') {
+    crmMarkCourseCertificateSnapshotViewed($id);
 }
 
 $issuedAt = (string) ($snapshot['issued_at'] ?? '');
