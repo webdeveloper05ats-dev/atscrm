@@ -48,13 +48,15 @@ if ($roleId > 0) {
 // ===============================
 // Get Requested Page
 // ===============================
-$page = $_GET['page'] ?? $defaultPage;
-$page = trim($page);
+$requestedPage = isset($_GET['page']) ? trim((string)$_GET['page']) : '';
+$page = $requestedPage !== '' ? $requestedPage : $defaultPage;
+$page = trim((string)$page, " \t\n\r\0\x0B/");
 
 // ===============================
 // Security: Prevent Directory Traversal
 // ===============================
 $page = str_replace(['../', '..\\'], '', $page);
+$page = str_replace('\\', '/', $page);
 
 // Allow only a-z A-Z 0-9 / _ -
 if (!preg_match('/^[a-zA-Z0-9\/_-]+$/', $page)) {
@@ -66,9 +68,39 @@ if (!preg_match('/^[a-zA-Z0-9\/_-]+$/', $page)) {
 // ===============================
 $viewPath = __DIR__ . '/views/' . $page . '.php';
 
-// Check if file exists
+// If requested/default page is missing, auto-fallback to valid dashboard page
 if (!file_exists($viewPath)) {
-    die('Page not found.');
+    $fallbackPages = [
+        $defaultPage,
+        'dashboard/superadmin',
+        'dashboard/staff',
+        'dashboard/marketing',
+        'dashboard/frontoffice',
+        'dashboard/hr',
+        'dashboard/test'
+    ];
+
+    $fallbackFound = false;
+    foreach (array_unique($fallbackPages) as $candidate) {
+        $candidate = trim((string)$candidate, " \t\n\r\0\x0B/");
+        $candidate = str_replace(['../', '..\\'], '', $candidate);
+        $candidate = str_replace('\\', '/', $candidate);
+        if ($candidate === '' || !preg_match('/^[a-zA-Z0-9\/_-]+$/', $candidate)) {
+            continue;
+        }
+
+        $candidateView = __DIR__ . '/views/' . $candidate . '.php';
+        if (file_exists($candidateView)) {
+            $page = $candidate;
+            $viewPath = $candidateView;
+            $fallbackFound = true;
+            break;
+        }
+    }
+
+    if (!$fallbackFound) {
+        die('Page not found.');
+    }
 }
 
 // ===============================

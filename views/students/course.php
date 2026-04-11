@@ -328,8 +328,6 @@ try {
     </div>
 </div>
 
-<<<<<<< HEAD
-=======
 <style>
     .handlink-page {
         display: flex;
@@ -897,8 +895,6 @@ button i:only-child {
     font-weight: 600;
 }
 </style>
-
->>>>>>> 9ff78a73d99b8230a71931eac4450ef1c253596d
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     if (typeof crmDataTable !== 'function') {
