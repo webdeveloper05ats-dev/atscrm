@@ -174,6 +174,9 @@
     var wrapper = input.closest(".modern-input-wrap");
     var staticMode = !!wrapper;
 
+    var minAttr = input.getAttribute("min");
+    var maxAttr = input.getAttribute("max");
+
     var options = {
       dateFormat: "Y-m-d",
       altInput: true,
@@ -211,6 +214,9 @@
         }
       }
     };
+
+    if (minAttr) options.minDate = minAttr;
+    if (maxAttr) options.maxDate = maxAttr;
 
     window.flatpickr(input, options);
   }

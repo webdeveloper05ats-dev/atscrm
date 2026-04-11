@@ -22,6 +22,7 @@ $requiredTables=[
 $missingTables=[]; foreach($requiredTables as $t){ if(!function_exists('crmTableExists') || !crmTableExists($pdo,$t)) $missingTables[]=$t; }
 
 $today=date('Y-m-d');
+$minSelectableDate = date('Y-m-d', strtotime($today.' -2 day'));
 $reportDate=trim((string)($_GET['report_date']??$today));
 if(!preg_match('/^\d{4}-\d{2}-\d{2}$/',$reportDate)) $reportDate=$today;
 $dayDiff=(int)((strtotime($today.' 00:00:00')-strtotime($reportDate.' 00:00:00'))/86400);
@@ -308,7 +309,7 @@ function mkj($v){ return h(json_encode($v, JSON_UNESCAPED_UNICODE)); }
 <div class="dr-wrap">
   <?php if($warning!==''): ?><div class="dr-card"><div class="dr-card-body" style="color:#9a3412"><?= h($warning) ?></div></div><?php endif; ?>
   <div class="dr-card"><div class="dr-card-body">
-    <div class="dr-grid"><div class="dr-field"><label>Report Date</label><input type="date" class="js-dr-report-date" value="<?= h($reportDate) ?>"></div><div class="dr-field"><label>Edit Mode</label><input readonly value="<?= h($editModeLabel) ?>"></div><div class="dr-field"><label>Role</label><input readonly value="Marketing"></div><div class="dr-field"><label>Status</label><input readonly value="<?= h(ucfirst((string)($master['status'] ?? 'draft'))) ?>"></div></div>
+    <div class="dr-grid"><div class="dr-field"><label>Report Date</label><input type="date" class="js-dr-report-date" value="<?= h($reportDate) ?>" min="<?= h($minSelectableDate) ?>" max="<?= h($today) ?>"></div><div class="dr-field"><label>Edit Mode</label><input readonly value="<?= h($editModeLabel) ?>"></div><div class="dr-field"><label>Role</label><input readonly value="Marketing"></div><div class="dr-field"><label>Status</label><input readonly value="<?= h(ucfirst((string)($master['status'] ?? 'draft'))) ?>"></div></div>
     <?php if($master && empty($missingTables) && $canUseMarketingForm): ?>
     <form method="POST" id="mkDailyForm">
       <input type="hidden" name="csrf_token" value="<?= h(generateCSRF()) ?>"><input type="hidden" name="save_all_report" value="1">
@@ -826,10 +827,21 @@ function init(){
       })
       .catch(function(){ window.location.href = url; });
   }
-  document.addEventListener('change', function(e){
+  const root = document.querySelector('.dr-wrap') || document;
+  root.querySelectorAll('.js-dr-report-date').forEach(function(el){
+    el.setAttribute('min', '<?= h($minSelectableDate) ?>');
+    el.setAttribute('max', '<?= h($today) ?>');
+  });
+  root.addEventListener('change', function(e){
     if(!e.target.classList.contains('js-dr-report-date')) return;
     const dt = (e.target.value || '').trim();
     if(!dt) return;
+    const minDt = '<?= h($minSelectableDate) ?>';
+    const maxDt = '<?= h($today) ?>';
+    if (dt < minDt || dt > maxDt) {
+      e.target.value = '<?= h($reportDate) ?>';
+      return;
+    }
     drAjaxSwap('index.php?page=dailyreports/entry&report_type=marketing&report_date=' + encodeURIComponent(dt));
   });
   const tabs=[...document.querySelectorAll('.dr-tab')],steps=[...document.querySelectorAll('.dr-step')];
@@ -858,7 +870,7 @@ function init(){
     tr.innerHTML='<td style="border:1px solid #f1d6e3;padding:8px;"><input type="time" class="mk-hour-time-from" value="'+slot.from+'"></td><td style="border:1px solid #f1d6e3;padding:8px;"><input type="time" class="mk-hour-time-to" value="'+slot.to+'"></td><td style="border:1px solid #f1d6e3;padding:8px;"><input class="mk-hour-particulars"></td><td style="border:1px solid #f1d6e3;padding:8px;"><textarea class="mk-hour-activities"></textarea></td><td style="border:1px solid #f1d6e3;padding:8px;"><button type="button" class="dr-btn dr-btn-muted js-del-hour-row" style="height:32px;">Delete</button></td>';
     body.appendChild(tr);
   });
-  document.addEventListener('click',function(e){
+  root.addEventListener('click',function(e){
     if(!e.target.classList.contains('js-del-hour-row')) return;
     const tr=e.target.closest('tr'); if(tr) tr.remove();
   });
@@ -875,7 +887,7 @@ function init(){
     const tr=createCollegeRow();
     body.appendChild(tr); renumberCollegeRows();
   });
-  document.addEventListener('click',function(e){
+  root.addEventListener('click',function(e){
     if(!e.target.classList.contains('js-del-col-row')) return;
     const tr=e.target.closest('tr'); if(tr) tr.remove(); renumberCollegeRows();
   });
@@ -892,11 +904,11 @@ function init(){
     const body=document.getElementById('mkProspectBody'); if(!body) return;
     body.appendChild(createProspectRow()); renumberProspectRows();
   });
-  document.addEventListener('click',function(e){
+  root.addEventListener('click',function(e){
     if(!e.target.classList.contains('js-del-pro-row')) return;
     const tr=e.target.closest('tr'); if(tr) tr.remove(); renumberProspectRows();
   });
-  document.addEventListener('click',function(e){
+  root.addEventListener('click',function(e){
     if(e.target.classList.contains('js-add-followup')){
       const wrap=e.target.closest('td')?.querySelector('.mk-pro-followups');
       if(!wrap) return;
@@ -933,7 +945,7 @@ function init(){
     const body=document.getElementById('mkAmountBody'); if(!body) return;
     body.appendChild(createAmountRow()); renumberAmountRows();
   });
-  document.addEventListener('click',function(e){
+  root.addEventListener('click',function(e){
     if(!e.target.classList.contains('js-del-amt-row')) return;
     const tr=e.target.closest('tr'); if(tr) tr.remove(); renumberAmountRows();
   });
@@ -947,7 +959,7 @@ function init(){
     const body=document.getElementById('mkProgramBody'); if(!body) return;
     body.appendChild(createProgramRow());
   });
-  document.addEventListener('click',function(e){
+  root.addEventListener('click',function(e){
     if(!e.target.classList.contains('js-del-prg-row')) return;
     const tr=e.target.closest('tr'); if(tr) tr.remove();
   });
@@ -959,7 +971,7 @@ function init(){
     const el=tr.querySelector('.mk-prg-pending');
     if(el) el.value=p.toFixed(2);
   }
-  document.addEventListener('input', function(e){
+  root.addEventListener('input', function(e){
     if(!(e.target.classList.contains('mk-prg-amount') || e.target.classList.contains('mk-prg-collection'))) return;
     updateProgramPendingForRow(e.target.closest('tr'));
   });
@@ -973,7 +985,7 @@ function init(){
     const body=document.getElementById('mkArtsCollegeBody'); if(!body) return;
     body.appendChild(createArtsCollegeRow());
   });
-  document.addEventListener('click',function(e){
+  root.addEventListener('click',function(e){
     if(!e.target.classList.contains('js-del-ac-row')) return;
     const tr=e.target.closest('tr'); if(tr) tr.remove();
   });
@@ -986,7 +998,7 @@ function init(){
     const body=document.getElementById('mkArtsPcBody'); if(!body) return;
     body.appendChild(createArtsPcRow());
   });
-  document.addEventListener('click',function(e){
+  root.addEventListener('click',function(e){
     if(!e.target.classList.contains('js-del-apc-row')) return;
     const tr=e.target.closest('tr'); if(tr) tr.remove();
   });
@@ -999,7 +1011,7 @@ function init(){
     const body=document.getElementById('mkEnggCollegeBody'); if(!body) return;
     body.appendChild(createEnggCollegeRow());
   });
-  document.addEventListener('click',function(e){
+  root.addEventListener('click',function(e){
     if(!e.target.classList.contains('js-del-ec-row')) return;
     const tr=e.target.closest('tr'); if(tr) tr.remove();
   });
@@ -1012,7 +1024,7 @@ function init(){
     const body=document.getElementById('mkEnggPcBody'); if(!body) return;
     body.appendChild(createEnggPcRow());
   });
-  document.addEventListener('click',function(e){
+  root.addEventListener('click',function(e){
     if(!e.target.classList.contains('js-del-epc-row')) return;
     const tr=e.target.closest('tr'); if(tr) tr.remove();
   });
@@ -1025,7 +1037,7 @@ function init(){
     const body=document.getElementById('mkPolytechCollegeBody'); if(!body) return;
     body.appendChild(createPolytechCollegeRow());
   });
-  document.addEventListener('click',function(e){
+  root.addEventListener('click',function(e){
     if(!e.target.classList.contains('js-del-pc-row')) return;
     const tr=e.target.closest('tr'); if(tr) tr.remove();
   });

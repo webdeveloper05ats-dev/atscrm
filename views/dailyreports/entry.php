@@ -45,6 +45,7 @@ if (!empty($missingTables)) {
 }
 
 $today = date('Y-m-d');
+$minSelectableDate = date('Y-m-d', strtotime($today . ' -2 day'));
 $reportDate = trim((string)($_GET['report_date'] ?? $today));
 if(!preg_match('/^\d{4}-\d{2}-\d{2}$/',$reportDate)) $reportDate = $today;
 $isToday = ($reportDate === $today);
@@ -369,7 +370,7 @@ if($_SERVER['REQUEST_METHOD']==='POST' && isset($_POST['save_all_report']) && em
   </div>
 
   <?php if (empty($missingTables) && $canUseFrontOfficeForm && $master): ?>
-  <div class="dr-card" style="margin-bottom:12px;"><div class="dr-card-head">Report Context</div><div class="dr-card-body"><div class="dr-grid"><div class="dr-field"><label>Report Date</label><form method="GET" action="index.php"><input type="hidden" name="page" value="dailyreports/entry"><input type="date" class="js-dr-report-date" name="report_date" value="<?= h($reportDate) ?>"></form></div><div class="dr-field"><label>Type</label><input type="text" value="Front Office" readonly></div><div class="dr-field"><label>Status</label><input type="text" value="<?= h(ucfirst((string)($master['status'] ?? 'draft'))) ?>" readonly></div><div class="dr-field"><label>Edit Mode</label><input type="text" value="<?= h($editModeLabel) ?>" readonly></div></div></div></div>
+  <div class="dr-card" style="margin-bottom:12px;"><div class="dr-card-head">Report Context</div><div class="dr-card-body"><div class="dr-grid"><div class="dr-field"><label>Report Date</label><form method="GET" action="index.php"><input type="hidden" name="page" value="dailyreports/entry"><input type="date" class="js-dr-report-date" name="report_date" value="<?= h($reportDate) ?>" min="<?= h($minSelectableDate) ?>" max="<?= h($today) ?>"></form></div><div class="dr-field"><label>Type</label><input type="text" value="Front Office" readonly></div><div class="dr-field"><label>Status</label><input type="text" value="<?= h(ucfirst((string)($master['status'] ?? 'draft'))) ?>" readonly></div><div class="dr-field"><label>Edit Mode</label><input type="text" value="<?= h($editModeLabel) ?>" readonly></div></div></div></div>
 
   <form method="POST" id="dailyReportForm">
     <input type="hidden" name="csrf_token" value="<?= h(generateCSRF()) ?>"><input type="hidden" name="save_all_report" value="1">
@@ -419,10 +420,21 @@ if($_SERVER['REQUEST_METHOD']==='POST' && isset($_POST['save_all_report']) && em
       })
       .catch(function(){ window.location.href = url; });
   }
-  document.addEventListener('change', function(e){
+  const root = document.querySelector('.dr-wrap') || document;
+  root.querySelectorAll('.js-dr-report-date').forEach(function(el){
+    el.setAttribute('min', '<?= h($minSelectableDate) ?>');
+    el.setAttribute('max', '<?= h($today) ?>');
+  });
+  root.addEventListener('change', function(e){
     if(!e.target.classList.contains('js-dr-report-date')) return;
     const dt = (e.target.value || '').trim();
     if(!dt) return;
+    const minDt = '<?= h($minSelectableDate) ?>';
+    const maxDt = '<?= h($today) ?>';
+    if (dt < minDt || dt > maxDt) {
+      e.target.value = '<?= h($reportDate) ?>';
+      return;
+    }
     drAjaxSwap('index.php?page=dailyreports/entry&report_date=' + encodeURIComponent(dt));
   });
   const tabs=[...document.querySelectorAll('.dr-tab')], steps=[...document.querySelectorAll('.dr-step')];
@@ -451,7 +463,7 @@ if($_SERVER['REQUEST_METHOD']==='POST' && isset($_POST['save_all_report']) && em
     renumberSerialColumn('collegeBody', 'college_serial_no[]');
     renumberSerialColumn('dbBody', 'db_serial_no[]');
   }
-  document.addEventListener('click',e=>{
+  root.addEventListener('click',e=>{
     const b=e.target.closest('.js-del-row');
     if(b){
       const tr=b.closest('tr');
