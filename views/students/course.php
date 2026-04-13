@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 if (!defined('APP_NAME')) {
     die("Unauthorized access.");
 }
@@ -14,11 +14,28 @@ if (!function_exists('h')) {
     }
 }
 
+if (!function_exists('courseStudentFormatDate')) {
+    function courseStudentFormatDate($value, bool $withTime = false): string
+    {
+        $value = trim((string) $value);
+        if ($value === '' || $value === '0000-00-00' || $value === '0000-00-00 00:00:00') {
+            return '-';
+        }
+
+        $timestamp = strtotime($value);
+        if ($timestamp === false) {
+            return $value;
+        }
+
+        return date($withTime ? 'd M Y, g:i A' : 'd M Y', $timestamp);
+    }
+}
+
 if (($_SESSION['role_name'] ?? '') !== 'HR') {
     http_response_code(403);
-    echo "<div style='padding:20px;font-family:Poppins,sans-serif'>
-            <h2 style='margin:0 0 8px;color:#e91e63'>Access Denied</h2>
-            <p style='margin:0;color:#666'>This page is available only for HR users.</p>
+    echo "<div style='padding:20px;font-family:var(--crm-font-family)'>
+            <h2 style='margin:0 0 8px;color:var(--crm-primary)'>Access Denied</h2>
+            <p style='margin:0;color:var(--crm-text-muted)'>This page is available only for HR users.</p>
           </div>";
     return;
 }
@@ -41,8 +58,28 @@ $certificateFilter = trim((string) ($_GET['certificate'] ?? ''));
 if (!in_array($certificateFilter, ['given', 'not_given'], true)) {
     $certificateFilter = '';
 }
+$courseStatusFilter = trim((string) ($_GET['course_status'] ?? ''));
+if (!in_array($courseStatusFilter, ['completed'], true)) {
+    $courseStatusFilter = '';
+}
 
 $rows = [];
+$certificateSnapshotIds = [];
+$certificateSnapshotTimes = [];
+
+try {
+    $snapshotDir = UPLOAD_PATH . 'course_certificates/generated/';
+    foreach (glob($snapshotDir . 'course_certificate_*.json') ?: [] as $snapshotPath) {
+        if (preg_match('/course_certificate_(\d+)\.json$/', (string) $snapshotPath, $matches)) {
+            $snapshotId = (int) $matches[1];
+            $certificateSnapshotIds[$snapshotId] = true;
+            $certificateSnapshotTimes[$snapshotId] = (int) (@filemtime($snapshotPath) ?: 0);
+        }
+    }
+} catch (Exception $e) {
+    $certificateSnapshotIds = [];
+    $certificateSnapshotTimes = [];
+}
 
 try {
     $params = [];
@@ -74,6 +111,10 @@ try {
         $where[] = "COALESCE(r.internship_certificate_status, 'not_given') <> 'given'";
     }
 
+    if ($courseStatusFilter === 'completed') {
+        $where[] = "r.registration_status = 'completed'";
+    }
+
     $sql = "
         SELECT
             r.id,
@@ -100,9 +141,54 @@ try {
     $st = $pdo->prepare($sql);
     $st->execute($params);
     $rows = $st->fetchAll(PDO::FETCH_ASSOC) ?: [];
+
+    foreach ($rows as &$row) {
+        $registrationId = (int) ($row['id'] ?? 0);
+        $row['_certificate_snapshot_exists'] = isset($certificateSnapshotIds[$registrationId]);
+        $row['_certificate_snapshot_mtime'] = $certificateSnapshotTimes[$registrationId] ?? 0;
+    }
+    unset($row);
 } catch (Exception $e) {
     setFlash('error', 'Unable to load course students: ' . $e->getMessage());
 }
+
+$totalStudents = count($rows);
+$issuedCertificates = 0;
+$pendingCertificates = 0;
+$completedCourses = 0;
+
+foreach ($rows as $row) {
+    $certificateStatus = strtolower(trim((string) ($row['internship_certificate_status'] ?? 'not_given')));
+    $certificateSaved = !empty($row['_certificate_snapshot_exists']);
+    if ($certificateSaved || $certificateStatus === 'given') {
+        $issuedCertificates++;
+    } else {
+        $pendingCertificates++;
+    }
+
+    if (strtolower((string) ($row['registration_status'] ?? '')) === 'completed') {
+        $completedCourses++;
+    }
+}
+
+$branchVisibilityLabel = $canAllBranches === 1 ? 'Showing all branches' : 'Showing your branch only';
+$courseStudentsBaseUrl = 'index.php?page=students/course';
+$quickFilterParams = [
+    'q' => $search,
+    'certificate' => $certificateFilter,
+    'course_status' => $courseStatusFilter,
+];
+$buildCourseStudentsUrl = static function (array $overrides = []) use ($courseStudentsBaseUrl, $quickFilterParams): string {
+    $params = array_merge($quickFilterParams, $overrides);
+    $query = ['page' => 'students/course'];
+    foreach ($params as $key => $value) {
+        if (trim((string) $value) !== '') {
+            $query[$key] = $value;
+        }
+    }
+
+    return 'index.php?' . http_build_query($query);
+};
 ?>
 
 <div class="handlink-page">
@@ -111,8 +197,11 @@ try {
             <h2><i class="fas fa-clipboard"></i> Course Students</h2>
             <p>HR can manage only the paid course students already handed over by staff, view student details, and generate completion certificates.</p>
         </div>
-        <div class="handlink-stat">
-            <span><i class="fas fa-database"></i> Total: <?= (int) count($rows) ?></span>
+        <div class="handlink-stats">
+            <span><i class="fas fa-database"></i> Total: <?= (int) $totalStudents ?></span>
+            <span><i class="fas fa-certificate"></i> Issued: <?= (int) $issuedCertificates ?></span>
+            <span><i class="fas fa-hourglass-half"></i> Pending: <?= (int) $pendingCertificates ?></span>
+            <span><i class="fas fa-check-circle"></i> Completed: <?= (int) $completedCourses ?></span>
         </div>
     </div>
 
@@ -126,21 +215,24 @@ try {
                         <label><i class="fas fa-search"></i> Search</label>
                         <input type="text" name="q" value="<?= h($search) ?>" placeholder="Registration, student, program, batch">
                     </div>
-                    <div class="filter-field">
-                        <label><i class="fas fa-certificate"></i> Certificate</label>
-                        <select name="certificate">
-                            <option value="">All</option>
-                            <option value="given" <?= $certificateFilter === 'given' ? 'selected' : '' ?>>Issued</option>
-                            <option value="not_given" <?= $certificateFilter === 'not_given' ? 'selected' : '' ?>>Not Issued</option>
-                        </select>
-                    </div>
                     <div class="filter-actions">
-                        <button type="submit" class="crm-icon-btn is-primary" data-modern-tooltip="Apply filters" aria-label="Apply filters">
+                        <button type="submit" class="crm-icon-btn is-primary" data-mobile-label="Apply" data-modern-tooltip="Apply filters" aria-label="Apply filters">
                             <i class="fas fa-filter"></i>
                         </button>
-                        <a href="index.php?page=students/course" class="crm-icon-btn is-muted" data-modern-tooltip="Reset filters" aria-label="Reset filters">
+                        <a href="index.php?page=students/course" class="crm-icon-btn is-muted" data-mobile-label="Reset" data-modern-tooltip="Reset filters" aria-label="Reset filters">
                             <i class="fas fa-undo-alt"></i>
                         </a>
+                    </div>
+                </div>
+                <div class="handlink-quick-row">
+                    <div class="handlink-branch-scope">
+                        <i class="fas fa-code-branch"></i> <?= h($branchVisibilityLabel) ?>
+                    </div>
+                    <div class="handlink-quick-filters" aria-label="Quick filters">
+                        <a href="<?= h($buildCourseStudentsUrl(['certificate' => '', 'course_status' => ''])) ?>" class="<?= $certificateFilter === '' && $courseStatusFilter === '' ? 'is-active' : '' ?>">All</a>
+                        <a href="<?= h($buildCourseStudentsUrl(['certificate' => 'not_given', 'course_status' => ''])) ?>" class="<?= $certificateFilter === 'not_given' ? 'is-active' : '' ?>">Certificate Pending</a>
+                        <a href="<?= h($buildCourseStudentsUrl(['certificate' => 'given', 'course_status' => ''])) ?>" class="<?= $certificateFilter === 'given' ? 'is-active' : '' ?>">Certificate Issued</a>
+                        <a href="<?= h($buildCourseStudentsUrl(['course_status' => 'completed', 'certificate' => ''])) ?>" class="<?= $courseStatusFilter === 'completed' ? 'is-active' : '' ?>">Course Completed</a>
                     </div>
                 </div>
             </form>
@@ -171,30 +263,32 @@ try {
                         $studentName = $row['student_name'] ?: $row['enquiry_snapshot_name'] ?: '-';
                         $certificateIssuedAt = trim((string) ($row['internship_certificate_issued_at'] ?? ''));
                         $certificateStatus = strtolower(trim((string) ($row['internship_certificate_status'] ?? 'not_given')));
-                        $certificateSnapshot = crmLoadCourseCertificateSnapshot((int) $row['id']);
-                        $certificateSnapshotExists = $certificateSnapshot !== null;
-                        $certificateViewConsumed = trim((string) ($certificateSnapshot['view_consumed_at'] ?? '')) !== '';
-                        $certificateLabel = 'Not Issued';
+                        $certificateSnapshotExists = !empty($row['_certificate_snapshot_exists']);
+                        $certificateSnapshotTime = (int) ($row['_certificate_snapshot_mtime'] ?? 0);
+                        $certificateLabel = 'Pending';
                         $certificateClass = 'status-muted';
-                        if ($certificateSnapshotExists && $certificateViewConsumed) {
-                            $certificateLabel = 'Viewed';
-                            $certificateClass = 'status-muted';
-                        } elseif ($certificateSnapshotExists) {
+                        $certificateDateLabel = '-';
+                        if ($certificateSnapshotExists) {
                             $certificateLabel = 'Saved';
                             $certificateClass = 'status-success';
+                            $certificateDateLabel = courseStudentFormatDate($certificateIssuedAt, true);
+                            if ($certificateDateLabel === '-' && $certificateSnapshotTime > 0) {
+                                $certificateDateLabel = date('d M Y, g:i A', $certificateSnapshotTime);
+                            }
                         } elseif ($certificateStatus === 'given') {
                             $certificateLabel = 'Issued';
                             $certificateClass = 'status-success';
+                            $certificateDateLabel = courseStudentFormatDate($certificateIssuedAt, true);
                         }
                         ?>
                         <tr>
                             <td>
                                 <div class="handlink-primary"><?= h($row['registration_no'] ?: ('REG-' . $row['id'])) ?></div>
-                                <div class="handlink-sub">Joined: <?= h($row['joined_on'] ?: '-') ?></div>
+                                <div class="handlink-sub">Joined: <?= h(courseStudentFormatDate($row['joined_on'] ?? '')) ?></div>
                             </td>
                             <td>
                                 <div class="handlink-primary"><?= h($studentName) ?></div>
-                                <div class="handlink-sub">Moved to HR: <?= h($row['sent_to_hr_at'] ?: '-') ?></div>
+                                <div class="handlink-sub">Moved to HR: <?= h(courseStudentFormatDate($row['sent_to_hr_at'] ?? '', true)) ?></div>
                             </td>
                             <td>
                                 <div class="handlink-primary"><?= h($row['program_name'] ?: '-') ?></div>
@@ -213,11 +307,7 @@ try {
                                     <?= h($certificateLabel) ?>
                                 </span>
                                 <div class="handlink-sub">
-                                    <?php if ($certificateViewConsumed): ?>
-                                        Viewed: <?= h((string) ($certificateSnapshot['view_consumed_at'] ?? '-')) ?>
-                                    <?php else: ?>
-                                        <?= h($certificateIssuedAt !== '' && $certificateIssuedAt !== '0000-00-00 00:00:00' ? $certificateIssuedAt : '-') ?>
-                                    <?php endif; ?>
+                                    <?= h($certificateDateLabel) ?>
                                 </div>
                             </td>
                             <td class="text-center">
@@ -225,27 +315,22 @@ try {
                                     <a
                                         href="index.php?page=reports/student_profile&id=<?= (int) $row['id'] ?>"
                                         class="crm-icon-btn is-info"
+                                        data-mobile-label="View"
                                         data-modern-tooltip="View student details"
                                         aria-label="View student details">
                                         <i class="fas fa-eye"></i>
                                     </a>
-                                    <?php if ($certificateSnapshotExists && !$certificateViewConsumed): ?>
+                                    <?php if ($certificateSnapshotExists): ?>
                                         <a
                                             href="index.php?page=students/course_certificate&id=<?= (int) $row['id'] ?>"
                                             target="_blank"
                                             rel="noopener"
                                             class="crm-icon-btn is-success"
-                                            data-modern-tooltip="View certificate once"
-                                            aria-label="View certificate once">
+                                            data-mobile-label="View Certificate"
+                                            data-modern-tooltip="View/download saved certificate"
+                                            aria-label="View/download saved certificate">
                                             <i class="fas fa-certificate"></i>
                                         </a>
-                                    <?php elseif ($certificateSnapshotExists): ?>
-                                        <span
-                                            class="crm-icon-btn is-disabled"
-                                            data-modern-tooltip="Certificate already viewed"
-                                            aria-label="Certificate already viewed">
-                                            <i class="fas fa-lock"></i>
-                                        </span>
                                     <?php else: ?>
                                         <button
                                             type="button"
@@ -253,6 +338,7 @@ try {
                                             data-registration-id="<?= (int) $row['id'] ?>"
                                             data-student-name="<?= h($studentName) ?>"
                                             data-registration-no="<?= h($row['registration_no'] ?: ('REG-' . $row['id'])) ?>"
+                                            data-mobile-label="Generate"
                                             data-modern-tooltip="Generate certificate"
                                             aria-label="Generate certificate">
                                             <i class="fas fa-certificate"></i>
@@ -274,14 +360,14 @@ try {
         <div class="crm-modal-header">
             <div>
                 <h3 id="courseCertificateModalTitle">Generate Course Certificate</h3>
-                <p class="handlink-modal-copy">Upload the final signature along with the performance remark. The saved certificate can be viewed only once.</p>
+                <p class="handlink-modal-copy">Upload the final signature along with the performance remark. The saved certificate becomes view-only and can be downloaded.</p>
             </div>
             <button type="button" class="crm-modal-close" data-close-modal aria-label="Close">
                 <i class="fas fa-times"></i>
             </button>
         </div>
 
-        <form method="POST" action="index.php?page=students/course_certificate" target="_blank" enctype="multipart/form-data" class="handlink-certificate-form">
+        <form method="POST" action="index.php?page=students/course_certificate" target="_blank" enctype="multipart/form-data" class="handlink-certificate-form" id="courseCertificateForm">
             <input type="hidden" name="csrf_token" value="<?= h($csrfToken) ?>">
             <input type="hidden" name="registration_id" id="certificateRegistrationId" value="">
 
@@ -320,7 +406,7 @@ try {
 
             <div class="crm-modal-footer">
                 <button type="button" class="crm-btn ghost" data-close-modal>Cancel</button>
-                <button type="submit" class="crm-btn primary">
+                <button type="submit" class="crm-btn primary" id="courseCertificateSubmit">
                     <i class="fas fa-certificate"></i> Generate & Save Certificate
                 </button>
             </div>
@@ -330,6 +416,16 @@ try {
 
 <style>
     .handlink-page {
+        --handlink-primary: var(--crm-primary);
+        --handlink-primary-dark: var(--crm-primary-dark);
+        --handlink-primary-light: var(--crm-primary-light);
+        --handlink-accent: var(--crm-accent);
+        --handlink-text: var(--crm-text);
+        --handlink-muted: var(--crm-text-muted);
+        --handlink-bg-light: var(--crm-bg-light);
+        --handlink-border: var(--crm-border);
+        --handlink-surface: var(--crm-surface);
+        --handlink-link: var(--crm-link);
         display: flex;
         flex-direction: column;
         gap: 16px;
@@ -350,24 +446,43 @@ try {
         gap: 10px;
         font-size: 28px;
         font-weight: 900;
-        color: #2b3547;
+        color: var(--handlink-text);
     }
 
     .handlink-header p {
         margin: 8px 0 0;
-        color: #69778a;
+        color: var(--handlink-muted);
         font-weight: 600;
     }
 
-    .handlink-stat span {
+    .handlink-page .card {
+        background: var(--handlink-surface);
+        border-color: var(--handlink-border);
+    }
+
+    .handlink-page .card-header {
+        background: var(--handlink-bg-light);
+        border-color: var(--handlink-border);
+        color: var(--handlink-text);
+    }
+
+    .handlink-stats {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    .handlink-stats span {
         display: inline-flex;
         align-items: center;
         gap: 8px;
         padding: 9px 14px;
         border-radius: 999px;
-        background: #fff5f9;
-        border: 1px solid #f6d6e4;
-        color: #c2185b;
+        background: var(--handlink-bg-light);
+        border: 1px solid var(--handlink-border);
+        color: var(--handlink-primary-dark);
         font-weight: 800;
     }
 
@@ -377,9 +492,58 @@ try {
 
     .handlink-filter-grid {
         display: grid;
-        grid-template-columns: minmax(260px, 1fr) minmax(180px, 220px) auto;
+        grid-template-columns: minmax(260px, 1fr) auto;
         gap: 14px;
         align-items: end;
+    }
+
+    .handlink-quick-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-top: 14px;
+    }
+
+    .handlink-branch-scope {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        color: var(--handlink-muted);
+        font-size: 13px;
+        font-weight: 700;
+    }
+
+    .handlink-quick-filters {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    .handlink-quick-filters a {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 34px;
+        padding: 7px 11px;
+        border: 1px solid var(--handlink-border);
+        border-radius: 8px;
+        background: var(--handlink-surface);
+        color: var(--handlink-muted);
+        font-size: 12px;
+        font-weight: 800;
+        text-decoration: none;
+        transition: .15s ease;
+    }
+
+    .handlink-quick-filters a:hover,
+    .handlink-quick-filters a.is-active {
+        background: var(--handlink-primary-light);
+        border-color: var(--handlink-primary);
+        color: var(--handlink-primary-dark);
     }
 
     .filter-field label {
@@ -389,7 +553,7 @@ try {
         margin-bottom: 8px;
         font-size: 13px;
         font-weight: 800;
-        color: #5f6b7a;
+        color: var(--handlink-muted);
         text-transform: uppercase;
         letter-spacing: .3px;
     }
@@ -399,17 +563,18 @@ try {
         width: 100%;
         min-height: 42px;
         padding: 10px 12px;
-        border: 1px solid #d7dde5;
+        border: 1px solid var(--handlink-border);
         border-radius: 10px;
-        background: #fff;
+        background: var(--handlink-surface);
+        color: var(--handlink-text);
         outline: none;
         transition: .15s ease;
     }
 
     .filter-field input:focus,
     .filter-field select:focus {
-        border-color: #e91e63;
-        box-shadow: 0 0 0 3px rgba(233, 30, 99, .14);
+        border-color: var(--handlink-primary);
+        box-shadow: 0 0 0 3px color-mix(in srgb, var(--handlink-primary) 14%, transparent);
     }
 
     .filter-actions {
@@ -417,6 +582,27 @@ try {
         align-items: center;
         gap: 8px;
         justify-content: flex-end;
+    }
+
+    .handlink-page .crm-icon-btn.is-primary,
+    .handlink-page .crm-icon-btn.is-success,
+    .handlink-page .crm-icon-btn.is-info {
+        background: var(--handlink-primary) !important;
+        border-color: var(--handlink-primary) !important;
+        color: var(--handlink-surface) !important;
+    }
+
+    .handlink-page .crm-icon-btn.is-muted {
+        background: var(--handlink-primary-light) !important;
+        border-color: var(--handlink-border) !important;
+        color: var(--handlink-primary-dark) !important;
+    }
+
+    .handlink-page .crm-icon-btn:hover,
+    .handlink-page .crm-icon-btn:focus-visible {
+        background: var(--handlink-primary-dark) !important;
+        border-color: var(--handlink-primary-dark) !important;
+        color: var(--handlink-surface) !important;
     }
 
     .handlink-table-head {
@@ -427,7 +613,7 @@ try {
         width: 100%;
         font-weight: 900;
         font-size: 16px;
-        color: #2b3547;
+        color: var(--handlink-text);
     }
 
     .handlink-table-wrap {
@@ -477,24 +663,25 @@ try {
         gap: 8px;
         margin: 0;
         font-weight: 700;
-        color: #334155;
+        color: var(--handlink-text);
         white-space: nowrap;
     }
 
     .dataTables_wrapper .dataTables_filter input,
     .dataTables_wrapper .dataTables_length select {
-        border: 1px solid #d7dde5;
+        border: 1px solid var(--handlink-border);
         border-radius: 10px;
         padding: 8px 12px;
-        background: #fff;
+        background: var(--handlink-surface);
+        color: var(--handlink-text);
         min-height: 38px;
         outline: none;
     }
 
     .dataTables_wrapper .dataTables_filter input:focus,
     .dataTables_wrapper .dataTables_length select:focus {
-        border-color: #e91e63;
-        box-shadow: 0 0 0 3px rgba(233, 30, 99, .14);
+        border-color: var(--handlink-primary);
+        box-shadow: 0 0 0 3px color-mix(in srgb, var(--handlink-primary) 14%, transparent);
     }
 
     .dataTables_wrapper .dataTables_filter input {
@@ -502,27 +689,27 @@ try {
     }
 
     .dataTables_wrapper .dataTables_paginate .paginate_button {
-        border: 1px solid #f1d6e3 !important;
-        background: #fff !important;
-        color: #475569 !important;
+        border: 1px solid var(--handlink-border) !important;
+        background: var(--handlink-surface) !important;
+        color: var(--handlink-muted) !important;
         border-radius: 8px !important;
         padding: 6px 10px !important;
     }
 
     .dataTables_wrapper .dataTables_paginate .paginate_button.current {
-        background: #e91e63 !important;
-        border-color: #e91e63 !important;
-        color: #fff !important;
+        background: var(--handlink-primary) !important;
+        border-color: var(--handlink-primary) !important;
+        color: var(--handlink-surface) !important;
     }
 
     .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
-        background: #fff5f9 !important;
-        border-color: #f1d6e3 !important;
-        color: #c2185b !important;
+        background: var(--handlink-primary-light) !important;
+        border-color: var(--handlink-primary) !important;
+        color: var(--handlink-primary-dark) !important;
     }
 
     .dataTables_wrapper .dataTables_info {
-        color: #64748b;
+        color: var(--handlink-muted);
         font-weight: 600;
     }
 
@@ -535,7 +722,7 @@ try {
     .crm-table.handlink-table th,
     .crm-table.handlink-table td {
         padding: 12px 12px;
-        border-bottom: 1px solid #f0f0f0;
+        border-bottom: 1px solid var(--handlink-border);
         vertical-align: middle;
         font-size: 13px;
     }
@@ -552,24 +739,39 @@ try {
         text-transform: uppercase;
         letter-spacing: .35px;
         font-weight: 800;
-        color: #2b3547;
-        background: #fafbfd;
+        color: var(--handlink-text);
+        background: var(--handlink-bg-light);
         white-space: nowrap;
     }
 
     .crm-table.handlink-table tbody tr:hover {
-        background: #fff8fb;
+        background: var(--handlink-bg-light);
+    }
+
+    .handlink-empty-state {
+        padding: 20px 12px;
+        color: var(--handlink-muted);
+        font-weight: 700;
+        text-align: center;
+    }
+
+    .handlink-empty-state a {
+        display: inline-flex;
+        margin-top: 8px;
+        color: var(--handlink-link);
+        font-weight: 800;
+        text-decoration: none;
     }
 
     .handlink-primary {
         font-weight: 800;
-        color: #182235;
+        color: var(--handlink-text);
     }
 
     .handlink-sub {
         margin-top: 3px;
         font-size: 12px;
-        color: #7a8698;
+        color: var(--handlink-muted);
     }
 
     .status-pill {
@@ -585,33 +787,33 @@ try {
     }
 
     .status-success {
-        background: #ebfff3;
-        color: #15803d;
-        border-color: #b7f0cc;
+        background: var(--handlink-primary-light);
+        color: var(--handlink-primary-dark);
+        border-color: var(--handlink-primary);
     }
 
     .status-warning {
-        background: #fff8e8;
-        color: #b26a00;
-        border-color: #f3ddb0;
+        background: color-mix(in srgb, var(--handlink-primary-light) 80%, var(--handlink-surface));
+        color: var(--handlink-primary-dark);
+        border-color: var(--handlink-border);
     }
 
     .status-muted {
-        background: #f5f7fb;
-        color: #64748b;
-        border-color: #d9e1ea;
+        background: var(--handlink-surface);
+        color: var(--handlink-muted);
+        border-color: var(--handlink-border);
     }
 
     .status-hr {
-        background: #eef4ff;
-        color: #2459c3;
-        border-color: #cad8ff;
+        background: var(--handlink-bg-light);
+        color: var(--handlink-primary-dark);
+        border-color: var(--handlink-border);
     }
 
     .crm-icon-btn.is-disabled {
-        background: #f1f5f9;
-        border-color: #d9e1ea;
-        color: #94a3b8;
+        background: color-mix(in srgb, var(--handlink-surface) 72%, var(--handlink-bg-light));
+        border-color: var(--handlink-border);
+        color: var(--handlink-muted);
         cursor: not-allowed;
         box-shadow: none;
         transform: none;
@@ -634,7 +836,7 @@ try {
     .crm-modal-backdrop {
         position: absolute;
         inset: 0;
-        background: rgba(15, 23, 42, .42);
+        background: color-mix(in srgb, var(--handlink-text) 42%, transparent);
         backdrop-filter: blur(2px);
     }
 
@@ -642,10 +844,10 @@ try {
         position: relative;
         z-index: 1;
         width: min(100%, 560px);
-        background: linear-gradient(180deg, #fffefe 0%, #fff7fb 100%);
-        border: 1px solid #f2d6e3;
+        background: linear-gradient(180deg, var(--handlink-surface) 0%, var(--handlink-bg-light) 100%);
+        border: 1px solid var(--handlink-border);
         border-radius: 22px;
-        box-shadow: 0 30px 60px rgba(15, 23, 42, .24);
+        box-shadow: 0 30px 60px color-mix(in srgb, var(--handlink-text) 24%, transparent);
         overflow: hidden;
     }
 
@@ -655,23 +857,23 @@ try {
         justify-content: space-between;
         gap: 16px;
         padding: 20px 22px 14px;
-        border-bottom: 1px solid #f4e1ea;
+        border-bottom: 1px solid var(--handlink-border);
     }
 
     .crm-modal-header h3 {
         margin: 0;
         font-size: 22px;
         font-weight: 900;
-        color: #243046;
+        color: var(--handlink-text);
     }
 
     .crm-modal-close {
         width: 38px;
         height: 38px;
-        border: 1px solid #f0d7e3;
+        border: 1px solid var(--handlink-border);
         border-radius: 12px;
-        background: #fff;
-        color: #64748b;
+        background: var(--handlink-surface);
+        color: var(--handlink-muted);
         display: inline-flex;
         align-items: center;
         justify-content: center;
@@ -680,9 +882,9 @@ try {
     }
 
     .crm-modal-close:hover {
-        background: #fff2f7;
-        color: #c2185b;
-        border-color: #efc5d8;
+        background: var(--handlink-primary-light);
+        color: var(--handlink-primary-dark);
+        border-color: var(--handlink-primary);
     }
 
     .crm-modal-body {
@@ -704,7 +906,7 @@ try {
 
     .handlink-modal-copy {
         margin: 6px 0 0;
-        color: #7a8698;
+        color: var(--handlink-muted);
         font-size: 13px;
         font-weight: 600;
     }
@@ -716,8 +918,8 @@ try {
     .handlink-modal-summary {
         padding: 12px 14px;
         border-radius: 14px;
-        background: #fff7fb;
-        border: 1px solid #f6d7e4;
+        background: var(--handlink-bg-light);
+        border: 1px solid var(--handlink-border);
         margin-bottom: 14px;
     }
 
@@ -726,12 +928,12 @@ try {
         font-weight: 800;
         text-transform: uppercase;
         letter-spacing: .35px;
-        color: #8b5e72;
+        color: var(--handlink-primary-dark);
     }
 
     .handlink-modal-value {
         margin-top: 4px;
-        color: #1f2937;
+        color: var(--handlink-text);
         font-size: 15px;
         font-weight: 800;
     }
@@ -739,7 +941,7 @@ try {
     .handlink-upload-note {
         margin-top: 8px;
         font-size: 12px;
-        color: #7a8698;
+        color: var(--handlink-muted);
         font-weight: 600;
     }
 
@@ -761,18 +963,33 @@ try {
     }
 
     .crm-btn.primary {
-        background: #e91e63;
-        color: #fff;
+        background: var(--handlink-primary);
+        color: var(--handlink-surface);
+    }
+
+    .crm-btn.primary:disabled {
+        background: color-mix(in srgb, var(--handlink-primary) 45%, var(--handlink-surface));
+        cursor: wait;
     }
 
     .crm-btn.ghost {
-        background: #f1f5f9;
-        color: #475569;
+        background: var(--handlink-primary-light);
+        color: var(--handlink-primary-dark);
     }
 
     @media (max-width: 900px) {
         .handlink-filter-grid {
             grid-template-columns: 1fr;
+        }
+
+        .handlink-quick-row,
+        .handlink-quick-filters {
+            align-items: stretch;
+            justify-content: flex-start;
+        }
+
+        .handlink-quick-filters a {
+            flex: 1 1 auto;
         }
 
         .filter-actions {
@@ -909,6 +1126,10 @@ document.addEventListener('DOMContentLoaded', function () {
             scrollX: false,
             responsive: false,
             searchPlaceholder: 'Search course students...',
+            language: {
+                emptyTable: '<div class="handlink-empty-state">No course students found for these filters.<br><a href="index.php?page=students/course">Reset filters</a></div>',
+                zeroRecords: '<div class="handlink-empty-state">No course students found for this search.<br><a href="index.php?page=students/course">Reset filters</a></div>'
+            },
             columnDefs: [
                 { orderable: false, targets: [6] }
             ],
@@ -936,8 +1157,56 @@ document.addEventListener('DOMContentLoaded', function () {
     const studentNameNode = document.getElementById('certificateStudentName');
     const registrationNoNode = document.getElementById('certificateRegistrationNo');
     const remarksInput = document.getElementById('certificateRemarks');
+    const signatureInput = document.getElementById('certificateSignature');
+    const certificateForm = document.getElementById('courseCertificateForm');
+    const submitButton = document.getElementById('courseCertificateSubmit');
+    let lastFocusedButton = null;
+
+    function setSubmitLoading(isLoading) {
+        if (!submitButton) {
+            return;
+        }
+
+        submitButton.disabled = isLoading;
+        submitButton.innerHTML = isLoading
+            ? '<i class="fas fa-spinner fa-spin"></i> Generating...'
+            : '<i class="fas fa-certificate"></i> Generate & Save Certificate';
+    }
+
+    function validateSignatureFile() {
+        if (!signatureInput) {
+            return true;
+        }
+
+        const file = signatureInput.files && signatureInput.files[0] ? signatureInput.files[0] : null;
+        if (!file) {
+            alert('Please choose a signature image.');
+            signatureInput.focus();
+            return false;
+        }
+
+        const allowedTypes = ['image/png', 'image/jpeg'];
+        const allowedExtensions = ['png', 'jpg', 'jpeg'];
+        const extension = (file.name.split('.').pop() || '').toLowerCase();
+        if (!allowedTypes.includes(file.type) && !allowedExtensions.includes(extension)) {
+            alert('Signature image must be JPG or PNG.');
+            signatureInput.value = '';
+            signatureInput.focus();
+            return false;
+        }
+
+        if (file.size > 2 * 1024 * 1024) {
+            alert('Signature image must be under 2 MB.');
+            signatureInput.value = '';
+            signatureInput.focus();
+            return false;
+        }
+
+        return true;
+    }
 
     function openModal(button) {
+        lastFocusedButton = button;
         registrationIdInput.value = button.getAttribute('data-registration-id') || '';
         studentNameNode.textContent = button.getAttribute('data-student-name') || '-';
         registrationNoNode.textContent = button.getAttribute('data-registration-no') || '-';
@@ -946,11 +1215,19 @@ document.addEventListener('DOMContentLoaded', function () {
         }
         modal.classList.add('show');
         modal.setAttribute('aria-hidden', 'false');
+        window.setTimeout(function () {
+            remarksInput.focus();
+            remarksInput.select();
+        }, 50);
     }
 
     function closeModal() {
         modal.classList.remove('show');
         modal.setAttribute('aria-hidden', 'true');
+        setSubmitLoading(false);
+        if (lastFocusedButton) {
+            lastFocusedButton.focus();
+        }
     }
 
     document.querySelectorAll('.js-open-certificate-modal').forEach(function (button) {
@@ -963,6 +1240,24 @@ document.addEventListener('DOMContentLoaded', function () {
         node.addEventListener('click', closeModal);
     });
 
+    if (signatureInput) {
+        signatureInput.addEventListener('change', validateSignatureFile);
+    }
+
+    if (certificateForm) {
+        certificateForm.addEventListener('submit', function (event) {
+            if (!validateSignatureFile()) {
+                event.preventDefault();
+                return;
+            }
+
+            setSubmitLoading(true);
+            window.setTimeout(function () {
+                setSubmitLoading(false);
+            }, 3000);
+        });
+    }
+
     document.addEventListener('keydown', function (event) {
         if (event.key === 'Escape' && modal.classList.contains('show')) {
             closeModal();
@@ -971,5 +1266,4 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 </script>
-
 

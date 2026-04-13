@@ -1,12 +1,8 @@
-﻿<?php
+<?php
 if (!defined('APP_NAME')) {
     die("Unauthorized access.");
 }
 
-if (!headers_sent()) {
-    header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
-    header('Pragma: no-cache');
-}
 
 if (($_SESSION['role_name'] ?? '') !== 'HR') {
     http_response_code(403);
@@ -69,7 +65,6 @@ if ($id <= 0) {
 }
 
 $existingSnapshot = crmLoadCourseCertificateSnapshot($id);
-$existingSnapshotViewConsumed = crmCourseCertificateSnapshotViewConsumed($id);
 $submittedRemark = '';
 $submittedHrName = '';
 $uploadedSignaturePath = '';
@@ -147,14 +142,7 @@ if (!$student) {
 
 if ($requestMethod === 'POST' && $existingSnapshot !== null) {
     echo 'Certificate has already been generated and cannot be generated again.';
-    if (!$existingSnapshotViewConsumed) {
-        echo '<br><a href="index.php?page=students/course_certificate&id=' . (int) $id . '">View saved certificate once</a>';
-    }
-    return;
-}
-
-if ($requestMethod === 'GET' && $existingSnapshotViewConsumed) {
-    echo 'This certificate has already been viewed once. Further viewing is not allowed.';
+    echo '<br><a href="index.php?page=students/course_certificate&id=' . (int) $id . '">View saved certificate</a>';
     return;
 }
 
@@ -284,7 +272,7 @@ if ($snapshot === null) {
         <strong>Program:</strong> ' . h((string) ($snapshot['program_name_raw'] ?? '')) . '<br>
         <strong>Issued At:</strong> ' . h((string) ($snapshot['issued_at'] ?? '')) . '<br>
         <strong>Certificate Link:</strong> <a href="' . h($certificateUrl) . '">' . h($certificateUrl) . '</a></p>
-        <p>This saved certificate link can be viewed only once.</p>
+        <p>This saved certificate can be viewed and downloaded from the HR course students list.</p>
         <p>Regards,<br>' . h(APP_NAME) . '</p>';
     $textBody = "Dear Student and Parent,\n\n"
         . "The course completion certificate has been generated successfully.\n"
@@ -293,7 +281,7 @@ if ($snapshot === null) {
         . "Program: " . (string) ($snapshot['program_name_raw'] ?? '') . "\n"
         . "Issued At: " . (string) ($snapshot['issued_at'] ?? '') . "\n"
         . "Certificate Link: {$certificateUrl}\n\n"
-        . "This saved certificate link can be viewed only once.\n\n"
+        . "This saved certificate can be viewed and downloaded from the HR course students list.\n\n"
         . "Regards,\n" . APP_NAME;
     crmSendEmail($recipients, 'Course certificate generated for ' . $studentDisplayName, $htmlBody, $textBody);
 
@@ -304,49 +292,49 @@ if ($snapshot === null) {
         <meta charset="utf-8">
         <title>Course Certificate Saved</title>
         <style>
-            body {
-                margin: 0;
-                min-height: 100vh;
-                display: grid;
-                place-items: center;
-                background: #f6f7fb;
-                color: #1f2937;
-                font-family: Arial, sans-serif;
-            }
-            .message {
-                width: min(520px, calc(100% - 32px));
-                border: 1px solid #d7dee8;
-                border-radius: 8px;
-                background: #fff;
-                padding: 24px;
-                box-shadow: 0 14px 32px rgba(15, 23, 42, 0.12);
-            }
-            h1 {
-                margin: 0 0 10px;
-                font-size: 24px;
-            }
-            p {
-                line-height: 1.5;
-            }
-            a {
-                display: inline-flex;
-                align-items: center;
-                justify-content: center;
-                min-height: 40px;
-                border-radius: 8px;
-                background: #0f766e;
-                color: #fff;
-                padding: 0 16px;
-                font-weight: 700;
-                text-decoration: none;
-            }
-        </style>
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: grid;
+            place-items: center;
+            background: #f6f7fb;
+            color: #1f2937;
+            font-family: Arial, sans-serif;
+        }
+        .message {
+            width: min(520px, calc(100% - 32px));
+            border: 1px solid #d7dee8;
+            border-radius: 8px;
+            background: #fff;
+            padding: 24px;
+            box-shadow: 0 14px 32px rgba(15, 23, 42, 0.12);
+        }
+        h1 {
+            margin: 0 0 10px;
+            font-size: 17px;
+        }
+        p {
+            line-height: 1.5;
+        }
+        a {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 40px;
+            border-radius: 8px;
+            background: #0f766e;
+            color: #fff;
+            padding: 0 16px;
+            font-weight: 700;
+            text-decoration: none;
+        }
+    </style>
     </head>
     <body>
         <div class="message">
             <h1>Certificate saved</h1>
-            <p>The course certificate has been generated and saved. It can be viewed only once from the saved certificate link.</p>
-            <a href="index.php?page=students/course_certificate&id=<?= (int) $id ?>">View Certificate Once</a>
+            <p>The course certificate has been generated and saved. It is now view-only and can be downloaded from the saved certificate page.</p>
+            <a href="index.php?page=students/course_certificate&id=<?= (int) $id ?>">View Saved Certificate</a>
         </div>
     </body>
     </html>
@@ -354,9 +342,6 @@ if ($snapshot === null) {
     return;
 }
 
-if ($requestMethod === 'GET') {
-    crmMarkCourseCertificateSnapshotViewed($id);
-}
 
 $issuedAt = (string) ($snapshot['issued_at'] ?? '');
 $startDateText = (string) ($snapshot['start_date_text'] ?? '');
@@ -367,67 +352,537 @@ $certificateNo = (string) ($snapshot['certificate_no'] ?? '');
 $hrName = (string) ($snapshot['hr_name'] ?? 'Human Resource');
 $performanceRemark = (string) ($snapshot['performance_remark'] ?? 'Satisfactory');
 $uploadedSignaturePath = (string) ($snapshot['signature_path'] ?? '');
+$isDownloadRequest = $requestMethod === 'GET' && (string) ($_GET['download'] ?? '') === '1';
+if ($isDownloadRequest && !headers_sent()) {
+    $downloadFileName = 'course_certificate_' . preg_replace('/[^A-Za-z0-9_-]+/', '_', $certificateNo !== '' ? $certificateNo : (string) $id) . '.html';
+    header('Content-Type: text/html; charset=UTF-8');
+    header('Content-Disposition: attachment; filename="' . $downloadFileName . '"');
+}
 ?>
 <!doctype html>
 <html lang="en">
 <head>
     <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <base href="<?= h(BASE_URL) ?>">
     <title>Course Completion Certificate</title>
-    
+    <style>
+        :root {
+            color-scheme: light;
+        }
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            margin: 0;
+            min-height: 100vh;
+            background: #f9edf8;
+            font-family: Georgia, 'Times New Roman', serif;
+            color: #111;
+        }
+        .toolbar {
+            width: min(1540px, calc(100% - 32px));
+            margin: 20px auto 0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+        }
+        .toolbar a,
+        .toolbar button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px 16px;
+            border-radius: 8px;
+            border: none;
+            background: #c81d75;
+            color: #fff;
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        .toolbar button:hover,
+        .toolbar a:hover {
+            background: #9f145d;
+        }
+        .certificate-shell {
+            width: 100%;
+            padding: 24px 0 42px;
+            display: flex;
+            justify-content: center;
+        }
+        .certificate {
+            width: min(1540px, calc(100% - 40px));
+            aspect-ratio: 1.414 / 1;
+            border: 30px solid #d30079;
+            background: #fff;
+            padding: 34px 46px 22px;
+            box-shadow: 0 26px 80px rgba(0, 0, 0, 0.12);
+            position: relative;
+            overflow: hidden;
+        }
+        .certificate::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: url('assets/images/logo.png') center 54% / 520px auto no-repeat;
+            opacity: 0.045;
+            pointer-events: none;
+        }
+        .certificate-content {
+            position: relative;
+            z-index: 1;
+            height: 100%;
+            display: grid;
+            grid-template-rows: auto auto 1fr;
+        }
+        .certificate-header {
+            display: flex;
+            justify-content: space-between;
+            gap: 38px;
+            align-items: flex-start;
+        }
+        .certificate-brand {
+            display: flex;
+            gap: 22px;
+            align-items: center;
+            min-width: 0;
+        }
+        .brand-logo {
+            width: 210px;
+            max-width: 24vw;
+            height: auto;
+            display: block;
+            flex: 0 0 auto;
+        }
+        .brand-text {
+            display: grid;
+            gap: 8px;
+            min-width: 0;
+        }
+        .brand-name {
+            font-family: Georgia, 'Times New Roman', serif;
+            font-size: clamp(26px, 2.5vw, 42px);
+            line-height: 1;
+            font-weight: 800;
+            color: #111;
+            white-space: nowrap;
+        }
+        .brand-tagline {
+            font-size: clamp(18px, 1.6vw, 27px);
+            line-height: 1;
+            font-weight: 700;
+            color: #d30079;
+            font-style: italic;
+            text-align: center;
+        }
+        .certificate-meta {
+            text-align: right;
+            display: grid;
+            gap: 8px;
+            justify-items: end;
+            flex: 0 1 380px;
+            max-width: 380px;
+            min-width: 0;
+        }
+        .certifications {
+            width: 285px;
+            max-width: 24vw;
+            height: auto;
+            display: block;
+        }
+        .certificate-number {
+            max-width: 100%;
+            font-size: clamp(16px, 1.25vw, 22px);
+            line-height: 1.15;
+            color: #111;
+            font-weight: 700;
+            overflow-wrap: anywhere;
+        }
+        .hero {
+            display: flex;
+            justify-content: center;
+            margin: 6px 0 14px;
+        }
+        .emblem-image {
+            width: 400px;
+            max-width: 35vw;
+            height: auto;
+            display: block;
+        }
+        .certificate-title {
+            display: none;
+        }
+        .certificate-main {
+            min-height: 0;
+            display: grid;
+            grid-template-rows: auto auto 1fr auto;
+            padding: 0;
+        }
+        .certificate-description {
+            margin: 0;
+        }
+        .certificate-main p {
+            margin: 12px 0 0;
+            font-size: clamp(18px, 1.6vw, 27px);
+            line-height: 1.65;
+            color: #111;
+            word-spacing: 0.12em;
+        }
+        .certificate-main .student-line {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            align-items: end;
+            gap: 30px;
+            margin-top: 6px;
+            font-size: clamp(19px, 1.75vw, 29px);
+            line-height: 1.2;
+            font-weight: 500;
+        }
+        .certificate-main .student-line span:first-child {
+            white-space: nowrap;
+        }
+        .student-name {
+            display: block;
+            border-bottom: 3px solid #111;
+            padding: 0 12px 2px;
+            text-align: center;
+            font-size: clamp(22px, 2vw, 35px);
+            line-height: 1;
+            font-weight: 900;
+            color: #111;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+        .program-name {
+            color: #d30079;
+            font-weight: 900;
+            white-space: nowrap;
+        }
+        .remark {
+            color: #111;
+            font-weight: 900;
+            white-space: nowrap;
+        }
+        .certificate-bottom {
+            align-self: end;
+            display: flex;
+            justify-content: space-between;
+            gap: 48px;
+            align-items: flex-end;
+            margin-top: 20px;
+        }
+        .portrait-image {
+            width: 220px;
+            max-width: 22vw;
+            height: auto;
+            object-fit: contain;
+            display: block;
+        }
+        .signature-block {
+            display: grid;
+            gap: 8px;
+            width: min(420px, 34vw);
+            min-width: 0;
+            text-align: center;
+            justify-items: center;
+        }
+        .signature-image {
+            width: 200px;
+            max-height: 90px;
+            display: block;
+            object-fit: contain;
+        }
+        .signature-name {
+            font-size: clamp(19px, 1.6vw, 27px);
+            line-height: 1.1;
+            font-weight: 800;
+            color: #111;
+        }
+        .signature-role,
+        .signature-company {
+            max-width: 100%;
+            font-size: clamp(16px, 1.25vw, 22px);
+            line-height: 1.15;
+            color: #111;
+            overflow-wrap: normal;
+        }
+        .website {
+            align-self: end;
+            text-align: center;
+            margin-top: 6px;
+            font-size: clamp(17px, 1.4vw, 25px);
+            line-height: 1;
+            font-weight: 800;
+            color: #d30079;
+        }
+        @media (max-width: 900px) {
+            .certificate {
+                padding: 20px;
+            }
+            .certificate-header,
+            .certificate-bottom {
+                margin-top: 3mm;
+                gap: 8mm;
+            }
+            .certificate-brand {
+                gap: 5mm;
+                flex: 1 1 auto;
+                min-width: 0;
+            }
+            .certificate-meta {
+            text-align: right;
+            display: grid;
+            gap: 8px;
+            justify-items: end;
+            flex: 0 1 380px;
+            max-width: 380px;
+            min-width: 0;
+        }
+            .certificate-main .student-line {
+                grid-template-columns: 1fr;
+                text-align: center;
+            }
+        }
+        @page {
+            size: A4 landscape;
+            margin: 0;
+        }
+        @media print {
+            html,
+            body {
+                width: 297mm;
+                height: 210mm;
+                min-height: 0;
+                margin: 0;
+                padding: 0;
+                background: #fff;
+                overflow: hidden;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            .toolbar {
+                display: none !important;
+            }
+            .certificate-shell {
+                width: 297mm;
+                height: 210mm;
+                padding: 0;
+                display: grid;
+                place-items: stretch;
+                overflow: hidden;
+            }
+            .certificate {
+                width: 297mm;
+                height: 210mm;
+                aspect-ratio: auto;
+                padding: 6mm 9mm 5mm;
+                border-width: 4mm;
+                box-shadow: none;
+                overflow: hidden;
+                break-inside: avoid;
+                page-break-inside: avoid;
+            }
+            .certificate::before {
+                background-size: 105mm auto;
+                opacity: 0.04;
+            }
+            .certificate-content {
+                height: 100%;
+                display: flex;
+                flex-direction: column;
+            }
+            .certificate-header {
+                gap: 8mm;
+            }
+            .certificate-brand {
+                gap: 5mm;
+                flex: 1 1 auto;
+                min-width: 0;
+            }
+            .brand-logo {
+                width: 35mm;
+                max-width: none;
+            }
+            .brand-name {
+                font-size: 24px;
+                line-height: 1;
+            }
+            .brand-tagline {
+                font-size: 15px;
+            }
+            .certificate-meta {
+                flex-basis: 54mm;
+                max-width: 54mm;
+            }
+            .certifications {
+                width: 41mm;
+                max-width: 100%;
+            }
+            .certificate-number {
+                font-size: 10px;
+                line-height: 1.15;
+                text-align: right;
+            }
+            .emblem-image {
+                width: 65mm;
+                max-width: none;
+            }
+            .hero {
+                margin: 1mm 0 2mm;
+            }
+            .certificate-main p {
+                margin-top: 1.5mm;
+                font-size: 25px;
+                line-height: 1.2;
+            }
+            .certificate-main {
+                flex: 1 1 auto;
+                display: flex;
+                flex-direction: column;
+                min-height: 0;
+            }
+            .certificate-main .student-line {
+                display: flex;
+                flex-wrap: nowrap;
+                align-items: flex-end;
+                justify-content: flex-start;
+                gap: 3mm;
+                margin-top: 0;
+                font-size: 25px;
+                text-align: left;
+            }
+            .certificate-main .student-line span:first-child {
+                flex: 0 0 auto;
+                white-space: nowrap;
+            }
+            .student-name {
+                flex: 1 1 auto;
+                min-width: 0;
+                font-size: 35px;
+                border-bottom-width: 2px;
+            }
+            .certificate-bottom {
+                align-self: start;
+                width: 100%;
+                margin-top: 50px;
+                gap: 8mm;
+            }
+            .portrait-image {
+                width: 41mm;
+                max-width: none;
+            }
+            .signature-block {
+                width: 56mm;
+                min-width: 0;
+                gap: 2mm;
+            }
+            .signature-image {
+                width: 34mm;
+                max-height: 13mm;
+            }
+            .signature-name {
+                font-size: 16px;
+            }
+            .signature-role,
+            .signature-company {
+                max-width: 100%;
+                font-size: 12px;
+                line-height: 1.15;
+                overflow-wrap: normal;
+            }
+            .website {
+                position: absolute;
+                left: 0;
+                right: 0;
+                bottom: 1.5mm;
+                width: auto;
+                margin: 0;
+                text-align: center;
+                font-size: 17px;
+            }
+        }
+    </style>
 </head>
 <body>
+    <?php if (!$isDownloadRequest): ?>
     <div class="toolbar">
         <a href="index.php?page=students/course">Back to Course Students</a>
+        <a href="index.php?page=students/course_certificate&id=<?= (int) $id ?>&download=1">Download Certificate</a>
         <button type="button" onclick="window.print()">Print Certificate</button>
     </div>
+    <?php endif; ?>
 
     <div class="certificate-shell">
         <div class="certificate">
-            <div class="topbar">
-                <div class="brand-block">
-                    <img src="assets/images/logo.png" alt="ATS Logo" class="brand-logo">
-                    <div class="brand-copy">
-                        <div class="brand-name">ACCENT TECHNO SOFT</div>
-                        <div class="brand-tagline">Quality Matters...</div>
+            <div class="certificate-content">
+                <div class="certificate-header">
+                    <div class="certificate-brand">
+                        <img src="assets/images/logo.png" alt="ATS Logo" class="brand-logo">
+                        <div class="brand-text">
+                            <div class="brand-name">ACCENT TECHNO SOFT</div>
+                            <div class="brand-tagline">Quality Matters...</div>
+                        </div>
+                    </div>
+                    <div class="certificate-meta">
+                        <img src="assets/images/certificate elements/credentials.png" alt="Certifications" class="certifications">
+                        <div class="certificate-number">Certification No: <?= h($certificateNo) ?></div>
                     </div>
                 </div>
-                <div class="accreditation">
-                    <img src="assets/images/certificate elements/credentials.png" alt="ISO, KAB and IAF Credentials" class="credentials-image">
+
+                <div class="hero">
+                    <img src="assets/images/certificate elements/certificate_emblem.png" alt="Certificate Emblem" class="emblem-image">
                 </div>
-            </div>
 
-            <div class="hero">
-                <img src="assets/images/certificate elements/certificate_emblem.png" alt="Certificate Emblem" class="emblem-image">
-            </div>
+                <div class="certificate-title">CERTIFICATE</div>
 
-            <div class="content">
-                <p class="certificate-intro">This is to certify that Mr.</p>
-                <div class="student-name-wrap">
-                    <span class="student-inline"><?= h($studentName) ?></span>
-                </div>
-                <p class="certificate-body">
-                    has successfully completed <span class="highlight">"<?= h($programName) ?>"</span> Technology Training and gained Hands-on
-                    experience during the period from <?= h($startDateText) ?> to <?= h($endDateText) ?> and has achieved
-                    <span class="highlight-remark"><?= h($performanceRemark) ?></span> as remark for his performance in the exams conducted by Accent Techno Soft (ATS).
-                </p>
-
-                <div class="footer-area">
-                    <img src="assets/images/certificate elements/abdul_kalam.png" alt="Dr. A.P.J. Abdul Kalam Illustration" class="portrait-image">
-                    <div class="signatory">
-                        <?php if ($uploadedSignaturePath !== ''): ?>
-                            <img src="<?= h($uploadedSignaturePath) ?>" alt="Authority Signature" class="signature-image">
-                        <?php endif; ?>
-                        <div class="signatory-name"><?= h($hrName) ?></div>
-                        <div class="signatory-role">Human Resource</div>
-                        <div class="signatory-org">Accent Techno Soft (ATS)</div>
+                <div class="certificate-main">
+                    <div class="certificate-description">
+                        <div class="certificate-line student-line">
+                            <span>This is to certify that Mr.</span>
+                            <span class="student-name"><?= h($studentName) ?></span>
+                        </div>
                     </div>
+                    <p class="certificate-description">
+                        has successfully completed <span class="program-name">"<?= h($programName) ?>"</span> Technology Training and gained Hands-on experience during the period from <?= h($startDateText) ?> to <?= h($endDateText) ?> and has achieved <span class="remark"><?= h($performanceRemark) ?></span> as remark for his performance in the exams conducted by Accent Techno Soft (ATS).
+                    </p>
+
+                    <div class="certificate-bottom">
+                        <img src="assets/images/certificate elements/abdul_kalam.png" alt="Illustration" class="portrait-image">
+                        <div class="signature-block">
+                            <?php if ($uploadedSignaturePath !== ''): ?>
+                                <img src="<?= h($uploadedSignaturePath) ?>" alt="Authority Signature" class="signature-image">
+                            <?php endif; ?>
+                            <div class="signature-name"><?= h($hrName) ?></div>
+                            <div class="signature-role">Human Resource</div>
+                            <div class="signature-company">Accent Techno Soft (ATS)</div>
+                        </div>
+                    </div>
+
+                    <div class="website">www.accenttechnosoft.com</div>
                 </div>
             </div>
-
-            <div class="website">www.accenttechnosoft.com</div>
         </div>
     </div>
 </body>
 </html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
