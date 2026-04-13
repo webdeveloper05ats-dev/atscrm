@@ -7,6 +7,15 @@ if (!defined('APP_NAME')) {
     die("Unauthorized access.");
 }
 
+if (!function_exists('crmAppendQueryParam')) {
+    function crmAppendQueryParam($url, $key, $value)
+    {
+        $url = (string)$url;
+        $joiner = (strpos($url, '?') !== false) ? '&' : '?';
+        return $url . $joiner . rawurlencode((string)$key) . '=' . rawurlencode((string)$value);
+    }
+}
+
 // Protect all pages except login
 if (!isset($noAuth)) {
     requireLogin();
@@ -58,10 +67,67 @@ $hideTopbar = (isset($hideSidebar) && $hideSidebar === true);
 // Target notifications (phase 1 for bell system)
 $topNotifications = [];
 if (!$hideTopbar && isset($pdo) && $pdo instanceof PDO && !empty($_SESSION['user_id']) && !empty($_SESSION['branch_id'])) {
+    $sessionUserId = (int)($_SESSION['user_id'] ?? 0);
+    $sessionBranchId = (int)($_SESSION['branch_id'] ?? 0);
+    $roleNameLower = strtolower(trim((string)($_SESSION['role_name'] ?? '')));
+
+    // Mark a persistent notification as read.
+    if (isset($_GET['notif_read']) && ctype_digit((string)$_GET['notif_read'])) {
+        $readId = (int)$_GET['notif_read'];
+        if ($readId > 0) {
+            try {
+                $stmtRead = $pdo->prepare("
+                    UPDATE user_notifications
+                    SET is_read = 1, read_at = NOW()
+                    WHERE id = :id
+                      AND user_id = :user_id
+                      AND is_read = 0
+                    LIMIT 1
+                ");
+                $stmtRead->execute([
+                    ':id' => $readId,
+                    ':user_id' => $sessionUserId,
+                ]);
+            } catch (Throwable $e) {
+                // Ignore read failures to keep navigation safe.
+            }
+
+            $requestUri = $_SERVER['REQUEST_URI'] ?? '';
+            $parsed = parse_url($requestUri);
+            $path = $parsed['path'] ?? (BASE_URL . 'index.php');
+            $queryParams = [];
+            if (!empty($parsed['query'])) {
+                parse_str($parsed['query'], $queryParams);
+            }
+            unset($queryParams['notif_read']);
+            $newQuery = http_build_query($queryParams);
+            $redirectTo = $path . ($newQuery !== '' ? ('?' . $newQuery) : '');
+            header('Location: ' . $redirectTo);
+            exit;
+        }
+    }
+
     try {
-        $sessionUserId = (int)($_SESSION['user_id'] ?? 0);
-        $sessionBranchId = (int)($_SESSION['branch_id'] ?? 0);
-        $roleNameLower = strtolower(trim((string)($_SESSION['role_name'] ?? '')));
+        // Persistent notifications table (extendable for leads/enquiries later).
+        $pdo->exec("
+            CREATE TABLE IF NOT EXISTS user_notifications (
+                id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+                user_id BIGINT UNSIGNED NOT NULL,
+                notif_key VARCHAR(191) NOT NULL,
+                type VARCHAR(80) NOT NULL,
+                priority VARCHAR(20) NOT NULL DEFAULT 'medium',
+                title VARCHAR(191) NOT NULL,
+                message TEXT NOT NULL,
+                link VARCHAR(255) NULL,
+                is_read TINYINT(1) NOT NULL DEFAULT 0,
+                created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                read_at DATETIME NULL,
+                expires_at DATETIME NULL,
+                UNIQUE KEY uniq_user_notif (user_id, notif_key),
+                KEY idx_user_read_created (user_id, is_read, created_at)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        ");
+
         // Admin reminder:
         // - day 1 to 26: check current month coverage
         // - day 27 onward: check next month coverage
@@ -94,6 +160,7 @@ if (!$hideTopbar && isset($pdo) && $pdo instanceof PDO && !empty($_SESSION['user
                    AND mt.status = 'active'
                 WHERE r.status = 1
                   AND r.is_target_applicable = 1
+                  AND LOWER(COALESCE(r.role_name, '')) IN ('front office', 'hr', 'marketing')
                 GROUP BY r.id, r.role_name
                 ORDER BY r.role_name ASC
             ");
@@ -129,9 +196,9 @@ if (!$hideTopbar && isset($pdo) && $pdo instanceof PDO && !empty($_SESSION['user
             }
         }
 
-        // Personal target progress for target-applicable users (includes HR as a user view).
+        // Target-applicable user checks (includes HR personal stream).
         $stmtUserRole = $pdo->prepare("
-            SELECT r.is_target_applicable
+            SELECT r.is_target_applicable, LOWER(COALESCE(r.role_name, '')) AS role_name_lc
             FROM users u
             INNER JOIN roles r ON r.id = u.role_id
             WHERE u.id = :user_id
@@ -143,20 +210,23 @@ if (!$hideTopbar && isset($pdo) && $pdo instanceof PDO && !empty($_SESSION['user
             ':branch_id' => $sessionBranchId,
         ]);
         $roleRow = $stmtUserRole->fetch(PDO::FETCH_ASSOC);
-        $isTargetApplicableUser = (int)($roleRow['is_target_applicable'] ?? 0) === 1;
+        $isTargetApplicableUser = (int)($roleRow['is_target_applicable'] ?? 0) === 1
+            && in_array((string)($roleRow['role_name_lc'] ?? ''), ['front office', 'hr', 'marketing'], true);
 
         if ($isTargetApplicableUser) {
             $currentYear = (int) date('Y');
             $currentMonthNo = (int) date('n');
+            $currentMonthLabel = date('F Y');
 
             $stmtMyTarget = $pdo->prepare("
-                SELECT target_amount
+                SELECT id, target_year, target_month, target_amount, created_at, updated_at
                 FROM monthly_targets
                 WHERE branch_id = :branch_id
                   AND user_id = :user_id
                   AND target_year = :target_year
                   AND target_month = :target_month
                   AND status = 'active'
+                ORDER BY updated_at DESC, id DESC
                 LIMIT 1
             ");
             $stmtMyTarget->execute([
@@ -169,6 +239,28 @@ if (!$hideTopbar && isset($pdo) && $pdo instanceof PDO && !empty($_SESSION['user
 
             if ($myTarget && (float)($myTarget['target_amount'] ?? 0) > 0) {
                 $targetAmount = (float)$myTarget['target_amount'];
+                $targetId = (int)($myTarget['id'] ?? 0);
+                $targetStampRaw = (string)($myTarget['updated_at'] ?? $myTarget['created_at'] ?? '');
+                $targetStamp = $targetStampRaw !== '' ? strtotime($targetStampRaw) : time();
+                $notifKey = 'target_assigned_' . $targetId . '_' . (int)$targetStamp;
+
+                // One-time notification for newly assigned/updated target.
+                $stmtInsertNotif = $pdo->prepare("
+                    INSERT INTO user_notifications
+                        (user_id, notif_key, type, priority, title, message, link, expires_at)
+                    VALUES
+                        (:user_id, :notif_key, 'target_assigned', 'medium', :title, :message, :link, :expires_at)
+                    ON DUPLICATE KEY UPDATE id = id
+                ");
+                $stmtInsertNotif->execute([
+                    ':user_id' => $sessionUserId,
+                    ':notif_key' => $notifKey,
+                    ':title' => 'New Target Assigned',
+                    ':message' => 'Your target for ' . $currentMonthLabel . ' is Rs ' . number_format($targetAmount, 2) . '.',
+                    ':link' => BASE_URL . 'index.php?page=targets/my-target',
+                    ':expires_at' => date('Y-m-t 23:59:59'),
+                ]);
+
                 $stmtAch = $pdo->prepare("
                     SELECT COALESCE(SUM(amount), 0) AS achieved_amount
                     FROM registration_payments
@@ -185,24 +277,46 @@ if (!$hideTopbar && isset($pdo) && $pdo instanceof PDO && !empty($_SESSION['user
                     ':target_month' => $currentMonthNo,
                 ]);
                 $achievedAmount = (float)($stmtAch->fetchColumn() ?: 0);
-                $progressPct = $targetAmount > 0 ? (($achievedAmount / $targetAmount) * 100) : 0;
+                $shortfall = max($targetAmount - $achievedAmount, 0);
+                $dayNow = (int) date('j');
+                $daysInCurrentMonth = (int) date('t');
+                $isLastTwoDays = $dayNow >= max(1, $daysInCurrentMonth - 1);
 
-                $topNotifications[] = [
-                    'priority' => 'medium',
-                    'title' => 'Your Monthly Target',
-                    'message' => 'Achieved Rs ' . number_format($achievedAmount, 2) . ' of Rs ' . number_format($targetAmount, 2) . ' (' . number_format($progressPct, 1) . '%).',
-                    'link' => BASE_URL . 'index.php?page=targets/my-target',
-                    'link_label' => 'View my target',
-                ];
-            } else {
-                $topNotifications[] = [
-                    'priority' => 'medium',
-                    'title' => 'No Active Target Found',
-                    'message' => 'Your target is not set for this month yet.',
-                    'link' => BASE_URL . 'index.php?page=targets/my-target',
-                    'link_label' => 'Open my target',
-                ];
+                // Urgent reminder only in last 2 days and only if target still pending.
+                if ($isLastTwoDays && $shortfall > 0) {
+                    $topNotifications[] = [
+                        'priority' => 'high',
+                        'title' => 'Target Deadline Alert',
+                        'message' => 'You still need Rs ' . number_format($shortfall, 2) . ' to finish your ' . $currentMonthLabel . ' target.',
+                        'link' => BASE_URL . 'index.php?page=targets/my-target',
+                        'link_label' => 'View my target',
+                    ];
+                }
             }
+        }
+
+        // Load unread persistent notifications for this user.
+        $stmtUnread = $pdo->prepare("
+            SELECT id, priority, title, message, link
+            FROM user_notifications
+            WHERE user_id = :user_id
+              AND is_read = 0
+              AND (expires_at IS NULL OR expires_at >= NOW())
+            ORDER BY created_at DESC
+            LIMIT 10
+        ");
+        $stmtUnread->execute([':user_id' => $sessionUserId]);
+        $unreadRows = $stmtUnread->fetchAll(PDO::FETCH_ASSOC);
+        foreach ($unreadRows as $unread) {
+            $topNotifications[] = [
+                'id' => (int)($unread['id'] ?? 0),
+                'priority' => (string)($unread['priority'] ?? 'medium'),
+                'title' => (string)($unread['title'] ?? 'Notification'),
+                'message' => (string)($unread['message'] ?? ''),
+                'link' => (string)($unread['link'] ?? (BASE_URL . 'index.php')),
+                'link_label' => 'Open',
+                'can_mark_read' => true,
+            ];
         }
     } catch (Throwable $e) {
         // Keep header safe even if notification queries fail.
@@ -267,6 +381,8 @@ $topNotificationCount = count($topNotifications);
     .crm-notif-item .title{font-size:12px;font-weight:700;color:#1f2937;margin-bottom:3px;}
     .crm-notif-item .msg{font-size:12px;line-height:1.4;color:#6b7280;margin-bottom:6px;}
     .crm-notif-item .link{font-size:11px;font-weight:700;color:var(--crm-primary);text-decoration:none;}
+    .crm-notif-item .meta{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+    .crm-notif-item .read-link{font-size:11px;font-weight:700;color:#64748b;text-decoration:none;}
     .crm-notif-item.high{border-left:4px solid #ef4444;}
     .crm-notif-item.medium{border-left:4px solid #e91e63;}
     .crm-notif-empty{font-size:12px;color:#6b7280;padding:8px 6px;}
@@ -300,12 +416,25 @@ $topNotificationCount = count($topNotifications);
                 <div class="crm-notif-head">Notifications</div>
                 <?php if ($topNotificationCount > 0): ?>
                     <?php foreach ($topNotifications as $notif): ?>
+                        <?php
+                            $notifLink = (string)($notif['link'] ?? BASE_URL);
+                            if (!empty($notif['can_mark_read']) && !empty($notif['id'])) {
+                                $notifLink = crmAppendQueryParam($notifLink, 'notif_read', (int)$notif['id']);
+                            }
+                        ?>
                         <div class="crm-notif-item <?= htmlspecialchars((string)($notif['priority'] ?? 'medium'), ENT_QUOTES, 'UTF-8') ?>">
                             <div class="title"><?= htmlspecialchars((string)($notif['title'] ?? 'Notification'), ENT_QUOTES, 'UTF-8') ?></div>
                             <div class="msg"><?= htmlspecialchars((string)($notif['message'] ?? ''), ENT_QUOTES, 'UTF-8') ?></div>
-                            <a class="link" href="<?= htmlspecialchars((string)($notif['link'] ?? BASE_URL), ENT_QUOTES, 'UTF-8') ?>">
-                                <?= htmlspecialchars((string)($notif['link_label'] ?? 'Open'), ENT_QUOTES, 'UTF-8') ?>
-                            </a>
+                            <div class="meta">
+                                <a class="link" href="<?= htmlspecialchars($notifLink, ENT_QUOTES, 'UTF-8') ?>">
+                                    <?= htmlspecialchars((string)($notif['link_label'] ?? 'Open'), ENT_QUOTES, 'UTF-8') ?>
+                                </a>
+                                <?php if (!empty($notif['can_mark_read']) && !empty($notif['id'])): ?>
+                                    <a class="read-link" href="?<?= htmlspecialchars(http_build_query(array_merge($_GET, ['notif_read' => (int)$notif['id']])), ENT_QUOTES, 'UTF-8') ?>">
+                                        Mark as read
+                                    </a>
+                                <?php endif; ?>
+                            </div>
                         </div>
                     <?php endforeach; ?>
                 <?php else: ?>

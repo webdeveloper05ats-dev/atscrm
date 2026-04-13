@@ -106,7 +106,7 @@ if (!$error) {
               AND u.status = 1
               AND r.status = 1
               AND r.is_target_applicable = 1
-              AND LOWER(COALESCE(r.role_name, '')) IN ('front office', 'hr', 'marketing', 'corporate')
+              AND LOWER(COALESCE(r.role_name, '')) IN ('front office', 'hr', 'marketing')
             ORDER BY u.name ASC
         ";
         $stmtEligible = $pdo->prepare($sqlEligible);
@@ -230,6 +230,8 @@ if (!$error && $_SERVER['REQUEST_METHOD'] === 'POST') {
                 $error = 'Selected user not found in this branch.';
             } elseif ((int)$selectedUser['is_target_applicable'] !== 1) {
                 $error = 'Selected role is not target applicable.';
+            } elseif (!in_array(strtolower(trim((string)($selectedUser['role_name'] ?? ''))), ['front office', 'hr', 'marketing'], true)) {
+                $error = 'Targets can be assigned only for Front Office, HR, and Marketing roles.';
             } else {
                 $form['role_id'] = (int)$selectedUser['role_id'];
             }
