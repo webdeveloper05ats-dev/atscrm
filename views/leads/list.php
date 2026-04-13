@@ -12,6 +12,8 @@ $error="";
 $userId=(int)($_SESSION['user_id']??0);
 $roleId=(int)($_SESSION['role_id']??0);
 $branchId=(int)($_SESSION['branch_id']??0);
+$sessionRoleName = trim((string)($_SESSION['role_name'] ?? ''));
+$canUseAssignedFilter = in_array($sessionRoleName, ['Super Admin', 'HR'], true);
 
 /* Branch Access */
 $canAllBranches=0;
@@ -63,7 +65,7 @@ $error=$e->getMessage();
 /* FILTERS */
 $q=trim($_GET['q']??'');
 $status=trim($_GET['status']??'');
-$assigned=(int)($_GET['assigned_to']??0);
+$assigned=$canUseAssignedFilter ? (int)($_GET['assigned_to']??0) : 0;
 
 /* Pagination */
 $page=(int)($_GET['p']??1);
@@ -242,6 +244,7 @@ $baseUrl="index.php?page=leads/list&q=$q&status=$status&assigned_to=$assigned";
                 </select>
             </div>
             
+            <?php if ($canUseAssignedFilter): ?>
             <div class="filter-item">
                 <label><i class="fas fa-user-check"></i> Assigned</label>
                 <select name="assigned_to">
@@ -251,6 +254,7 @@ $baseUrl="index.php?page=leads/list&q=$q&status=$status&assigned_to=$assigned";
                     <?php endforeach; ?>
                 </select>
             </div>
+            <?php endif; ?>
             
             <div class="filter-actions">
                 <button type="submit" class="btn-icon-only apply" title="Apply filters" data-mobile-label="Apply">

@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 // =====================================
 // Enquiries - Followups (Tabs + Table + Modal History)
 // Slug: enquiries/followups
@@ -152,6 +152,9 @@ $userId   = (int)($_SESSION['user_id'] ?? 0);
 $roleId   = (int)($_SESSION['role_id'] ?? 0);
 $roleName = $_SESSION['role_name'] ?? '';
 $branchId = (int)($_SESSION['branch_id'] ?? 0);
+$isSuperAdmin = ($roleName === 'Super Admin');
+$isFrontOffice = ($roleName === 'Front Office');
+$canUseHandledFilter = in_array($roleName, ['Super Admin', 'HR'], true);
 
 $canAllBranches = 0;
 try {
@@ -175,124 +178,121 @@ if ($isAjax) {
      // Load followups by tab
     // Load followups by tab
 if (isset($_GET['tab'])) {
+    $tab = trim((string)($_GET['tab'] ?? 'today'));
+    $handledAjax = $canUseHandledFilter ? (int)($_GET['handled_by'] ?? 0) : 0;
+    $qAjax = trim((string)($_GET['q'] ?? ''));
+    $fromAjax = trim((string)($_GET['from'] ?? ''));
+    $toAjax = trim((string)($_GET['to'] ?? ''));
 
-    $tab = $_GET['tab'] ?? 'today';
+    $where = [];
+    $params = [];
 
-    $where = "";
+    if ($canAllBranches !== 1 && $branchId > 0) {
+        $where[] = "f.branch_id = ?";
+        $params[] = $branchId;
+    }
+    if ($isFrontOffice) {
+        $where[] = "(e.handled_by = ? OR f.created_by = ?)";
+        $params[] = $userId;
+        $params[] = $userId;
+    } elseif ($handledAjax > 0) {
+        $where[] = "e.handled_by = ?";
+        $params[] = $handledAjax;
+    }
 
     if ($tab === "today") {
-        $where = "WHERE f.followup_date = CURDATE()";
+        $where[] = "f.followup_date = CURDATE()";
+        $where[] = "f.status = 'pending'";
+    } elseif ($tab === "pending") {
+        $where[] = "f.status = 'pending'";
+    } elseif ($tab === "missed") {
+        $where[] = "f.followup_date < CURDATE()";
+        $where[] = "f.status = 'pending'";
+    } elseif ($tab === "done") {
+        $where[] = "f.status = 'done'";
     }
-    elseif ($tab === "pending") {
-        $where = "WHERE f.status = 'pending'";
+    if ($fromAjax !== '') {
+        $where[] = "f.followup_date >= ?";
+        $params[] = $fromAjax;
     }
-    elseif ($tab === "missed") {
-        $where = "WHERE f.status = 'missed'";
+    if ($toAjax !== '') {
+        $where[] = "f.followup_date <= ?";
+        $params[] = $toAjax;
     }
-    elseif ($tab === "done") {
-        $where = "WHERE f.status = 'done'";
+    if ($qAjax !== '') {
+        $where[] = "(e.name LIKE ? OR e.phone LIKE ? OR e.email LIKE ? OR e.enquiry_no LIKE ?)";
+        $like = '%' . $qAjax . '%';
+        array_push($params, $like, $like, $like, $like);
     }
 
+    $whereSql = !empty($where) ? ('WHERE ' . implode(' AND ', $where)) : '';
     $sql = "
         SELECT
             f.*,
             e.enquiry_no,
             e.name,
-            e.phone
+            e.phone,
+            e.handled_by AS enquiry_handled_by
         FROM enquiry_followups f
         JOIN enquiries e ON e.id = f.enquiry_id
-        $where
-        ORDER BY f.followup_date DESC
+        $whereSql
+        ORDER BY f.followup_date DESC, f.followup_time DESC, f.id DESC
     ";
 
-    $st = $pdo->query($sql);
+    $st = $pdo->prepare($sql);
+    $st->execute($params);
     $rows = $st->fetchAll(PDO::FETCH_ASSOC);
 
     if (!$rows) {
-
-       
         exit;
     }
 
-foreach ($rows as $r) {
+    foreach ($rows as $r) {
+        $status = $r['status'] ?? 'pending';
+        $canManage = $isSuperAdmin || ((int)($r['created_by'] ?? 0) === $userId);
 
-    $status = $r['status'] ?? 'pending';
+        if ($status === "done") {
+            $statusBadge = '<span class="tag" style="color:#2e7d32;background:#e8f5e9;">Done</span>';
+        } elseif ($status === "missed") {
+            $statusBadge = '<span class="tag" style="color:#d32f2f;background:#ffebee;">Missed</span>';
+        } else {
+            $statusBadge = '<span class="tag" style="color:#ff9800;background:#fff4e5;">Pending</span>';
+        }
 
-    if($status == "done"){
-        $statusBadge = '<span class="tag" style="color:#2e7d32;background:#e8f5e9;">Done</span>';
+        echo "<tr>";
+        echo "<td>" . h($r['followup_date']) . "</td>";
+        echo "<td><b>" . h($r['enquiry_no']) . "</b><br><small>" . h($r['name']) . "</small></td>";
+        echo "<td>" . h($r['phone']) . "</td>";
+        echo "<td>" . h($r['followup_type']) . "</td>";
+        echo "<td class='tc'>" . $statusBadge . "</td>";
+        echo "<td>" . h($r['next_followup_date']) . "</td>";
+        echo "<td>";
+
+        echo "<button type='button' class='icon-btn btn-view' onclick='openHistoryModal(" . (int)$r['enquiry_id'] . ")'>
+            <span class='btn-inner'><i class='fas fa-eye'></i><span class='btn-mobile-label'>View</span></span>
+        </button>";
+
+        if ($canManage) {
+            echo "<button type='button' class='icon-btn btn-edit' onclick='openEditModal(" . (int)$r['id'] . ")'>
+                <span class='btn-inner'><i class='fas fa-pen'></i><span class='btn-mobile-label'>Edit</span></span>
+            </button>";
+
+            if ($status !== "done") {
+                echo "<form method='POST' class='doneForm' style='display:inline;'>
+                    <input type='hidden' name='csrf_token' value='" . h(generateCSRF()) . "'>
+                    <input type='hidden' name='followup_id' value='" . (int)$r['id'] . "'>
+                    <button type='submit' name='mark_done' class='icon-btn btn-done'>
+                        <span class='btn-inner'><i class='fas fa-check'></i><span class='btn-mobile-label'>Done</span></span>
+                    </button>
+                </form>";
+            }
+        } else {
+            echo "<span class='tag' style='color:#607d8b;background:#eceff1;'>View only</span>";
+        }
+
+        echo "</td>";
+        echo "</tr>";
     }
-    elseif($status == "missed"){
-        $statusBadge = '<span class="tag" style="color:#d32f2f;background:#ffebee;">Missed</span>';
-    }
-    else{
-        $statusBadge = '<span class="tag" style="color:#ff9800;background:#fff4e5;">Pending</span>';
-    }
-
-    echo "<tr>";
-
-    echo "<td>".$r['followup_date']."</td>";
-
-    echo "<td>
-            <b>".$r['enquiry_no']."</b><br>
-            <small>".$r['name']."</small>
-          </td>";
-
-    echo "<td>".$r['phone']."</td>";
-
-    echo "<td>".$r['followup_type']."</td>";
-
-    echo "<td class='tc'>".$statusBadge."</td>";
-
-    echo "<td>".$r['next_followup_date']."</td>";
-
-    echo "<td>";
-
-    // View button
-    echo "<button type='button'
-    class='icon-btn btn-view'
-    onclick='openHistoryModal(".$r['enquiry_id'].")'>
-    <span class='btn-inner'>
-    <i class='fas fa-eye'></i>
-    <span class='btn-mobile-label'>View</span>
-    </span>
-    </button>";
-
-    // Edit button
-    echo "<button type='button'
-    class='icon-btn btn-edit'
-    onclick='openEditModal(".$r['id'].")'>
-    <span class='btn-inner'>
-    <i class='fas fa-pen'></i>
-    <span class='btn-mobile-label'>Edit</span>
-    </span>
-    </button>";
-
-    // Done button only if not done
-    if($status != "done"){
-
-        echo "<form method='POST' class='doneForm' style='display:inline;'>
-
-        <input type='hidden' name='csrf_token' value='".h(generateCSRF())."'>
-
-        <input type='hidden' name='followup_id' value='".$r['id']."'> 
-
-        <button type='submit'
-        name='mark_done'
-        class='icon-btn btn-done'>
-        <span class='btn-inner'>
-        <i class='fas fa-check'></i>
-        <span class='btn-mobile-label'>Done</span>
-        </span>
-
-        </button>
-
-        </form>";
-    }
-
-    echo "</td>";
-
-    echo "</tr>";
-}
     exit;
 }
 
@@ -318,6 +318,13 @@ foreach ($rows as $r) {
         if (!$enq) {
             echo "<div class='muted'>Enquiry not found.</div>";
             exit;
+        }
+        if ($isFrontOffice && !$isSuperAdmin) {
+            $isOwner = ((int)($enq['handled_by'] ?? 0) === $userId) || ((int)($enq['created_by'] ?? 0) === $userId);
+            if (!$isOwner) {
+                echo "<div class='muted'>Access denied for this enquiry history.</div>";
+                exit;
+            }
         }
 
         $st = $pdo->prepare("
@@ -349,10 +356,10 @@ foreach ($rows as $r) {
         ?>
         <div class="modal-head">
             <div>
-                <div class="modal-title"><?= h($enq['enquiry_no'] ?? ('ENQ-'.$enq['id'])) ?> � <?= h($enq['name'] ?? '-') ?></div>
+                <div class="modal-title"><?= h($enq['enquiry_no'] ?? ('ENQ-'.$enq['id'])) ?> ? <?= h($enq['name'] ?? '-') ?></div>
                 <div class="muted">
-                    Phone: <?= h($enq['phone'] ?? '-') ?> � 
-                    Email: <?= h($enq['email'] ?? '-') ?> � 
+                    Phone: <?= h($enq['phone'] ?? '-') ?> ? 
+                    Email: <?= h($enq['email'] ?? '-') ?> ? 
                     Course: <?= h($enq['course_interest'] ?? '-') ?>
                 </div>
             </div>
@@ -384,12 +391,12 @@ foreach ($rows as $r) {
                         <div class="history-top">
                             <div>
                                 <div class="strong">
-                                    <?= h($f['followup_date']) ?> <?= h($f['followup_time'] ?? '') ?> � <?= h($f['followup_type'] ?? '-') ?>
+                                    <?= h($f['followup_date']) ?> <?= h($f['followup_time'] ?? '') ?> ? <?= h($f['followup_type'] ?? '-') ?>
                                 </div>
                                 <div class="muted">
                                     By: <?= h($f['created_by_name'] ?? '-') ?>
                                     <?php if (!empty($f['next_followup_date'])): ?>
-                                        � Next: <?= h($f['next_followup_date']) ?> <?= h($f['next_followup_time'] ?? '') ?>
+                                        ? Next: <?= h($f['next_followup_date']) ?> <?= h($f['next_followup_time'] ?? '') ?>
                                     <?php endif; ?>
                                 </div>
                             </div>
@@ -426,7 +433,7 @@ foreach ($rows as $r) {
                             <div class="hr"></div>
                             <div class="muted">
                                 Verified By: <?= h($f['verified_by_name'] ?? '-') ?>
-                                <?= !empty($f['verified_at']) ? ' � ' . h($f['verified_at']) : '' ?>
+                                <?= !empty($f['verified_at']) ? ' ? ' . h($f['verified_at']) : '' ?>
                             </div>
 
                             <form method="POST" class="verifyForm" style="margin-top:10px;">
@@ -495,11 +502,15 @@ foreach ($rows as $r) {
             echo "<div class='muted'>Follow-up not found.</div>";
             exit;
         }
+        if (!$isSuperAdmin && (int)($f['created_by'] ?? 0) !== $userId) {
+            echo "<div class='muted'>You can only edit follow-ups created by you.</div>";
+            exit;
+        }
         ?>
         <div class="modal-head">
             <div>
                 <div class="modal-title">Edit Follow-up</div>
-                <div class="muted"><?= h($f['enquiry_no'] ?? ('ENQ-'.$f['enquiry_id'])) ?> � <?= h($f['enquiry_name'] ?? '-') ?></div>
+                <div class="muted"><?= h($f['enquiry_no'] ?? ('ENQ-'.$f['enquiry_id'])) ?> ? <?= h($f['enquiry_name'] ?? '-') ?></div>
             </div>
         </div>
 
@@ -631,24 +642,49 @@ if (isset($_POST['add_followup'])) {
                 // If branch is null in old records, use session branch
                 // ---------------------------------------------------
                 if ($canAllBranches !== 1 && $branchId > 0) {
-                    $chk = $pdo->prepare("
-                        SELECT 
-                            id,
-                            branch_id
-                        FROM enquiries
-                        WHERE id = ?
-                          AND (branch_id = ? OR branch_id IS NULL)
-                        LIMIT 1
-                    ");
-                    $chk->execute([$enquiry_id, $branchId]);
+                    if ($isFrontOffice) {
+                        $chk = $pdo->prepare("
+                            SELECT
+                                id,
+                                branch_id
+                            FROM enquiries
+                            WHERE id = ?
+                              AND (branch_id = ? OR branch_id IS NULL)
+                              AND (handled_by = ? OR created_by = ?)
+                            LIMIT 1
+                        ");
+                        $chk->execute([$enquiry_id, $branchId, $userId, $userId]);
+                    } else {
+                        $chk = $pdo->prepare("
+                            SELECT
+                                id,
+                                branch_id
+                            FROM enquiries
+                            WHERE id = ?
+                              AND (branch_id = ? OR branch_id IS NULL)
+                            LIMIT 1
+                        ");
+                        $chk->execute([$enquiry_id, $branchId]);
+                    }
                 } else {
-                    $chk = $pdo->prepare("
-                        SELECT id, branch_id
-                        FROM enquiries
-                        WHERE id = ?
-                        LIMIT 1
-                    ");
-                    $chk->execute([$enquiry_id]);
+                    if ($isFrontOffice) {
+                        $chk = $pdo->prepare("
+                            SELECT id, branch_id
+                            FROM enquiries
+                            WHERE id = ?
+                              AND (handled_by = ? OR created_by = ?)
+                            LIMIT 1
+                        ");
+                        $chk->execute([$enquiry_id, $userId, $userId]);
+                    } else {
+                        $chk = $pdo->prepare("
+                            SELECT id, branch_id
+                            FROM enquiries
+                            WHERE id = ?
+                            LIMIT 1
+                        ");
+                        $chk->execute([$enquiry_id]);
+                    }
                 }
 
                 $enqRow = $chk->fetch(PDO::FETCH_ASSOC);
@@ -814,12 +850,23 @@ if (isset($_POST['mark_done'])) {
                 }
 
                 // GET FOLLOWUP
-                $st = $pdo->prepare("SELECT id, enquiry_id, branch_id FROM enquiry_followups WHERE id=? LIMIT 1");
+                $st = $pdo->prepare("
+                    SELECT f.id, f.enquiry_id, f.branch_id, f.created_by
+                    FROM enquiry_followups f
+                    WHERE f.id=?
+                    LIMIT 1
+                ");
                 $st->execute([$fid]);
                 $fu = $st->fetch(PDO::FETCH_ASSOC);
 
                 if (!$fu) {
                     throw new Exception("Follow-up not found.");
+                }
+                if ($canAllBranches !== 1 && $branchId > 0 && (int)($fu['branch_id'] ?? 0) !== $branchId) {
+                    throw new Exception("Access denied for this follow-up (branch restriction).");
+                }
+                if (!$isSuperAdmin && (int)($fu['created_by'] ?? 0) !== $userId) {
+                    throw new Exception("Only follow-up creator or Super Admin can mark this done.");
                 }
 
                 $enquiryId = (int)$fu['enquiry_id'];
@@ -1073,16 +1120,19 @@ if (isset($_POST['update_followup'])) {
         } else {
             try {
                 if ($canAllBranches !== 1 && $branchId > 0) {
-                    $st = $pdo->prepare("SELECT id, enquiry_id, branch_id FROM enquiry_followups WHERE id=? AND branch_id=? LIMIT 1");
+                    $st = $pdo->prepare("SELECT id, enquiry_id, branch_id, created_by FROM enquiry_followups WHERE id=? AND branch_id=? LIMIT 1");
                     $st->execute([$fid, $branchId]);
                 } else {
-                    $st = $pdo->prepare("SELECT id, enquiry_id, branch_id FROM enquiry_followups WHERE id=? LIMIT 1");
+                    $st = $pdo->prepare("SELECT id, enquiry_id, branch_id, created_by FROM enquiry_followups WHERE id=? LIMIT 1");
                     $st->execute([$fid]);
                 }
 
                 $row = $st->fetch(PDO::FETCH_ASSOC);
                 if (!$row) {
                     throw new Exception("Follow-up not found.");
+                }
+                if (!$isSuperAdmin && (int)($row['created_by'] ?? 0) !== $userId) {
+                    throw new Exception("Only follow-up creator or Super Admin can update this follow-up.");
                 }
 
                 $enquiry_id  = (int)$row['enquiry_id'];
@@ -1183,6 +1233,24 @@ $tab  = trim($_GET['tab'] ?? 'today');
 $q    = trim($_GET['q'] ?? '');
 $from = trim($_GET['from'] ?? '');
 $to   = trim($_GET['to'] ?? '');
+$handled = $canUseHandledFilter ? (int)($_GET['handled_by'] ?? 0) : 0;
+
+$frontOfficeUsers = [];
+if ($canUseHandledFilter) {
+    try {
+        $st = $pdo->prepare("
+            SELECT u.id, u.name
+            FROM users u
+            JOIN roles r ON r.id = u.role_id
+            WHERE u.status = 1 AND r.role_name = 'Front Office'
+            ORDER BY u.name ASC
+        ");
+        $st->execute();
+        $frontOfficeUsers = $st->fetchAll(PDO::FETCH_ASSOC);
+    } catch (Exception $e) {
+        $frontOfficeUsers = [];
+    }
+}
 
 $where = [];
 $params = [];
@@ -1191,9 +1259,18 @@ if ($canAllBranches !== 1 && $branchId > 0) {
     $where[] = "f.branch_id = ?";
     $params[] = $branchId;
 }
+if ($isFrontOffice) {
+    $where[] = "(e.handled_by = ? OR f.created_by = ?)";
+    $params[] = $userId;
+    $params[] = $userId;
+} elseif ($handled > 0) {
+    $where[] = "e.handled_by = ?";
+    $params[] = $handled;
+}
 
 if ($tab === 'today') {
     $where[] = "f.followup_date = CURDATE()";
+    $where[] = "f.status = 'pending'";
 }
 elseif ($tab === 'pending') {
     $where[] = "f.status = 'pending'";
@@ -1236,40 +1313,58 @@ $missedCount = 0;
 $upcomingCount = 0;
 
 try {
+    $countWhere = [];
+    $countParams = [];
+
+    if ($canAllBranches !== 1 && $branchId > 0) {
+        $countWhere[] = "f.branch_id = ?";
+        $countParams[] = $branchId;
+    }
+    if ($isFrontOffice) {
+        $countWhere[] = "(e.handled_by = ? OR f.created_by = ?)";
+        $countParams[] = $userId;
+        $countParams[] = $userId;
+    } elseif ($handled > 0) {
+        $countWhere[] = "e.handled_by = ?";
+        $countParams[] = $handled;
+    }
+
+    $countWhereSql = !empty($countWhere) ? (' AND ' . implode(' AND ', $countWhere)) : '';
 
     // Today Followups
     $st = $pdo->prepare("
         SELECT COUNT(*)
-        FROM enquiry_followups
-        WHERE followup_date = CURDATE()
-        AND status = 'pending'
-        AND created_by = ?
+        FROM enquiry_followups f
+        JOIN enquiries e ON e.id = f.enquiry_id
+        WHERE f.followup_date = CURDATE()
+          AND f.status = 'pending'
+          $countWhereSql
     ");
-    $st->execute([$userId]);
+    $st->execute($countParams);
     $todayCount = (int)$st->fetchColumn();
-
 
     // Missed Followups
     $st = $pdo->prepare("
         SELECT COUNT(*)
-        FROM enquiry_followups
-        WHERE followup_date < CURDATE()
-        AND status = 'pending'
-        AND created_by = ?
+        FROM enquiry_followups f
+        JOIN enquiries e ON e.id = f.enquiry_id
+        WHERE f.followup_date < CURDATE()
+          AND f.status = 'pending'
+          $countWhereSql
     ");
-    $st->execute([$userId]);
+    $st->execute($countParams);
     $missedCount = (int)$st->fetchColumn();
-
 
     // Upcoming Followups
     $st = $pdo->prepare("
         SELECT COUNT(*)
-        FROM enquiry_followups
-        WHERE followup_date > CURDATE()
-        AND status = 'pending'
-        AND created_by = ?
+        FROM enquiry_followups f
+        JOIN enquiries e ON e.id = f.enquiry_id
+        WHERE f.followup_date > CURDATE()
+          AND f.status = 'pending'
+          $countWhereSql
     ");
-    $st->execute([$userId]);
+    $st->execute($countParams);
     $upcomingCount = (int)$st->fetchColumn();
 
 } catch(Exception $e) {
@@ -1290,7 +1385,8 @@ try {
             f.*,
             e.name AS enquiry_name,
             e.phone AS enquiry_phone,
-            e.enquiry_no
+            e.enquiry_no,
+            e.handled_by AS enquiry_handled_by
         FROM enquiry_followups f
         JOIN enquiries e ON e.id = f.enquiry_id
         $whereSql
@@ -1309,21 +1405,63 @@ try {
 $enquiryOptions = [];
 try {
     if ($canAllBranches !== 1 && $branchId > 0) {
-        $st = $pdo->prepare("
-            SELECT id, enquiry_no, name, phone
-            FROM enquiries
-            WHERE branch_id = ?
-            ORDER BY id DESC
-            LIMIT 300
-        ");
-        $st->execute([$branchId]);
+        if ($isFrontOffice) {
+            $st = $pdo->prepare("
+                SELECT id, enquiry_no, name, phone
+                FROM enquiries
+                WHERE branch_id = ?
+                  AND (handled_by = ? OR created_by = ?)
+                ORDER BY id DESC
+                LIMIT 300
+            ");
+            $st->execute([$branchId, $userId, $userId]);
+        } elseif ($handled > 0) {
+            $st = $pdo->prepare("
+                SELECT id, enquiry_no, name, phone
+                FROM enquiries
+                WHERE branch_id = ?
+                  AND handled_by = ?
+                ORDER BY id DESC
+                LIMIT 300
+            ");
+            $st->execute([$branchId, $handled]);
+        } else {
+            $st = $pdo->prepare("
+                SELECT id, enquiry_no, name, phone
+                FROM enquiries
+                WHERE branch_id = ?
+                ORDER BY id DESC
+                LIMIT 300
+            ");
+            $st->execute([$branchId]);
+        }
     } else {
-        $st = $pdo->query("
-            SELECT id, enquiry_no, name, phone
-            FROM enquiries
-            ORDER BY id DESC
-            LIMIT 300
-        ");
+        if ($isFrontOffice) {
+            $st = $pdo->prepare("
+                SELECT id, enquiry_no, name, phone
+                FROM enquiries
+                WHERE (handled_by = ? OR created_by = ?)
+                ORDER BY id DESC
+                LIMIT 300
+            ");
+            $st->execute([$userId, $userId]);
+        } elseif ($handled > 0) {
+            $st = $pdo->prepare("
+                SELECT id, enquiry_no, name, phone
+                FROM enquiries
+                WHERE handled_by = ?
+                ORDER BY id DESC
+                LIMIT 300
+            ");
+            $st->execute([$handled]);
+        } else {
+            $st = $pdo->query("
+                SELECT id, enquiry_no, name, phone
+                FROM enquiries
+                ORDER BY id DESC
+                LIMIT 300
+            ");
+        }
     }
     $enquiryOptions = $st->fetchAll(PDO::FETCH_ASSOC);
 } catch (Exception $e) {
@@ -3098,6 +3236,18 @@ button i:only-child {
 <input type="text" name="q" value="<?= h($q) ?>" placeholder="Name / Phone / Email / Enquiry No">
 </div>
 
+<?php if ($canUseHandledFilter): ?>
+<div class="filter-field">
+<label class="lbl">Handled By</label>
+<select name="handled_by">
+<option value="">All</option>
+<?php foreach ($frontOfficeUsers as $u): ?>
+<option value="<?= (int)$u['id'] ?>" <?= ($handled === (int)$u['id']) ? 'selected' : '' ?>><?= h($u['name']) ?></option>
+<?php endforeach; ?>
+</select>
+</div>
+<?php endif; ?>
+
 <div class="filter-field">
 <label class="lbl">Date From</label>
 <input type="date" name="from" value="<?= h($from) ?>">
@@ -3171,6 +3321,7 @@ title="Reset Filter">
 
 <?php
 $status = $f['status'] ?? 'pending';
+$canManage = $isSuperAdmin || ((int)($f['created_by'] ?? 0) === $userId);
 
 $sBadge = ($status==='done')
 ? badge('Done','green')
@@ -3226,6 +3377,7 @@ onclick="openHistoryModal(<?= (int)$f['enquiry_id'] ?>)">
 
 </button>
 
+<?php if ($canManage): ?>
 <button type="button"
 class="icon-btn btn-edit"
 onclick="openEditModal(<?= (int)$f['id'] ?>)">
@@ -3257,6 +3409,9 @@ class="icon-btn btn-done">
 
 </form>
 
+<?php endif; ?>
+<?php else: ?>
+<span class="tag" style="color:#607d8b;background:#eceff1;">View only</span>
 <?php endif; ?>
 
 </td>
@@ -3335,7 +3490,7 @@ class="icon-btn btn-done">
                     <div class="sb-ico"><i class="fas fa-bell"></i></div>
                     <div>
                         <div class="sb-title">Scheduled Follow-up</div>
-                        <div class="sb-text" id="scheduleBannerText">�</div>
+                        <div class="sb-text" id="scheduleBannerText">?</div>
                     </div>
                 </div>
                 <button type="button" class="sb-close" onclick="hideScheduleBanner()">
@@ -4194,7 +4349,22 @@ document.addEventListener("DOMContentLoaded", function () {
             const tabName = this.dataset.tab;
             showTableLoader();
 
-            fetch(`index.php?page=enquiries/followups&ajax=1&tab=${tabName}`)
+            const filterForm = document.querySelector('.followup-filters-wrap');
+            const qVal = (filterForm?.querySelector('input[name="q"]')?.value || '').trim();
+            const fromVal = (filterForm?.querySelector('input[name="from"]')?.value || '').trim();
+            const toVal = (filterForm?.querySelector('input[name="to"]')?.value || '').trim();
+            const handledVal = (filterForm?.querySelector('select[name="handled_by"]')?.value || '').trim();
+            const qs = new URLSearchParams({
+                page: 'enquiries/followups',
+                ajax: '1',
+                tab: tabName
+            });
+            if (qVal) qs.set('q', qVal);
+            if (fromVal) qs.set('from', fromVal);
+            if (toVal) qs.set('to', toVal);
+            if (handledVal) qs.set('handled_by', handledVal);
+
+            fetch(`index.php?${qs.toString()}`)
                 .then(res => {
                     if (!res.ok) throw new Error('Network response was not ok');
                     return res.text();
@@ -4264,4 +4434,5 @@ function initFollowupTable() {
     }
 }
 </script>
+
 

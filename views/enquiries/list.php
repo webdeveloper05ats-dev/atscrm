@@ -20,6 +20,7 @@ $roleId   = (int)($_SESSION['role_id'] ?? 0);
 $roleName = $_SESSION['role_name'] ?? '';
 $branchId = (int)($_SESSION['branch_id'] ?? 0);
 $isSuperAdmin = ($roleName === 'Super Admin');
+$canUseHandledFilter = in_array($roleName, ['Super Admin', 'HR'], true);
 
 // Branch access (roles.can_access_all_branches)
 $canAllBranches = 0;
@@ -94,7 +95,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['delete_enquiry'])) {
 // --------------------------
 $q       = trim($_GET['q'] ?? '');
 $status  = trim($_GET['status'] ?? '');
-$handled = (int)($_GET['handled_by'] ?? 0);
+$handled = $canUseHandledFilter ? (int)($_GET['handled_by'] ?? 0) : 0;
 $from    = trim($_GET['from'] ?? '');
 $to      = trim($_GET['to'] ?? '');
 
@@ -320,6 +321,7 @@ $baseUrl = "index.php?page=enquiries/list"
         </select>
       </div>
 
+      <?php if ($canUseHandledFilter): ?>
       <div class="filter-item">
         <label><i class="fas fa-user-check"></i> Handled By</label>
         <select name="handled_by">
@@ -331,6 +333,7 @@ $baseUrl = "index.php?page=enquiries/list"
           <?php endforeach; ?>
         </select>
       </div>
+      <?php endif; ?>
 
       <div class="filter-item">
         <label><i class="fas fa-calendar-alt"></i> Date From</label>
