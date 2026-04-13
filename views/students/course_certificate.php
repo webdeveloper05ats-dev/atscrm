@@ -436,10 +436,13 @@ if ($isDownloadRequest && !headers_sent()) {
             position: relative;
             z-index: 1;
             height: 100%;
-            display: grid;
-            grid-template-rows: auto auto 1fr;
+            display: block;
         }
         .certificate-header {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
             display: flex;
             justify-content: space-between;
             gap: 38px;
@@ -452,7 +455,7 @@ if ($isDownloadRequest && !headers_sent()) {
             min-width: 0;
         }
         .brand-logo {
-            width: 210px;
+            width: 250px;
             max-width: 24vw;
             height: auto;
             display: block;
@@ -465,19 +468,22 @@ if ($isDownloadRequest && !headers_sent()) {
         }
         .brand-name {
             font-family: Georgia, 'Times New Roman', serif;
-            font-size: clamp(26px, 2.5vw, 42px);
+            font-size: clamp(30px, 2.9vw, 48px);
             line-height: 1;
             font-weight: 800;
             color: #111;
             white-space: nowrap;
+            font-style: italic;
+            letter-spacing: 0.06em;
         }
         .brand-tagline {
-            font-size: clamp(18px, 1.6vw, 27px);
+            font-size: clamp(18px, 1.7vw, 28px);
             line-height: 1;
             font-weight: 700;
             color: #d30079;
             font-style: italic;
-            text-align: center;
+            text-align: right;
+            padding-right: 10px;
         }
         .certificate-meta {
             text-align: right;
@@ -503,12 +509,16 @@ if ($isDownloadRequest && !headers_sent()) {
             overflow-wrap: anywhere;
         }
         .hero {
+            position: absolute;
+            top: 130px;
+            left: 0;
+            right: 0;
             display: flex;
             justify-content: center;
-            margin: 6px 0 14px;
+            margin: 0;
         }
         .emblem-image {
-            width: 400px;
+            width: 310px;
             max-width: 35vw;
             height: auto;
             display: block;
@@ -517,9 +527,13 @@ if ($isDownloadRequest && !headers_sent()) {
             display: none;
         }
         .certificate-main {
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: 44%;
+            bottom: 0;
             min-height: 0;
-            display: grid;
-            grid-template-rows: auto auto 1fr auto;
+            display: block;
             padding: 0;
         }
         .certificate-description {
@@ -528,16 +542,16 @@ if ($isDownloadRequest && !headers_sent()) {
         .certificate-main p {
             margin: 12px 0 0;
             font-size: clamp(18px, 1.6vw, 27px);
-            line-height: 1.65;
+            line-height: 1.55;
             color: #111;
-            word-spacing: 0.12em;
+            word-spacing: 0.06em;
         }
         .certificate-main .student-line {
             display: grid;
             grid-template-columns: auto 1fr;
             align-items: end;
-            gap: 30px;
-            margin-top: 6px;
+            gap: 10px;
+            margin-top: 0;
             font-size: clamp(19px, 1.75vw, 29px);
             line-height: 1.2;
             font-weight: 500;
@@ -568,12 +582,15 @@ if ($isDownloadRequest && !headers_sent()) {
             white-space: nowrap;
         }
         .certificate-bottom {
-            align-self: end;
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 18px;
             display: flex;
             justify-content: space-between;
             gap: 48px;
             align-items: flex-end;
-            margin-top: 20px;
+            margin-top: 0;
         }
         .portrait-image {
             width: 220px;
@@ -591,8 +608,8 @@ if ($isDownloadRequest && !headers_sent()) {
             justify-items: center;
         }
         .signature-image {
-            width: 200px;
-            max-height: 90px;
+            width: 210px;
+            max-height: 95px;
             display: block;
             object-fit: contain;
         }
@@ -611,9 +628,12 @@ if ($isDownloadRequest && !headers_sent()) {
             overflow-wrap: normal;
         }
         .website {
-            align-self: end;
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 0;
             text-align: center;
-            margin-top: 6px;
+            margin: 0;
             font-size: clamp(17px, 1.4vw, 25px);
             line-height: 1;
             font-weight: 800;
@@ -679,7 +699,7 @@ if ($isDownloadRequest && !headers_sent()) {
                 width: 297mm;
                 height: 210mm;
                 aspect-ratio: auto;
-                padding: 6mm 9mm 5mm;
+                padding: 0mm 0mm 0mm;
                 border-width: 4mm;
                 box-shadow: none;
                 overflow: hidden;
@@ -692,57 +712,68 @@ if ($isDownloadRequest && !headers_sent()) {
             }
             .certificate-content {
                 height: 100%;
-                display: flex;
-                flex-direction: column;
+                display: block;
             }
             .certificate-header {
+                top: 0;
+                left: 6mm;
+                right: 6mm;
                 gap: 8mm;
+                align-items: flex-start;
             }
             .certificate-brand {
-                gap: 5mm;
+                gap: 6mm;
                 flex: 1 1 auto;
                 min-width: 0;
             }
             .brand-logo {
-                width: 35mm;
+                width: 46mm;
                 max-width: none;
             }
             .brand-name {
-                font-size: 24px;
+                font-size: 28px;
                 line-height: 1;
             }
             .brand-tagline {
-                font-size: 15px;
+                font-size: 19px;
+                padding-right: 3mm;
             }
             .certificate-meta {
-                flex-basis: 54mm;
-                max-width: 54mm;
+                flex-basis: 70mm;
+                max-width: 70mm;
+                gap: 1mm;
             }
             .certifications {
-                width: 41mm;
+                width: 62mm;
                 max-width: 100%;
             }
             .certificate-number {
-                font-size: 10px;
+                font-size: 13px;
                 line-height: 1.15;
                 text-align: right;
             }
             .emblem-image {
-                width: 65mm;
+                width: 63mm;
                 max-width: none;
             }
             .hero {
-                margin: 1mm 0 2mm;
+                top: 42mm;
+                left: 0;
+                right: 0;
+                margin: 0;
             }
             .certificate-main p {
-                margin-top: 1.5mm;
-                font-size: 25px;
-                line-height: 1.2;
+                margin-top: 2mm;
+                font-size: 19px;
+                line-height: 1.55;
+                word-spacing: 0.03em;
             }
             .certificate-main {
-                flex: 1 1 auto;
-                display: flex;
-                flex-direction: column;
+                top: 90mm;
+                left: 4mm;
+                right: 4mm;
+                bottom: 0;
+                display: block;
                 min-height: 0;
             }
             .certificate-main .student-line {
@@ -750,9 +781,9 @@ if ($isDownloadRequest && !headers_sent()) {
                 flex-wrap: nowrap;
                 align-items: flex-end;
                 justify-content: flex-start;
-                gap: 3mm;
+                gap: 1.5mm;
                 margin-top: 0;
-                font-size: 25px;
+                font-size: 19px;
                 text-align: left;
             }
             .certificate-main .student-line span:first-child {
@@ -762,35 +793,38 @@ if ($isDownloadRequest && !headers_sent()) {
             .student-name {
                 flex: 1 1 auto;
                 min-width: 0;
-                font-size: 35px;
+                font-size: 22px;
                 border-bottom-width: 2px;
+                padding-bottom: 1mm;
             }
             .certificate-bottom {
-                align-self: start;
+                left: 0;
+                right: 0;
+                bottom: 9mm;
                 width: 100%;
-                margin-top: 50px;
+                margin-top: 0;
                 gap: 8mm;
             }
             .portrait-image {
-                width: 41mm;
+                width: 43mm;
                 max-width: none;
             }
             .signature-block {
-                width: 56mm;
+                width: 62mm;
                 min-width: 0;
-                gap: 2mm;
+                gap: 1.8mm;
             }
             .signature-image {
-                width: 34mm;
-                max-height: 13mm;
+                width: 42mm;
+                max-height: 17mm;
             }
             .signature-name {
-                font-size: 16px;
+                font-size: 19px;
             }
             .signature-role,
             .signature-company {
                 max-width: 100%;
-                font-size: 12px;
+                font-size: 17px;
                 line-height: 1.15;
                 overflow-wrap: normal;
             }
@@ -798,11 +832,11 @@ if ($isDownloadRequest && !headers_sent()) {
                 position: absolute;
                 left: 0;
                 right: 0;
-                bottom: 1.5mm;
+                bottom: 3mm;
                 width: auto;
                 margin: 0;
                 text-align: center;
-                font-size: 17px;
+                font-size: 16px;
             }
         }
     </style>
