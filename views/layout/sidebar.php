@@ -15,6 +15,9 @@ if (isset($hideSidebar) && $hideSidebar === true) {
 
 $role_id     = $_SESSION['role_id'] ?? 0;
 $currentPage = $_GET['page'] ?? '';
+$sessionUserId = (int)($_SESSION['user_id'] ?? 0);
+$sessionRoleName = trim((string)($_SESSION['role_name'] ?? ''));
+$sessionBranchId = (int)($_SESSION['branch_id'] ?? 0);
 
 // -------------------------------
 // Role based Dashboard link
@@ -88,7 +91,158 @@ function isParentOpen($parent, $currentPage) {
 
 // Active dashboard?
 $isDashboardActive = ($currentPage === '' || strpos($currentPage, 'dashboard/') === 0);
+
+// --------------------------------
+// Sidebar live badges (safe scoped)
+// --------------------------------
+$sidebarBadges = [
+    'lead' => 0,
+    'enquiries' => 0,
+    'enquiries/followups' => 0,
+];
+
+try {
+    $sidebarBadgeCacheKey = 'sidebar_badges_' . $sessionUserId;
+    $cachedSidebarBadges = $_SESSION[$sidebarBadgeCacheKey] ?? null;
+    $useBadgeCache = is_array($cachedSidebarBadges)
+        && isset($cachedSidebarBadges['ts'], $cachedSidebarBadges['values'])
+        && (time() - (int)$cachedSidebarBadges['ts']) <= 30
+        && (int)($cachedSidebarBadges['role_id'] ?? 0) === (int)$role_id
+        && (int)($cachedSidebarBadges['branch_id'] ?? 0) === (int)$sessionBranchId;
+
+    if ($useBadgeCache) {
+        $vals = (array)$cachedSidebarBadges['values'];
+        foreach ($sidebarBadges as $k => $v) {
+            if (isset($vals[$k])) $sidebarBadges[$k] = max(0, (int)$vals[$k]);
+        }
+    } else {
+        $canAllBranchesSidebar = 0;
+        try {
+            $stRole = $pdo->prepare("SELECT can_access_all_branches FROM roles WHERE id=? LIMIT 1");
+            $stRole->execute([(int)$role_id]);
+            $canAllBranchesSidebar = (int)($stRole->fetchColumn() ?? 0);
+        } catch (Throwable $e) {
+            $canAllBranchesSidebar = 0;
+        }
+
+        // Lead badge count (open actionable leads)
+        $leadSql = "SELECT COUNT(*) FROM leads l WHERE l.status NOT IN ('converted','closed')";
+        $leadParams = [];
+        if ($canAllBranchesSidebar !== 1 && $sessionBranchId > 0) {
+            $leadSql .= " AND l.branch_id = ?";
+            $leadParams[] = $sessionBranchId;
+        }
+        $leadGlobalRoles = ['Super Admin', 'HR', 'Marketing'];
+        if (!in_array($sessionRoleName, $leadGlobalRoles, true)) {
+            $leadSql .= " AND (l.assigned_to = ? OR l.created_by = ?)";
+            $leadParams[] = $sessionUserId;
+            $leadParams[] = $sessionUserId;
+        }
+        $stLead = $pdo->prepare($leadSql);
+        $stLead->execute($leadParams);
+        $sidebarBadges['lead'] = (int)($stLead->fetchColumn() ?: 0);
+
+        // Enquiry badge count (open actionable enquiries)
+        $enqSql = "SELECT COUNT(*) FROM enquiries e WHERE e.status IN ('new','followup')";
+        $enqParams = [];
+        if ($canAllBranchesSidebar !== 1 && $sessionBranchId > 0) {
+            $enqSql .= " AND e.branch_id = ?";
+            $enqParams[] = $sessionBranchId;
+        }
+        if ($sessionRoleName === 'Front Office') {
+            $enqSql .= " AND (e.handled_by = ? OR e.created_by = ?)";
+            $enqParams[] = $sessionUserId;
+            $enqParams[] = $sessionUserId;
+        }
+        $stEnq = $pdo->prepare($enqSql);
+        $stEnq->execute($enqParams);
+        $sidebarBadges['enquiries'] = (int)($stEnq->fetchColumn() ?: 0);
+
+        // Follow-up badge count (pending follow-ups)
+        $fuSql = "
+            SELECT COUNT(*)
+            FROM enquiry_followups f
+            INNER JOIN enquiries e ON e.id = f.enquiry_id
+            WHERE LOWER(TRIM(COALESCE(f.status,'pending'))) = 'pending'
+        ";
+        $fuParams = [];
+        if ($canAllBranchesSidebar !== 1 && $sessionBranchId > 0) {
+            $fuSql .= " AND f.branch_id = ?";
+            $fuParams[] = $sessionBranchId;
+        }
+        if ($sessionRoleName === 'Front Office') {
+            $fuSql .= " AND (e.handled_by = ? OR f.created_by = ?)";
+            $fuParams[] = $sessionUserId;
+            $fuParams[] = $sessionUserId;
+        }
+        $stFu = $pdo->prepare($fuSql);
+        $stFu->execute($fuParams);
+        $sidebarBadges['enquiries/followups'] = (int)($stFu->fetchColumn() ?: 0);
+
+        $_SESSION[$sidebarBadgeCacheKey] = [
+            'ts' => time(),
+            'role_id' => (int)$role_id,
+            'branch_id' => (int)$sessionBranchId,
+            'values' => $sidebarBadges,
+        ];
+    }
+} catch (Throwable $e) {
+    // keep sidebar safe even if badge query fails
+}
+
+if (!function_exists('sidebarBadgeText')) {
+    function sidebarBadgeText($count): string {
+        $c = max(0, (int)$count);
+        return $c > 99 ? '99+' : (string)$c;
+    }
+}
 ?>
+
+<style>
+.sidebar .menu-badge{
+    flex:0 0 auto;
+    margin-left:8px;
+    min-width:24px;
+    height:18px;
+    border-radius:999px;
+    padding:0 6px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    font-size:11px;
+    font-weight:700;
+    color:#fff;
+    background:#d81b60;
+    line-height:1;
+    letter-spacing:.01em;
+}
+.sidebar .menu-tail{
+    margin-left:auto;
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    flex:0 0 auto;
+}
+.sidebar .menu-toggle .menu-tail .menu-badge{
+    margin-left:0;
+}
+.sidebar .menu-list li:not(.active) > a .menu-badge,
+.sidebar .menu-list li:not(.active) > .menu-toggle .menu-badge{
+    opacity:.84;
+}
+.sidebar .menu-list li.active > a .menu-badge,
+.sidebar .menu-list li.active > .menu-toggle .menu-badge{
+    opacity:1;
+}
+.sidebar .menu-list li.has-children > .menu-toggle .menu-tail .caret{
+    margin-left:0 !important;
+    width:auto !important;
+}
+.sidebar .menu-label{
+    flex:1 1 auto;
+    min-width:0;
+}
+</style>
 
 <div class="sidebar" id="crmSidebar">
 
@@ -110,7 +264,7 @@ $isDashboardActive = ($currentPage === '' || strpos($currentPage, 'dashboard/') 
         <li class="<?= $isDashboardActive ? 'active' : '' ?>">
             <a href="index.php?page=<?= htmlspecialchars($dashboardSlug) ?>" data-tooltip="Dashboard">
                 <i class="fas fa-home"></i>
-                <span>Dashboard</span>
+                <span class="menu-label">Dashboard</span>
             </a>
         </li>
 
@@ -135,8 +289,29 @@ $isDashboardActive = ($currentPage === '' || strpos($currentPage, 'dashboard/') 
                         aria-controls="<?= htmlspecialchars($submenuId) ?>"
                     >
                         <i class="<?= htmlspecialchars($parent['icon'] ?: 'fas fa-circle') ?>"></i>
-                        <span><?= htmlspecialchars($parent['menu_name']) ?></span>
-                        <i class="fas fa-chevron-down caret"></i>
+                        <span class="menu-label"><?= htmlspecialchars($parent['menu_name']) ?></span>
+                        <?php
+                            $parentSlug = strtolower(trim((string)($parent['menu_slug'] ?? '')));
+                            $parentName = strtolower(trim((string)($parent['menu_name'] ?? '')));
+                            $parentBadgeCount = 0;
+                            if ($parentSlug === 'lead' || strpos($parentName, 'lead') !== false) {
+                                $parentBadgeCount = (int)($sidebarBadges['lead'] ?? 0);
+                            } elseif ($parentSlug === 'enquiries' || strpos($parentName, 'enquir') !== false) {
+                                $parentBadgeCount = (int)($sidebarBadges['enquiries'] ?? 0);
+                            }
+                        ?>
+                        <?php if ($parentBadgeCount > 0): ?>
+                            <span class="menu-tail">
+                                <span class="menu-badge" data-modern-tooltip="Open <?= htmlspecialchars($parent['menu_name']) ?>: <?= (int)$parentBadgeCount ?>">
+                                    <?= htmlspecialchars(sidebarBadgeText($parentBadgeCount)) ?>
+                                </span>
+                                <i class="fas fa-chevron-down caret"></i>
+                            </span>
+                        <?php else: ?>
+                            <span class="menu-tail">
+                                <i class="fas fa-chevron-down caret"></i>
+                            </span>
+                        <?php endif; ?>
                     </button>
 
                     <ul id="<?= htmlspecialchars($submenuId) ?>" class="submenu" <?= $parentOpen ? '' : 'style="display:none;" hidden' ?>>
@@ -144,7 +319,19 @@ $isDashboardActive = ($currentPage === '' || strpos($currentPage, 'dashboard/') 
                             <li class="<?= ($currentPage === $child['menu_slug']) ? 'active' : '' ?>">
                                 <a href="index.php?page=<?= htmlspecialchars($child['menu_slug']) ?>">
                                     <i class="<?= htmlspecialchars($child['icon'] ?: 'fas fa-dot-circle') ?>"></i>
-                                    <span><?= htmlspecialchars($child['menu_name']) ?></span>
+                                    <span class="menu-label"><?= htmlspecialchars($child['menu_name']) ?></span>
+                                    <?php
+                                        $childSlug = strtolower(trim((string)($child['menu_slug'] ?? '')));
+                                        $childBadgeCount = 0;
+                                        if ($childSlug === 'enquiries/followups') {
+                                            $childBadgeCount = (int)($sidebarBadges['enquiries/followups'] ?? 0);
+                                        }
+                                    ?>
+                                    <?php if ($childBadgeCount > 0): ?>
+                                        <span class="menu-badge" data-modern-tooltip="Open <?= htmlspecialchars($child['menu_name']) ?>: <?= (int)$childBadgeCount ?>">
+                                            <?= htmlspecialchars(sidebarBadgeText($childBadgeCount)) ?>
+                                        </span>
+                                    <?php endif; ?>
                                 </a>
                             </li>
                         <?php endforeach; ?>
@@ -154,7 +341,24 @@ $isDashboardActive = ($currentPage === '' || strpos($currentPage, 'dashboard/') 
                     <!-- Normal menu link -->
                     <a href="index.php?page=<?= htmlspecialchars($parent['menu_slug']) ?>" data-tooltip="<?= htmlspecialchars($parent['menu_name']) ?>">
                         <i class="<?= htmlspecialchars($parent['icon'] ?: 'fas fa-circle') ?>"></i>
-                        <span><?= htmlspecialchars($parent['menu_name']) ?></span>
+                        <span class="menu-label"><?= htmlspecialchars($parent['menu_name']) ?></span>
+                        <?php
+                            $parentSlug = strtolower(trim((string)($parent['menu_slug'] ?? '')));
+                            $parentName = strtolower(trim((string)($parent['menu_name'] ?? '')));
+                            $parentBadgeCount = 0;
+                            if ($parentSlug === 'lead' || strpos($parentName, 'lead') !== false) {
+                                $parentBadgeCount = (int)($sidebarBadges['lead'] ?? 0);
+                            } elseif ($parentSlug === 'enquiries' || strpos($parentName, 'enquir') !== false) {
+                                $parentBadgeCount = (int)($sidebarBadges['enquiries'] ?? 0);
+                            } elseif ($parentSlug === 'enquiries/followups') {
+                                $parentBadgeCount = (int)($sidebarBadges['enquiries/followups'] ?? 0);
+                            }
+                        ?>
+                        <?php if ($parentBadgeCount > 0): ?>
+                            <span class="menu-badge" data-modern-tooltip="Open <?= htmlspecialchars($parent['menu_name']) ?>: <?= (int)$parentBadgeCount ?>">
+                                <?= htmlspecialchars(sidebarBadgeText($parentBadgeCount)) ?>
+                            </span>
+                        <?php endif; ?>
                     </a>
                 <?php endif; ?>
 
@@ -165,7 +369,7 @@ $isDashboardActive = ($currentPage === '' || strpos($currentPage, 'dashboard/') 
         <li class="sidebar-logout">
             <a href="logout.php" data-tooltip="Logout">
                 <i class="fas fa-sign-out-alt"></i>
-                <span>Logout</span>
+                <span class="menu-label">Logout</span>
             </a>
         </li>
 
