@@ -78,20 +78,35 @@ $progressClamped = max(0, min($progress, 100));
 /* =========================
    SMART INSIGHTS
 ========================= */
-$daysInMonth = (int)date('t');
-$currentDay = (int)date('d');
-$daysLeft = max(1, $daysInMonth - $currentDay);
-$dailyRequired = $shortfall > 0 ? $shortfall / $daysLeft : 0;
+$selectedMonthStart = new DateTimeImmutable(sprintf('%04d-%02d-01', $currentYear, $currentMonth));
+$selectedMonthEnd = $selectedMonthStart->modify('last day of this month');
+$today = new DateTimeImmutable('today');
+$daysInMonth = (int)$selectedMonthEnd->format('j');
 
-$status = 'Not Started';
-$statusTone = 'is-danger';
+if ($today < $selectedMonthStart) {
+    $daysLeft = $daysInMonth;
+} elseif ($today > $selectedMonthEnd) {
+    $daysLeft = 0;
+} else {
+    $daysLeft = ((int)$today->diff($selectedMonthEnd)->format('%a')) + 1;
+}
 
-if ($achievedAmount >= $effectiveTarget && $effectiveTarget > 0) {
+$dailyRequired = ($shortfall > 0 && $daysLeft > 0) ? ($shortfall / $daysLeft) : 0;
+$hasTarget = $effectiveTarget > 0;
+$daysLeftLabel = $daysLeft > 0 ? (string)$daysLeft : 'Period Closed';
+
+$status = 'No Target';
+$statusTone = 'is-neutral';
+
+if ($hasTarget && $achievedAmount >= $effectiveTarget) {
     $status = 'Achieved';
     $statusTone = 'is-success';
-} elseif ($achievedAmount > 0) {
+} elseif ($hasTarget && $achievedAmount > 0) {
     $status = 'In Progress';
     $statusTone = 'is-warning';
+} elseif ($hasTarget) {
+    $status = 'Not Started';
+    $statusTone = 'is-danger';
 }
 ?>
 
@@ -195,8 +210,8 @@ if ($achievedAmount >= $effectiveTarget && $effectiveTarget > 0) {
       <div class="progress-panel">
         <div>
           <div class="progress-meta">
-            <span>Collected vs Target</span>
-            <span><?= number_format($progress, 1) ?>%</span>
+            <span><?= $hasTarget ? 'Collected vs Target' : 'Target Status' ?></span>
+            <span><?= $hasTarget ? number_format($progress, 1) . '%' : 'No Target' ?></span>
           </div>
 
           <div class="progress">
@@ -208,11 +223,16 @@ if ($achievedAmount >= $effectiveTarget && $effectiveTarget > 0) {
             <span>Effective Target: <?= inr_symbol() ?> <?= number_format($effectiveTarget, 0) ?></span>
             <span>Excess: <?= inr_symbol() ?> <?= number_format($excess, 0) ?></span>
           </div>
+          <?php if(!$hasTarget): ?>
+            <div class="empty-state no-target-state">
+              No target is assigned for this period yet. Please contact HR or admin to set your monthly target.
+            </div>
+          <?php endif; ?>
         </div>
 
         <div class="progress-ring" style="--ring-pct:<?= $progressClamped ?>%;">
           <div class="progress-ring-inner">
-            <div class="progress-ring-value"><?= number_format($progress, 0) ?>%</div>
+            <div class="progress-ring-value"><?= $hasTarget ? number_format($progress, 0) . '%' : '--' ?></div>
             <div class="progress-ring-label">Completion</div>
           </div>
         </div>
@@ -229,8 +249,12 @@ if ($achievedAmount >= $effectiveTarget && $effectiveTarget > 0) {
       </div>
 
       <div class="insight-note">
-        <?php if($shortfall > 0): ?>
+        <?php if(!$hasTarget): ?>
+          No effective target is set for this period. Once target is assigned, daily pace guidance will appear here automatically.
+        <?php elseif($shortfall > 0 && $daysLeft > 0): ?>
           You need approximately <strong><?= inr_symbol() ?> <?= number_format($dailyRequired, 0) ?></strong> per day over the next <strong><?= (int)$daysLeft ?></strong> days to hit the effective target.
+        <?php elseif($shortfall > 0 && $daysLeft === 0): ?>
+          This period has ended with a pending shortfall of <strong><?= inr_symbol() ?> <?= number_format($shortfall, 0) ?></strong>.
         <?php else: ?>
           You have already met the effective target for this period. Any additional approved collection now strengthens your overachievement.
         <?php endif; ?>
@@ -243,7 +267,7 @@ if ($achievedAmount >= $effectiveTarget && $effectiveTarget > 0) {
         </div>
         <div class="insight-item">
           <div class="insight-label">Days Left</div>
-          <div class="insight-value"><?= (int)$daysLeft ?></div>
+          <div class="insight-value"><?= h($daysLeftLabel) ?></div>
         </div>
         <div class="insight-item">
           <div class="insight-label">Collected</div>
@@ -285,7 +309,7 @@ new Chart(document.getElementById('chart'), {
         labels: ['Target', 'Achieved'],
         datasets: [{
             data: [<?= $effectiveTarget ?>, <?= $achievedAmount ?>],
-            backgroundColor: ['#e61b72', '#32b3a8'],
+            backgroundColor: ['#e61b72', '#ff7ab6'],
             borderRadius: 10,
             borderSkipped: false,
             barThickness: 58

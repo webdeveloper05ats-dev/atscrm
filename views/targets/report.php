@@ -553,12 +553,11 @@ foreach ($rows as $row) {
 $collectionEfficiency = $totalEffectiveTarget > 0 ? (($totalAchieved / $totalEffectiveTarget) * 100) : 0;
 $collectionEfficiency = max(0, min($collectionEfficiency, 999.99));
 ?>
-
 <!-- Font Awesome for Icons -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
 <div class="container-fluid py-3">
-    <div class="iso-report-root">
+    <div class="iso-report-root iso-report-v2">
 
         <!-- Modern Hero Section -->
         <div class="iso-report-hero">
@@ -641,7 +640,7 @@ $collectionEfficiency = max(0, min($collectionEfficiency, 999.99));
                     </div>
                     <div class="iso-report-insight-value"><?= h($biggestShortfallUser['user_name'] ?? 'No gap') ?></div>
                     <div class="iso-report-insight-sub">
-                        <?= inr_symbol() ?> <?= number_format((float)($biggestShortfallUser['shortfall_amount'] ?? 0), 2) ?> pending against target
+                        Rs <?= number_format((float)($biggestShortfallUser['shortfall_amount'] ?? 0), 2) ?> pending against target
                     </div>
                 </div>
             </div>
@@ -765,22 +764,22 @@ $collectionEfficiency = max(0, min($collectionEfficiency, 999.99));
         <div class="iso-report-kpi-grid">
             <div class="iso-report-kpi-card" data-tooltip="Total effective target amount for this month">
                 <div class="iso-report-kpi-label"><i class="fas fa-crosshairs" style="color:#e83e8c;"></i> Total Target</div>
-                <div class="iso-report-kpi-value"><?= inr_symbol() ?> <?= number_format($totalEffectiveTarget, 2) ?></div>
+                <div class="iso-report-kpi-value">Rs <?= number_format($totalEffectiveTarget, 2) ?></div>
                 <div class="iso-report-kpi-sub">Base target plus opening carry forward</div>
             </div>
             <div class="iso-report-kpi-card" data-tooltip="Total achieved amount for this month">
                 <div class="iso-report-kpi-label"><i class="fas fa-trophy" style="color:#e83e8c;"></i> Total Achieved</div>
-                <div class="iso-report-kpi-value"><?= inr_symbol() ?> <?= number_format($totalAchieved, 2) ?></div>
+                <div class="iso-report-kpi-value">Rs <?= number_format($totalAchieved, 2) ?></div>
                 <div class="iso-report-kpi-sub">Approved collected amount mapped to staff</div>
             </div>
             <div class="iso-report-kpi-card" data-tooltip="Total shortfall across all users">
                 <div class="iso-report-kpi-label"><i class="fas fa-arrow-trend-down" style="color:#e83e8c;"></i> Total Shortfall</div>
-                <div class="iso-report-kpi-value"><?= inr_symbol() ?> <?= number_format($totalShortfall, 2) ?></div>
+                <div class="iso-report-kpi-value">Rs <?= number_format($totalShortfall, 2) ?></div>
                 <div class="iso-report-kpi-sub">Recovery amount still needed this month</div>
             </div>
             <div class="iso-report-kpi-card" data-tooltip="Total excess achieved beyond effective target">
                 <div class="iso-report-kpi-label"><i class="fas fa-arrow-trend-up" style="color:#e83e8c;"></i> Total Excess</div>
-                <div class="iso-report-kpi-value"><?= inr_symbol() ?> <?= number_format($totalExcess, 2) ?></div>
+                <div class="iso-report-kpi-value">Rs <?= number_format($totalExcess, 2) ?></div>
                 <div class="iso-report-kpi-sub">Additional collection over effective target</div>
             </div>
             <div class="iso-report-kpi-card" data-tooltip="Overall collection efficiency percentage">
@@ -891,19 +890,19 @@ $collectionEfficiency = max(0, min($collectionEfficiency, 999.99));
                                                 </div>
                                             </div>
                                         </td>
-                                        <td class="money-cell"><span class="iso-report-money"><?= inr_symbol() ?> <?= number_format((float)($row['base_target'] ?? 0), 2) ?></span></td>
-                                        <td class="money-cell"><span class="iso-report-soft"><?= inr_symbol() ?> <?= number_format((float)($row['opening_carry'] ?? 0), 2) ?></span></td>
-                                        <td class="money-cell"><span class="iso-report-money"><?= inr_symbol() ?> <?= number_format((float)($row['effective_target'] ?? 0), 2) ?></span></td>
-                                        <td class="money-cell"><span class="iso-report-money"><?= inr_symbol() ?> <?= number_format((float)($row['achieved_amount'] ?? 0), 2) ?></span></td>
-                                        <td class="money-cell"><span class="iso-report-soft"><?= inr_symbol() ?> <?= number_format((float)($row['excess_amount'] ?? 0), 2) ?></span></td>
-                                        <td class="money-cell"><span class="iso-report-soft"><?= inr_symbol() ?> <?= number_format((float)($row['shortfall_amount'] ?? 0), 2) ?></span></td>
+                                        <td class="money-cell"><span class="iso-report-money">Rs <?= number_format((float)($row['base_target'] ?? 0), 2) ?></span></td>
+                                        <td class="money-cell"><span class="iso-report-soft">Rs <?= number_format((float)($row['opening_carry'] ?? 0), 2) ?></span></td>
+                                        <td class="money-cell"><span class="iso-report-money">Rs <?= number_format((float)($row['effective_target'] ?? 0), 2) ?></span></td>
+                                        <td class="money-cell"><span class="iso-report-money">Rs <?= number_format((float)($row['achieved_amount'] ?? 0), 2) ?></span></td>
+                                        <td class="money-cell"><span class="iso-report-soft">Rs <?= number_format((float)($row['excess_amount'] ?? 0), 2) ?></span></td>
+                                        <td class="money-cell"><span class="iso-report-soft">Rs <?= number_format((float)($row['shortfall_amount'] ?? 0), 2) ?></span></td>
                                         <td class="percent-cell">
                                             <span class="iso-report-soft">
                                                 <?= number_format((float)($row['incentive_percent'] ?? 0), 2) ?>%
                                             </span>
                                         </td>
                                         <td class="money-cell">
-                                            <span class="iso-report-money"><?= inr_symbol() ?> <?= number_format((float)($row['incentive_amount'] ?? 0), 2) ?></span>
+                                            <span class="iso-report-money">Rs <?= number_format((float)($row['incentive_amount'] ?? 0), 2) ?></span>
                                         </td>
                                         <td class="status-cell">
 										<div class="iso-report-status">
@@ -1129,235 +1128,5 @@ $collectionEfficiency = max(0, min($collectionEfficiency, 999.99));
     </div>
 </div>
 <script id="isoReportViewData" type="application/json"><?= json_encode($viewModalData, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?></script>
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-    function escapeHtml(value) {
-        return String(value == null ? '' : value)
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;')
-            .replace(/'/g, '&#039;');
-    }
-
-    function formatMoney(value) {
-        const amount = Number(value || 0);
-        return 'Rs ' + amount.toLocaleString('en-IN', {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2
-        });
-    }
-
-    function formatPercent(value) {
-        const amount = Number(value || 0);
-        return amount.toLocaleString('en-IN', {
-            minimumFractionDigits: 1,
-            maximumFractionDigits: 1
-        }) + '%';
-    }
-
-    function statusIcon(statusClass) {
-        if (statusClass === 'badge-soft-success') return 'fa-check-circle';
-        if (statusClass === 'badge-soft-warning') return 'fa-clock';
-        if (statusClass === 'badge-soft-danger') return 'fa-times-circle';
-        if (statusClass === 'badge-soft-info') return 'fa-info-circle';
-        return 'fa-circle';
-    }
-
-    function paymentStatusClass(statusText) {
-        const status = String(statusText || '').toLowerCase();
-        if (status === 'approved') return 'mini-status is-approved';
-        if (status === 'achieved') return 'mini-status is-approved';
-        if (status === 'in progress') return 'mini-status is-progress';
-        if (status === 'pending') return 'mini-status is-pending';
-        if (status === 'not started') return 'mini-status is-rejected';
-        if (status === 'rejected') return 'mini-status is-rejected';
-        return 'mini-status';
-    }
-
-    const modal = document.getElementById('isoReportViewModal');
-    const modalDataNode = document.getElementById('isoReportViewData');
-    const modalData = modalDataNode ? JSON.parse(modalDataNode.textContent || '{}') : {};
-    const modalCloseBtn = document.getElementById('isoModalCloseBtn');
-    const modalFooterCloseBtn = document.getElementById('isoModalFooterCloseBtn');
-
-    function setProgressState(progressPercent) {
-        const progressValue = Number(progressPercent || 0);
-        const progressFill = document.getElementById('isoModalProgressFill');
-        const width = Math.min(progressValue, 100);
-        let progressClass = 'iso-progress-fill is-risk';
-
-        if (progressValue >= 100) {
-            progressClass = 'iso-progress-fill is-strong';
-        } else if (progressValue >= 75) {
-            progressClass = 'iso-progress-fill is-warning';
-        } else if (progressValue > 0) {
-            progressClass = 'iso-progress-fill';
-        }
-
-        if (progressFill) {
-            progressFill.className = progressClass;
-            progressFill.style.width = width + '%';
-        }
-    }
-
-    function openReportModal(userId) {
-        const data = modalData[String(userId)] || modalData[userId];
-        if (!data || !modal) return;
-
-        document.getElementById('isoModalUserName').textContent = data.user_name || 'Performance Details';
-        document.getElementById('isoModalSubtitle').textContent = 'Review target summary, carry-forward trail, and current month collections for ' + (data.period_label || 'the selected period') + '.';
-        document.getElementById('isoModalHeroName').textContent = data.user_name || '-';
-        document.getElementById('isoModalHeroRole').textContent = data.role_name || '-';
-        document.getElementById('isoModalHeroEmail').textContent = data.user_email || '-';
-        document.getElementById('isoModalHeroPeriod').textContent = data.period_label || '-';
-        document.getElementById('isoModalInfoUser').textContent = data.user_name || '-';
-        document.getElementById('isoModalInfoRole').textContent = data.role_name || '-';
-        document.getElementById('isoModalInfoEmail').textContent = data.user_email || '-';
-        document.getElementById('isoModalInfoPeriod').textContent = data.period_label || '-';
-        document.getElementById('isoModalProgressValue').textContent = formatPercent(data.progress_percent || 0);
-        document.getElementById('isoModalProgressLabel').textContent = data.progress_label || 'No Target';
-        document.getElementById('isoModalBaseTarget').textContent = formatMoney(data.base_target || 0);
-        document.getElementById('isoModalOpeningCarry').textContent = formatMoney(data.opening_carry || 0);
-        document.getElementById('isoModalEffectiveTarget').textContent = formatMoney(data.effective_target || 0);
-        document.getElementById('isoModalAchieved').textContent = formatMoney(data.achieved_amount || 0);
-        document.getElementById('isoModalGap').textContent = (Number(data.shortfall_amount || 0) > 0 ? 'Shortfall ' : 'Excess ') + formatMoney(Number(data.shortfall_amount || 0) > 0 ? data.shortfall_amount : data.excess_amount);
-        document.getElementById('isoModalIncentiveAmount').textContent = formatMoney(data.incentive_amount || 0);
-        document.getElementById('isoModalCarryRisk').textContent = data.carry_risk ? 'Yes' : 'No';
-        document.getElementById('isoModalShortfall').textContent = formatMoney(data.shortfall_amount || 0);
-        document.getElementById('isoModalIncentivePercent').textContent = Number(data.incentive_percent || 0).toLocaleString('en-IN', {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2
-        }) + '%';
-        document.getElementById('isoModalInsightMessage').textContent = data.insight_message || '-';
-
-        const statusBadge = document.getElementById('isoModalStatusBadge');
-        if (statusBadge) {
-            statusBadge.className = 'iso-report-badge ' + (data.status_class || 'badge-soft-secondary');
-            statusBadge.innerHTML = '<i class="fas ' + statusIcon(data.status_class || '') + '"></i> ' + escapeHtml(data.status_text || 'No Target');
-        }
-
-        const downloadLink = data.download_url || '#';
-        document.getElementById('isoModalDownloadBtn').setAttribute('href', downloadLink);
-        document.getElementById('isoModalFooterDownloadBtn').setAttribute('href', downloadLink);
-
-        setProgressState(data.progress_percent || 0);
-
-        const historyTarget = document.getElementById('isoModalHistoryRows');
-        const historyRows = Array.isArray(data.history_rows) ? data.history_rows : [];
-        if (historyTarget) {
-            historyTarget.innerHTML = historyRows.length
-                ? historyRows.map(function (item) {
-                    return '<tr>' +
-                        '<td>' + escapeHtml(item.period || '-') + '</td>' +
-                        '<td class="col-amount">' + escapeHtml(formatMoney(item.base_target || 0)) + '</td>' +
-                        '<td class="col-amount">' + escapeHtml(formatMoney(item.opening_carry || 0)) + '</td>' +
-                        '<td class="col-amount">' + escapeHtml(formatMoney(item.effective_target || 0)) + '</td>' +
-                        '<td class="col-amount">' + escapeHtml(formatMoney(item.achieved_amount || 0)) + '</td>' +
-                        '<td class="col-amount">' + escapeHtml(formatMoney(item.shortfall_amount || 0)) + '</td>' +
-                        '<td class="col-status"><span class="' + paymentStatusClass(item.status_text || '') + '">' + escapeHtml(item.status_text || '-') + '</span></td>' +
-                    '</tr>';
-                }).join('')
-                : '<tr><td colspan="7" class="iso-report-modal-empty">No history available.</td></tr>';
-        }
-
-        const collectionTarget = document.getElementById('isoModalCollectionRows');
-        const collectionRows = Array.isArray(data.collection_rows) ? data.collection_rows : [];
-        if (collectionTarget) {
-            collectionTarget.innerHTML = collectionRows.length
-                ? collectionRows.map(function (item) {
-                    return '<tr>' +
-                        '<td class="col-date">' + escapeHtml(item.payment_date || '-') + '</td>' +
-                        '<td class="col-amount">' + escapeHtml(formatMoney(item.amount || 0)) + '</td>' +
-                        '<td class="col-status"><span class="' + paymentStatusClass(item.approval_status || '') + '">' + escapeHtml(item.approval_status || '-') + '</span></td>' +
-                    '</tr>';
-                }).join('')
-                : '<tr><td colspan="3" class="iso-report-modal-empty">No collection entries available.</td></tr>';
-        }
-
-        modal.classList.add('show');
-        document.body.style.overflow = 'hidden';
-    }
-
-    function closeReportModal() {
-        if (!modal) return;
-        modal.classList.remove('show');
-        document.body.style.overflow = '';
-    }
-
-    document.querySelectorAll('.js-view-report').forEach(function (button) {
-        button.addEventListener('click', function () {
-            openReportModal(this.getAttribute('data-user-id'));
-        });
-    });
-
-    if (modalCloseBtn) {
-        modalCloseBtn.addEventListener('click', closeReportModal);
-    }
-
-    if (modalFooterCloseBtn) {
-        modalFooterCloseBtn.addEventListener('click', closeReportModal);
-    }
-
-    if (modal) {
-        modal.addEventListener('click', function (event) {
-            if (event.target === modal) {
-                closeReportModal();
-            }
-        });
-    }
-
-    document.addEventListener('keydown', function (event) {
-        if (event.key === 'Escape' && modal && modal.classList.contains('show')) {
-            closeReportModal();
-        }
-    });
-
-    if (typeof crmDataTable === 'function') {
-        crmDataTable('#targetsReportTable', {
-            pageLength: 10,
-            lengthMenu: [10, 25, 50, 100],
-            ordering: true,
-            order: [[0, 'desc']],
-            searchPlaceholder: 'Search performance...',
-            autoWidth: false,
-            responsive: false,
-            scrollX: true,
-            dom:
-                "<'dt-top'lf>" +
-                "rt" +
-                "<'iso-dt-bottom'ip>",
-            columnDefs: [
-                { targets: [13], orderable: false }
-            ]
-        });
-
-        function syncTargetsReportTable() {
-            if (window.jQuery && jQuery.fn && jQuery.fn.dataTable) {
-                jQuery('#targetsReportTable').DataTable().columns.adjust().draw(false);
-            }
-        }
-
-        setTimeout(function () {
-            var controls = document.querySelector('#targetsReportTable_wrapper .dt-top');
-            var target = document.getElementById('isoDatatableControls');
-            if (controls && target) {
-                target.appendChild(controls);
-            }
-
-            syncTargetsReportTable();
-        }, 100);
-
-        window.addEventListener('resize', function () {
-            setTimeout(syncTargetsReportTable, 50);
-        });
-
-        window.addEventListener('load', function () {
-            setTimeout(syncTargetsReportTable, 100);
-        });
-    }
-});
-</script>
-
-
+<script src="<?= BASE_URL ?>assets/js/pages/targets/report.js?v=<?= urlencode((string) (@filemtime(ROOT_PATH . '/assets/js/pages/targets/report.js') ?: time())) ?>"></script>
 

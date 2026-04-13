@@ -158,6 +158,12 @@ color:#27364c;
 transition:border-color .18s ease, box-shadow .18s ease;
 }
 
+.targets-form-grid .form-control::placeholder{
+color:#9a7b8f;
+opacity:1;
+font-weight:500;
+}
+
 .targets-form-grid .form-control:focus,
 .targets-form-grid .form-select:focus{
 border-color:#e91e63;
@@ -186,7 +192,17 @@ pointer-events:none;
 
 .targets-input-shell .form-control,
 .targets-input-shell .form-select{
-padding-left:30px;
+padding-left:36px;
+}
+
+/* Dropdown fields: use native select spacing to avoid icon/text overlap */
+.targets-input-shell.select-shell .targets-input-icon{
+display:none;
+}
+
+.targets-input-shell.select-shell .form-select{
+padding-left:12px !important;
+padding-right:38px !important;
 }
 
 .targets-readonly{
@@ -203,6 +219,43 @@ box-shadow:none !important;
 .targets-input-shell.textarea-shell .targets-input-icon{
 top:14px;
 transform:none;
+}
+
+.targets-input-shell.textarea-shell .form-control{
+padding-left:12px;
+}
+
+.targets-input-shell.has-prefix .form-control.has-prefix-input{
+padding-left:50px;
+}
+
+.targets-input-prefix{
+position:absolute;
+left:14px;
+top:50%;
+transform:translateY(-50%);
+font-size:.95rem;
+font-weight:800;
+color:#e91e63;
+line-height:1;
+pointer-events:none;
+}
+
+.targets-input-shell.has-suffix .form-control.has-suffix-input{
+padding-right:34px;
+padding-left:12px;
+}
+
+.targets-input-suffix{
+position:absolute;
+right:12px;
+top:50%;
+transform:translateY(-50%);
+font-size:.82rem;
+font-weight:800;
+color:#a25076;
+line-height:1;
+pointer-events:none;
 }
 
 .targets-inline-note{

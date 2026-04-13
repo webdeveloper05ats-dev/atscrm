@@ -410,6 +410,41 @@ if (!empty($form['user_id'])) {
 ?>
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<style>
+#targetsSetupForm .targets-input-shell.has-prefix .targets-input-prefix{
+left:16px;
+font-size:1rem;
+z-index:3;
+}
+#targetsSetupForm .targets-input-shell.has-prefix #target_amount.form-control.has-prefix-input{
+padding-left:56px !important;
+}
+#targetsSetupForm .targets-input-shell.has-prefix #target_amount.form-control.has-prefix-input::placeholder{
+color:#96778b;
+opacity:1;
+}
+#targetsSetupForm .targets-input-shell .targets-input-icon{
+left:13px;
+z-index:2;
+width:14px;
+text-align:center;
+}
+#targetsSetupForm .targets-input-shell .form-control,
+#targetsSetupForm .targets-input-shell .form-select{
+padding-left:42px !important;
+}
+#targetsSetupForm .targets-input-shell.has-suffix .form-control.has-suffix-input{
+padding-left:12px !important;
+padding-right:34px !important;
+}
+#targetsSetupForm .targets-input-shell.textarea-shell .form-control{
+padding-left:12px !important;
+}
+#targetsSetupForm input[name="target_year"].form-control,
+#targetsSetupForm #role_name_display.form-control{
+padding-left:44px !important;
+}
+</style>
 
 <div class="container-fluid py-3">
 <div class="targets-setup-wrap">
@@ -481,7 +516,7 @@ value="<?= h($form['target_year']) ?>">
 
 <div>
 <label class="targets-label">Target Month</label>
-<div class="targets-input-shell">
+<div class="targets-input-shell select-shell">
 <i class="fas fa-calendar-day targets-input-icon"></i>
 <select name="target_month" class="form-select">
 
@@ -503,7 +538,7 @@ value="<?= h($form['target_year']) ?>">
 
 <div>
 <label class="targets-label">Staff / User <span class="required-mark">*</span></label>
-<div class="targets-input-shell">
+<div class="targets-input-shell select-shell">
 <i class="fas fa-user targets-input-icon"></i>
 <select name="user_id" id="user_id" class="form-select" required>
 
@@ -544,13 +579,13 @@ value="<?= h($selectedRoleName) ?>">
 <div>
 <label class="targets-label">Target Amount <span class="required-mark">*</span></label>
 <div class="amount-combo">
-<div class="targets-input-shell">
-<i class="fas fa-rupee-sign targets-input-icon"></i>
+<div class="targets-input-shell has-prefix">
+<span class="targets-input-prefix"><?= inr_symbol() ?></span>
 <input
 type="number"
 id="target_amount"
 name="target_amount"
-class="form-control"
+class="form-control has-prefix-input"
 placeholder="Enter target amount"
 min="0"
 step="0.01"
@@ -582,13 +617,13 @@ value="<?= $form['target_amount'] ?: 0 ?>">
 
 <div>
 <label class="targets-label">Incentive %</label>
-<div class="targets-input-shell">
-<i class="fas fa-percent targets-input-icon"></i>
+<div class="targets-input-shell has-suffix">
 <input
 type="number"
 name="incentive_percent"
-class="form-control"
+class="form-control has-suffix-input"
 value="<?= h($form['incentive_percent']) ?>">
+<span class="targets-input-suffix">%</span>
 </div>
 <div class="targets-inline-note is-muted">Set the incentive percentage linked to achievement.</div>
 </div>
@@ -622,7 +657,6 @@ value="<?= h($form['status']) ?>">
 
 <label class="targets-label">Remarks</label>
 <div class="targets-input-shell textarea-shell">
-<i class="fas fa-note-sticky targets-input-icon"></i>
 <textarea
 name="remarks"
 class="form-control">
