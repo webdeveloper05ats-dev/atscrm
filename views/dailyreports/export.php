@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 if (!defined('APP_NAME')) die('Unauthorized access.');
 if (!function_exists('h')) { function h($v){ return htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8'); } }
 
@@ -814,6 +814,7 @@ if ($doExport) {
             $sheet->getStyle($summaryRange)->getBorders()->getOutline()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_MEDIUM);
         }
 
+        while (ob_get_level() > 0) { ob_end_clean(); }
         header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
         header('Content-Disposition: attachment; filename="' . $fileName . '"');
         header('Cache-Control: max-age=0');
@@ -823,6 +824,45 @@ if ($doExport) {
     exit;
 }
 ?>
+<style>
+/* Keep export action icons in one horizontal line */
+.dre-filter-actions{
+  display:inline-flex !important;
+  flex-direction:row !important;
+  flex-wrap:nowrap !important;
+  align-items:flex-end;
+  gap:8px;
+  white-space:nowrap;
+}
+.dre-filter-actions .dre-icon-btn{
+  display:inline-flex !important;
+  align-items:center;
+  justify-content:center;
+  width:40px;
+  height:40px;
+  padding:0;
+  border:1px solid #f3c5d9 !important;
+  border-radius:12px !important;
+  background:#fff !important;
+  color:#e91e63 !important;
+  box-shadow:0 1px 2px rgba(15,23,42,.04);
+  transition:all .16s ease;
+}
+.dre-filter-actions .dre-icon-btn i{
+  color:inherit !important;
+  font-size:15px;
+}
+.dre-filter-actions .dre-icon-btn:hover,
+.dre-filter-actions .dre-icon-btn:focus{
+  background:#fff4fa !important;
+  border-color:#eaa3c3 !important;
+  color:#cf1457 !important;
+  transform:translateY(-1px);
+}
+.dre-filter-actions .dre-icon-btn:active{
+  transform:translateY(0);
+}
+</style>
 
 <div class="dre-wrap">
   <div class="dre-head">
@@ -872,7 +912,7 @@ if ($doExport) {
             <input type="hidden" name="report_type" value="<?= h($reportType) ?>">
             <input type="hidden" name="user_id" value="<?= (int)$userId ?>">
           <?php endif; ?>
-          <div style="display:flex;align-items:flex-end;gap:8px">
+          <div class="dre-filter-actions">
             <button type="submit" class="dre-btn dre-icon-btn ui-tooltip" data-modern-tooltip="Load Reports"><i class="fas fa-filter"></i></button>
             <a id="exportCsvBtn" class="dre-btn dre-icon-btn ui-tooltip" data-modern-tooltip="Export CSV" href="index.php?page=dailyreports/export&period=<?= urlencode($period) ?>&week=<?= urlencode($weekValue) ?>&month=<?= urlencode($monthValue) ?>&date_from=<?= urlencode($dateFrom) ?>&date_to=<?= urlencode($dateTo) ?>&report_type=<?= urlencode($reportType) ?>&user_id=<?= (int)$userFilter ?>&load=<?= $isLoaded ? '1' : '0' ?>&action=export"><i class="fas fa-download"></i></a>
             <a id="exportXlsxBtn" class="dre-btn dre-icon-btn ui-tooltip" data-modern-tooltip="Export Excel (XLSX)" href="index.php?page=dailyreports/export&period=<?= urlencode($period) ?>&week=<?= urlencode($weekValue) ?>&month=<?= urlencode($monthValue) ?>&date_from=<?= urlencode($dateFrom) ?>&date_to=<?= urlencode($dateTo) ?>&report_type=<?= urlencode($reportType) ?>&user_id=<?= (int)$userFilter ?>&load=<?= $isLoaded ? '1' : '0' ?>&action=export_xlsx"><i class="fas fa-file-excel"></i></a>

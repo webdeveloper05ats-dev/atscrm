@@ -11,6 +11,7 @@ $roleId=(int)($_SESSION['role_id']??0);
 $branchId=(int)($_SESSION['branch_id']??0);
 $roleName=strtolower(trim((string)($_SESSION['role_name']??'')));
 $canUseMarketingForm = ($roleName==='marketing' || $roleName==='super admin');
+$hideActivityTab = ($roleName === 'marketing');
 $isSaveRequest = ($_SERVER['REQUEST_METHOD']==='POST' && isset($_POST['save_all_report']));
 
 $requiredTables=[
@@ -270,6 +271,7 @@ if($_SERVER['REQUEST_METHOD']==='POST' && isset($_POST['save_all_report']) && em
             $tx = drText($fw['status_text'] ?? '');
             $rm = drText($fw['remarks'] ?? '');
             if($dt===null && $tx==='' && $rm==='') continue;
+            if($dt===null) $dt = $reportDate;
             $sidx++;
             $statusIns->execute([$pid,$sidx,$dt,$tx,$rm]);
           }
@@ -293,7 +295,23 @@ $editModeLabel='Read Only'; if($isToday) $editModeLabel=$isEditable?'Editable (T
 $mkMonthPrefix = date('F', strtotime($reportDate));
 $mkDayIndex = (int)date('j', strtotime($reportDate));
 $mkDayLabel = date('d M Y', strtotime($reportDate));
-$mkActMetricList = ['Students Reference','Workshop','On Campus Training','Project Taken','Billing','Fresh Collection','Old Collection','Total Collection','Registration','Walkins'];
+$mkActMetricList = [
+  'No of Hods Met',
+  'No of Asst Professor Met',
+  'Total Calls',
+  'No of Colleges Visited',
+  'No of Companies Visited',
+  'Students Reference',
+  'Workshop',
+  'On Campus Training',
+  'Project Taken',
+  'Billing',
+  'Fresh Collection',
+  'Old Collection',
+  'Total Collection',
+  'Registration',
+  'Walkins'
+];
 $mkActTodayKey = 'day_'.$mkDayIndex;
 $mkActValues = [];
 foreach(($sections['act_report'] ?? []) as $ar){
@@ -305,8 +323,189 @@ foreach(($sections['act_report'] ?? []) as $ar){
 }
 function mkj($v){ return h(json_encode($v, JSON_UNESCAPED_UNICODE)); }
 ?>
-
-<div class="dr-wrap">
+<style>
+.dr-wrap.mk-hide-activity .dr-tab[data-step="1"],
+.dr-wrap.mk-hide-activity .dr-step[data-step="1"]{display:none;}
+.dr-tabs{margin-top:8px;}
+.mk-college-search{overflow:visible;}
+.mk-college-search{position:relative;max-width:520px;}
+.mk-college-searchbox{
+  width:100%;
+  max-width:520px;
+  border:1px solid #f2cfe0;
+  border-radius:12px;
+  background:#fff;
+  padding:10px 12px;
+}
+.mk-college-select-menu{
+  position:absolute;
+  left:0;
+  right:0;
+  top:calc(100% + 6px);
+  z-index:2500;
+  display:none;
+  border:1px solid #f2cfe0;
+  border-radius:12px;
+  background:#fff;
+  box-shadow:0 12px 30px rgba(15,23,42,.08);
+  max-height:240px;
+  overflow:auto;
+}
+.mk-college-option{
+  width:100%;
+  text-align:left;
+  border:0;
+  border-bottom:1px solid #f8e5ef;
+  background:#fff;
+  padding:10px 12px;
+  cursor:pointer;
+  transition:background-color .14s ease;
+}
+.mk-college-option:last-child{border-bottom:0;}
+.mk-college-option:hover,
+.mk-college-option.active{
+  background:#fff5fa;
+}
+.mk-college-option-title{
+  display:block;
+  font-size:14px;
+  line-height:1.2;
+  font-weight:700;
+  color:#9d174d;
+  margin-bottom:2px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.mk-college-option-meta{
+  display:block;
+  font-size:12px;
+  color:#64748b;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.mk-college-meta{
+  display:none;
+  margin:6px 0 8px 2px;
+  font-size:12px;
+  font-weight:600;
+  color:#6b7280;
+}
+.mk-prospect-search{position:relative;max-width:520px;}
+.mk-prospect-searchbox{
+  width:100%;
+  max-width:520px;
+  border:1px solid #f2cfe0;
+  border-radius:12px;
+  background:#fff;
+  padding:10px 12px;
+}
+.mk-prospect-select-menu{
+  position:absolute;
+  left:0;
+  right:0;
+  top:calc(100% + 6px);
+  z-index:2500;
+  display:none;
+  border:1px solid #f2cfe0;
+  border-radius:12px;
+  background:#fff;
+  box-shadow:0 12px 30px rgba(15,23,42,.08);
+  max-height:240px;
+  overflow:auto;
+}
+.mk-prospect-option{
+  width:100%;
+  text-align:left;
+  border:0;
+  border-bottom:1px solid #f8e5ef;
+  background:#fff;
+  padding:10px 12px;
+  cursor:pointer;
+  transition:background-color .14s ease;
+}
+.mk-prospect-option:last-child{border-bottom:0;}
+.mk-prospect-option:hover,
+.mk-prospect-option.active{background:#fff5fa;}
+.mk-prospect-option-title{
+  display:block;
+  font-size:14px;
+  line-height:1.2;
+  font-weight:700;
+  color:#9d174d;
+  margin-bottom:2px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.mk-prospect-option-meta{
+  display:block;
+  font-size:12px;
+  color:#64748b;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.mk-prospect-meta{
+  display:none;
+  margin:6px 0 8px 2px;
+  font-size:12px;
+  font-weight:600;
+  color:#6b7280;
+}
+/* April Act Report - UI only (content/logic unchanged) */
+.dr-step[data-step="5"] .mk-metric-cards{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:12px;
+}
+.dr-step[data-step="5"] .mk-metric-cards .dr-block{
+  border:1px solid #f2cfe0;
+  border-radius:14px;
+  overflow:hidden;
+  background:#fff;
+}
+.dr-step[data-step="5"] .mk-metric-cards .dr-block-head{
+  background:linear-gradient(180deg,#f53e87 0%,#e91e63 100%);
+  color:#fff;
+  text-align:center;
+  font-weight:800;
+  padding:8px 10px;
+}
+.dr-step[data-step="5"] .mk-metric-cards .dr-block-body{
+  padding:10px 12px;
+}
+.dr-step[data-step="5"] .mk-metric-row{
+  display:grid;
+  grid-template-columns:1fr;
+  gap:6px;
+  margin-bottom:10px;
+}
+.dr-step[data-step="5"] .mk-metric-row:last-child{margin-bottom:0;}
+.dr-step[data-step="5"] .mk-metric-row > input:first-child{
+  border:0;
+  background:transparent;
+  color:#475569;
+  font-weight:700;
+  padding:0;
+  height:auto;
+  pointer-events:none;
+}
+.dr-step[data-step="5"] .mk-metric-row > input.mk-act-card-value{
+  border:1px solid #f2cfe0;
+  border-radius:12px;
+  background:#fff;
+  min-height:40px;
+}
+@media (max-width: 1100px){
+  .dr-step[data-step="5"] .mk-metric-cards{grid-template-columns:1fr 1fr;}
+}
+@media (max-width: 700px){
+  .dr-step[data-step="5"] .mk-metric-cards{grid-template-columns:1fr;}
+}
+</style>
+<div class="dr-wrap<?= $hideActivityTab ? ' mk-hide-activity' : '' ?>">
   <?php if($warning!==''): ?><div class="dr-card"><div class="dr-card-body" style="color:#9a3412"><?= h($warning) ?></div></div><?php endif; ?>
   <div class="dr-card"><div class="dr-card-body">
     <div class="dr-grid"><div class="dr-field"><label>Report Date</label><input type="date" class="js-dr-report-date" value="<?= h($reportDate) ?>" min="<?= h($minSelectableDate) ?>" max="<?= h($today) ?>"></div><div class="dr-field"><label>Edit Mode</label><input readonly value="<?= h($editModeLabel) ?>"></div><div class="dr-field"><label>Role</label><input readonly value="Marketing"></div><div class="dr-field"><label>Status</label><input readonly value="<?= h(ucfirst((string)($master['status'] ?? 'draft'))) ?>"></div></div>
@@ -314,8 +513,8 @@ function mkj($v){ return h(json_encode($v, JSON_UNESCAPED_UNICODE)); }
     <form method="POST" id="mkDailyForm">
       <input type="hidden" name="csrf_token" value="<?= h(generateCSRF()) ?>"><input type="hidden" name="save_all_report" value="1">
       <?php foreach($sections as $k=>$v): ?><input type="hidden" name="<?= h($k) ?>" id="mk_<?= h($k) ?>"><?php endforeach; ?>
-      <div class="dr-tabs" id="drTabs"><button type="button" class="dr-tab active" data-step="1">Activity</button><button type="button" class="dr-tab" data-step="2">Hourly</button><button type="button" class="dr-tab" data-step="3">Colleges</button><button type="button" class="dr-tab" data-step="4"><?= h($mkMonthPrefix) ?> Prospect</button><button type="button" class="dr-tab" data-step="5"><?= h($mkMonthPrefix) ?> Act Report</button><button type="button" class="dr-tab" data-step="6"><?= h($mkMonthPrefix) ?> Amount</button><button type="button" class="dr-tab" data-step="7"><?= h($mkMonthPrefix) ?> Programs</button><button type="button" class="dr-tab" data-step="8">Arts Colleges</button><button type="button" class="dr-tab" data-step="9">Arts PC</button><button type="button" class="dr-tab" data-step="10">Engg Colleges</button><button type="button" class="dr-tab" data-step="11">Engg PC</button><button type="button" class="dr-tab" data-step="12">Polytech Colleges</button></div>
-      <div class="dr-step active" data-step="1">
+      <div class="dr-tabs" id="drTabs"><button type="button" class="dr-tab<?= $hideActivityTab ? '' : ' active' ?>" data-step="1">Activity</button><button type="button" class="dr-tab<?= $hideActivityTab ? ' active' : '' ?>" data-step="2">Hourly</button><button type="button" class="dr-tab" data-step="3">Colleges</button><button type="button" class="dr-tab" data-step="4"><?= h($mkMonthPrefix) ?> Prospect</button><button type="button" class="dr-tab" data-step="5"><?= h($mkMonthPrefix) ?> Act Report</button><button type="button" class="dr-tab" data-step="6"><?= h($mkMonthPrefix) ?> Amount</button><button type="button" class="dr-tab" data-step="7"><?= h($mkMonthPrefix) ?> Programs</button><button type="button" class="dr-tab" data-step="8">Arts Colleges</button><button type="button" class="dr-tab" data-step="9">Arts PC</button><button type="button" class="dr-tab" data-step="10">Engg Colleges</button><button type="button" class="dr-tab" data-step="11">Engg PC</button><button type="button" class="dr-tab" data-step="12">Polytech Colleges</button></div>
+      <div class="dr-step<?= $hideActivityTab ? '' : ' active' ?>" data-step="1">
         <div class="dr-activity-board">
           <div class="dr-block"><div class="dr-block-head">Datas</div><div class="dr-block-body">
             <div class="dr-field"><label>No Of Fresh Calls</label><input type="number" id="mk_fresh_calls" name="fresh_calls" value="<?= h($activity['fresh_calls']) ?>"></div>
@@ -343,7 +542,7 @@ function mkj($v){ return h(json_encode($v, JSON_UNESCAPED_UNICODE)); }
         </div>
         <div class="dr-step-nav"><span></span><button type="button" class="dr-btn dr-btn-primary" data-next="2">Next</button></div>
       </div>
-      <div class="dr-step" data-step="2">
+      <div class="dr-step<?= $hideActivityTab ? ' active' : '' ?>" data-step="2">
         <div class="dr-field">
           <label>Hourly Report</label>
           <div style="overflow:auto;border:1px solid #f1d6e3;border-radius:10px;">
@@ -372,15 +571,16 @@ function mkj($v){ return h(json_encode($v, JSON_UNESCAPED_UNICODE)); }
           </div>
         </div>
         <div style="margin-top:8px"><button type="button" class="dr-btn dr-btn-primary" id="mkAddHourRow" style="height:34px;">+ Add Row</button></div>
-        <div class="dr-step-nav"><button type="button" class="dr-btn dr-btn-muted" data-prev="1">Back</button><button type="button" class="dr-btn dr-btn-primary" data-next="3">Next</button></div>
+        <div class="dr-step-nav"><?php if(!$hideActivityTab): ?><button type="button" class="dr-btn dr-btn-muted" data-prev="1">Back</button><?php else: ?><span></span><?php endif; ?><button type="button" class="dr-btn dr-btn-primary" data-next="3">Next</button></div>
       </div>
       <div class="dr-step" data-step="3">
         <div class="dr-field">
           <label>Colleges</label>
-          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px;">
-            <input id="mkCollegeSearchInput" placeholder="Search old college (name/contact/mobile/city)" style="max-width:420px;">
-            <button type="button" class="dr-btn dr-btn-primary" id="mkCollegeSearchBtn" style="height:34px;">Search & Auto Fill</button>
+          <div class="mk-college-search" style="margin-bottom:8px;">
+            <input id="mkCollegeSearchInput" class="mk-college-searchbox" placeholder="Type at least 3 characters to search previous colleges" autocomplete="off">
+            <div id="mkCollegeSelectMenu" class="mk-college-select-menu"></div>
           </div>
+          <div id="mkCollegeResultMeta" class="mk-college-meta"></div>
           <div style="overflow:auto;border:1px solid #f1d6e3;border-radius:10px;">
             <table style="width:100%;border-collapse:collapse;">
               <thead>
@@ -428,10 +628,11 @@ function mkj($v){ return h(json_encode($v, JSON_UNESCAPED_UNICODE)); }
       <div class="dr-step" data-step="4">
         <div class="dr-field">
           <label><?= h($mkMonthPrefix) ?> Prospect</label>
-          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px;">
-            <input id="mkProspectSearchInput" placeholder="Search old prospect (name/college/mobile/email)" style="max-width:420px;">
-            <button type="button" class="dr-btn dr-btn-primary" id="mkProspectSearchBtn" style="height:34px;">Search & Auto Fill</button>
+          <div class="mk-prospect-search" style="margin-bottom:8px;">
+            <input id="mkProspectSearchInput" class="mk-prospect-searchbox" placeholder="Type at least 3 characters to search previous prospect" autocomplete="off">
+            <div id="mkProspectSelectMenu" class="mk-prospect-select-menu"></div>
           </div>
+          <div id="mkProspectResultMeta" class="mk-prospect-meta"></div>
           <div style="overflow:auto;border:1px solid #f1d6e3;border-radius:10px;">
             <table style="width:100%;border-collapse:collapse;">
               <thead>
@@ -459,17 +660,19 @@ function mkj($v){ return h(json_encode($v, JSON_UNESCAPED_UNICODE)); }
                     <td style="border:1px solid #f1d6e3;padding:8px;"><input class="mk-pro-email" value="<?= h((string)($r['email'] ?? '')) ?>"></td>
                     <td style="border:1px solid #f1d6e3;padding:8px;min-width:360px;">
                       <div class="mk-pro-followups">
-                        <?php $fw = (isset($r['followups']) && is_array($r['followups'])) ? $r['followups'] : []; if (empty($fw)) $fw=[['status_date'=>'','status_text'=>'','remarks'=>'']]; ?>
-                        <?php foreach($fw as $f): ?>
-                          <div class="mk-pro-followup-item" style="display:flex;gap:6px;align-items:center;margin-bottom:6px;">
-                            <input type="date" class="mk-pro-f-date" value="<?= h((string)($f['status_date'] ?? '')) ?>" style="max-width:130px;">
-                            <input class="mk-pro-f-text" placeholder="Status" value="<?= h((string)($f['status_text'] ?? '')) ?>">
-                            <input class="mk-pro-f-remarks" placeholder="Remarks" value="<?= h((string)($f['remarks'] ?? '')) ?>">
-                            <button type="button" class="dr-btn dr-btn-muted js-del-followup" style="height:30px;padding:0 10px;">-</button>
-                          </div>
-                        <?php endforeach; ?>
+                        <?php
+                          $fw = (isset($r['followups']) && is_array($r['followups'])) ? $r['followups'] : [];
+                          $f = ['status_date'=>'','status_text'=>'','remarks'=>''];
+                          if (!empty($fw)) {
+                            $last = end($fw);
+                            if (is_array($last)) $f = array_merge($f, $last);
+                          }
+                        ?>
+                        <div class="mk-pro-followup-item" style="display:flex;gap:6px;align-items:center;margin-bottom:6px;">
+                          <input class="mk-pro-f-text" placeholder="Status" value="<?= h((string)($f['status_text'] ?? '')) ?>">
+                          <input class="mk-pro-f-remarks" placeholder="Remarks" value="<?= h((string)($f['remarks'] ?? '')) ?>">
+                        </div>
                       </div>
-                      <button type="button" class="dr-btn dr-btn-primary js-add-followup" style="height:30px;padding:0 10px;">+ Add Status</button>
                     </td>
                     <td style="border:1px solid #f1d6e3;padding:8px;"><button type="button" class="dr-btn dr-btn-muted js-del-pro-row" style="height:32px;">Delete</button></td>
                   </tr>
@@ -485,20 +688,32 @@ function mkj($v){ return h(json_encode($v, JSON_UNESCAPED_UNICODE)); }
         <div class="dr-field">
           <label><?= h($mkMonthPrefix) ?> Act Report</label>
           <div class="mk-metric-cards">
-            <div class="dr-block">
+            <div class="dr-block" data-act-col="1">
+              <div class="dr-block-head">Datas</div>
+              <div class="dr-block-body">
+                <?php foreach(['No of Hods Met','No of Asst Professor Met','Total Calls','No of Colleges Visited','No of Companies Visited'] as $m): $k=strtolower($m); ?>
+                  <div class="mk-metric-row"><input value="<?= h($m) ?>" readonly><input class="mk-act-card-value" data-metric="<?= h($m) ?>" placeholder="Enter <?= h($m) ?>" value="<?= h($mkActValues[$k] ?? '') ?>"></div>
+                <?php endforeach; ?>
+                <div class="mk-metric-row"><input value="Total Value" readonly><input id="mk_act_col1_total" placeholder="Auto calculated" readonly></div>
+              </div>
+            </div>
+            <div class="dr-block" data-act-col="2">
               <div class="dr-block-head">Business Break Ups</div>
               <div class="dr-block-body">
                 <?php foreach(['Students Reference','Workshop','On Campus Training','Project Taken'] as $m): $k=strtolower($m); ?>
-                  <div class="mk-metric-row"><input value="<?= h($m) ?>" readonly><input class="mk-act-card-value" data-metric="<?= h($m) ?>" placeholder="Today Value (<?= h($mkDayLabel) ?>)" value="<?= h($mkActValues[$k] ?? '') ?>"></div>
+                  <div class="mk-metric-row"><input value="<?= h($m) ?>" readonly><input class="mk-act-card-value" data-metric="<?= h($m) ?>" placeholder="Enter <?= h($m) ?>" value="<?= h($mkActValues[$k] ?? '') ?>"></div>
                 <?php endforeach; ?>
+                <div class="mk-metric-row"><input value="Total Value" readonly><input id="mk_act_col2_total" placeholder="Auto calculated" readonly></div>
               </div>
             </div>
-            <div class="dr-block">
+            <div class="dr-block" data-act-col="3">
               <div class="dr-block-head">Contents</div>
               <div class="dr-block-body">
                 <?php foreach(['Billing','Fresh Collection','Old Collection','Total Collection','Registration','Walkins'] as $m): $k=strtolower($m); ?>
-                  <div class="mk-metric-row"><input value="<?= h($m) ?>" readonly><input class="mk-act-card-value" data-metric="<?= h($m) ?>" placeholder="Today Value (<?= h($mkDayLabel) ?>)" value="<?= h($mkActValues[$k] ?? '') ?>"></div>
+                  <?php $mkReadOnly = ($k === 'total collection'); ?>
+                  <div class="mk-metric-row"><input value="<?= h($m) ?>" readonly><input class="mk-act-card-value" data-metric="<?= h($m) ?>" placeholder="<?= $mkReadOnly ? 'Auto calculated' : ('Enter '.h($m)) ?>" value="<?= h($mkActValues[$k] ?? '') ?>"<?= $mkReadOnly ? ' readonly' : '' ?>></div>
                 <?php endforeach; ?>
+                <div class="mk-metric-row"><input value="Conversion Ratio (%)" readonly><input id="mk_act_col3_ratio" placeholder="Auto calculated" readonly></div>
               </div>
             </div>
           </div>
@@ -897,7 +1112,7 @@ function init(){
   }
   function createProspectRow(){
     const tr=document.createElement('tr');
-    tr.innerHTML='<td style="border:1px solid #f1d6e3;padding:8px;"><input class="mk-pro-serial" readonly value=""></td><td style="border:1px solid #f1d6e3;padding:8px;"><input class="mk-pro-staff_name"></td><td style="border:1px solid #f1d6e3;padding:8px;"><input class="mk-pro-college"></td><td style="border:1px solid #f1d6e3;padding:8px;"><input class="mk-pro-department"></td><td style="border:1px solid #f1d6e3;padding:8px;"><input class="mk-pro-designation"></td><td style="border:1px solid #f1d6e3;padding:8px;"><input class="mk-pro-mobile_number"></td><td style="border:1px solid #f1d6e3;padding:8px;"><input class="mk-pro-email"></td><td style="border:1px solid #f1d6e3;padding:8px;min-width:360px;"><div class="mk-pro-followups"><div class="mk-pro-followup-item" style="display:flex;gap:6px;align-items:center;margin-bottom:6px;"><input type="date" class="mk-pro-f-date" style="max-width:130px;"><input class="mk-pro-f-text" placeholder="Status"><input class="mk-pro-f-remarks" placeholder="Remarks"><button type="button" class="dr-btn dr-btn-muted js-del-followup" style="height:30px;padding:0 10px;">-</button></div></div><button type="button" class="dr-btn dr-btn-primary js-add-followup" style="height:30px;padding:0 10px;">+ Add Status</button></td><td style="border:1px solid #f1d6e3;padding:8px;"><button type="button" class="dr-btn dr-btn-muted js-del-pro-row" style="height:32px;">Delete</button></td>';
+    tr.innerHTML='<td style="border:1px solid #f1d6e3;padding:8px;"><input class="mk-pro-serial" readonly value=""></td><td style="border:1px solid #f1d6e3;padding:8px;"><input class="mk-pro-staff_name"></td><td style="border:1px solid #f1d6e3;padding:8px;"><input class="mk-pro-college"></td><td style="border:1px solid #f1d6e3;padding:8px;"><input class="mk-pro-department"></td><td style="border:1px solid #f1d6e3;padding:8px;"><input class="mk-pro-designation"></td><td style="border:1px solid #f1d6e3;padding:8px;"><input class="mk-pro-mobile_number"></td><td style="border:1px solid #f1d6e3;padding:8px;"><input class="mk-pro-email"></td><td style="border:1px solid #f1d6e3;padding:8px;min-width:360px;"><div class="mk-pro-followups"><div class="mk-pro-followup-item" style="display:flex;gap:6px;align-items:center;margin-bottom:6px;"><input class="mk-pro-f-text" placeholder="Status"><input class="mk-pro-f-remarks" placeholder="Remarks"></div></div></td><td style="border:1px solid #f1d6e3;padding:8px;"><button type="button" class="dr-btn dr-btn-muted js-del-pro-row" style="height:32px;">Delete</button></td>';
     return tr;
   }
   document.getElementById('mkAddProspectRow')?.addEventListener('click',function(){
@@ -907,30 +1122,6 @@ function init(){
   root.addEventListener('click',function(e){
     if(!e.target.classList.contains('js-del-pro-row')) return;
     const tr=e.target.closest('tr'); if(tr) tr.remove(); renumberProspectRows();
-  });
-  root.addEventListener('click',function(e){
-    if(e.target.classList.contains('js-add-followup')){
-      const wrap=e.target.closest('td')?.querySelector('.mk-pro-followups');
-      if(!wrap) return;
-      const div=document.createElement('div');
-      div.className='mk-pro-followup-item';
-      div.style.cssText='display:flex;gap:6px;align-items:center;margin-bottom:6px;';
-      div.innerHTML='<input type="date" class="mk-pro-f-date" style="max-width:130px;"><input class="mk-pro-f-text" placeholder="Status"><input class="mk-pro-f-remarks" placeholder="Remarks"><button type="button" class="dr-btn dr-btn-muted js-del-followup" style="height:30px;padding:0 10px;">-</button>';
-      wrap.appendChild(div);
-    }
-    if(e.target.classList.contains('js-del-followup')){
-      const row=e.target.closest('tr');
-      const wrap=row?.querySelector('.mk-pro-followups');
-      const item=e.target.closest('.mk-pro-followup-item');
-      if(item) item.remove();
-      if(wrap && wrap.querySelectorAll('.mk-pro-followup-item').length===0){
-        const div=document.createElement('div');
-        div.className='mk-pro-followup-item';
-        div.style.cssText='display:flex;gap:6px;align-items:center;margin-bottom:6px;';
-        div.innerHTML='<input type="date" class="mk-pro-f-date" style="max-width:130px;"><input class="mk-pro-f-text" placeholder="Status"><input class="mk-pro-f-remarks" placeholder="Remarks"><button type="button" class="dr-btn dr-btn-muted js-del-followup" style="height:30px;padding:0 10px;">-</button>';
-        wrap.appendChild(div);
-      }
-    }
   });
   renumberProspectRows();
   function renumberAmountRows(){
@@ -1063,24 +1254,14 @@ function init(){
     if(!wrap) return;
     wrap.innerHTML='';
     const list = Array.isArray(followups) ? followups : [];
-    if(list.length===0){
-      const div=document.createElement('div');
-      div.className='mk-pro-followup-item';
-      div.style.cssText='display:flex;gap:6px;align-items:center;margin-bottom:6px;';
-      div.innerHTML='<input type="date" class="mk-pro-f-date" style="max-width:130px;"><input class="mk-pro-f-text" placeholder="Status"><input class="mk-pro-f-remarks" placeholder="Remarks"><button type="button" class="dr-btn dr-btn-muted js-del-followup" style="height:30px;padding:0 10px;">-</button>';
-      wrap.appendChild(div);
-      return;
-    }
-    list.forEach(function(f){
-      const div=document.createElement('div');
-      div.className='mk-pro-followup-item';
-      div.style.cssText='display:flex;gap:6px;align-items:center;margin-bottom:6px;';
-      const d=(f.status_date||'').toString();
-      const t=(f.status_text||'').toString();
-      const r=(f.remarks||'').toString();
-      div.innerHTML='<input type="date" class="mk-pro-f-date" style="max-width:130px;" value="'+d+'"><input class="mk-pro-f-text" placeholder="Status" value="'+t.replace(/"/g,'&quot;')+'"><input class="mk-pro-f-remarks" placeholder="Remarks" value="'+r.replace(/"/g,'&quot;')+'"><button type="button" class="dr-btn dr-btn-muted js-del-followup" style="height:30px;padding:0 10px;">-</button>';
-      wrap.appendChild(div);
-    });
+    const one = list.length ? list[list.length-1] : {};
+    const t=((one && one.status_text) || '').toString();
+    const r=((one && one.remarks) || '').toString();
+    const div=document.createElement('div');
+    div.className='mk-pro-followup-item';
+    div.style.cssText='display:flex;gap:6px;align-items:center;margin-bottom:6px;';
+    div.innerHTML='<input class="mk-pro-f-text" placeholder="Status" value="'+t.replace(/"/g,'&quot;')+'"><input class="mk-pro-f-remarks" placeholder="Remarks" value="'+r.replace(/"/g,'&quot;')+'">';
+    wrap.appendChild(div);
   }
   function fillProspectRow(tr, row){
     if(!tr || !row) return;
@@ -1094,34 +1275,137 @@ function init(){
     setProspectFollowups(tr, row.followups || []);
     const f=tr.querySelector('.mk-pro-f-text'); if(f) f.focus();
   }
-  document.getElementById('mkProspectSearchBtn')?.addEventListener('click', async function(){
-    const q=(document.getElementById('mkProspectSearchInput')?.value||'').trim();
-    if(!q){
-      if(typeof Swal!=='undefined') Swal.fire({icon:'warning',title:'Search Required',text:'Please type prospect search text.'});
+  const prospectSuggestInput = document.getElementById('mkProspectSearchInput');
+  const prospectResultMeta = document.getElementById('mkProspectResultMeta');
+  const prospectSelectMenu = document.getElementById('mkProspectSelectMenu');
+  let prospectSuggestTimer = null;
+  let lastProspectQuery = '';
+  let lastProspectRows = [];
+  let prospectActiveIndex = -1;
+  function hideProspectSuggest(){
+    if(prospectSelectMenu){
+      prospectSelectMenu.style.display='none';
+      prospectSelectMenu.innerHTML='';
+    }
+    prospectActiveIndex = -1;
+    if(prospectResultMeta){
+      prospectResultMeta.style.display='none';
+      prospectResultMeta.textContent='';
+    }
+  }
+  function renderProspectSuggest(rows){
+    if(!rows.length){ hideProspectSuggest(); return; }
+    if(prospectResultMeta){
+      prospectResultMeta.style.display='block';
+      prospectResultMeta.textContent='Found ' + rows.length + ' match(es). Click one to auto fill.';
+      prospectResultMeta.style.color='#166534';
+    }
+    if(prospectSelectMenu){
+      prospectSelectMenu.innerHTML = rows.map(function(r,idx){
+        const title = (r.staff_name||'-') + ' | ' + (r.college||'-');
+        const meta = (r.mobile_number||'-') + ' | ' + (r.email||'-') + ' | ' + (r.report_date||'-');
+        return '<button type="button" class="mk-prospect-option'+(idx===0?' active':'')+'" data-idx="'+idx+'">'
+          + '<span class="mk-prospect-option-title">'+title.replace(/</g,'&lt;').replace(/>/g,'&gt;')+'</span>'
+          + '<span class="mk-prospect-option-meta">'+meta.replace(/</g,'&lt;').replace(/>/g,'&gt;')+'</span>'
+          + '</button>';
+      }).join('');
+      prospectSelectMenu.style.display='block';
+      prospectActiveIndex = rows.length ? 0 : -1;
+    }
+  }
+  async function fetchProspectSuggest(q){
+    const url='index.php?page=dailyreports/entry&report_type=marketing&ajax=prospect_lookup&q='+encodeURIComponent(q);
+    const res=await fetch(url,{headers:{'X-Requested-With':'XMLHttpRequest'},credentials:'same-origin'});
+    const text=await res.text();
+    let data=null;
+    const cleaned=(text||'').replace(/^\uFEFF/,'').trim();
+    try{
+      data=JSON.parse(cleaned);
+    }catch(e){
+      const s=cleaned.indexOf('{');
+      const eidx=cleaned.lastIndexOf('}');
+      if(s!==-1 && eidx>s){
+        try{ data=JSON.parse(cleaned.slice(s,eidx+1)); }catch(_){ data=null; }
+      }else{
+        data=null;
+      }
+    }
+    if(!res.ok || !data || data.ok===false) throw new Error((text||'').trim() || ('HTTP '+res.status));
+    return Array.isArray(data.rows)?data.rows:[];
+  }
+  function queueProspectSuggestLookup(){
+    if(!prospectSuggestInput) return;
+    const q=(prospectSuggestInput.value||'').trim();
+    if(q.length < 3){ hideProspectSuggest(); lastProspectQuery=''; lastProspectRows=[]; return; }
+    if(q === lastProspectQuery) return;
+    if(prospectResultMeta){
+      prospectResultMeta.style.display='block';
+      prospectResultMeta.textContent='Searching...';
+      prospectResultMeta.style.color='#6b7280';
+    }
+    if(prospectSuggestTimer) clearTimeout(prospectSuggestTimer);
+    prospectSuggestTimer=setTimeout(async function(){
+      lastProspectQuery=q;
+      try{
+        const rows=await fetchProspectSuggest(q);
+        lastProspectRows=rows;
+        renderProspectSuggest(rows.slice(0,10));
+        if(prospectResultMeta && !rows.length){
+          prospectResultMeta.style.display='block';
+          prospectResultMeta.textContent='No matches found.';
+          prospectResultMeta.style.color='#6b7280';
+        }
+      }catch(e){
+        lastProspectQuery='';
+        hideProspectSuggest();
+        if(prospectResultMeta){
+          prospectResultMeta.style.display='block';
+          prospectResultMeta.textContent='Search error: ' + (e && e.message ? e.message : 'Unable to fetch matches.');
+          prospectResultMeta.style.color='#b91c1c';
+        }
+      }
+    },250);
+  }
+  function pickProspectByIndex(idx){
+    const row=lastProspectRows[idx];
+    if(!row) return;
+    const tr=findProspectTargetRow();
+    fillProspectRow(tr,row);
+    hideProspectSuggest();
+  }
+  prospectSuggestInput?.addEventListener('keyup', queueProspectSuggestLookup);
+  prospectSuggestInput?.addEventListener('input', queueProspectSuggestLookup);
+  prospectSelectMenu?.addEventListener('click', function(e){
+    const btn=e.target.closest('.mk-prospect-option');
+    if(!btn) return;
+    const idx=parseInt(btn.getAttribute('data-idx')||'',10);
+    if(Number.isNaN(idx)) return;
+    pickProspectByIndex(idx);
+  });
+  prospectSuggestInput?.addEventListener('keydown', function(e){
+    if(!prospectSelectMenu || prospectSelectMenu.style.display!=='block') return;
+    if(e.key!=='ArrowDown' && e.key!=='ArrowUp' && e.key!=='Enter' && e.key!=='Escape') return;
+    if(e.key==='Escape'){ hideProspectSuggest(); return; }
+    const options=Array.from(prospectSelectMenu.querySelectorAll('.mk-prospect-option'));
+    if(!options.length) return;
+    if(e.key==='Enter'){
+      e.preventDefault();
+      if(prospectActiveIndex<0) prospectActiveIndex=0;
+      pickProspectByIndex(prospectActiveIndex);
       return;
     }
-    try{
-      const url='index.php?page=dailyreports/entry&report_type=marketing&ajax=prospect_lookup&q='+encodeURIComponent(q);
-      const res=await fetch(url,{headers:{'X-Requested-With':'XMLHttpRequest'}});
-      const data=await res.json();
-      const rows=Array.isArray(data.rows)?data.rows:[];
-      if(!rows.length){
-        if(typeof Swal!=='undefined') Swal.fire({icon:'info',title:'No Match',text:'No previous prospect found for this staff.'});
-        return;
-      }
-      let picked=rows[0];
-      if(rows.length>1 && typeof Swal!=='undefined'){
-        const options={}; rows.forEach((r,i)=>{ options[String(i)]=(r.staff_name||'-')+' | '+(r.college||'-')+' | '+(r.mobile_number||'-')+' | '+(r.report_date||'-'); });
-        const pick=await Swal.fire({title:'Select Prospect',input:'select',inputOptions:options,inputValue:'0',showCancelButton:true,confirmButtonColor:'#e91e63'});
-        if(!pick.isConfirmed) return;
-        const idx=parseInt(pick.value||'0',10); picked=rows[idx]||rows[0];
-      }
-      const tr=findProspectTargetRow();
-      fillProspectRow(tr,picked);
-      if(typeof Swal!=='undefined') Swal.fire({icon:'success',title:'Loaded',text:'Previous prospect data loaded. Update status and save.'});
-    }catch(err){
-      if(typeof Swal!=='undefined') Swal.fire({icon:'error',title:'Error',text:'Failed to fetch previous prospect data.'});
-    }
+    e.preventDefault();
+    if(prospectActiveIndex<0) prospectActiveIndex=0;
+    if(e.key==='ArrowDown') prospectActiveIndex=Math.min(options.length-1, prospectActiveIndex+1);
+    if(e.key==='ArrowUp') prospectActiveIndex=Math.max(0, prospectActiveIndex-1);
+    options.forEach(function(el,i){ el.classList.toggle('active', i===prospectActiveIndex); });
+    options[prospectActiveIndex].scrollIntoView({ block:'nearest' });
+  });
+  document.addEventListener('click', function(e){
+    if(!prospectSuggestInput) return;
+    if(prospectSelectMenu && prospectSelectMenu.contains(e.target)) return;
+    if(prospectSuggestInput.contains(e.target)) return;
+    hideProspectSuggest();
   });
   function findCollegeTargetRow(){
     let target=null;
@@ -1151,38 +1435,139 @@ function init(){
     set('.mk-col-designation', row.designation);
     set('.mk-col-mobile_no', row.mobile_no);
     set('.mk-col-mail_id', row.mail_id);
-    set('.mk-col-status_1', row.status_1);
-    set('.mk-col-status_2', row.status_2);
     const s1=tr.querySelector('.mk-col-status_1'); if(s1) s1.focus();
   }
-  document.getElementById('mkCollegeSearchBtn')?.addEventListener('click', async function(){
-    const q=(document.getElementById('mkCollegeSearchInput')?.value||'').trim();
-    if(!q){
-      if(typeof Swal!=='undefined') Swal.fire({icon:'warning',title:'Search Required',text:'Please type college/search text.'});
+  const collegeSuggestInput = document.getElementById('mkCollegeSearchInput');
+  const collegeResultMeta = document.getElementById('mkCollegeResultMeta');
+  const collegeSelectMenu = document.getElementById('mkCollegeSelectMenu');
+  let collegeSuggestTimer = null;
+  let lastCollegeQuery = '';
+  let lastCollegeRows = [];
+  let collegeActiveIndex = -1;
+  function hideCollegeSuggest(){
+    if (collegeSelectMenu) {
+      collegeSelectMenu.style.display = 'none';
+      collegeSelectMenu.innerHTML = '';
+    }
+    collegeActiveIndex = -1;
+    if (collegeResultMeta) {
+      collegeResultMeta.style.display = 'none';
+      collegeResultMeta.textContent = '';
+    }
+  }
+  function renderCollegeSuggest(rows){
+    if(!rows.length){ hideCollegeSuggest(); return; }
+    if (collegeResultMeta) {
+      collegeResultMeta.style.display = 'block';
+      collegeResultMeta.textContent = 'Found ' + rows.length + ' match(es). Click one to auto fill.';
+      collegeResultMeta.style.color = '#166534';
+    }
+    if (collegeSelectMenu) {
+      collegeSelectMenu.innerHTML = rows.map(function(r,idx){
+        const title = (r.college_name||'-');
+        const meta = (r.contact_person||'-') + ' | ' + (r.mobile_no||'-') + ' | ' + (r.city||'-') + ' | ' + (r.report_date||'-');
+        return '<button type="button" class="mk-college-option'+(idx===0?' active':'')+'" data-idx="'+idx+'">'
+          + '<span class="mk-college-option-title">'+title.replace(/</g,'&lt;').replace(/>/g,'&gt;')+'</span>'
+          + '<span class="mk-college-option-meta">'+meta.replace(/</g,'&lt;').replace(/>/g,'&gt;')+'</span>'
+          + '</button>';
+      }).join('');
+      collegeSelectMenu.style.display = 'block';
+      collegeActiveIndex = rows.length ? 0 : -1;
+    }
+  }
+  async function fetchCollegeSuggest(q){
+    const url='index.php?page=dailyreports/entry&report_type=marketing&ajax=college_lookup&report_date=<?= h($reportDate) ?>&q='+encodeURIComponent(q);
+    const res=await fetch(url,{headers:{'X-Requested-With':'XMLHttpRequest'},credentials:'same-origin'});
+    const text=await res.text();
+    let data=null;
+    const cleaned = (text || '').replace(/^\uFEFF/, '').trim();
+    try{
+      data=JSON.parse(cleaned);
+    }catch(e){
+      const s = cleaned.indexOf('{');
+      const eidx = cleaned.lastIndexOf('}');
+      if(s !== -1 && eidx > s){
+        try{ data = JSON.parse(cleaned.slice(s, eidx + 1)); }catch(_){ data=null; }
+      } else {
+        data=null;
+      }
+    }
+    if(!res.ok || !data || data.ok===false) throw new Error((text||'').trim() || ('HTTP '+res.status));
+    return Array.isArray(data.rows)?data.rows:[];
+  }
+  function queueCollegeSuggestLookup(){
+    if(!collegeSuggestInput) return;
+    const q=(collegeSuggestInput.value||'').trim();
+    if(q.length < 3){ hideCollegeSuggest(); lastCollegeQuery=''; lastCollegeRows=[]; return; }
+    if(q === lastCollegeQuery) return;
+    if(collegeResultMeta){
+      collegeResultMeta.style.display='block';
+      collegeResultMeta.textContent='Searching...';
+      collegeResultMeta.style.color='#6b7280';
+    }
+    if(collegeSuggestTimer) clearTimeout(collegeSuggestTimer);
+    collegeSuggestTimer = setTimeout(async function(){
+      lastCollegeQuery = q;
+      try{
+        const rows = await fetchCollegeSuggest(q);
+        lastCollegeRows = rows;
+        renderCollegeSuggest(rows.slice(0, 10));
+        if(collegeResultMeta && !rows.length){
+          collegeResultMeta.style.display='block';
+          collegeResultMeta.textContent='No matches found.';
+          collegeResultMeta.style.color='#6b7280';
+        }
+      }catch(e){
+        lastCollegeQuery = '';
+        hideCollegeSuggest();
+        if(collegeResultMeta){
+          collegeResultMeta.style.display='block';
+          collegeResultMeta.textContent='Search error: ' + (e && e.message ? e.message : 'Unable to fetch matches.');
+          collegeResultMeta.style.color='#b91c1c';
+        }
+      }
+    }, 250);
+  }
+  collegeSuggestInput?.addEventListener('keyup', queueCollegeSuggestLookup);
+  collegeSuggestInput?.addEventListener('input', queueCollegeSuggestLookup);
+  function pickCollegeByIndex(idx){
+    const row = lastCollegeRows[idx];
+    if(!row) return;
+    const tr = findCollegeTargetRow();
+    fillCollegeRow(tr,row);
+    hideCollegeSuggest();
+  }
+  collegeSelectMenu?.addEventListener('click', function(e){
+    const btn = e.target.closest('.mk-college-option');
+    if(!btn) return;
+    const idx = parseInt(btn.getAttribute('data-idx') || '', 10);
+    if (Number.isNaN(idx)) return;
+    pickCollegeByIndex(idx);
+  });
+  collegeSuggestInput?.addEventListener('keydown', function(e){
+    if(!collegeSelectMenu || collegeSelectMenu.style.display !== 'block') return;
+    if(e.key !== 'ArrowDown' && e.key !== 'ArrowUp' && e.key !== 'Enter' && e.key !== 'Escape') return;
+    if(e.key === 'Escape'){ hideCollegeSuggest(); return; }
+    const options = Array.from(collegeSelectMenu.querySelectorAll('.mk-college-option'));
+    if(!options.length) return;
+    if(e.key === 'Enter'){
+      e.preventDefault();
+      if(collegeActiveIndex < 0) collegeActiveIndex = 0;
+      pickCollegeByIndex(collegeActiveIndex);
       return;
     }
-    try{
-      const url='index.php?page=dailyreports/entry&report_type=marketing&ajax=college_lookup&q='+encodeURIComponent(q);
-      const res=await fetch(url,{headers:{'X-Requested-With':'XMLHttpRequest'}});
-      const data=await res.json();
-      const rows=Array.isArray(data.rows)?data.rows:[];
-      if(!rows.length){
-        if(typeof Swal!=='undefined') Swal.fire({icon:'info',title:'No Match',text:'No previous college found for this staff.'});
-        return;
-      }
-      let picked=rows[0];
-      if(rows.length>1 && typeof Swal!=='undefined'){
-        const options={}; rows.forEach((r,i)=>{ options[String(i)]=(r.college_name||'-')+' | '+(r.contact_person||'-')+' | '+(r.mobile_no||'-')+' | '+(r.report_date||'-'); });
-        const pick=await Swal.fire({title:'Select College',input:'select',inputOptions:options,inputValue:'0',showCancelButton:true,confirmButtonColor:'#e91e63'});
-        if(!pick.isConfirmed) return;
-        const idx=parseInt(pick.value||'0',10); picked=rows[idx]||rows[0];
-      }
-      const tr=findCollegeTargetRow();
-      fillCollegeRow(tr,picked);
-      if(typeof Swal!=='undefined') Swal.fire({icon:'success',title:'Loaded',text:'Previous college data loaded. Update status and save.'});
-    }catch(err){
-      if(typeof Swal!=='undefined') Swal.fire({icon:'error',title:'Error',text:'Failed to fetch previous college data.'});
-    }
+    e.preventDefault();
+    if(collegeActiveIndex < 0) collegeActiveIndex = 0;
+    if(e.key === 'ArrowDown') collegeActiveIndex = Math.min(options.length - 1, collegeActiveIndex + 1);
+    if(e.key === 'ArrowUp') collegeActiveIndex = Math.max(0, collegeActiveIndex - 1);
+    options.forEach(function(el, i){ el.classList.toggle('active', i === collegeActiveIndex); });
+    options[collegeActiveIndex].scrollIntoView({ block:'nearest' });
+  });
+  document.addEventListener('click', function(e){
+    if(!collegeSuggestInput) return;
+    if(collegeSelectMenu && collegeSelectMenu.contains(e.target)) return;
+    if(collegeSuggestInput.contains(e.target)) return;
+    hideCollegeSuggest();
   });
   function serializeHourly(){
     const rows=[]; let valid=0;
@@ -1229,10 +1614,11 @@ function init(){
         email:(tr.querySelector('.mk-pro-email')?.value||'').trim(),
         followups:[]
       };
-      tr.querySelectorAll('.mk-pro-followup-item').forEach(function(fi){
-        const f={status_date:(fi.querySelector('.mk-pro-f-date')?.value||'').trim(),status_text:(fi.querySelector('.mk-pro-f-text')?.value||'').trim(),remarks:(fi.querySelector('.mk-pro-f-remarks')?.value||'').trim()};
-        if(f.status_date || f.status_text || f.remarks) one.followups.push(f);
-      });
+      const fi = tr.querySelector('.mk-pro-followup-item');
+      if(fi){
+        const f={status_date:'',status_text:(fi.querySelector('.mk-pro-f-text')?.value||'').trim(),remarks:(fi.querySelector('.mk-pro-f-remarks')?.value||'').trim()};
+        if(f.status_text || f.remarks) one.followups=[f];
+      }
       const hasAny = one.staff_name||one.college||one.department||one.designation||one.mobile_number||one.email||one.followups.length>0;
       if(hasAny) rows.push(one);
     });
@@ -1254,6 +1640,43 @@ function init(){
     });
     const t=document.getElementById('mk_act_report'); if(t) t.value=JSON.stringify(rows);
   }
+  function calcActReportSummaries(){
+    const num=function(v){
+      const n=parseFloat(String(v||'').replace(/,/g,'').trim());
+      return Number.isFinite(n)?n:0;
+    };
+    let c1=0,c2=0,totalCalls=0,registration=0,freshCollection=0,oldCollection=0;
+    document.querySelectorAll('.dr-step[data-step="5"] .dr-block[data-act-col="1"] .mk-act-card-value').forEach(function(inp){
+      const m=(inp.getAttribute('data-metric')||'').toLowerCase().trim();
+      const v=num(inp.value);
+      c1 += v;
+      if(m==='total calls') totalCalls=v;
+    });
+    document.querySelectorAll('.dr-step[data-step="5"] .dr-block[data-act-col="2"] .mk-act-card-value').forEach(function(inp){ c2 += num(inp.value); });
+    document.querySelectorAll('.dr-step[data-step="5"] .dr-block[data-act-col="3"] .mk-act-card-value').forEach(function(inp){
+      const m=(inp.getAttribute('data-metric')||'').toLowerCase().trim();
+      if(m==='registration') registration=num(inp.value);
+      if(m==='fresh collection') freshCollection=num(inp.value);
+      if(m==='old collection') oldCollection=num(inp.value);
+    });
+    const totalCollection = freshCollection + oldCollection;
+    const totalCollectionInput = document.querySelector('.dr-step[data-step="5"] .mk-act-card-value[data-metric="Total Collection"]');
+    if(totalCollectionInput) totalCollectionInput.value = Number(totalCollection || 0).toFixed(2);
+    const ratio = totalCalls>0 ? (registration/totalCalls)*100 : 0;
+    const setVal=function(id,v,suffix){
+      const el=document.getElementById(id);
+      if(!el) return;
+      el.value = Number(v||0).toFixed(2) + (suffix||'');
+    };
+    setVal('mk_act_col1_total', c1, '');
+    setVal('mk_act_col2_total', c2, '');
+    setVal('mk_act_col3_ratio', ratio, '%');
+  }
+  document.querySelectorAll('.mk-act-card-value').forEach(function(inp){
+    inp.addEventListener('input', calcActReportSummaries);
+    inp.addEventListener('change', calcActReportSummaries);
+  });
+  calcActReportSummaries();
   function serializeAmount(){
     const rows=[];
     document.querySelectorAll('#mkAmountBody tr').forEach(function(tr,idx){
@@ -1424,11 +1847,12 @@ function init(){
       if(!target || !target.matches('input, textarea, select')) return;
       const text = (e.clipboardData || window.clipboardData)?.getData('text') || '';
       if(!text || (text.indexOf('\t') === -1 && text.indexOf('\n') === -1 && text.indexOf('\r') === -1)) return;
+      if(target.tagName === 'TEXTAREA' && text.indexOf('\t') === -1) return;
       const tr = target.closest('tr');
       if(!tr) return;
       const table = tr.closest('table');
       if(!table) return;
-      const tableRows = Array.from(table.querySelectorAll('tbody tr'));
+      let tableRows = Array.from(table.querySelectorAll('tbody tr'));
       const startRow = tableRows.indexOf(tr);
       if(startRow < 0) return;
       const rowFields = Array.from(tr.querySelectorAll('input, textarea, select')).filter(function(el){
@@ -1440,6 +1864,16 @@ function init(){
       if(startCol < 0) return;
       const matrix = text.replace(/\r/g,'').split('\n').filter(function(line){ return line !== ''; }).map(function(line){ return line.split('\t'); });
       if(!matrix.length) return;
+      const tbody = tr.closest('tbody');
+      if(tbody && tbody.id === 'mkHourlyBody'){
+        const addBtn = document.getElementById('mkAddHourRow');
+        const requiredRows = startRow + matrix.length;
+        while(addBtn && tableRows.length < requiredRows){
+          addBtn.click();
+          tableRows = Array.from(table.querySelectorAll('tbody tr'));
+          if(tableRows.length >= requiredRows) break;
+        }
+      }
       e.preventDefault();
       matrix.forEach(function(cols, rIdx){
         const row = tableRows[startRow + rIdx];

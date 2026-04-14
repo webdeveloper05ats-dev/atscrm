@@ -1,4 +1,5 @@
 ﻿<?php
+//error_reporting(0);
 if (!defined('APP_NAME')) die('Unauthorized access.');
 if (!function_exists('h')) { function h($v){ return htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8'); } }
 if (!function_exists('drFmtDateTime')) {
@@ -68,6 +69,9 @@ function drRenderViewDetails($selectedMaster, $activity, $registrationRows, $pla
     }
     $viewDate = (string)($selectedMaster['report_date'] ?? '');
     $viewDay = $viewDate !== '' ? date('l', strtotime($viewDate)) : '-';
+    $viewDayNum = $viewDate !== '' ? (int)date('j', strtotime($viewDate)) : 0;
+   $viewDayNum = $viewDate !== '' ? (int)date('j', strtotime($viewDate)) : 0;
+   $viewDayNum = $viewDate !== '' ? (int)date('j', strtotime($viewDate)) : 0;
     ?>
     <div class="drv-card"><div class="drv-body"><div class="drv-context">
       <span class="drv-chip"><i class="fas fa-calendar-day"></i> Date: <?= h($viewDate) ?></span>
@@ -209,14 +213,38 @@ function drRenderMarketingViewDetails($selectedMaster, $activity, $hourlyRows, $
       <div class="drv-card"><div class="drv-body"><h4 class="drv-sec"><?= h($title) ?></h4>
       <?php if (empty($rows)): ?><div class="drv-blank">No rows.</div>
       <?php else:
-        $ignoreKeys = ['id','master_id','sort_order'];
-        $visibleKeys = [];
-        foreach(array_keys($rows[0]) as $k){
-            if (!in_array($k, $ignoreKeys, true)) $visibleKeys[] = $k;
+        if ($title === 'Act Report') {
+            ?><div class="drv-table-wrap"><table class="drv-table"><thead><tr>
+              <th>S.No</th>
+              <th>Metric Name</th>
+              <th>Total Value</th>
+              <th>Created At</th>
+              <th>Updated At</th>
+            </tr></thead><tbody>
+            <?php foreach($rows as $idx => $r):
+                $metric = (string)($r['metric_name'] ?? '');
+                $totalVal = (string)($r['total_value'] ?? '');
+                $createdAt = drFmtDateTime((string)($r['created_at'] ?? ''));
+                $updatedAt = drFmtDateTime((string)($r['updated_at'] ?? ''));
+            ?><tr>
+              <td><?= (int)$idx + 1 ?></td>
+              <td><?= h($metric) ?></td>
+              <td><?= h($totalVal) ?></td>
+              <td><?= h($createdAt) ?></td>
+              <td><?= h($updatedAt) ?></td>
+            </tr><?php endforeach; ?>
+            </tbody></table></div><?php
+        } else {
+            $ignoreKeys = ['id','master_id','sort_order','serial_no','s_no','sno'];
+            $visibleKeys = [];
+            foreach(array_keys($rows[0]) as $k){
+                if (!in_array($k, $ignoreKeys, true)) $visibleKeys[] = $k;
+            }
+            ?><div class="drv-table-wrap"><table class="drv-table"><thead><tr><th>S.No</th><?php foreach($visibleKeys as $k): ?><th><?= h(ucwords(str_replace('_',' ',$k))) ?></th><?php endforeach; ?></tr></thead><tbody>
+            <?php foreach($rows as $idx => $r): ?><tr><td><?= (int)$idx + 1 ?></td><?php foreach($visibleKeys as $k): ?><td><?php $cell = (string)($r[$k] ?? ''); if ($k === 'created_at' || $k === 'updated_at') $cell = drFmtDateTime($cell); if ($k === 'time_from' || $k === 'time_to') $cell = drFmtTime12($cell); ?><?= h($cell) ?></td><?php endforeach; ?></tr><?php endforeach; ?>
+            </tbody></table></div><?php
         }
-      ?><div class="drv-table-wrap"><table class="drv-table"><thead><tr><th>S.No</th><?php foreach($visibleKeys as $k): ?><th><?= h(ucwords(str_replace('_',' ',$k))) ?></th><?php endforeach; ?></tr></thead><tbody>
-      <?php foreach($rows as $idx => $r): ?><tr><td><?= (int)$idx + 1 ?></td><?php foreach($visibleKeys as $k): ?><td><?php $cell = (string)($r[$k] ?? ''); if ($k === 'created_at' || $k === 'updated_at') $cell = drFmtDateTime($cell); if ($k === 'time_from' || $k === 'time_to') $cell = drFmtTime12($cell); ?><?= h($cell) ?></td><?php endforeach; ?></tr><?php endforeach; ?>
-      </tbody></table></div><?php endif; ?>
+        endif; ?>
       </div></div>
     <?php endforeach;
     return ob_get_clean();
@@ -561,6 +589,36 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'details') {
 }
 ?>
 
+<style>
+#savedReportsTable_wrapper .dataTables_length,
+#savedReportsTable_wrapper .dataTables_filter{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  margin-bottom:8px;
+}
+#savedReportsTable_wrapper .dataTables_length{
+  float:left;
+}
+#savedReportsTable_wrapper .dataTables_filter{
+  float:right;
+  justify-content:flex-end;
+}
+#savedReportsTable_wrapper .dataTables_filter{
+  margin-left:auto;
+  text-align:right;
+}
+#savedReportsTable_wrapper .dataTables_filter label,
+#savedReportsTable_wrapper .dataTables_length label{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  margin:0;
+}
+#savedReportsTable_wrapper .dataTables_filter input{
+  margin-left:0;
+}
+</style>
 <div class="drv-wrap">
   <div class="drv-head">
     <div>

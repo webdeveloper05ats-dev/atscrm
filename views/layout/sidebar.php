@@ -132,7 +132,7 @@ try {
             $leadSql .= " AND l.branch_id = ?";
             $leadParams[] = $sessionBranchId;
         }
-        $leadGlobalRoles = ['Super Admin', 'HR', 'Marketing'];
+        $leadGlobalRoles = ['Super Admin', 'HR'];
         if (!in_array($sessionRoleName, $leadGlobalRoles, true)) {
             $leadSql .= " AND (l.assigned_to = ? OR l.created_by = ?)";
             $leadParams[] = $sessionUserId;
@@ -149,7 +149,8 @@ try {
             $enqSql .= " AND e.branch_id = ?";
             $enqParams[] = $sessionBranchId;
         }
-        if ($sessionRoleName === 'Front Office') {
+        $enqGlobalRoles = ['Super Admin', 'HR'];
+        if (!in_array($sessionRoleName, $enqGlobalRoles, true)) {
             $enqSql .= " AND (e.handled_by = ? OR e.created_by = ?)";
             $enqParams[] = $sessionUserId;
             $enqParams[] = $sessionUserId;
@@ -170,7 +171,8 @@ try {
             $fuSql .= " AND f.branch_id = ?";
             $fuParams[] = $sessionBranchId;
         }
-        if ($sessionRoleName === 'Front Office') {
+        $fuGlobalRoles = ['Super Admin', 'HR'];
+        if (!in_array($sessionRoleName, $fuGlobalRoles, true)) {
             $fuSql .= " AND (e.handled_by = ? OR f.created_by = ?)";
             $fuParams[] = $sessionUserId;
             $fuParams[] = $sessionUserId;

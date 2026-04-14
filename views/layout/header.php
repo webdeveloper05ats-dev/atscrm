@@ -631,7 +631,7 @@ if (!$hideTopbar && isset($pdo) && $pdo instanceof PDO && !empty($_SESSION['user
             }
         }
 
-        $isFrontOfficeScope = ($roleNameLower === 'front office');
+        $isUserScoped = !in_array($roleNameLower, ['super admin', 'hr'], true);
 
         $followupScopeSql = "";
         $followupScopeParams = [];
@@ -639,7 +639,7 @@ if (!$hideTopbar && isset($pdo) && $pdo instanceof PDO && !empty($_SESSION['user
             $followupScopeSql .= " AND f.branch_id = :scope_branch_id";
             $followupScopeParams[':scope_branch_id'] = $sessionBranchId;
         }
-        if ($isFrontOfficeScope) {
+        if ($isUserScoped) {
             $followupScopeSql .= " AND (e.handled_by = :scope_user_1 OR f.created_by = :scope_user_2)";
             $followupScopeParams[':scope_user_1'] = $sessionUserId;
             $followupScopeParams[':scope_user_2'] = $sessionUserId;
@@ -741,7 +741,7 @@ if (!$hideTopbar && isset($pdo) && $pdo instanceof PDO && !empty($_SESSION['user
             $sqlSla .= " AND e.branch_id = :sla_branch_id";
             $paramsSla[':sla_branch_id'] = $sessionBranchId;
         }
-        if ($isFrontOfficeScope) {
+        if ($isUserScoped) {
             $sqlSla .= " AND (e.handled_by = :sla_user_1 OR e.created_by = :sla_user_2)";
             $paramsSla[':sla_user_1'] = $sessionUserId;
             $paramsSla[':sla_user_2'] = $sessionUserId;
