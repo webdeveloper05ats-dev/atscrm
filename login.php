@@ -96,10 +96,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             remember_revoke($pdo, (int)$user['id']);
         }
 
+        // Audit: successful login
+        crmAuditInsert($pdo, [
+            'user_id' => (int)$user['id'],
+            'action' => 'LOGIN_SUCCESS',
+            'table_name' => 'users',
+            'record_id' => (int)$user['id'],
+            'ip_address' => (string)($_SERVER['REMOTE_ADDR'] ?? ''),
+        ]);
+
         redirect('index.php');
         exit;
 
     } else {
+        // Audit: failed login attempt
+        crmAuditInsert($pdo, [
+            'user_id' => 0,
+            'action' => 'LOGIN_FAILED',
+            'table_name' => 'users',
+            'record_id' => 0,
+            'ip_address' => (string)($_SERVER['REMOTE_ADDR'] ?? ''),
+        ]);
+
         setFlash('error', 'Invalid email or password.');
         redirect('login.php');
         exit;
@@ -973,6 +991,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
+
 
 // Forgot Password Modal Functionality - Completely unchanged
 (function(){

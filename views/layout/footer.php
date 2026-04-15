@@ -1218,5 +1218,77 @@ $('#followupForm').submit(function(e){
 })();
 </script>
 
+<script>
+(function () {
+    const sessionKey = 'crm_audit_geo_sent_v1';
+    const endpoint = '<?= BASE_URL ?>ajax/audit/set_geo.php';
+
+    function saveGeo(lat, lng, locationText) {
+        const body = new URLSearchParams();
+        body.set('latitude', String(lat));
+        body.set('longitude', String(lng));
+        if (locationText) {
+            body.set('location_text', locationText);
+        }
+
+        return fetch(endpoint, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: body.toString(),
+            credentials: 'same-origin'
+        }).then(function () {
+            try { sessionStorage.setItem(sessionKey, '1'); } catch (e) {}
+        }).catch(function () {});
+    }
+
+    function reverseAddress(lat, lng) {
+        const url = 'https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat='
+            + encodeURIComponent(String(lat))
+            + '&lon=' + encodeURIComponent(String(lng));
+
+        return fetch(url, {
+            method: 'GET',
+            headers: { 'Accept': 'application/json' }
+        }).then(function (res) {
+            if (!res.ok) return null;
+            return res.json();
+        }).then(function (json) {
+            if (!json || typeof json !== 'object') return '';
+            return String(json.display_name || '').trim();
+        }).catch(function () {
+            return '';
+        });
+    }
+
+    function captureGeoOnce() {
+        if (!navigator.geolocation) return;
+        try {
+            if (sessionStorage.getItem(sessionKey) === '1') return;
+        } catch (e) {}
+
+        navigator.geolocation.getCurrentPosition(function (pos) {
+            const lat = pos && pos.coords ? Number(pos.coords.latitude) : NaN;
+            const lng = pos && pos.coords ? Number(pos.coords.longitude) : NaN;
+            if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
+
+            reverseAddress(lat, lng).then(function (locationText) {
+                saveGeo(lat, lng, locationText);
+            });
+        }, function () {
+            // user denied or browser blocked; skip silently
+        }, {
+            enableHighAccuracy: false,
+            timeout: 7000,
+            maximumAge: 900000
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', captureGeoOnce);
+})();
+</script>
+
 </body>
 </html>

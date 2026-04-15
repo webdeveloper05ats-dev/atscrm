@@ -104,6 +104,17 @@ if (!file_exists($viewPath)) {
 }
 
 // ===============================
+// Audit Logging (Mutation Requests)
+// ===============================
+if (
+    isset($pdo) && $pdo instanceof PDO
+    && $_SERVER['REQUEST_METHOD'] === 'POST'
+    && $page !== 'system/audit_logs'
+) {
+    crmAuditLogPageMutation($pdo, $page);
+}
+
+// ===============================
 // RAW Pages (no layout)
 // Used for CSV/Excel/PDF/API style responses
 // ===============================

@@ -5,6 +5,8 @@ if (!function_exists('drInt')) { function drInt($v){ return max(0, (int)$v); } }
 if (!function_exists('drDec')) { function drDec($v){ return number_format((float)$v, 2, '.', ''); } }
 if (!function_exists('drText')) { function drText($v){ return trim((string)$v); } }
 if (!function_exists('drDateOrNull')) { function drDateOrNull($v){ $v=trim((string)$v); return preg_match('/^\d{4}-\d{2}-\d{2}$/',$v)?$v:null; } }
+if (!function_exists('drValidEmail')) { function drValidEmail($v){ $v=trim((string)$v); return $v!=='' && (bool)filter_var($v, FILTER_VALIDATE_EMAIL); } }
+if (!function_exists('drValidPersonName')) { function drValidPersonName($v){ $v=trim((string)$v); return $v!=='' && (bool)preg_match('/^[A-Za-z][A-Za-z .\'-]{1,79}$/', $v); } }
 
 $userId=(int)($_SESSION['user_id']??0);
 $roleId=(int)($_SESSION['role_id']??0);
@@ -257,6 +259,12 @@ if($_SERVER['REQUEST_METHOD']==='POST' && isset($_POST['save_all_report']) && em
         foreach($fields as $f){
           $v=$r[$f]??'';
           if(strpos($f,'date')!==false || in_array($f,['dob','doa','day_start','end_day'],true)) $v=drDateOrNull($v); else $v=drText($v);
+          if (in_array($f, ['mail_id','email','email_id'], true) && $v!=='') {
+            if (!drValidEmail($v)) throw new Exception('Invalid email ID in '.$k.' row #'.($idx+1).': '.$v);
+          }
+          if (in_array($f, ['staff_name','contact_person','name','program_given_by','trainer'], true) && $v!=='') {
+            if (!drValidPersonName($v)) throw new Exception('Invalid name in '.$k.' row #'.($idx+1).' ('.$f.').');
+          }
           if($v!==''&&$v!==null&&$v!==0) $has=true;
           $vals[]=$v;
         }
@@ -1921,7 +1929,53 @@ function init(){
   const form=document.getElementById('mkDailyForm');
   enableEnterNavigation(form);
   enableTablePaste(form);
-  form?.addEventListener('submit',function(e){ e.preventDefault(); const hourlyValid=serializeHourly(); serializeColleges(); serializeProspect(); serializeActReport(); serializeAmount(); serializeProgram(); serializeArtsCollege(); serializeArtsPc(); serializeEnggCollege(); serializeEnggPc(); serializePolytechCollege(); if(hourlyValid===0){ show(2); if(typeof Swal!=='undefined') Swal.fire({icon:'error',title:'Hourly Report Required',text:'Please fill at least one hourly row (From, To, Particulars).'}); else alert('Hourly Report required.'); return; } if(typeof Swal!=='undefined'){ Swal.fire({icon:'question',title:'Save Marketing Daily Report?',text:'This will save all sections to database.',showCancelButton:true,confirmButtonColor:'#e91e63',cancelButtonColor:'#6b7280',confirmButtonText:'Yes, Save All'}).then(r=>{ if(!r.isConfirmed) return; Swal.fire({title:'Saving report...',allowOutsideClick:false,didOpen:()=>Swal.showLoading()}); form.submit(); }); } else form.submit(); });
+  function validateMarketingFormInputs(){
+    const emailRx=/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i;
+    const nameRx=/^[A-Za-z][A-Za-z .'-]{1,79}$/;
+    const checks=[
+      {selector:'.mk-col-mail_id,.mk-pro-email,.mk-ac-email_id,.mk-ec-email_id,.mk-epc-email_id,.mk-pc-email_id',type:'email',label:'Email'},
+      {selector:'.mk-col-contact_person,.mk-pro-staff_name,.mk-apc-name,.mk-epc-name,.mk-pc-contact_person,.mk-ac-contact_person,.mk-prg-program_given_by,.mk-prg-trainer',type:'name',label:'Name'}
+    ];
+    for(const rule of checks){
+      const nodes=document.querySelectorAll(rule.selector);
+      for(const el of nodes){
+        const v=(el.value||'').trim();
+        if(v==='') continue;
+        if(rule.type==='email' && !emailRx.test(v)){
+          return {ok:false,message:'Invalid email format found: '+v,el};
+        }
+        if(rule.type==='name' && !nameRx.test(v)){
+          return {ok:false,message:'Invalid name format found: '+v+' (letters, spaces, dot, hyphen only).',el};
+        }
+      }
+    }
+    return {ok:true};
+  }
+  form?.addEventListener('submit',function(e){
+    e.preventDefault();
+    const hourlyValid=serializeHourly();
+    serializeColleges(); serializeProspect(); serializeActReport(); serializeAmount(); serializeProgram(); serializeArtsCollege(); serializeArtsPc(); serializeEnggCollege(); serializeEnggPc(); serializePolytechCollege();
+    if(hourlyValid===0){
+      show(2);
+      if(typeof Swal!=='undefined') Swal.fire({icon:'error',title:'Hourly Report Required',text:'Please fill at least one hourly row (From, To, Particulars).'});
+      else alert('Hourly Report required.');
+      return;
+    }
+    const vres=validateMarketingFormInputs();
+    if(!vres.ok){
+      if(vres.el && typeof vres.el.focus==='function') vres.el.focus();
+      if(typeof Swal!=='undefined') Swal.fire({icon:'error',title:'Validation Error',text:vres.message,confirmButtonColor:'#e91e63'});
+      else alert(vres.message);
+      return;
+    }
+    if(typeof Swal!=='undefined'){
+      Swal.fire({icon:'question',title:'Save Marketing Daily Report?',text:'This will save all sections to database.',showCancelButton:true,confirmButtonColor:'#e91e63',cancelButtonColor:'#6b7280',confirmButtonText:'Yes, Save All'}).then(r=>{
+        if(!r.isConfirmed) return;
+        Swal.fire({title:'Saving report...',allowOutsideClick:false,didOpen:()=>Swal.showLoading()});
+        form.submit();
+      });
+    } else form.submit();
+  });
   const s=<?= json_encode($drSuccessMessage) ?>, er=<?= json_encode($drErrorMessage) ?>;
   if(typeof Swal!=='undefined' && s) Swal.fire({icon:'success',title:'Success',text:s,confirmButtonColor:'#e91e63'});
   else if(typeof Swal!=='undefined' && er) Swal.fire({icon:'error',title:'Error',text:er,confirmButtonColor:'#e91e63'});

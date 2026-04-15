@@ -42,6 +42,51 @@ if (!function_exists('targetDec')) {
     }
 }
 
+if (!function_exists('targetAllowedRoleNames')) {
+    function targetAllowedRoleNames(): array
+    {
+        return ['front office', 'hr', 'marketing', 'corporate'];
+    }
+}
+
+if (!function_exists('targetFetchEligibleUsers')) {
+    function targetFetchEligibleUsers(PDO $pdo, int $branchId, int $targetYear, int $targetMonth, int $editId = 0): array
+    {
+        $roles = targetAllowedRoleNames();
+        $placeholders = implode(',', array_fill(0, count($roles), '?'));
+        $sql = "
+            SELECT
+                u.id,
+                u.name,
+                u.email,
+                u.role_id,
+                r.role_name
+            FROM users u
+            INNER JOIN roles r ON r.id = u.role_id
+            LEFT JOIN monthly_targets mt
+                ON mt.user_id = u.id
+               AND mt.branch_id = u.branch_id
+               AND mt.target_year = ?
+               AND mt.target_month = ?
+               AND (? <= 0 OR mt.id <> ?)
+            WHERE u.branch_id = ?
+              AND u.status = 1
+              AND r.status = 1
+              AND r.is_target_applicable = 1
+              AND LOWER(COALESCE(r.role_name, '')) IN ($placeholders)
+              AND mt.id IS NULL
+            ORDER BY u.name ASC
+        ";
+        $params = [$targetYear, $targetMonth, $editId, $editId, $branchId];
+        foreach ($roles as $roleLc) {
+            $params[] = $roleLc;
+        }
+        $st = $pdo->prepare($sql);
+        $st->execute($params);
+        return $st->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    }
+}
+
 $userId   = (int)($_SESSION['user_id'] ?? 0);
 $branchId = (int)($_SESSION['branch_id'] ?? 0);
 $roleName = trim((string)($_SESSION['role_name'] ?? ''));
@@ -89,37 +134,6 @@ $monthNames = [
 $eligibleUsers = [];
 
 // --------------------------------------------------
-// Load eligible users
-// --------------------------------------------------
-if (!$error) {
-    try {
-        $sqlEligible = "
-            SELECT
-                u.id,
-                u.name,
-                u.email,
-                u.role_id,
-                r.role_name
-            FROM users u
-            INNER JOIN roles r ON r.id = u.role_id
-            WHERE u.branch_id = :branch_id
-              AND u.status = 1
-              AND r.status = 1
-              AND r.is_target_applicable = 1
-              AND LOWER(COALESCE(r.role_name, '')) IN ('front office', 'hr', 'marketing')
-            ORDER BY u.name ASC
-        ";
-        $stmtEligible = $pdo->prepare($sqlEligible);
-        $stmtEligible->execute([
-            ':branch_id' => $branchId
-        ]);
-        $eligibleUsers = $stmtEligible->fetchAll(PDO::FETCH_ASSOC);
-    } catch (Throwable $e) {
-        $error = 'Unable to load eligible users. ' . $e->getMessage();
-    }
-}
-
-// --------------------------------------------------
 // Edit mode
 // --------------------------------------------------
 if (!$error && $editId > 0) {
@@ -156,6 +170,47 @@ if (!$error && $editId > 0) {
         }
     } catch (Throwable $e) {
         $error = 'Unable to load target record. ' . $e->getMessage();
+    }
+}
+
+// --------------------------------------------------
+// AJAX - Eligible users by month/year (unassigned only)
+// --------------------------------------------------
+if (!$error && isset($_GET['ajax']) && (string)$_GET['ajax'] === 'target_users') {
+    $year = targetInt($_GET['year'] ?? $form['target_year']);
+    $month = targetInt($_GET['month'] ?? $form['target_month']);
+    $ajaxEditId = targetInt($_GET['edit_id'] ?? $form['id']);
+    if ($year < 2000 || $year > 2100) {
+        $year = (int)$form['target_year'];
+    }
+    if ($month < 1 || $month > 12) {
+        $month = (int)$form['target_month'];
+    }
+
+    header('Content-Type: application/json; charset=utf-8');
+    try {
+        $users = targetFetchEligibleUsers($pdo, $branchId, $year, $month, $ajaxEditId);
+        echo json_encode(['ok' => true, 'users' => $users], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    } catch (Throwable $e) {
+        echo json_encode(['ok' => false, 'users' => []], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    }
+    exit;
+}
+
+// --------------------------------------------------
+// Load eligible users (unassigned for current month/year)
+// --------------------------------------------------
+if (!$error) {
+    try {
+        $eligibleUsers = targetFetchEligibleUsers(
+            $pdo,
+            $branchId,
+            (int)$form['target_year'],
+            (int)$form['target_month'],
+            (int)$form['id']
+        );
+    } catch (Throwable $e) {
+        $error = 'Unable to load eligible users. ' . $e->getMessage();
     }
 }
 
@@ -230,8 +285,8 @@ if (!$error && $_SERVER['REQUEST_METHOD'] === 'POST') {
                 $error = 'Selected user not found in this branch.';
             } elseif ((int)$selectedUser['is_target_applicable'] !== 1) {
                 $error = 'Selected role is not target applicable.';
-            } elseif (!in_array(strtolower(trim((string)($selectedUser['role_name'] ?? ''))), ['front office', 'hr', 'marketing'], true)) {
-                $error = 'Targets can be assigned only for Front Office, HR, and Marketing roles.';
+            } elseif (!in_array(strtolower(trim((string)($selectedUser['role_name'] ?? ''))), targetAllowedRoleNames(), true)) {
+                $error = 'Targets can be assigned only for Front Office, HR, Marketing, and Corporate roles.';
             } else {
                 $form['role_id'] = (int)$selectedUser['role_id'];
             }
@@ -507,6 +562,7 @@ Target Configuration
 <div class="targets-input-shell">
 <i class="fas fa-lock targets-input-icon"></i>
 <input type="number"
+id="target_year"
 name="target_year"
 class="form-control targets-readonly"
 placeholder="Enter target year"
@@ -707,8 +763,53 @@ View Target List
 /* ROLE AUTO DISPLAY */
 
 const userSelect=document.getElementById("user_id");
+const monthSelect=document.querySelector('select[name="target_month"]');
+const yearInput=document.getElementById("target_year");
+const setupIdInput=document.querySelector('input[name="id"]');
 const roleInput=document.getElementById("role_name_display");
 const saveTargetBtn=document.getElementById("saveTargetBtn");
+
+const refreshTargetUsers = async function () {
+if(!userSelect || !monthSelect || !yearInput) return;
+
+const selectedBefore=(userSelect.value || "").trim();
+const monthVal=(monthSelect.value || "").trim();
+const yearVal=(yearInput.value || "").trim();
+const editId=(setupIdInput?.value || "").trim();
+
+if(monthVal === "" || yearVal === "") return;
+
+const url=`index.php?page=targets/setup&ajax=target_users&month=${encodeURIComponent(monthVal)}&year=${encodeURIComponent(yearVal)}&edit_id=${encodeURIComponent(editId)}`;
+
+try{
+const res=await fetch(url,{credentials:"same-origin"});
+if(!res.ok) return;
+const payload=await res.json();
+if(!payload || payload.ok !== true || !Array.isArray(payload.users)) return;
+
+userSelect.innerHTML='<option value="">Select staff / user</option>';
+
+payload.users.forEach(function(u){
+const opt=document.createElement("option");
+opt.value=String(u.id || "");
+opt.setAttribute("data-role-id", String(u.role_id || ""));
+opt.setAttribute("data-role-name", String(u.role_name || ""));
+opt.textContent=`${u.name || ""} | ${u.role_name || ""}`;
+if(String(u.id || "") === selectedBefore){
+opt.selected=true;
+}
+userSelect.appendChild(opt);
+});
+
+const hasSelected=userSelect.value && userSelect.value !== "";
+if(!hasSelected){
+roleInput.value="";
+}
+syncSaveTargetState();
+}catch(e){
+// Keep existing options on network/parser issues.
+}
+};
 
 if(userSelect){
 
@@ -720,6 +821,12 @@ roleInput.value=opt ? (opt.getAttribute("data-role-name") || "") : "";
 
 });
 
+}
+
+if(monthSelect){
+monthSelect.addEventListener("change", function(){
+refreshTargetUsers();
+});
 }
 
 const syncSaveTargetState=function(){
@@ -846,6 +953,7 @@ userSelect.addEventListener("change",syncSaveTargetState);
 }
 
 syncSaveTargetState();
+refreshTargetUsers();
 
 </script>
 

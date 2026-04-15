@@ -244,6 +244,26 @@ if (!function_exists('sidebarBadgeText')) {
     flex:1 1 auto;
     min-width:0;
 }
+.sidebar .menu-list a .menu-label,
+.sidebar .menu-list .menu-toggle .menu-label{
+    flex:1 1 auto !important;
+    min-width:0;
+}
+.sidebar .menu-list a .menu-tail,
+.sidebar .menu-list .menu-toggle .menu-tail{
+    flex:0 0 auto !important;
+    margin-left:auto;
+    min-width:max-content;
+}
+.sidebar .menu-list a .menu-badge,
+.sidebar .menu-list .menu-toggle .menu-badge{
+    flex:0 0 auto !important;
+    white-space:nowrap;
+}
+.sidebar .menu-list li.has-children > .menu-toggle .caret{
+    flex:0 0 auto !important;
+    margin-left:0 !important;
+}
 </style>
 
 <div class="sidebar" id="crmSidebar">
@@ -366,6 +386,14 @@ if (!function_exists('sidebarBadgeText')) {
 
             </li>
         <?php endforeach; ?>
+
+        <!-- Audit Logs (quick access) -->
+        <li class="<?= ($currentPage === 'system/audit_logs') ? 'active' : '' ?>">
+            <a href="index.php?page=system/audit_logs" data-tooltip="Audit Logs">
+                <i class="fas fa-history"></i>
+                <span class="menu-label">Audit Logs</span>
+            </a>
+        </li>
 
         <!-- Logout -->
         <li class="sidebar-logout">
