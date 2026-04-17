@@ -52,3 +52,9 @@
 [2026-04-11 12:03:23] Sent mail "Registration completed for Dinesh" to webdeveloper05.ats@gmail.com via primary (smtp.gmail.com:465, smtps)
 [2026-04-11 12:42:16] Sent mail "Course certificate generated for Joseph" to joseph@gmail.com via primary (smtp.gmail.com:465, smtps)
 [2026-04-11 12:42:20] Sent mail "Course certificate generated for Joseph" to parent@gmail.com via primary (smtp.gmail.com:465, smtps)
+[2026-04-16 17:12:04] Attempting registration mail from enquiry conversion for registration_id=10, status=active, student_email=ramesh@gmail.com, parent_email=sampl@gmail.com
+[2026-04-16 17:12:08] Sent mail "Registration completed for Ramesh" to ramesh@gmail.com via primary (smtp.gmail.com:465, smtps)
+[2026-04-16 17:12:12] Sent mail "Registration completed for Ramesh" to sampl@gmail.com via primary (smtp.gmail.com:465, smtps)
+[2026-04-16 17:14:46] Sent mail "Payment received for Ramesh" to ramesh@gmail.com via primary (smtp.gmail.com:465, smtps)
+[2026-04-16 17:14:51] Sent mail "Payment received for Ramesh" to sampl@gmail.com via primary (smtp.gmail.com:465, smtps)
+[2026-04-16 17:14:55] Sent mail "Payment received for Ramesh" to pramo@gmail.com via primary (smtp.gmail.com:465, smtps)

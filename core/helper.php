@@ -243,6 +243,236 @@ function crmColumnExists(PDO $pdo, string $tableName, string $columnName): bool
     return $cache[$key];
 }
 
+function crmLeadNormalizePhone10($value): ?string
+{
+    $digits = preg_replace('/\D+/', '', (string) $value);
+    if ($digits === '') {
+        return null;
+    }
+    if (strlen($digits) > 10) {
+        $digits = substr($digits, -10);
+    }
+    if (strlen($digits) !== 10) {
+        return null;
+    }
+    return $digits;
+}
+
+function crmLeadNormalizeEmail($value): ?string
+{
+    $email = strtolower(trim((string) $value));
+    if ($email === '') {
+        return null;
+    }
+    return filter_var($email, FILTER_VALIDATE_EMAIL) ? $email : null;
+}
+
+function crmLeadCanBypassDuplicateGuard(string $roleName): bool
+{
+    $role = strtolower(trim($roleName));
+    return in_array($role, ['super admin', 'hr', 'marketing'], true);
+}
+
+function crmLeadFindDuplicate(
+    PDO $pdo,
+    int $branchId,
+    ?string $phone,
+    ?string $email,
+    int $excludeLeadId = 0,
+    bool $allowAllBranches = false
+): ?array {
+    $phoneNorm = crmLeadNormalizePhone10($phone);
+    $emailNorm = crmLeadNormalizeEmail($email);
+    if ($phoneNorm === null && $emailNorm === null) {
+        return null;
+    }
+
+    $whereParts = [];
+    $params = [];
+
+    if ($phoneNorm !== null) {
+        $whereParts[] = "RIGHT(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(COALESCE(l.phone, ''), ' ', ''), '-', ''), '+', ''), '(', ''), ')', ''), '.', ''), 10) = :phone_norm";
+        $params[':phone_norm'] = $phoneNorm;
+    }
+    if ($emailNorm !== null) {
+        $whereParts[] = "LOWER(TRIM(COALESCE(l.email, ''))) = :email_norm";
+        $params[':email_norm'] = $emailNorm;
+    }
+    if (empty($whereParts)) {
+        return null;
+    }
+
+    $sql = "
+        SELECT
+            l.id, l.branch_id, l.name, l.phone, l.email, l.status, l.assigned_to,
+            l.created_at, l.updated_at, u.name AS assigned_name
+        FROM leads l
+        LEFT JOIN users u ON u.id = l.assigned_to
+        WHERE (" . implode(' OR ', $whereParts) . ")
+    ";
+
+    if (!$allowAllBranches && $branchId > 0) {
+        $sql .= " AND l.branch_id = :branch_id";
+        $params[':branch_id'] = $branchId;
+    }
+    if ($excludeLeadId > 0) {
+        $sql .= " AND l.id <> :exclude_lead_id";
+        $params[':exclude_lead_id'] = $excludeLeadId;
+    }
+
+    $sql .= " ORDER BY l.updated_at DESC, l.id DESC LIMIT 20";
+
+    try {
+        $st = $pdo->prepare($sql);
+        $st->execute($params);
+        $rows = $st->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    } catch (Exception $e) {
+        return null;
+    }
+
+    $best = null;
+    $bestScore = -1;
+    foreach ($rows as $row) {
+        $score = 0;
+        $rowPhoneNorm = crmLeadNormalizePhone10($row['phone'] ?? null);
+        $rowEmailNorm = crmLeadNormalizeEmail($row['email'] ?? null);
+        $matchedPhone = ($phoneNorm !== null && $rowPhoneNorm !== null && $phoneNorm === $rowPhoneNorm);
+        $matchedEmail = ($emailNorm !== null && $rowEmailNorm !== null && $emailNorm === $rowEmailNorm);
+        if ($matchedPhone) {
+            $score += 2;
+        }
+        if ($matchedEmail) {
+            $score += 2;
+        }
+        if ($score > $bestScore) {
+            $bestScore = $score;
+            $row['duplicate_match_phone'] = $matchedPhone ? 1 : 0;
+            $row['duplicate_match_email'] = $matchedEmail ? 1 : 0;
+            $best = $row;
+        }
+    }
+
+    return $bestScore > 0 ? $best : null;
+}
+
+function crmLeadMergeRecord(PDO $pdo, int $targetLeadId, array $incoming, array $context = []): array
+{
+    $st = $pdo->prepare("SELECT * FROM leads WHERE id = ? LIMIT 1");
+    $st->execute([$targetLeadId]);
+    $existing = $st->fetch(PDO::FETCH_ASSOC);
+    if (!$existing) {
+        throw new Exception('Target lead not found.');
+    }
+
+    $changes = [];
+    $params = [':id' => $targetLeadId];
+    $set = [];
+
+    $incomingName = trim((string)($incoming['name'] ?? ''));
+    if ($incomingName !== '' && $incomingName !== (string)($existing['name'] ?? '')) {
+        $set[] = "name = :name";
+        $params[':name'] = $incomingName;
+        $changes[] = 'name';
+    }
+
+    $incomingPhone = crmLeadNormalizePhone10($incoming['phone'] ?? null);
+    $existingPhone = crmLeadNormalizePhone10($existing['phone'] ?? null);
+    if ($incomingPhone !== null && $incomingPhone !== $existingPhone) {
+        $set[] = "phone = :phone";
+        $params[':phone'] = $incomingPhone;
+        $changes[] = 'phone';
+    }
+
+    $incomingEmail = crmLeadNormalizeEmail($incoming['email'] ?? null);
+    $existingEmail = crmLeadNormalizeEmail($existing['email'] ?? null);
+    if ($incomingEmail !== null && $incomingEmail !== $existingEmail) {
+        $set[] = "email = :email";
+        $params[':email'] = $incomingEmail;
+        $changes[] = 'email';
+    }
+
+    foreach (['source', 'course_interest', 'company_college_name', 'department', 'lead_year'] as $field) {
+        $incomingValue = trim((string)($incoming[$field] ?? ''));
+        if ($incomingValue !== '' && $incomingValue !== (string)($existing[$field] ?? '')) {
+            $set[] = $field . " = :" . $field;
+            $params[':' . $field] = $incomingValue;
+            $changes[] = $field;
+        }
+    }
+
+    $preferIncomingAssignment = !empty($context['prefer_incoming_assignment']);
+    $incomingAssignedTo = (int)($incoming['assigned_to'] ?? 0);
+    $existingAssignedTo = (int)($existing['assigned_to'] ?? 0);
+    if ($incomingAssignedTo > 0) {
+        if ($preferIncomingAssignment || $existingAssignedTo <= 0) {
+            if ($incomingAssignedTo !== $existingAssignedTo) {
+                $set[] = "assigned_to = :assigned_to";
+                $params[':assigned_to'] = $incomingAssignedTo;
+                $changes[] = 'assigned_to';
+            }
+        }
+    }
+
+    $incomingRemarks = trim((string)($incoming['remarks'] ?? ''));
+    if ($incomingRemarks !== '') {
+        $existingRemarks = trim((string)($existing['remarks'] ?? ''));
+        $stamp = date('Y-m-d H:i:s');
+        $mergePrefix = trim((string)($context['merge_note_prefix'] ?? 'Merged note'));
+        $mergeNote = '[' . $mergePrefix . ' ' . $stamp . '] ' . $incomingRemarks;
+        $newRemarks = $existingRemarks === '' ? $mergeNote : ($existingRemarks . "\n\n" . $mergeNote);
+        if ($newRemarks !== $existingRemarks) {
+            $set[] = "remarks = :remarks";
+            $params[':remarks'] = $newRemarks;
+            $changes[] = 'remarks';
+        }
+    }
+
+    $importBatchId = (int)($incoming['import_batch_id'] ?? 0);
+    $existingImportBatchId = (int)($existing['import_batch_id'] ?? 0);
+    if ($importBatchId > 0 && $existingImportBatchId <= 0) {
+        $set[] = "import_batch_id = :import_batch_id";
+        $params[':import_batch_id'] = $importBatchId;
+        $changes[] = 'import_batch_id';
+    }
+
+    if (empty($set)) {
+        return [
+            'lead_id' => $targetLeadId,
+            'updated' => false,
+            'changes' => [],
+            'existing' => $existing,
+        ];
+    }
+
+    $set[] = "updated_at = NOW()";
+    $updatedBy = (int)($context['updated_by'] ?? 0);
+    if ($updatedBy > 0) {
+        $set[] = "updated_by = :updated_by";
+        $params[':updated_by'] = $updatedBy;
+    }
+    $ip = trim((string)($context['ip_address'] ?? ''));
+    if ($ip !== '') {
+        $set[] = "ip_address = :ip_address";
+        $params[':ip_address'] = substr($ip, 0, 50);
+    }
+    $ua = trim((string)($context['user_agent'] ?? ''));
+    if ($ua !== '') {
+        $set[] = "user_agent = :user_agent";
+        $params[':user_agent'] = substr($ua, 0, 255);
+    }
+
+    $sql = "UPDATE leads SET " . implode(', ', $set) . " WHERE id = :id";
+    $upd = $pdo->prepare($sql);
+    $upd->execute($params);
+
+    return [
+        'lead_id' => $targetLeadId,
+        'updated' => true,
+        'changes' => $changes,
+        'existing' => $existing,
+    ];
+}
+
 function crmEnsureRegistrationProfileParentEmailColumn(PDO $pdo): bool
 {
     if (!crmTableExists($pdo, 'registration_profiles')) {
@@ -889,6 +1119,22 @@ function crmEnsureAuditLogsTable(PDO $pdo): bool
         }
     }
 
+    // Ensure performance indexes exist for high-volume audit filtering.
+    $indexAdds = [
+        "ALTER TABLE `audit_logs` ADD INDEX `idx_audit_user` (`user_id`)",
+        "ALTER TABLE `audit_logs` ADD INDEX `idx_audit_table` (`table_name`)",
+        "ALTER TABLE `audit_logs` ADD INDEX `idx_audit_created` (`created_at`)",
+        "ALTER TABLE `audit_logs` ADD INDEX `idx_audit_created_id` (`created_at`, `id`)",
+        "ALTER TABLE `audit_logs` ADD INDEX `idx_audit_table_created` (`table_name`, `created_at`)",
+    ];
+    foreach ($indexAdds as $sql) {
+        try {
+            $pdo->exec($sql);
+        } catch (Exception $e) {
+            // ignore if already exists
+        }
+    }
+
     return true;
 }
 
@@ -1178,7 +1424,7 @@ function crmAuditGuessActionFromRequest(): string
     if (isset($_POST['delete_registration']) || isset($_POST['delete_target']) || isset($_POST['delete_id'])) {
         return 'DELETE';
     }
-    if (isset($_POST['save_payment'])) {
+    if (isset($_POST['save_payment']) || isset($_POST['add_payment'])) {
         return 'PAYMENT';
     }
     if (isset($_POST['mark_done']) && (int)($_POST['convert'] ?? 0) === 1) {
@@ -1383,6 +1629,16 @@ function crmAuditLeadActionText(PDO $pdo, string $action, int $recordId): string
     $phone = trim((string)($_POST['phone'] ?? ''));
     $course = trim((string)($_POST['course_interest'] ?? ''));
     $assignedTo = (int)($_POST['assigned_to'] ?? 0);
+    if ($assignedTo <= 0) {
+        $assignedTo = (int)($_POST['assign_to_bulk'] ?? 0);
+    }
+    $leadIds = (isset($_POST['lead_ids']) && is_array($_POST['lead_ids'])) ? $_POST['lead_ids'] : [];
+    $leadCount = 0;
+    foreach ($leadIds as $lid) {
+        if ((int)$lid > 0) {
+            $leadCount++;
+        }
+    }
 
     if ($recordId > 0 && $action === 'CREATE') {
         $action = 'UPDATE';
@@ -1405,6 +1661,16 @@ function crmAuditLeadActionText(PDO $pdo, string $action, int $recordId): string
     $phoneText = $phone !== '' ? ' (' . $phone . ')' : '';
     $courseText = $course !== '' ? ' for ' . $course : '';
     $assignText = $assignedName !== '' ? ' assigned to ' . $assignedName : '';
+
+    if ($action === 'ASSIGN') {
+        if ($leadCount > 1) {
+            return $leadCount . ' leads assigned to ' . ($assignedName !== '' ? $assignedName : 'selected staff');
+        }
+        if ($name !== '') {
+            return 'Lead assigned: ' . $name . ($assignedName !== '' ? ' to ' . $assignedName : '');
+        }
+        return 'Lead assignment updated' . ($assignedName !== '' ? ' to ' . $assignedName : '');
+    }
 
     if ($action === 'CREATE') {
         return 'New lead added: ' . $who . $phoneText . $courseText . $assignText;
@@ -1538,12 +1804,18 @@ function crmAuditPaymentActionText(string $action, int $recordId): string
 {
     $action = strtoupper(trim($action));
     $registrationId = (int)($_POST['registration_id'] ?? 0);
+    if ($registrationId <= 0) {
+        $registrationId = (int)($_POST['reg_id'] ?? 0);
+    }
     $amount = trim((string)($_POST['amount'] ?? ''));
     $mode = trim((string)($_POST['payment_mode'] ?? ''));
     $type = trim((string)($_POST['payment_type'] ?? ''));
     $date = trim((string)($_POST['payment_date'] ?? ''));
+    if ($date === '') {
+        $date = trim((string)($_POST['date'] ?? ''));
+    }
 
-    if ($action === 'PAYMENT' || isset($_POST['save_payment'])) {
+    if ($action === 'PAYMENT' || isset($_POST['save_payment']) || isset($_POST['add_payment'])) {
         $amountText = $amount !== '' ? crmAuditFmtRs($amount) : 'Amount';
         $modeText = $mode !== '' ? (' via ' . $mode) : '';
         $typeText = $type !== '' ? (' [' . ucfirst($type) . ']') : '';
@@ -1625,7 +1897,12 @@ function crmAuditLogPageMutation(PDO $pdo, string $page): void
     } elseif ($tableName === 'enquiry_followups') {
         $actionText = crmAuditFollowupActionText($action, $recordId);
     } elseif ($tableName === 'registrations') {
-        $actionText = crmAuditRegistrationActionText($action, $recordId);
+        if ($action === 'PAYMENT' || isset($_POST['add_payment']) || isset($_POST['save_payment'])) {
+            $actionText = crmAuditPaymentActionText($action, $recordId);
+            $tableName = 'registration_payments';
+        } else {
+            $actionText = crmAuditRegistrationActionText($action, $recordId);
+        }
     } elseif ($tableName === 'registration_payments') {
         $actionText = crmAuditPaymentActionText($action, $recordId);
     }

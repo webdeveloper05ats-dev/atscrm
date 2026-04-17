@@ -18,6 +18,7 @@ $currentPage = $_GET['page'] ?? '';
 $sessionUserId = (int)($_SESSION['user_id'] ?? 0);
 $sessionRoleName = trim((string)($_SESSION['role_name'] ?? ''));
 $sessionBranchId = (int)($_SESSION['branch_id'] ?? 0);
+$isSuperAdminSidebar = function_exists('crmIsSuperAdminRole') ? crmIsSuperAdminRole() : (strtolower($sessionRoleName) === 'super admin');
 
 // -------------------------------
 // Role based Dashboard link
@@ -48,7 +49,11 @@ $menus = $stmt->fetchAll(PDO::FETCH_ASSOC);
 // -------------------------------
 $menus = array_values(array_filter($menus, function($m) {
     $slug = $m['menu_slug'] ?? '';
-    return !(strpos($slug, 'dashboard/') === 0 || $slug === 'dashboard');
+    return !(
+        strpos($slug, 'dashboard/') === 0
+        || $slug === 'dashboard'
+        || $slug === 'system/demo_reset'
+    );
 }));
 
 // Build parent -> child tree
@@ -394,6 +399,21 @@ if (!function_exists('sidebarBadgeText')) {
                 <span class="menu-label">Audit Logs</span>
             </a>
         </li>
+        <li class="<?= ($currentPage === 'system/onboarding') ? 'active' : '' ?>">
+            <a href="index.php?page=system/onboarding" data-tooltip="Onboarding Guide">
+                <i class="fas fa-book-open"></i>
+                <span class="menu-label">Onboarding Guide</span>
+            </a>
+        </li>
+
+        <?php if ($isSuperAdminSidebar): ?>
+        <li class="<?= ($currentPage === 'system/backup_health') ? 'active' : '' ?>">
+            <a href="index.php?page=system/backup_health" data-tooltip="Backup & Health">
+                <i class="fas fa-shield-alt"></i>
+                <span class="menu-label">Backup & Health</span>
+            </a>
+        </li>
+        <?php endif; ?>
 
         <!-- Logout -->
         <li class="sidebar-logout">

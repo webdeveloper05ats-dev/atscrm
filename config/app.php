@@ -75,6 +75,10 @@ if (!defined('APP_NAME')) {
 }
 define('APP_ENV', 'development'); // change to 'production' in live server
 define('BASE_URL', 'http://localhost/new_2025/demo/crm gitcopy/'); // change in production
+if (!defined('LEAD_CONTACT_SLA_HOURS')) {
+    // Lead contact SLA window from assignment/ownership point. Keep configurable for product rollout.
+    define('LEAD_CONTACT_SLA_HOURS', 24);
+}
 
 //define('BASE_URL', 'http://localhost/2026/crm/');
 

@@ -46,42 +46,275 @@ if (!function_exists('auditHumanizeModule')) {
 }
 
 if (!function_exists('auditFmtAction')) {
-    function auditFmtAction($action, $tableName = '', $recordId = 0): string
+    function auditExtractTargetPerson(string $text): string
+    {
+        $patterns = [
+            '/\bset\s+to\s+(.+?)\s*-\s*rs\b/i',
+            '/\bfor\s+(.+?)\s+to\s+rs\b/i',
+            '/\bfor\s+(.+?)\s*-\s*rs\b/i',
+        ];
+        foreach ($patterns as $pattern) {
+            if (preg_match($pattern, $text, $m)) {
+                $name = trim((string)($m[1] ?? ''));
+                $name = preg_replace('/\s+/', ' ', $name) ?? $name;
+                if ($name !== '' && strlen($name) <= 100) {
+                    return $name;
+                }
+            }
+        }
+        return '';
+    }
+
+    function auditExtractPaymentAmount(string $text): string
+    {
+        $patterns = [
+            '/(?:rs\.?|inr)\s*[:\-]?\s*([0-9][0-9,]*(?:\.\d{1,2})?)/i',
+            '/(?:amount|amt)\s*[:=]?\s*([0-9][0-9,]*(?:\.\d{1,2})?)/i',
+        ];
+        foreach ($patterns as $pattern) {
+            if (preg_match($pattern, $text, $m)) {
+                $raw = trim((string)($m[1] ?? ''));
+                $plain = str_replace(',', '', $raw);
+                if ($plain !== '' && is_numeric($plain)) {
+                    $decimals = (strpos($plain, '.') !== false) ? 2 : 0;
+                    return number_format((float)$plain, $decimals, '.', ',');
+                }
+                return $raw;
+            }
+        }
+        return '';
+    }
+
+    function auditFmtActionCleanup(string $text): string
+    {
+        // Remove explicit id markers to keep UI name-first.
+        $text = preg_replace('/\(\s*Record\s*#\d+\s*\)/i', '', $text) ?? $text;
+        $text = preg_replace('/\s*#\d+\b/', '', $text) ?? $text;
+        $text = preg_replace('/\b(id|record id|reg id)\s*[:=]?\s*\d+\b/i', '', $text) ?? $text;
+        $text = preg_replace('/\s+:\s+/', ': ', $text) ?? $text;
+        $text = preg_replace('/\s+-\s+/', ' - ', $text) ?? $text;
+        $text = preg_replace('/\s+/', ' ', $text) ?? $text;
+        return trim($text);
+    }
+
+    function auditRecordNameFromAction(string $action, string $tableName = '', string $userName = ''): string
+    {
+        $raw = trim($action);
+        $table = strtolower(trim($tableName));
+        if ($raw === '') {
+            return '';
+        }
+
+        if ($table === 'monthly_targets') {
+            $name = auditExtractTargetPerson($raw);
+            if ($name !== '') {
+                return $name;
+            }
+        }
+
+        if ($table === 'registration_payments' && preg_match('/\bfor\s+(.+?)(?:\s+via|\s+\[|\s+on|$)/i', $raw, $m)) {
+            $name = trim((string)($m[1] ?? ''));
+            $name = preg_replace('/\s+/', ' ', $name) ?? $name;
+            if ($name !== '' && !preg_match('/\bregistration\b/i', $name)) {
+                return $name;
+            }
+        }
+
+        if (($table === 'leads' || $table === 'enquiries') && preg_match('/:\s*([^,(]+)/', $raw, $m)) {
+            $name = trim((string)($m[1] ?? ''));
+            if ($name !== '' && !in_array(strtolower($name), ['unknown', 'lead', 'enquiry'], true)) {
+                return $name;
+            }
+        }
+        if ($table === 'leads' && preg_match('/\bassigned\s+to\s+(.+?)$/i', $raw, $m)) {
+            $name = trim((string)($m[1] ?? ''));
+            $name = preg_replace('/\s+/', ' ', $name) ?? $name;
+            if ($name !== '' && !in_array(strtolower($name), ['selected staff', 'staff'], true)) {
+                return $name;
+            }
+        }
+
+        if ($table === 'registrations' && preg_match('/\bfor\s+(.+?)(?:\s+-|\s+\(|\s+\[|$)/i', $raw, $m)) {
+            $name = trim((string)($m[1] ?? ''));
+            if ($name !== '' && !in_array(strtolower($name), ['student', 'registration'], true)) {
+                return $name;
+            }
+        }
+
+        if ($table === 'users') {
+            $name = trim($userName);
+            if ($name !== '' && $name !== '-') {
+                return $name;
+            }
+        }
+
+        return '';
+    }
+
+    function auditFmtAction($action, $tableName = '', $recordId = 0, $entityName = ''): string
     {
         $raw = trim((string)$action);
         if ($raw === '') {
             return '-';
         }
 
-        // Keep already-human sentence style as-is.
-        if (
-            preg_match('/\s/', $raw)
-            && strpos($raw, '[') === false
-            && strpos($raw, '_') === false
-            && preg_match('/[a-z]/', $raw)
-        ) {
-            return $raw;
+        $upper = strtoupper($raw);
+        $tableKey = strtolower(trim((string)$tableName));
+        $module = auditHumanizeModule($tableKey);
+        $entity = trim((string)$entityName) !== '' ? trim((string)$entityName) : $module;
+        $isPayment = ($upper === 'PAYMENT' || strpos($upper, 'PAYMENT') !== false || strtolower((string)$tableName) === 'registration_payments');
+        if ($isPayment) {
+            $amount = auditExtractPaymentAmount($raw);
+            if (trim((string)$entityName) !== '') {
+                $paymentText = $amount !== ''
+                    ? ('Payment of Rs ' . $amount . ' added for ' . trim((string)$entityName))
+                    : ('Payment added for ' . trim((string)$entityName));
+                return auditFmtActionCleanup($paymentText);
+            }
+            return auditFmtActionCleanup($amount !== '' ? ('Payment of Rs ' . $amount . ' added') : 'Payment added');
         }
 
-        $upper = strtoupper($raw);
-        $module = auditHumanizeModule($tableName);
-        $rid = (int)$recordId;
-        $ridText = $rid > 0 ? ' (Record #' . $rid . ')' : '';
+        if ($tableKey === 'monthly_targets' || strpos($upper, 'TARGET') !== false) {
+            $amount = auditExtractPaymentAmount($raw);
+            $amountText = $amount !== '' ? (' - Rs ' . $amount) : '';
+            $periodText = '';
+            if (preg_match('/\(([A-Za-z]+\s+\d{4})\)/', $raw, $m)) {
+                $periodText = ' (' . trim((string)$m[1]) . ')';
+            }
+            $targetPerson = trim((string)$entityName);
+            if ($targetPerson === '') {
+                $targetPerson = auditExtractTargetPerson($raw);
+            }
+            if ($targetPerson === '') {
+                $targetPerson = 'user';
+            }
+            if (preg_match('/\b(DELETE|REMOVED|REMOVE)\b/i', $raw)) {
+                return auditFmtActionCleanup('Target removed for ' . $targetPerson . $amountText . $periodText);
+            }
+            if (preg_match('/\b(CREATE|NEW|SET)\b/i', $raw)) {
+                return auditFmtActionCleanup('New target set for ' . $targetPerson . $amountText . $periodText);
+            }
+            return auditFmtActionCleanup('Target updated for ' . $targetPerson . $amountText . $periodText);
+        }
+
+        if ($tableKey === 'enquiry_followups' || strpos($upper, 'FOLLOW-UP') !== false || strpos($upper, 'FOLLOWUP') !== false) {
+            if (preg_match('/\b(CONVERT|CONVERTED)\b/i', $raw)) {
+                return auditFmtActionCleanup('Follow-up converted to registration for ' . $entity);
+            }
+            if (preg_match('/\b(MARKED DONE|DONE)\b/i', $raw)) {
+                return auditFmtActionCleanup('Follow-up marked done for ' . $entity);
+            }
+            if (preg_match('/\b(VERIFY|VERIFICATION)\b/i', $raw)) {
+                return auditFmtActionCleanup('Follow-up verification updated for ' . $entity);
+            }
+            if (preg_match('/\b(CREATE|NEW|ADD|ADDED)\b/i', $raw)) {
+                return auditFmtActionCleanup('New follow-up added for ' . $entity);
+            }
+            if (preg_match('/\b(DELETE|REMOVED|REMOVE)\b/i', $raw)) {
+                return auditFmtActionCleanup('Follow-up deleted for ' . $entity);
+            }
+            return auditFmtActionCleanup('Follow-up updated for ' . $entity);
+        }
+
+        if ($tableKey === 'registrations' || strpos($upper, 'REGISTRATION') !== false) {
+            if (preg_match('/\b(DELETE|REMOVED|REMOVE)\b/i', $raw)) {
+                return auditFmtActionCleanup('Registration deleted for ' . $entity);
+            }
+            if (preg_match('/\b(CREATE|NEW)\b/i', $raw)) {
+                return auditFmtActionCleanup('New registration created for ' . $entity);
+            }
+            if (preg_match('/\b(CONVERT|CONVERTED)\b/i', $raw)) {
+                return auditFmtActionCleanup('Registration converted for ' . $entity);
+            }
+            return auditFmtActionCleanup('Registration updated for ' . $entity);
+        }
+
+        if ($tableKey === 'enquiries' || strpos($upper, 'ENQUIRY') !== false) {
+            if (preg_match('/\b(DELETE|REMOVED|REMOVE)\b/i', $raw)) {
+                return auditFmtActionCleanup('Enquiry deleted for ' . $entity);
+            }
+            if (preg_match('/\b(CREATE|NEW)\b/i', $raw)) {
+                return auditFmtActionCleanup('New enquiry added for ' . $entity);
+            }
+            return auditFmtActionCleanup('Enquiry updated for ' . $entity);
+        }
+
+        if ($tableKey === 'leads' || strpos($upper, 'LEAD') !== false) {
+            if (preg_match('/\bleads?\s+assigned\s+to\s+(.+)$/i', $raw, $m)) {
+                $to = trim((string)($m[1] ?? ''));
+                return auditFmtActionCleanup('Leads assigned to ' . $to);
+            }
+            if (preg_match('/\blead\s+assigned\s*:\s*(.+)$/i', $raw, $m)) {
+                $payload = trim((string)($m[1] ?? ''));
+                return auditFmtActionCleanup('Lead assigned: ' . $payload);
+            }
+            if (preg_match('/\bassignment\s+updated(?:\s+to\s+(.+))?$/i', $raw, $m)) {
+                $to = trim((string)($m[1] ?? ''));
+                return auditFmtActionCleanup('Lead assignment updated' . ($to !== '' ? (' to ' . $to) : ''));
+            }
+            if (preg_match('/\b(DELETE|REMOVED|REMOVE)\b/i', $raw)) {
+                return auditFmtActionCleanup('Lead deleted for ' . $entity);
+            }
+            if (preg_match('/\b(CREATE|NEW)\b/i', $raw)) {
+                return auditFmtActionCleanup('New lead added for ' . $entity);
+            }
+            if (
+                preg_match('/\s/', $raw)
+                && strpos($raw, '[') === false
+                && strpos($raw, '_') === false
+                && preg_match('/[a-z]/', $raw)
+            ) {
+                return auditFmtActionCleanup($raw);
+            }
+            return auditFmtActionCleanup('Lead updated for ' . $entity);
+        }
+
+        if ($tableKey === 'users') {
+            if ($upper === 'LOGIN_SUCCESS') {
+                return 'Logged in successfully';
+            }
+            if ($upper === 'LOGIN_FAILED') {
+                return 'Login failed';
+            }
+            if ($upper === 'LOGOUT') {
+                return 'Logged out';
+            }
+            if (preg_match('/\b(DELETE|REMOVED|REMOVE)\b/i', $raw)) {
+                return auditFmtActionCleanup('User deleted: ' . $entity);
+            }
+            if (preg_match('/\b(CREATE|NEW)\b/i', $raw)) {
+                return auditFmtActionCleanup('New user created: ' . $entity);
+            }
+            if (preg_match('/\b(UPDATE|EDIT)\b/i', $raw)) {
+                return auditFmtActionCleanup('User updated: ' . $entity);
+            }
+        }
+
+        if ($tableKey === 'roles') {
+            if (preg_match('/\b(DELETE|REMOVED|REMOVE)\b/i', $raw)) {
+                return auditFmtActionCleanup('Role deleted: ' . $entity);
+            }
+            if (preg_match('/\b(CREATE|NEW)\b/i', $raw)) {
+                return auditFmtActionCleanup('New role created: ' . $entity);
+            }
+            if (preg_match('/\b(UPDATE|EDIT|ASSIGN|PERMISSION)\b/i', $raw)) {
+                return auditFmtActionCleanup('Role updated: ' . $entity);
+            }
+        }
 
         $simpleMap = [
             'LOGIN_SUCCESS' => 'Logged in successfully',
             'LOGIN_FAILED' => 'Login failed',
             'LOGOUT' => 'Logged out',
-            'CREATE' => 'Created ' . $module . $ridText,
-            'UPDATE' => 'Updated ' . $module . $ridText,
-            'DELETE' => 'Deleted ' . $module . $ridText,
-            'ASSIGN' => 'Assigned ' . $module . $ridText,
-            'IMPORT' => 'Imported ' . $module . $ridText,
-            'PAYMENT' => 'Payment updated' . $ridText,
-            'CONVERT' => 'Converted ' . $module . $ridText,
+            'CREATE' => 'Created ' . $entity,
+            'UPDATE' => 'Updated ' . $entity,
+            'DELETE' => 'Deleted ' . $entity,
+            'ASSIGN' => 'Assigned ' . $entity,
+            'IMPORT' => 'Imported ' . $entity,
+            'CONVERT' => 'Converted ' . $entity,
         ];
         if (isset($simpleMap[$upper])) {
-            return trim($simpleMap[$upper]);
+            return auditFmtActionCleanup(trim($simpleMap[$upper]));
         }
 
         // Pattern example: UPDATE [targets/setup] via id
@@ -89,7 +322,7 @@ if (!function_exists('auditFmtAction')) {
             $verb = strtoupper(trim((string)$m[1]));
             $path = auditHumanizeModule((string)$m[2]);
             $via = trim((string)($m[3] ?? ''));
-            $entity = (strtolower($module) !== 'record') ? $module : $path;
+            $entity = trim((string)$entityName) !== '' ? trim((string)$entityName) : ((strtolower($module) !== 'record') ? $module : $path);
             $verbText = [
                 'CREATE' => 'Created',
                 'UPDATE' => 'Updated',
@@ -97,12 +330,22 @@ if (!function_exists('auditFmtAction')) {
                 'ASSIGN' => 'Assigned',
                 'IMPORT' => 'Imported',
                 'CONVERT' => 'Converted',
-                'PAYMENT' => 'Updated payment for',
+                'PAYMENT' => 'Added payment for',
             ][$verb] ?? ucwords(strtolower(str_replace('_', ' ', $verb)));
             $viaKey = strtolower($via);
             $showVia = ($viaKey !== '' && !in_array($viaKey, ['id', 'pk', 'uid', 'record id', 'record_id'], true));
             $viaText = $showVia ? ' via ' . $viaKey : '';
-            return trim($verbText . ' ' . $entity . $ridText . $viaText);
+            return auditFmtActionCleanup(trim($verbText . ' ' . $entity . $viaText));
+        }
+
+        // Keep already-human sentence style as-is after cleanup.
+        if (
+            preg_match('/\s/', $raw)
+            && strpos($raw, '[') === false
+            && strpos($raw, '_') === false
+            && preg_match('/[a-z]/', $raw)
+        ) {
+            return auditFmtActionCleanup($raw);
         }
 
         // Generic fallback: make tokenized text readable.
@@ -110,10 +353,187 @@ if (!function_exists('auditFmtAction')) {
         $text = preg_replace('/\s+/', ' ', $text) ?? $text;
         $text = trim($text);
         $text = ucwords(strtolower($text));
-        if ($rid > 0 && stripos($text, '#' . $rid) === false) {
-            $text .= ' (#' . $rid . ')';
+        $text = auditFmtActionCleanup($text);
+        return $text !== '' ? $text : auditFmtActionCleanup($raw);
+    }
+}
+
+if (!function_exists('auditBuildEntityNameMap')) {
+    function auditBuildEntityNameMap(PDO $pdo, array $rows): array
+    {
+        $idsByTable = [];
+        foreach ($rows as $row) {
+            $table = strtolower(trim((string)($row['table_name'] ?? '')));
+            $id = (int)($row['record_id'] ?? 0);
+            if ($table === '' || $id <= 0) {
+                continue;
+            }
+            if (!isset($idsByTable[$table])) {
+                $idsByTable[$table] = [];
+            }
+            $idsByTable[$table][$id] = true;
         }
-        return $text !== '' ? $text : $raw;
+
+        $map = [];
+        $fetchSimple = static function (string $table, string $idCol, string $nameExpr) use ($pdo, &$idsByTable, &$map): void {
+            if (empty($idsByTable[$table])) {
+                return;
+            }
+            $ids = array_keys($idsByTable[$table]);
+            $ph = implode(',', array_fill(0, count($ids), '?'));
+            $sql = "SELECT {$idCol} AS rid, {$nameExpr} AS label FROM {$table} WHERE {$idCol} IN ({$ph})";
+            $st = $pdo->prepare($sql);
+            $st->execute($ids);
+            $rows = $st->fetchAll(PDO::FETCH_ASSOC) ?: [];
+            foreach ($rows as $r) {
+                $rid = (int)($r['rid'] ?? 0);
+                if ($rid <= 0) {
+                    continue;
+                }
+                $label = trim((string)($r['label'] ?? ''));
+                if ($label === '') {
+                    continue;
+                }
+                $map[$table . ':' . $rid] = $label;
+            }
+        };
+
+        try { $fetchSimple('leads', 'id', "COALESCE(NULLIF(TRIM(name),''), 'Lead')"); } catch (Throwable $e) {}
+        try { $fetchSimple('enquiries', 'id', "COALESCE(NULLIF(TRIM(name),''), 'Enquiry')"); } catch (Throwable $e) {}
+        try { $fetchSimple('users', 'id', "COALESCE(NULLIF(TRIM(name),''), 'User')"); } catch (Throwable $e) {}
+        try { $fetchSimple('roles', 'id', "COALESCE(NULLIF(TRIM(role_name),''), 'Role')"); } catch (Throwable $e) {}
+
+        try {
+            if (!empty($idsByTable['registrations'])) {
+                $ids = array_keys($idsByTable['registrations']);
+                $ph = implode(',', array_fill(0, count($ids), '?'));
+                $sql = "
+                    SELECT r.id AS rid,
+                           COALESCE(
+                               NULLIF(TRIM(r.student_name), ''),
+                               NULLIF(TRIM(r.enquiry_snapshot_name), ''),
+                               NULLIF(TRIM(e.name), ''),
+                               CONCAT('Registration ', COALESCE(r.registration_no, ''))
+                           ) AS label
+                    FROM registrations r
+                    LEFT JOIN enquiries e ON e.id = r.enquiry_id
+                    WHERE r.id IN ({$ph})
+                ";
+                $st = $pdo->prepare($sql);
+                $st->execute($ids);
+                foreach (($st->fetchAll(PDO::FETCH_ASSOC) ?: []) as $r) {
+                    $rid = (int)($r['rid'] ?? 0);
+                    $label = trim((string)($r['label'] ?? ''));
+                    if ($rid > 0 && $label !== '') {
+                        $map['registrations:' . $rid] = $label;
+                    }
+                }
+            }
+        } catch (Throwable $e) {}
+
+        try {
+            if (!empty($idsByTable['registration_payments'])) {
+                $ids = array_keys($idsByTable['registration_payments']);
+                $ph = implode(',', array_fill(0, count($ids), '?'));
+                $sql = "
+                    SELECT p.id AS rid,
+                           COALESCE(
+                               NULLIF(TRIM(r.student_name), ''),
+                               NULLIF(TRIM(r.enquiry_snapshot_name), ''),
+                               NULLIF(TRIM(e.name), ''),
+                               CONCAT('Registration ', COALESCE(r.registration_no, '')),
+                               'registration'
+                           ) AS label
+                    FROM registration_payments p
+                    LEFT JOIN registrations r ON r.id = p.registration_id
+                    LEFT JOIN enquiries e ON e.id = r.enquiry_id
+                    WHERE p.id IN ({$ph})
+                ";
+                $st = $pdo->prepare($sql);
+                $st->execute($ids);
+                foreach (($st->fetchAll(PDO::FETCH_ASSOC) ?: []) as $r) {
+                    $rid = (int)($r['rid'] ?? 0);
+                    $label = trim((string)($r['label'] ?? ''));
+                    if ($rid > 0 && $label !== '') {
+                        $map['registration_payments:' . $rid] = $label;
+                    }
+                }
+            }
+        } catch (Throwable $e) {}
+
+        try {
+            if (!empty($idsByTable['enquiry_followups'])) {
+                $ids = array_keys($idsByTable['enquiry_followups']);
+                $ph = implode(',', array_fill(0, count($ids), '?'));
+                $sql = "
+                    SELECT f.id AS rid,
+                           COALESCE(
+                               NULLIF(TRIM(e.name), ''),
+                               CONCAT('Enquiry ', COALESCE(CAST(e.id AS CHAR), '')),
+                               'Enquiry'
+                           ) AS label
+                    FROM enquiry_followups f
+                    LEFT JOIN enquiries e ON e.id = f.enquiry_id
+                    WHERE f.id IN ({$ph})
+                ";
+                $st = $pdo->prepare($sql);
+                $st->execute($ids);
+                foreach (($st->fetchAll(PDO::FETCH_ASSOC) ?: []) as $r) {
+                    $rid = (int)($r['rid'] ?? 0);
+                    $label = trim((string)($r['label'] ?? ''));
+                    if ($rid > 0 && $label !== '') {
+                        $map['enquiry_followups:' . $rid] = $label;
+                    }
+                }
+            }
+        } catch (Throwable $e) {}
+
+        try {
+            if (!empty($idsByTable['monthly_targets'])) {
+                $ids = array_keys($idsByTable['monthly_targets']);
+                $ph = implode(',', array_fill(0, count($ids), '?'));
+                $sql = "
+                    SELECT mt.id AS rid,
+                           COALESCE(NULLIF(TRIM(u.name), ''), 'User') AS label
+                    FROM monthly_targets mt
+                    LEFT JOIN users u ON u.id = mt.user_id
+                    WHERE mt.id IN ({$ph})
+                ";
+                $st = $pdo->prepare($sql);
+                $st->execute($ids);
+                foreach (($st->fetchAll(PDO::FETCH_ASSOC) ?: []) as $r) {
+                    $rid = (int)($r['rid'] ?? 0);
+                    $label = trim((string)($r['label'] ?? ''));
+                    if ($rid > 0 && $label !== '') {
+                        $map['monthly_targets:' . $rid] = $label;
+                    }
+                }
+            }
+        } catch (Throwable $e) {}
+
+        return $map;
+    }
+}
+
+if (!function_exists('auditParseYmd')) {
+    function auditParseYmd(string $value): ?DateTimeImmutable
+    {
+        $value = trim($value);
+        if ($value === '') {
+            return null;
+        }
+        $dt = DateTimeImmutable::createFromFormat('Y-m-d', $value);
+        if (!$dt) {
+            return null;
+        }
+        $err = DateTimeImmutable::getLastErrors();
+        if (!empty($err['warning_count']) || !empty($err['error_count'])) {
+            return null;
+        }
+        if ($dt->format('Y-m-d') !== $value) {
+            return null;
+        }
+        return $dt;
     }
 }
 
@@ -122,8 +542,11 @@ $branchId = (int)($_SESSION['branch_id'] ?? 0);
 $isSuperAdmin = crmIsSuperAdminRole();
 $isHr = crmIsHrRole();
 
-$from = trim((string)($_GET['from'] ?? date('Y-m-d', strtotime('-7 days'))));
-$to = trim((string)($_GET['to'] ?? date('Y-m-d')));
+$defaultFrom = (new DateTimeImmutable('today'))->modify('-7 days');
+$defaultTo = new DateTimeImmutable('today');
+
+$fromRaw = trim((string)($_GET['from'] ?? $defaultFrom->format('Y-m-d')));
+$toRaw = trim((string)($_GET['to'] ?? $defaultTo->format('Y-m-d')));
 $module = trim((string)($_GET['module'] ?? ''));
 $search = trim((string)($_GET['search'] ?? ''));
 $limit = (int)($_GET['limit'] ?? 150);
@@ -134,17 +557,26 @@ if ($limit > 500) {
     $limit = 500;
 }
 
-if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $from)) {
-    $from = date('Y-m-d', strtotime('-7 days'));
+$fromDt = auditParseYmd($fromRaw) ?: $defaultFrom;
+$toDt = auditParseYmd($toRaw) ?: $defaultTo;
+if ($fromDt > $toDt) {
+    $fromDt = $defaultFrom;
+    $toDt = $defaultTo;
 }
-if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $to)) {
-    $to = date('Y-m-d');
+$rangeClamped = false;
+$rangeDays = (int)$fromDt->diff($toDt)->days;
+if ($rangeDays > 90) {
+    $fromDt = $toDt->modify('-90 days');
+    $rangeClamped = true;
 }
+$from = $fromDt->format('Y-m-d');
+$to = $toDt->format('Y-m-d');
+$toExclusive = $toDt->modify('+1 day');
 
 $where = ["a.created_at >= :from_dt", "a.created_at < :to_dt"];
 $params = [
-    ':from_dt' => $from . ' 00:00:00',
-    ':to_dt' => date('Y-m-d', strtotime($to . ' +1 day')) . ' 00:00:00',
+    ':from_dt' => $fromDt->format('Y-m-d') . ' 00:00:00',
+    ':to_dt' => $toExclusive->format('Y-m-d') . ' 00:00:00',
 ];
 
 if ($module !== '') {
@@ -160,7 +592,7 @@ if ($search !== '') {
 if ($isSuperAdmin) {
     // Full logs.
 } elseif ($isHr) {
-    $where[] = "(u.branch_id = :branch_id OR a.user_id IS NULL)";
+    $where[] = "u.branch_id = :branch_id";
     $params[':branch_id'] = $branchId;
     $where[] = "a.table_name IN ('enquiries','enquiry_followups','monthly_targets','registration_payments','users','roles')";
 } else {
@@ -170,16 +602,51 @@ if ($isSuperAdmin) {
 
 $rows = [];
 $moduleOptions = [];
+$auditLoadError = '';
+$entityNameMap = [];
 try {
     crmEnsureAuditLogsTable($pdo);
 
-    $moduleOptionsSql = "
-        SELECT DISTINCT COALESCE(table_name, '') AS table_name
-        FROM audit_logs
-        WHERE table_name IS NOT NULL AND table_name <> ''
-        ORDER BY table_name ASC
-    ";
-    $moduleOptions = $pdo->query($moduleOptionsSql)->fetchAll(PDO::FETCH_COLUMN) ?: [];
+    $moduleWhere = ["created_at >= :from_dt", "created_at < :to_dt"];
+    $moduleParams = [
+        ':from_dt' => $fromDt->format('Y-m-d') . ' 00:00:00',
+        ':to_dt' => $toExclusive->format('Y-m-d') . ' 00:00:00',
+    ];
+    if ($isSuperAdmin) {
+        $moduleOptionsSql = "
+            SELECT DISTINCT COALESCE(table_name, '') AS table_name
+            FROM audit_logs
+            WHERE table_name IS NOT NULL AND table_name <> ''
+              AND " . implode(" AND ", $moduleWhere) . "
+            ORDER BY table_name ASC
+        ";
+    } elseif ($isHr) {
+        $moduleWhere = ["a.created_at >= :from_dt", "a.created_at < :to_dt", "u.branch_id = :branch_id"];
+        $moduleParams[':branch_id'] = $branchId;
+        $moduleWhere[] = "a.table_name IN ('enquiries','enquiry_followups','monthly_targets','registration_payments','users','roles')";
+        $moduleOptionsSql = "
+            SELECT DISTINCT COALESCE(a.table_name, '') AS table_name
+            FROM audit_logs a
+            LEFT JOIN users u ON u.id = a.user_id
+            WHERE a.table_name IS NOT NULL AND a.table_name <> ''
+              AND " . implode(" AND ", $moduleWhere) . "
+            ORDER BY a.table_name ASC
+        ";
+    } else {
+        $moduleWhere = ["created_at >= :from_dt", "created_at < :to_dt", "user_id = :user_id"];
+        $moduleParams[':user_id'] = $userId;
+        $moduleOptionsSql = "
+            SELECT DISTINCT COALESCE(table_name, '') AS table_name
+            FROM audit_logs
+            WHERE table_name IS NOT NULL AND table_name <> ''
+              AND " . implode(" AND ", $moduleWhere) . "
+            ORDER BY table_name ASC
+        ";
+    }
+
+    $moduleSt = $pdo->prepare($moduleOptionsSql);
+    $moduleSt->execute($moduleParams);
+    $moduleOptions = $moduleSt->fetchAll(PDO::FETCH_COLUMN) ?: [];
 
     $sql = "
         SELECT
@@ -204,14 +671,17 @@ try {
         LEFT JOIN roles r ON r.id = u.role_id
         LEFT JOIN branches b ON b.id = u.branch_id
         WHERE " . implode(" AND ", $where) . "
-        ORDER BY a.id DESC
+        ORDER BY a.created_at DESC, a.id DESC
         LIMIT " . $limit;
 
     $st = $pdo->prepare($sql);
     $st->execute($params);
     $rows = $st->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    $entityNameMap = auditBuildEntityNameMap($pdo, $rows);
 } catch (Exception $e) {
     $rows = [];
+    $moduleOptions = [];
+    $auditLoadError = 'Audit logs could not be loaded right now. Please refresh and try again.';
 }
 
 $rowCount = count($rows);
@@ -222,7 +692,7 @@ if ($module !== '') {
 if ($search !== '') {
     $activeFilterCount++;
 }
-if ($from !== date('Y-m-d', strtotime('-7 days')) || $to !== date('Y-m-d')) {
+if ($from !== $defaultFrom->format('Y-m-d') || $to !== $defaultTo->format('Y-m-d')) {
     $activeFilterCount++;
 }
 ?>
@@ -262,6 +732,16 @@ if ($from !== date('Y-m-d', strtotime('-7 days')) || $to !== date('Y-m-d')) {
 .audit-btn-link { display:inline-flex; align-items:center; justify-content:center; height:42px; border-radius:12px; border:1px solid #f3c3d8; color:#b01757; background:#fff; font-weight:700; padding:0 14px; text-decoration:none; white-space:nowrap; }
 .audit-toolbar { display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:8px; }
 .audit-hint { color:#7a8598; font-size:.84rem; font-weight:600; }
+.audit-soft-error{
+  border:1px solid #f4d2d2;
+  border-radius:12px;
+  background:#fff5f5;
+  color:#a12a2a;
+  font-size:.9rem;
+  font-weight:700;
+  padding:10px 12px;
+  margin-bottom:10px;
+}
 .audit-table-wrap { width:100%; max-width:100%; overflow-x:auto; overflow-y:visible; border:1px solid #f4c6d7; border-radius:14px; padding:10px; background:#fff; box-shadow:0 10px 28px rgba(176,23,87,.08); -webkit-overflow-scrolling:touch; }
 .audit-table-wrap .crm-table { min-width:1320px; width:1320px; border-radius:12px; overflow:hidden; table-layout:auto; border-collapse:collapse; }
 .audit-table-wrap .crm-table th {
@@ -515,9 +995,17 @@ if ($from !== date('Y-m-d', strtotime('-7 days')) || $to !== date('Y-m-d')) {
             <button type="submit" class="audit-btn">Apply Filter</button>
             <a class="audit-btn-link" href="index.php?page=system/audit_logs">Reset</a>
         </div>
+        <?php if ($rangeClamped): ?>
+            <div class="audit-field-wide">
+                <div class="audit-hint">Date range is limited to 90 days for performance. Older range was auto-adjusted.</div>
+            </div>
+        <?php endif; ?>
     </form>
 
     <div class="audit-card">
+        <?php if ($auditLoadError !== ''): ?>
+            <div class="audit-soft-error"><?= htmlspecialchars($auditLoadError) ?></div>
+        <?php endif; ?>
         <div class="audit-toolbar">
             <div class="audit-hint">Tip: Scroll inside the table area to view every column. Geo details now wrap instead of cutting off.</div>
         </div>
@@ -543,6 +1031,21 @@ if ($from !== date('Y-m-d', strtotime('-7 days')) || $to !== date('Y-m-d')) {
                     <?php if (!empty($rows)): ?>
                         <?php foreach ($rows as $i => $row): ?>
                             <tr>
+                                <?php
+                                $tblKey = strtolower(trim((string)($row['table_name'] ?? '')));
+                                $ridKey = (int)($row['record_id'] ?? 0);
+                                $entityName = ($tblKey !== '' && $ridKey > 0 && isset($entityNameMap[$tblKey . ':' . $ridKey]))
+                                    ? (string)$entityNameMap[$tblKey . ':' . $ridKey]
+                                    : '';
+                                $recordDisplay = $entityName;
+                                if ($recordDisplay === '') {
+                                    $recordDisplay = auditRecordNameFromAction(
+                                        (string)($row['action'] ?? ''),
+                                        (string)($row['table_name'] ?? ''),
+                                        (string)($row['user_name'] ?? '')
+                                    );
+                                }
+                                ?>
                                 <td><?= (int)$i + 1 ?></td>
                                 <td data-order="<?= (int)strtotime((string)($row['created_at'] ?? '')) ?>"><?= htmlspecialchars(auditFmtWhen($row['created_at'] ?? '')) ?></td>
                                 <td><?= htmlspecialchars((string)$row['user_name']) ?></td>
@@ -550,16 +1053,25 @@ if ($from !== date('Y-m-d', strtotime('-7 days')) || $to !== date('Y-m-d')) {
                                 <td><?= htmlspecialchars((string)$row['branch_name']) ?></td>
                                 <td><span class="audit-badge"><?= htmlspecialchars((string)$row['table_name']) ?></span></td>
                                 <td title="<?= htmlspecialchars((string)$row['action']) ?>">
-                                    <?= htmlspecialchars(auditFmtAction($row['action'] ?? '', $row['table_name'] ?? '', (int)($row['record_id'] ?? 0))) ?>
+                                    <?= htmlspecialchars(auditFmtAction($row['action'] ?? '', $row['table_name'] ?? '', (int)($row['record_id'] ?? 0), $entityName)) ?>
                                 </td>
-                                <td><?= ((int)$row['record_id'] > 0 ? (int)$row['record_id'] : '-') ?></td>
+                                <td><?= htmlspecialchars($recordDisplay !== '' ? $recordDisplay : '-') ?></td>
                                 <td><?= htmlspecialchars((string)($row['browser'] ?: '-')) ?></td>
                                 <td><?= htmlspecialchars((string)($row['device_type'] ?: '-')) ?></td>
                                 <td>
                                     <?php
                                     $geoParts = [];
-                                    if ($row['latitude'] !== null && $row['longitude'] !== null) {
-                                        $geoParts[] = number_format((float)$row['latitude'], 6) . ', ' . number_format((float)$row['longitude'], 6);
+                                    $latRaw = $row['latitude'] ?? null;
+                                    $lonRaw = $row['longitude'] ?? null;
+                                    $hasLat = ($latRaw !== null && $latRaw !== '' && is_numeric($latRaw));
+                                    $hasLon = ($lonRaw !== null && $lonRaw !== '' && is_numeric($lonRaw));
+                                    if ($hasLat && $hasLon) {
+                                        $lat = (float)$latRaw;
+                                        $lon = (float)$lonRaw;
+                                        $isZeroPair = (abs($lat) < 0.0000005 && abs($lon) < 0.0000005);
+                                        if (!$isZeroPair) {
+                                            $geoParts[] = number_format($lat, 6) . ', ' . number_format($lon, 6);
+                                        }
                                     }
                                     if (trim((string)($row['location_text'] ?? '')) !== '') {
                                         $geoParts[] = (string)$row['location_text'];

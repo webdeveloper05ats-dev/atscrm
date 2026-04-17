@@ -63,6 +63,12 @@ if (!preg_match('/^[a-zA-Z0-9\/_-]+$/', $page)) {
     die('Invalid page request.');
 }
 
+// Demo Reset page is retired and must not be routable.
+if ($page === 'system/demo_reset') {
+    http_response_code(404);
+    die('Page not found.');
+}
+
 // ===============================
 // Build View Path
 // ===============================
@@ -140,6 +146,22 @@ if ($page === 'dailyreports/export' && isset($_GET['action']) && in_array($_GET[
 
 if ($page === 'dailyreports/view' && isset($_GET['action']) && $_GET['action'] === 'download') {
     $rawPages[] = 'dailyreports/view';
+}
+
+if ($page === 'system/backup_health' && isset($_GET['export_uploads']) && (string)$_GET['export_uploads'] === '1') {
+    $rawPages[] = 'system/backup_health';
+}
+if ($page === 'system/backup_health' && isset($_GET['export_db']) && (string)$_GET['export_db'] === '1') {
+    $rawPages[] = 'system/backup_health';
+}
+if ($page === 'system/backup_health' && isset($_GET['download_backup']) && $_GET['download_backup'] !== '') {
+    $rawPages[] = 'system/backup_health';
+}
+if ($page === 'system/backup_health' && isset($_GET['health_api']) && (string)$_GET['health_api'] === '1') {
+    $rawPages[] = 'system/backup_health';
+}
+if ($page === 'system/onboarding_export') {
+    $rawPages[] = 'system/onboarding_export';
 }
 
 if (in_array($page, $rawPages, true)) {

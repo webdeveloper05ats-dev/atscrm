@@ -22,6 +22,7 @@ $allowedRoles = ['Super Admin','HR','Front Office','Staff','Marketing'];
 if (!in_array($roleName, $allowedRoles, true)) {
     $error = "Access denied.";
 }
+$canCreateDuplicate = crmLeadCanBypassDuplicateGuard($roleName);
 
 // Detect Edit Mode
 $leadId = (int)($_GET['id'] ?? 0);
@@ -88,6 +89,39 @@ try {
     $staff=[];
 }
 
+if (isset($_GET['duplicate_check']) && (string)$_GET['duplicate_check'] === '1') {
+    header('Content-Type: application/json; charset=utf-8');
+    $qPhone = (string)($_GET['phone'] ?? '');
+    $qEmail = (string)($_GET['email'] ?? '');
+    $excludeId = (int)($_GET['exclude_id'] ?? 0);
+    if ($isEdit && $leadId > 0 && $excludeId <= 0) {
+        $excludeId = $leadId;
+    }
+    $dup = crmLeadFindDuplicate($pdo, $branchId, $qPhone, $qEmail, $excludeId, (bool)$canAllBranches);
+    if (!$dup) {
+        echo json_encode(['ok' => true, 'duplicate' => false]);
+        exit;
+    }
+    $dupId = (int)($dup['id'] ?? 0);
+    echo json_encode([
+        'ok' => true,
+        'duplicate' => true,
+        'can_create_anyway' => $canCreateDuplicate,
+        'data' => [
+            'id' => $dupId,
+            'name' => (string)($dup['name'] ?? ''),
+            'phone' => (string)($dup['phone'] ?? ''),
+            'email' => (string)($dup['email'] ?? ''),
+            'status' => (string)($dup['status'] ?? ''),
+            'assigned_name' => (string)($dup['assigned_name'] ?? ''),
+            'match_phone' => (int)($dup['duplicate_match_phone'] ?? 0),
+            'match_email' => (int)($dup['duplicate_match_email'] ?? 0),
+            'edit_url' => 'index.php?page=leads/add&id=' . $dupId,
+        ],
+    ]);
+    exit;
+}
+
 // ===========================
 // Save Lead
 // ===========================
@@ -124,88 +158,156 @@ if(isset($_POST['save_lead']) && empty($error)){
 }else{
 
             try{
+                $duplicateAction = strtolower(trim((string)($_POST['duplicate_action'] ?? '')));
+                $duplicateTargetId = (int)($_POST['duplicate_target_id'] ?? 0);
 
-                if($isEdit){
+                $dup = crmLeadFindDuplicate($pdo, $branchId, $phone, $email, $isEdit ? $leadId : 0, (bool)$canAllBranches);
 
-                    // Add branch restriction to UPDATE
-                    $updateSql = "
-                            UPDATE leads SET
-                            name=:name,
-                            phone=:phone,
-                            email=:email,
-                            source=:source,
-                            course_interest=:course,
-                            company_college_name=:company_college_name,
-                            department=:department,
-                            lead_year=:lead_year,
-                            assigned_to=:assigned,
-                            remarks=:remarks,
-                            updated_by=:uid,
-                            updated_at=NOW()
-                            WHERE id=:id
-                        ";
+                if ($dup && $isEdit) {
+                    $error = "Duplicate detected with Lead #" . (int)($dup['id'] ?? 0) . ". Edit blocked to protect data.";
+                } elseif ($dup && !$isEdit) {
+                    $dupId = (int)($dup['id'] ?? 0);
 
-                    $updateParams = [
-                        ':name'=>$name,
-                        ':phone'=>$phone,
-                        ':email'=>$email,
-                        ':source'=>$source,
-                        ':course'=>$course,
-                        ':company_college_name'=>$companyCollege,
-                        ':department'=>$department,
-                        ':lead_year'=>$leadYear,
-                        ':assigned'=>$assign,
-                        ':remarks'=>$remarks,
-                        ':uid'=>$userId,
-                        ':id'=>$leadId
-                    ];
-
-                    if (!$canAllBranches && $branchId > 0) {
-                        $updateSql .= " AND branch_id=:branch_id";
-                        $updateParams[':branch_id'] = $branchId;
+                    if ($duplicateAction === 'open_existing') {
+                        redirect("index.php?page=leads/add&id=" . $dupId);
                     }
 
-                    $st=$pdo->prepare($updateSql);
-                    $st->execute($updateParams);
+                    if ($duplicateAction === 'merge' && $duplicateTargetId > 0 && $duplicateTargetId === $dupId) {
+                        $pdo->beginTransaction();
+                        $merge = crmLeadMergeRecord($pdo, $dupId, [
+                            'name' => $name,
+                            'phone' => $phone,
+                            'email' => $email,
+                            'source' => $source,
+                            'course_interest' => $course,
+                            'company_college_name' => $companyCollege,
+                            'department' => $department,
+                            'lead_year' => $leadYear,
+                            'assigned_to' => $assign,
+                            'remarks' => $remarks,
+                        ], [
+                            'updated_by' => $userId,
+                            'ip_address' => $_SERVER['REMOTE_ADDR'] ?? '',
+                            'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? '',
+                            'prefer_incoming_assignment' => true,
+                            'merge_note_prefix' => 'Duplicate merge',
+                        ]);
+                        $pdo->commit();
 
-                    $success="Lead updated successfully.";
+                        $changeText = !empty($merge['changes']) ? implode(', ', $merge['changes']) : 'no field change';
+                        crmAuditInsert($pdo, [
+                            'user_id' => $userId,
+                            'table_name' => 'leads',
+                            'record_id' => $dupId,
+                            'action' => 'Merged duplicate lead into Lead #' . $dupId . ' (' . $changeText . ')',
+                        ]);
 
-                }else{
+                        $success = "Duplicate found. Lead merged into existing Lead #{$dupId}.";
+                    } elseif ($duplicateAction === 'create_anyway') {
+                        if (!$canCreateDuplicate) {
+                            $error = "Duplicate found with Lead #{$dupId}. You are not allowed to create duplicates.";
+                        }
+                    } else {
+                        $error = "Duplicate found with Lead #{$dupId}. Choose merge or open existing lead.";
+                    }
+                }
 
-                    $st=$pdo->prepare("
-                            INSERT INTO leads
-                            (branch_id,name,phone,email,source,
-                            course_interest,company_college_name,department,lead_year,
-                            status,assigned_to,remarks,
-                            created_by,ip_address,user_agent,created_at)
-                            VALUES
-                            (:branch,:name,:phone,:email,:source,
-                            :course,:company_college_name,:department,:lead_year,
-                            'new',:assigned,:remarks,
-                            :uid,:ip,:ua,NOW())
-                        ");
+                if ($error === '' && $success === '') {
+                    if($isEdit){
 
-                    $st->execute([
-                        ':branch'=>$branchId,
-                        ':name'=>$name,
-                        ':phone'=>$phone,
-                        ':email'=>$email,
-                        ':source'=>$source,
-                        ':course'=>$course,
-                        ':company_college_name'=>$companyCollege,
-                        ':department'=>$department,
-                        ':lead_year'=>$leadYear,
-                        ':assigned'=>$assign,
-                        ':remarks'=>$remarks,
-                        ':uid'=>$userId,
-                        ':ip'=>$_SERVER['REMOTE_ADDR'] ?? null,
-                        ':ua'=>$_SERVER['HTTP_USER_AGENT'] ?? null
-                    ]);
+                        // Add branch restriction to UPDATE
+                        $updateSql = "
+                                UPDATE leads SET
+                                name=:name,
+                                phone=:phone,
+                                email=:email,
+                                source=:source,
+                                course_interest=:course,
+                                company_college_name=:company_college_name,
+                                department=:department,
+                                lead_year=:lead_year,
+                                assigned_to=:assigned,
+                                remarks=:remarks,
+                                updated_by=:uid,
+                                updated_at=NOW()
+                                WHERE id=:id
+                            ";
 
-                    $success="Lead created successfully.";
+                        $updateParams = [
+                            ':name'=>$name,
+                            ':phone'=>$phone,
+                            ':email'=>$email,
+                            ':source'=>$source,
+                            ':course'=>$course,
+                            ':company_college_name'=>$companyCollege,
+                            ':department'=>$department,
+                            ':lead_year'=>$leadYear,
+                            ':assigned'=>$assign,
+                            ':remarks'=>$remarks,
+                            ':uid'=>$userId,
+                            ':id'=>$leadId
+                        ];
+
+                        if (!$canAllBranches && $branchId > 0) {
+                            $updateSql .= " AND branch_id=:branch_id";
+                            $updateParams[':branch_id'] = $branchId;
+                        }
+
+                        $st=$pdo->prepare($updateSql);
+                        $st->execute($updateParams);
+
+                        $success="Lead updated successfully.";
+
+                    }else{
+
+                        $st=$pdo->prepare("
+                                INSERT INTO leads
+                                (branch_id,name,phone,email,source,
+                                course_interest,company_college_name,department,lead_year,
+                                status,assigned_to,remarks,
+                                created_by,ip_address,user_agent,created_at)
+                                VALUES
+                                (:branch,:name,:phone,:email,:source,
+                                :course,:company_college_name,:department,:lead_year,
+                                'new',:assigned,:remarks,
+                                :uid,:ip,:ua,NOW())
+                            ");
+
+                        $st->execute([
+                            ':branch'=>$branchId,
+                            ':name'=>$name,
+                            ':phone'=>$phone,
+                            ':email'=>$email,
+                            ':source'=>$source,
+                            ':course'=>$course,
+                            ':company_college_name'=>$companyCollege,
+                            ':department'=>$department,
+                            ':lead_year'=>$leadYear,
+                            ':assigned'=>$assign,
+                            ':remarks'=>$remarks,
+                            ':uid'=>$userId,
+                            ':ip'=>$_SERVER['REMOTE_ADDR'] ?? null,
+                            ':ua'=>$_SERVER['HTTP_USER_AGENT'] ?? null
+                        ]);
+
+                        if ($dup && $duplicateAction === 'create_anyway') {
+                            $newLeadId = (int)$pdo->lastInsertId();
+                            crmAuditInsert($pdo, [
+                                'user_id' => $userId,
+                                'table_name' => 'leads',
+                                'record_id' => $newLeadId,
+                                'action' => 'Duplicate override: new lead created even though Lead #' . (int)($dup['id'] ?? 0) . ' matched.',
+                            ]);
+                        }
+
+                        $success="Lead created successfully.";
+                    }
                 }
 
             }catch(Exception $e){
+                if ($pdo->inTransaction()) {
+                    $pdo->rollBack();
+                }
                 $error="Failed to save lead. ".$e->getMessage();
             }
 
@@ -263,6 +365,8 @@ alert('<?= addslashes($error) ?>');
 <form method="POST" id="leadForm" novalidate data-focus-start="on" data-focus-target="input[name='name']" data-form-assist="on">
 
 <input type="hidden" name="csrf_token" value="<?= h(generateCSRF()) ?>">
+<input type="hidden" name="duplicate_action" value="<?= h($_POST['duplicate_action'] ?? '') ?>">
+<input type="hidden" name="duplicate_target_id" value="<?= h($_POST['duplicate_target_id'] ?? '') ?>">
 
 <div class="form-grid">
 
@@ -337,7 +441,7 @@ value="<?= h($_POST['lead_year'] ?? $lead['lead_year'] ?? '') ?>">
 <?php foreach($staff as $s): ?>
 
 <option value="<?= $s['id'] ?>"
-<?= (($lead['assigned_to'] ?? '')==$s['id'])?'selected':'' ?>>
+<?= ((string)($_POST['assigned_to'] ?? ($lead['assigned_to'] ?? ''))===(string)$s['id'])?'selected':'' ?>>
 
 <?= h($s['name']) ?> (<?= h($s['role_name']) ?>)
 
@@ -384,6 +488,11 @@ document.addEventListener("DOMContentLoaded", function(){
     const reqDepartment = form.querySelector('[name="department"]');
     const reqLeadYear = form.querySelector('[name="lead_year"]');
     const reqAssignedTo = form.querySelector('[name="assigned_to"]');
+    const duplicateActionInput = form.querySelector('[name="duplicate_action"]');
+    const duplicateTargetInput = form.querySelector('[name="duplicate_target_id"]');
+    const isEditMode = <?= $isEdit ? 'true' : 'false' ?>;
+    const duplicateCheckBaseUrl = 'index.php?page=leads/add&duplicate_check=1&exclude_id=<?= (int)($leadId ?? 0) ?>';
+    let duplicateCheckInFlight = false;
     const showWarn = function(title, text){
         if(window.Swal && Swal.fire){
             Swal.fire({
@@ -503,6 +612,101 @@ document.addEventListener("DOMContentLoaded", function(){
             showWarn('Validation Error','Assign To is required');
             return;
         }
+
+        if(isEditMode){
+            return;
+        }
+
+        if(duplicateActionInput && duplicateActionInput.value){
+            return;
+        }
+
+        e.preventDefault();
+        if (duplicateCheckInFlight) {
+            return;
+        }
+        duplicateCheckInFlight = true;
+
+        const checkUrl = duplicateCheckBaseUrl
+            + '&phone=' + encodeURIComponent(phone)
+            + '&email=' + encodeURIComponent(email);
+
+        fetch(checkUrl, {
+            method: 'GET',
+            credentials: 'same-origin',
+            headers: { 'Accept': 'application/json' }
+        })
+            .then(function(resp){ return resp.json(); })
+            .then(function(payload){
+                duplicateCheckInFlight = false;
+                if(!payload || payload.ok !== true || payload.duplicate !== true){
+                    form.submit();
+                    return;
+                }
+
+                const dup = payload.data || {};
+                const dupId = Number(dup.id || 0);
+                const dupTitle = 'Possible Duplicate Lead';
+                const dupText = 'Lead #' + dupId + ' already exists for ' + (dup.name || 'this contact') + '.';
+
+                const proceedMerge = function(){
+                    if (duplicateActionInput) duplicateActionInput.value = 'merge';
+                    if (duplicateTargetInput) duplicateTargetInput.value = String(dupId);
+                    form.submit();
+                };
+                const proceedCreateAnyway = function(){
+                    if (duplicateActionInput) duplicateActionInput.value = 'create_anyway';
+                    if (duplicateTargetInput) duplicateTargetInput.value = String(dupId);
+                    form.submit();
+                };
+
+                if(window.Swal && Swal.fire){
+                    const html = ''
+                        + '<div style="text-align:left;line-height:1.55;">'
+                        + '<div><b>Lead #' + dupId + '</b> - ' + (dup.name || '-') + '</div>'
+                        + '<div>Phone: ' + (dup.phone || '-') + '</div>'
+                        + '<div>Email: ' + (dup.email || '-') + '</div>'
+                        + '<div>Status: ' + (dup.status || '-') + '</div>'
+                        + '<div>Assigned: ' + (dup.assigned_name || '-') + '</div>'
+                        + '</div>';
+
+                    Swal.fire({
+                        icon: 'warning',
+                        title: dupTitle,
+                        html: html,
+                        showDenyButton: true,
+                        showCancelButton: !!payload.can_create_anyway,
+                        confirmButtonText: 'Merge Into Existing',
+                        denyButtonText: 'Open Existing',
+                        cancelButtonText: 'Create Anyway',
+                        confirmButtonColor: '#e91e63',
+                        denyButtonColor: '#1976d2'
+                    }).then(function(result){
+                        if(result.isConfirmed){
+                            proceedMerge();
+                            return;
+                        }
+                        if(result.isDenied){
+                            window.location.href = dup.edit_url || ('index.php?page=leads/add&id=' + dupId);
+                            return;
+                        }
+                        if(result.dismiss === Swal.DismissReason.cancel && payload.can_create_anyway){
+                            proceedCreateAnyway();
+                        }
+                    });
+                }else{
+                    const shouldMerge = confirm(dupText + '\n\nPress OK to Merge.\nPress Cancel to open existing lead.');
+                    if (shouldMerge) {
+                        proceedMerge();
+                    } else {
+                        window.location.href = dup.edit_url || ('index.php?page=leads/add&id=' + dupId);
+                    }
+                }
+            })
+            .catch(function(){
+                duplicateCheckInFlight = false;
+                form.submit();
+            });
 
     });
 

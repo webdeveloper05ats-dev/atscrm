@@ -46,9 +46,7 @@ if (!function_exists('sheetPick')) {
 if (!function_exists('normalizePhone10')) {
     function normalizePhone10($v): ?string
     {
-        $digits = preg_replace('/\D+/', '', (string) $v);
-        if ($digits === '') return null;
-        return $digits;
+        return crmLeadNormalizePhone10($v);
     }
 }
 if (!function_exists('isValidPhone10')) {
@@ -71,7 +69,10 @@ $error = '';
 
 $userId = (int) ($_SESSION['user_id'] ?? 0);
 $roleId = (int) ($_SESSION['role_id'] ?? 0);
+$roleName = (string) ($_SESSION['role_name'] ?? '');
 $branchId = (int) ($_SESSION['branch_id'] ?? 0);
+$canCreateDuplicate = crmLeadCanBypassDuplicateGuard($roleName);
+$selectedDuplicatePolicy = 'merge';
 
 $canAllBranches = 0;
 try {
@@ -162,6 +163,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['upload_leads'])) {
         $error = "Invalid request.";
     } else {
         $assignTo = (int) ($_POST['assign_to'] ?? 0);
+        $selectedDuplicatePolicy = strtolower(trim((string)($_POST['duplicate_policy'] ?? 'merge')));
+        if (!in_array($selectedDuplicatePolicy, ['merge', 'skip', 'create_anyway'], true)) {
+            $selectedDuplicatePolicy = 'merge';
+        }
+        if ($selectedDuplicatePolicy === 'create_anyway' && !$canCreateDuplicate) {
+            $selectedDuplicatePolicy = 'merge';
+        }
         $file = $_FILES['lead_file'] ?? null;
         $maxUploadSize = 10 * 1024 * 1024; // 10 MB
 
@@ -189,6 +197,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['upload_leads'])) {
                     $totalRows = 0;
                     $successRows = 0;
                     $failedRows = 0;
+                    $mergedRows = 0;
+                    $skippedDuplicateRows = 0;
                     $rowErrors = [];
 
                     try {
@@ -291,6 +301,48 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['upload_leads'])) {
                             }
 
                             try {
+                                $dup = crmLeadFindDuplicate($pdo, $branchId, $phone, $email, 0, (bool)$canAllBranches);
+                                if ($dup && $selectedDuplicatePolicy !== 'create_anyway') {
+                                    if ($selectedDuplicatePolicy === 'skip') {
+                                        $failedRows++;
+                                        $skippedDuplicateRows++;
+                                        $rowErrors[] = "Row " . ($ri + 1) . ": Duplicate with Lead #" . (int)($dup['id'] ?? 0) . " skipped.";
+                                        continue;
+                                    }
+
+                                    $targetLeadId = (int)($dup['id'] ?? 0);
+                                    if ($targetLeadId > 0) {
+                                        crmLeadMergeRecord($pdo, $targetLeadId, [
+                                            'name' => $name,
+                                            'phone' => $phone,
+                                            'email' => $email,
+                                            'source' => $source,
+                                            'course_interest' => $course,
+                                            'company_college_name' => $companyCollege,
+                                            'department' => $department,
+                                            'lead_year' => $leadYear,
+                                            'assigned_to' => $assignTo > 0 ? $assignTo : 0,
+                                            'remarks' => $remarks,
+                                            'import_batch_id' => $batchId,
+                                        ], [
+                                            'updated_by' => $userId,
+                                            'ip_address' => $_SERVER['REMOTE_ADDR'] ?? '',
+                                            'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? '',
+                                            'prefer_incoming_assignment' => ($assignTo > 0),
+                                            'merge_note_prefix' => 'Import merge',
+                                        ]);
+                                        crmAuditInsert($pdo, [
+                                            'user_id' => $userId,
+                                            'table_name' => 'leads',
+                                            'record_id' => $targetLeadId,
+                                            'action' => 'Lead import merged duplicate row into Lead #' . $targetLeadId,
+                                        ]);
+                                        $successRows++;
+                                        $mergedRows++;
+                                        continue;
+                                    }
+                                }
+
                                 $ins = $pdo->prepare("
                                     INSERT INTO leads
                                     (
@@ -325,6 +377,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['upload_leads'])) {
                                     ':ua' => $_SERVER['HTTP_USER_AGENT'] ?? null
                                 ]);
                                 $successRows++;
+                                if ($dup && $selectedDuplicatePolicy === 'create_anyway') {
+                                    $newLeadId = (int)$pdo->lastInsertId();
+                                    crmAuditInsert($pdo, [
+                                        'user_id' => $userId,
+                                        'table_name' => 'leads',
+                                        'record_id' => $newLeadId,
+                                        'action' => 'Lead import duplicate override: new lead created while Lead #' . (int)($dup['id'] ?? 0) . ' already existed.',
+                                    ]);
+                                }
                             } catch (Exception $e) {
                                 $failedRows++;
                                 $rowErrors[] = "Row " . ($ri + 1) . ": " . $e->getMessage();
@@ -346,7 +407,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['upload_leads'])) {
                         $upd->execute([$totalRows, $successRows, $failedRows, $status, $batchId]);
 
                         if ($successRows > 0) {
-                            $success = "Import finished. Success: {$successRows}, Failed: {$failedRows}. Batch #{$batchId}";
+                            $summaryParts = [];
+                            $summaryParts[] = "Success: {$successRows}";
+                            $summaryParts[] = "Failed: {$failedRows}";
+                            if ($mergedRows > 0) {
+                                $summaryParts[] = "Merged duplicates: {$mergedRows}";
+                            }
+                            if ($skippedDuplicateRows > 0) {
+                                $summaryParts[] = "Skipped duplicates: {$skippedDuplicateRows}";
+                            }
+                            $success = "Import finished. " . implode(', ', $summaryParts) . ". Batch #{$batchId}";
                         } else {
                             $error = "Import failed. No rows inserted. Batch #{$batchId}";
                         }
@@ -541,6 +611,7 @@ $batchAssigned = 0;
 $batchUnassigned = 0;
 $batchConverted = 0;
 $batchNotConverted = 0;
+$ajaxBatchOnly = isset($_GET['_ajax_batch']) && (string)$_GET['_ajax_batch'] === '1';
 
 if ($batchId > 0) {
     try {
@@ -579,6 +650,115 @@ if ($batchId > 0) {
     } catch (Exception $e) {
         $batchLeads = [];
     }
+}
+
+if ($ajaxBatchOnly) {
+    ?>
+    <div id="batchLeadsSection">
+    <?php if ($batchId > 0): ?>
+        <div class="card" style="margin-top:16px;">
+            <div class="card-header">
+                <div class="table-header-flex">
+                    <div class="table-title"><i class="fas fa-list"></i> Batch #<?= (int) $batchId ?> Leads</div>
+                    <div id="batchLeadsTableControls"></div>
+                </div>
+            </div>
+
+            <form method="POST" class="filter-form" id="bulkAssignForm">
+                <input type="hidden" name="csrf_token" value="<?= h(generateCSRF()) ?>">
+                <input type="hidden" name="assign_selected" value="1">
+                <input type="hidden" name="batch_id" value="<?= (int) $batchId ?>">
+
+                <div class="batch-topbar">
+                    <div class="batch-summary">
+                        <span class="batch-chip">Total: <?= (int)$batchTotal ?></span>
+                        <span class="batch-chip assigned">Assigned: <?= (int)$batchAssigned ?></span>
+                        <span class="batch-chip unassigned">Unassigned: <?= (int)$batchUnassigned ?></span>
+                        <span class="batch-chip converted">Converted: <?= (int)$batchConverted ?></span>
+                        <span class="batch-chip not-converted">Not Converted: <?= (int)$batchNotConverted ?></span>
+                    </div>
+
+                    <div class="batch-actions-wrap">
+                        <div class="assign-filter-wrap">
+                            <label>Show</label>
+                            <select id="assign_state_filter">
+                                <option value="all">All</option>
+                                <option value="assigned">Assigned</option>
+                                <option value="unassigned">Unassigned</option>
+                            </select>
+                        </div>
+
+                        <div class="bulk-assign-wrap">
+                        <div>
+                            <label>Assign selected to</label>
+                            <select name="assign_to_bulk" required>
+                                <option value="">Select Staff</option>
+                                <?php foreach ($staff as $s): ?>
+                                    <option value="<?= (int) $s['id'] ?>">
+                                        <?= h($s['name']) ?> (<?= h($s['role_name']) ?>)
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+
+                        <div style="align-self:flex-end;">
+                            <button class="btn-icon-only apply" type="submit" title="Assign Selected" aria-label="Assign Selected">
+                                <i class="fas fa-user-check"></i>
+                            </button>
+                        </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="table-container">
+                    <table class="leads-table import-table" id="batchLeadsTable">
+                        <thead>
+                            <tr>
+                                <th style="width:40px;"><input type="checkbox" id="chkAll"></th>
+                                <th>ID</th>
+                                <th>Name</th>
+                                <th>Contact</th>
+                                <th>Interest</th>
+                                <th>Org / Dept / Year</th>
+                                <th>Assigned</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php if (!$batchLeads): ?>
+                                <tr>
+                                    <td colspan="7" style="text-align:center;">No leads in this batch.</td>
+                                </tr>
+                            <?php endif; ?>
+
+                            <?php foreach ($batchLeads as $r): ?>
+                                <tr>
+                                    <td><input type="checkbox" class="leadChk" name="lead_ids[]" value="<?= (int) $r['id'] ?>"></td>
+                                    <td><?= (int) $r['id'] ?></td>
+                                    <td><?= h($r['name']) ?></td>
+                                    <td>
+                                        <div><?= h($r['phone']) ?></div>
+                                        <div class="lead-sub"><?= h($r['email']) ?></div>
+                                    </td>
+                                    <td><?= h($r['course_interest']) ?></td>
+                                    <td>
+                                        <div><?= h($r['company_college_name']) ?></div>
+                                        <div class="lead-sub">
+                                            <?= h($r['department']) ?>
+                                            <?= !empty($r['lead_year']) ? ' | ' . h($r['lead_year']) : '' ?>
+                                        </div>
+                                    </td>
+                                    <td><?= h($r['assigned_name'] ?: '-') ?></td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </form>
+        </div>
+    <?php endif; ?>
+    </div>
+    <?php
+    exit;
 }
 ?>
 
@@ -650,6 +830,17 @@ if ($batchId > 0) {
                             <?= h($s['name']) ?> (<?= h($s['role_name']) ?>)
                         </option>
                     <?php endforeach; ?>
+                </select>
+            </div>
+
+            <div class="filter-item">
+                <label><i class="fas fa-clone"></i> Duplicate Handling</label>
+                <select name="duplicate_policy">
+                    <option value="merge" <?= $selectedDuplicatePolicy === 'merge' ? 'selected' : '' ?>>Merge with existing lead</option>
+                    <option value="skip" <?= $selectedDuplicatePolicy === 'skip' ? 'selected' : '' ?>>Skip duplicate rows</option>
+                    <?php if ($canCreateDuplicate): ?>
+                        <option value="create_anyway" <?= $selectedDuplicatePolicy === 'create_anyway' ? 'selected' : '' ?>>Create anyway (allow duplicate)</option>
+                    <?php endif; ?>
                 </select>
             </div>
 
@@ -725,7 +916,7 @@ if ($batchId > 0) {
                         <td class="created-at-cell"><?= h($b['created_at']) ?></td>
                         <td class="action-col">
                             <div class="import-row-actions">
-                                <a class="action-btn edit" href="index.php?page=leads/import&batch_id=<?= (int) $b['id'] ?>"
+                                <a class="action-btn edit js-view-batch" href="index.php?page=leads/import&batch_id=<?= (int) $b['id'] ?>"
                                     data-tooltip="View Batch">
                                     <i class="fas fa-eye"></i>
                                 </a>
@@ -747,6 +938,7 @@ if ($batchId > 0) {
     </div>
 </div>
 
+<div id="batchLeadsSection">
 <?php if ($batchId > 0): ?>
     <div class="card" style="margin-top:16px;">
         <div class="card-header">
@@ -848,16 +1040,20 @@ if ($batchId > 0) {
         </form>
     </div>
 <?php endif; ?>
+</div>
 
 </div>
 
 <script>
-    const chkAll = document.getElementById('chkAll');
-    if (chkAll) {
-        chkAll.addEventListener('change', function () {
-            document.querySelectorAll('.leadChk').forEach(cb => cb.checked = chkAll.checked);
+    document.addEventListener('change', function (e) {
+        const target = e.target;
+        if (!target || target.id !== 'chkAll') return;
+        const form = target.closest('form');
+        const scope = form || document;
+        scope.querySelectorAll('.leadChk').forEach(function (cb) {
+            cb.checked = target.checked;
         });
-    }
+    });
 
     function showAlert(options) {
         const icon = options && options.icon ? options.icon : 'info';
@@ -968,13 +1164,18 @@ if ($batchId > 0) {
             }
         }
 
-        if (typeof crmDataTable === "function" && document.querySelector('#batchLeadsTable')) {
+        function initBatchLeadsTable() {
+            if (!(typeof crmDataTable === "function" && document.querySelector('#batchLeadsTable'))) {
+                return;
+            }
+
             let selectedAssignState = 'all';
             if (assignStateFilter) {
                 selectedAssignState = assignStateFilter.value || 'all';
             }
 
-            if (window.jQuery && jQuery.fn && jQuery.fn.dataTable) {
+            if (window.jQuery && jQuery.fn && jQuery.fn.dataTable && !window.__leadImportBatchFilterHook) {
+                window.__leadImportBatchFilterHook = true;
                 jQuery.fn.dataTable.ext.search.push(function (settings, searchData) {
                     if (!settings || !settings.nTable || settings.nTable.id !== 'batchLeadsTable') {
                         return true;
@@ -995,6 +1196,10 @@ if ($batchId > 0) {
                     }
                     return true;
                 });
+            }
+
+            if (window.jQuery && jQuery.fn && jQuery.fn.dataTable && jQuery.fn.DataTable.isDataTable('#batchLeadsTable')) {
+                jQuery('#batchLeadsTable').DataTable().destroy();
             }
 
             crmDataTable('#batchLeadsTable', {
@@ -1025,6 +1230,60 @@ if ($batchId > 0) {
                 });
             }
         }
+        initBatchLeadsTable();
+
+        document.addEventListener('click', function (e) {
+            const link = e.target.closest('.js-view-batch');
+            if (!link) return;
+            e.preventDefault();
+
+            const section = document.getElementById('batchLeadsSection');
+            if (!section) {
+                window.location.href = link.href;
+                return;
+            }
+
+            const originalHtml = link.innerHTML;
+            link.style.pointerEvents = 'none';
+            link.innerHTML = "<i class='fas fa-spinner fa-spin'></i>";
+
+            const fetchUrl = link.href + (link.href.indexOf('?') >= 0 ? '&' : '?') + '_ajax_batch=1';
+            fetch(fetchUrl, {
+                credentials: 'same-origin',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            })
+                .then(function (res) { return res.text(); })
+                .then(function (html) {
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+                    const nextSection = doc.querySelector('#batchLeadsSection') || (doc.body && doc.body.id === 'batchLeadsSection' ? doc.body : null);
+                    if (!nextSection) {
+                        showAlert({
+                            icon: 'error',
+                            title: 'Load Failed',
+                            text: 'Could not load batch details. Please try again.'
+                        });
+                        return;
+                    }
+
+                    section.innerHTML = nextSection.innerHTML;
+                    if (window.history && window.history.replaceState) {
+                        window.history.replaceState(null, '', link.href);
+                    }
+                    initBatchLeadsTable();
+                })
+                .catch(function () {
+                    showAlert({
+                        icon: 'error',
+                        title: 'Load Failed',
+                        text: 'Network issue while loading batch details.'
+                    });
+                })
+                .finally(function () {
+                    link.style.pointerEvents = '';
+                    link.innerHTML = originalHtml;
+                });
+        });
 
         if (uploadLeadsForm && leadFileInput) {
             uploadLeadsForm.addEventListener('submit', function (e) {

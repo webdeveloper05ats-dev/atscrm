@@ -726,25 +726,34 @@ if (!$hideTopbar && isset($pdo) && $pdo instanceof PDO && !empty($_SESSION['user
             ];
         }
 
-        // 3) Enquiry SLA not contacted:
-        // enquiries older than 24h with no follow-up record yet.
+        // 3) Lead contact SLA pending:
+        // leads older than configured SLA since assignment point and still untouched (new/followup).
+        $leadSlaHours = (int)(defined('LEAD_CONTACT_SLA_HOURS') ? LEAD_CONTACT_SLA_HOURS : 24);
+        if ($leadSlaHours < 1 || $leadSlaHours > 168) {
+            $leadSlaHours = 24;
+        }
         $sqlSla = "
             SELECT COUNT(*)
-            FROM enquiries e
-            LEFT JOIN enquiry_followups f ON f.enquiry_id = e.id
+            FROM leads l
             WHERE 1=1
-              AND e.created_at <= DATE_SUB(NOW(), INTERVAL 24 HOUR)
-              AND f.id IS NULL
+              AND COALESCE(l.assigned_to, 0) > 0
+              AND LOWER(TRIM(COALESCE(l.status, 'new'))) IN ('new', 'followup')
+              AND COALESCE(
+                    CASE
+                        WHEN l.updated_at IS NOT NULL AND l.updated_at > l.created_at THEN l.updated_at
+                        ELSE l.created_at
+                    END,
+                    l.created_at
+                  ) <= DATE_SUB(NOW(), INTERVAL {$leadSlaHours} HOUR)
         ";
         $paramsSla = [];
         if ($canAllBranchesHeader !== 1 && $sessionBranchId > 0) {
-            $sqlSla .= " AND e.branch_id = :sla_branch_id";
+            $sqlSla .= " AND l.branch_id = :sla_branch_id";
             $paramsSla[':sla_branch_id'] = $sessionBranchId;
         }
         if ($isUserScoped) {
-            $sqlSla .= " AND (e.handled_by = :sla_user_1 OR e.created_by = :sla_user_2)";
-            $paramsSla[':sla_user_1'] = $sessionUserId;
-            $paramsSla[':sla_user_2'] = $sessionUserId;
+            $sqlSla .= " AND l.assigned_to = :sla_user_id";
+            $paramsSla[':sla_user_id'] = $sessionUserId;
         }
         $stmtSla = $pdo->prepare($sqlSla);
         $stmtSla->execute($paramsSla);
@@ -755,10 +764,10 @@ if (!$hideTopbar && isset($pdo) && $pdo instanceof PDO && !empty($_SESSION['user
                 'level' => 'p1',
                 'impact' => $slaCount,
                 'created_ts' => time(),
-                'title' => 'Enquiry Contact SLA Pending',
-                'message' => $slaCount . ' enquiry(ies) have no follow-up recorded beyond 24 hours.',
-                'link' => BASE_URL . 'index.php?page=enquiries/list',
-                'link_label' => 'Check enquiries',
+                'title' => 'Lead Contact SLA Pending',
+                'message' => $slaCount . ' assigned lead(s) are pending beyond ' . $leadSlaHours . ' hours.',
+                'link' => BASE_URL . 'index.php?page=leads/list&status=new',
+                'link_label' => 'Check leads',
             ];
         }
 
