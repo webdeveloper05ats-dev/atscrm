@@ -1290,5 +1290,44 @@ $('#followupForm').submit(function(e){
 })();
 </script>
 
+<script>
+(function () {
+    if (typeof window.fetch !== 'function') return;
+
+    const originalFetch = window.fetch.bind(window);
+    const requestId = 'web-' + Date.now() + '-' + Math.random().toString(36).slice(2, 10);
+
+    function shouldAttach(url) {
+        try {
+            const requestUrl = new URL(url, window.location.origin);
+            return requestUrl.origin === window.location.origin;
+        } catch (e) {
+            return false;
+        }
+    }
+
+    function withMetaHeaders(init) {
+        const nextInit = init ? Object.assign({}, init) : {};
+        const headers = new Headers(nextInit.headers || {});
+
+        if (!headers.has('X-Client-Source')) headers.set('X-Client-Source', 'web');
+        if (!headers.has('X-Device-Type')) headers.set('X-Device-Type', 'web');
+        if (!headers.has('X-App-Version')) headers.set('X-App-Version', 'web-1.0.0');
+        if (!headers.has('X-Request-Id')) headers.set('X-Request-Id', requestId);
+
+        nextInit.headers = headers;
+        return nextInit;
+    }
+
+    window.fetch = function (input, init) {
+        const url = typeof input === 'string' ? input : (input && input.url ? input.url : '');
+        if (!shouldAttach(url)) {
+            return originalFetch(input, init);
+        }
+        return originalFetch(input, withMetaHeaders(init));
+    };
+})();
+</script>
+
 </body>
 </html>
