@@ -89,13 +89,13 @@
 .sa-kpi-card {
   padding: 0;
   perspective: 1000px;
-  min-height: 188px;
+  min-height: 236px;
 }
 
 .sa-kpi-flip {
   position: relative;
   width: 100%;
-  min-height: 188px;
+  min-height: 236px;
   transform-style: preserve-3d;
   transition: transform 0.56s cubic-bezier(0.2, 0.65, 0.25, 1);
 }
@@ -104,6 +104,9 @@
   position: absolute;
   inset: 0;
   padding: 18px;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
 }
@@ -132,6 +135,13 @@
   font-size: 13px;
   line-height: 1.6;
   color: #6b7280;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.sa-kpi-sub {
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .sa-mini-chart-wrap {
@@ -168,7 +178,7 @@
 @media (max-width: 768px) {
   .sa-kpi-card,
   .sa-kpi-flip {
-    min-height: 168px;
+    min-height: 204px;
   }
 
   .sa-kpi-face {
